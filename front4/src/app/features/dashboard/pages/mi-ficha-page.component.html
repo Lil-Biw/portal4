@@ -1,0 +1,133 @@
+<!-- Header -->
+<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;margin-bottom:1.25rem;flex-wrap:wrap">
+  <div>
+    <h2 style="margin:0 0 .25rem;font-size:1.55rem;font-weight:700;color:#1f2937">
+      {{ empresaSeleccionada()?.razon_social ?? 'Bienvenido' }}
+    </h2>
+    <p style="margin:0;font-size:.85rem;color:#6b7280">{{ fecha }}</p>
+  </div>
+  <div style="display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;flex-shrink:0">
+    <!-- Selector de empresa -->
+    <select
+      class="empresa-select"
+      [ngModel]="empresaId()"
+      (ngModelChange)="empresaId.set($event)">
+      <option value="">Escoger empresa</option>
+      <option *ngFor="let e of clientesService.clientes()" [value]="e._id">
+        {{ e.razon_social }}
+      </option>
+    </select>
+    <button class="btn-primary" (click)="irADocumentos()">+ Subir documento</button>
+  </div>
+</div>
+
+<!-- Centros de costos -->
+<div class="card" style="margin-bottom:1rem">
+  <div style="margin-bottom:.9rem">
+    <h3 style="margin:0 0 .2rem;font-size:1rem;font-weight:700">Centros de costos</h3>
+    <p style="margin:0;font-size:.78rem;color:#6b7280">
+      @if (empresaId()) {
+        {{ centrosDeEmpresa().length }} centro{{ centrosDeEmpresa().length !== 1 ? 's' : '' }} activo{{ centrosDeEmpresa().length !== 1 ? 's' : '' }}
+      } @else {
+        Selecciona una empresa para ver sus centros de costos
+      }
+    </p>
+  </div>
+
+  @if (!empresaId()) {
+    <p style="color:#9ca3af;font-size:.875rem;padding:.5rem 0">Ninguna empresa seleccionada.</p>
+  } @else if (centrosDeEmpresa().length === 0) {
+    <p style="color:#9ca3af;font-size:.875rem;padding:.5rem 0">Esta empresa no tiene centros de costos registrados.</p>
+  } @else {
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:.85rem">
+      @for (centro of centrosDeEmpresa(); track centro._id) {
+        <div style="border:1px solid rgba(34,33,33,.12);border-radius:10px;padding:.9rem;cursor:pointer">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.5rem">
+            <div>
+              <strong style="display:block;font-size:.92rem;color:#1f2937">{{ centro.nombre }}</strong>
+              <span style="font-size:.75rem;color:#6b7280">Cód. {{ centro.codigo }}</span>
+            </div>
+            <div class="pct-badge" style="color:#0095d6;border-color:#0095d6;background:rgba(0,149,214,.1)">
+              —
+            </div>
+          </div>
+          @if (centro.ubicacion_ciudad) {
+            <p style="margin:0;font-size:.78rem;color:#6b7280">
+              {{ centro.ubicacion_ciudad }}{{ centro.ubicacion_region ? ', ' + centro.ubicacion_region : '' }}
+            </p>
+          }
+        </div>
+      }
+    </div>
+  }
+</div>
+
+<!-- Métricas -->
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:.85rem;margin-bottom:1rem">
+  @for (m of metricas; track m.label) {
+    <div class="card" style="padding:1.1rem">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.4rem">
+        <span style="font-size:.76rem;color:#6b7280;font-weight:500">{{ m.label }}</span>
+        <app-stat-chip [label]="m.chipLabel" [variant]="m.chipVariant"></app-stat-chip>
+      </div>
+      <p style="margin:0;font-size:2rem;font-weight:700;color:#1f2937;line-height:1.1">{{ m.valor }}</p>
+    </div>
+  }
+</div>
+
+<!-- Tareas | Mantenciones -->
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:.85rem;margin-bottom:1rem">
+  <div class="card">
+    <h3 style="margin:0 0 .9rem;font-size:1rem;font-weight:700">Tareas pendientes</h3>
+    @for (t of tareas; track t.titulo; let last = $last) {
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:.7rem 0" [style.border-bottom]="last ? 'none' : '1px solid rgba(34,33,33,.07)'">
+        <div style="display:flex;align-items:center;gap:.65rem">
+          <span style="width:8px;height:8px;border-radius:50%;flex-shrink:0" [style.background]="t.color"></span>
+          <span style="font-size:.875rem;color:#1f2937">{{ t.titulo }}</span>
+        </div>
+        <span style="font-size:.78rem;font-weight:600;white-space:nowrap;margin-left:.5rem" [style.color]="t.color">{{ t.fecha }}</span>
+      </div>
+    }
+  </div>
+
+  <div class="card">
+    <h3 style="margin:0 0 .9rem;font-size:1rem;font-weight:700">Próximas mantenciones</h3>
+    @for (m of mantenciones; track m.titulo; let last = $last) {
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:.75rem;padding:.7rem 0" [style.border-bottom]="last ? 'none' : '1px solid rgba(34,33,33,.07)'">
+        <div>
+          <p style="margin:0 0 .15rem;font-size:.875rem;font-weight:600;color:#1f2937">{{ m.titulo }}</p>
+          <span style="font-size:.76rem;color:#6b7280">{{ m.detalle }}</span>
+        </div>
+        <app-stat-chip [label]="m.chipLabel" [variant]="m.chipVariant" style="flex-shrink:0"></app-stat-chip>
+      </div>
+    }
+  </div>
+</div>
+
+<!-- Score | Novedades -->
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:.85rem">
+  <div class="card">
+    <h3 style="margin:0 0 .9rem;font-size:1rem;font-weight:700">Score documental</h3>
+    <div style="text-align:center;padding:.75rem 0 .5rem">
+      <p style="margin:0 0 .2rem;line-height:1">
+        <span style="font-size:3.5rem;font-weight:700;color:#0095d6">78</span>
+        <span style="font-size:1.4rem;color:#6b7280;font-weight:400">/ 100</span>
+      </p>
+      <p style="margin:.5rem 0 1.1rem;font-size:.83rem;color:#6b7280">14 de 18 documentos solicitados aprobados</p>
+      <div style="background:#e5e7eb;border-radius:999px;height:8px;overflow:hidden">
+        <div style="width:78%;height:100%;background:linear-gradient(90deg,#0095d6,#22c55e);border-radius:999px"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3 style="margin:0 0 .9rem;font-size:1rem;font-weight:700">Últimas novedades</h3>
+    @for (n of novedades; track n.titulo; let last = $last) {
+      <div style="padding:.6rem 0" [style.border-bottom]="last ? 'none' : '1px solid rgba(34,33,33,.07)'">
+        <app-stat-chip [label]="n.tipo" [variant]="n.chipVariant" style="display:inline-block;margin-bottom:.28rem"></app-stat-chip>
+        <p style="margin:0 0 .12rem;font-size:.875rem;font-weight:600;color:#1f2937">{{ n.titulo }}</p>
+        <span style="font-size:.74rem;color:#9ca3af">{{ n.fecha }}</span>
+      </div>
+    }
+  </div>
+</div>

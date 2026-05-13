@@ -1,0 +1,24 @@
+<nav class="sidebar">
+
+  <!-- Logo de perfil — cambia según el modo -->
+  <div class="profile-logo" [class.admin]="mode === 'admin'" [class.consumidor]="mode === 'consumidor'">
+    @if (mode === 'admin') {
+      <img src="/smart-clarity-clean.png" alt="Smart Clarity" class="profile-img" />
+    }
+    @if (mode === 'consumidor') {
+      <img src="/smart-clarity-pill.png" alt="Smart Clarity" class="profile-img profile-img--pill" />
+    }
+  </div>
+
+  <!-- Menú -->
+  <div class="menu">
+    <a
+      *ngFor="let item of menuItems"
+      class="item"
+      [routerLink]="item.route"
+      routerLinkActive="active">
+      {{ item.label }}
+    </a>
+  </div>
+
+</nav>

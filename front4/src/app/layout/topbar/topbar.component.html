@@ -1,0 +1,20 @@
+<div class="topbar" [class.admin]="mode === 'admin'" [class.consumidor]="mode === 'consumidor'">
+
+  <!-- Logo fijo — no cambia con el perfil -->
+  <div class="brand">
+    <img src="/SM_Isotipo_blanco_fondo_cyan.png" alt="Smart Clarity" class="brand-logo" />
+    <span class="brand-name">Smart Clarity</span>
+  </div>
+
+  <!-- Iconos configurables (ng-content) -->
+  <div class="icons-slot">
+    <ng-content select="[topbar-icons]"></ng-content>
+  </div>
+
+  <!-- Acciones de perfil -->
+  <div class="actions">
+    <span class="mode-chip">{{ modeLabel }}</span>
+    <button class="toggle-btn" (click)="modeToggle.emit()">Cambiar modo</button>
+  </div>
+
+</div>

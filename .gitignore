@@ -1,0 +1,14 @@
+# Secrets — NUNCA al repo
+**/.env
+**/uploads/
+
+# Node
+**/node_modules/
+
+# Build
+**/dist/
+front4/.angular/
+
+# OS
+.DS_Store
+Thumbs.db

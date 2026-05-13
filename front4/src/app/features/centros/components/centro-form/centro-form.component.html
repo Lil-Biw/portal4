@@ -1,0 +1,40 @@
+<form (ngSubmit)="submit()" class="form-grid">
+  <label class="field" style="grid-column:1/-1">
+    <span>Empresa *</span>
+    <select [(ngModel)]="form.cliente_id" name="cliente_id" required>
+      <option value="">Selecciona una empresa</option>
+      <option *ngFor="let c of clientes" [value]="c._id">{{ c.razon_social }}</option>
+    </select>
+  </label>
+  <label class="field">
+    <span>Código *</span>
+    <input [(ngModel)]="form.codigo" name="codigo" required />
+  </label>
+  <label class="field">
+    <span>Nombre *</span>
+    <input [(ngModel)]="form.nombre" name="nombre" required />
+  </label>
+  <label class="field" style="grid-column:1/-1">
+    <span>Descripción</span>
+    <input [(ngModel)]="form.descripcion" name="descripcion" />
+  </label>
+  <label class="field">
+    <span>Dirección</span>
+    <input [(ngModel)]="form.ubicacion_direccion" name="direccion" />
+  </label>
+  <label class="field">
+    <span>Ciudad</span>
+    <input [(ngModel)]="form.ubicacion_ciudad" name="ciudad" />
+  </label>
+  <label class="field">
+    <span>Región</span>
+    <input [(ngModel)]="form.ubicacion_region" name="region" />
+  </label>
+  <label class="field">
+    <span>País</span>
+    <input [(ngModel)]="form.ubicacion_pais" name="pais" />
+  </label>
+  <div class="form-footer">
+    <button type="submit" class="btn-primary">{{ submitLabel }}</button>
+  </div>
+</form>

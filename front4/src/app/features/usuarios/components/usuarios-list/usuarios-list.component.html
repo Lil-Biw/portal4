@@ -1,0 +1,18 @@
+<p *ngIf="usuarios.length === 0" class="empty">Sin usuarios registrados.</p>
+
+<div class="list">
+  <div
+    *ngFor="let u of usuarios"
+    class="card"
+    [class.selected]="u._id === seleccionadoId">
+    <div class="card-main">
+      <strong>{{ u.nombre }}</strong>
+      <span class="rut">{{ u.email }}</span>
+      <span class="email">{{ u.rol === 'admin_cliente' ? 'Admin cliente' : 'Usuario' }} · {{ u.permiso_acceso }}</span>
+    </div>
+    <div class="card-actions">
+      <button class="btn-ghost btn-sm" (click)="editado.emit(u)">Editar</button>
+      <button class="btn-danger"       (click)="eliminado.emit(u._id)">Eliminar</button>
+    </div>
+  </div>
+</div>

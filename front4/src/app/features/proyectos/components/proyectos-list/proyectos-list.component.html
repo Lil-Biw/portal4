@@ -1,0 +1,48 @@
+<p *ngIf="grupos.length === 0" class="empty">Sin proyectos registrados.</p>
+
+<div class="grupos">
+  <div *ngFor="let ge of grupos" class="grupo-empresa">
+
+    <!-- Nivel 1: Empresa -->
+    <div class="grupo-header">
+      <span class="grupo-label">{{ ge.empresa.razon_social }}</span>
+      <span class="grupo-count">{{ ge.centros.length }} centro{{ ge.centros.length !== 1 ? 's' : '' }}</span>
+    </div>
+
+    <div class="grupo-body">
+      <div *ngFor="let gc of ge.centros" class="grupo-centro">
+
+        <!-- Nivel 2: Centro de costos -->
+        <div class="grupo-header grupo-header--centro">
+          <span class="grupo-label grupo-label--centro">{{ gc.centro.nombre }}</span>
+          <span class="grupo-count">{{ gc.proyectos.length }} proyecto{{ gc.proyectos.length !== 1 ? 's' : '' }}</span>
+        </div>
+
+        <!-- Nivel 3: Proyectos -->
+        <div class="grupo-body list">
+          <div
+            *ngFor="let p of gc.proyectos"
+            class="card"
+            [class.selected]="p._id === seleccionadoId">
+            <div class="card-main">
+              <strong>{{ p.nombre }}</strong>
+              <span class="rut">Cód. {{ p.codigo }}</span>
+              <span class="email" *ngIf="p.fecha_inicio">
+                {{ p.fecha_inicio | slice:0:10 }}{{ p.fecha_fin ? ' → ' + (p.fecha_fin | slice:0:10) : '' }}
+              </span>
+            </div>
+            <div class="card-actions">
+              <span class="estado-chip" [style.color]="estadoChip(p.estado).color">
+                {{ estadoChip(p.estado).label }}
+              </span>
+              <button class="btn-ghost btn-sm" (click)="editado.emit(p)">Editar</button>
+              <button class="btn-danger"       (click)="eliminado.emit(p._id)">Eliminar</button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+</div>

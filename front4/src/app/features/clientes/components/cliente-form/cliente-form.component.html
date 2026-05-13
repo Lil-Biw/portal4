@@ -1,0 +1,37 @@
+<form (ngSubmit)="submit()" class="form-grid">
+  <label class="field">
+    <span>Razón social *</span>
+    <input [(ngModel)]="form.razon_social" name="razon_social" required />
+  </label>
+  <label class="field">
+    <span>RUT *</span>
+    <input [(ngModel)]="form.rut" name="rut" required />
+  </label>
+  <label class="field">
+    <span>Email contacto *</span>
+    <input [(ngModel)]="form.email_contacto" name="email_contacto" type="email" required />
+  </label>
+  <label class="field">
+    <span>Teléfono</span>
+    <input [(ngModel)]="form.telefono" name="telefono" />
+  </label>
+  <label class="field">
+    <span>Calle</span>
+    <input [(ngModel)]="form.direccion!.calle" name="calle" />
+  </label>
+  <label class="field">
+    <span>Ciudad</span>
+    <input [(ngModel)]="form.direccion!.ciudad" name="ciudad" />
+  </label>
+  <label class="field">
+    <span>Región</span>
+    <input [(ngModel)]="form.direccion!.region" name="region" />
+  </label>
+  <label class="field">
+    <span>País</span>
+    <input [(ngModel)]="form.direccion!.pais" name="pais" />
+  </label>
+  <div class="form-footer">
+    <button type="submit" class="btn-primary">{{ submitLabel }}</button>
+  </div>
+</form>

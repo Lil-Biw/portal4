@@ -1,0 +1,66 @@
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem">
+  <h2 style="margin:0;font-size:1.5rem;font-weight:700;color:#1f2937">Resumen general</h2>
+  <button class="btn-primary" (click)="refresh()">Actualizar todo</button>
+</div>
+
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1rem">
+
+  <!-- Empresas -->
+  <div class="card">
+    <h3 style="margin:0 0 .9rem;font-size:1rem;font-weight:700;display:flex;align-items:center;justify-content:space-between">
+      Empresas
+      <span style="background:rgba(0,149,214,.1);color:#0095d6;padding:.2rem .6rem;border-radius:999px;font-size:.78rem;font-weight:700">{{ clientesService.clientes().length }}</span>
+    </h3>
+    <p *ngIf="clientesService.clientes().length === 0" class="empty">Sin empresas registradas.</p>
+    <div *ngFor="let c of clientesService.clientes()" style="padding:.6rem 0;border-bottom:1px solid rgba(34,33,33,.07)">
+      <strong style="font-size:.875rem;display:block">{{ c.razon_social }}</strong>
+      <span style="font-size:.78rem;color:#6b7280">{{ c.rut }} · {{ c.email_contacto }}</span>
+    </div>
+  </div>
+
+  <!-- Centros -->
+  <div class="card">
+    <h3 style="margin:0 0 .9rem;font-size:1rem;font-weight:700;display:flex;align-items:center;justify-content:space-between">
+      Centros de costos
+      <span style="background:rgba(0,149,214,.1);color:#0095d6;padding:.2rem .6rem;border-radius:999px;font-size:.78rem;font-weight:700">{{ centrosService.centros().length }}</span>
+    </h3>
+    <p *ngIf="centrosService.centros().length === 0" class="empty">Sin centros registrados.</p>
+    <div *ngFor="let c of centrosService.centros()" style="padding:.6rem 0;border-bottom:1px solid rgba(34,33,33,.07)">
+      <strong style="font-size:.875rem;display:block">{{ c.nombre }}</strong>
+      <span style="font-size:.78rem;color:#6b7280">Cód. {{ c.codigo }}{{ c.ubicacion_ciudad ? ' · ' + c.ubicacion_ciudad : '' }}</span>
+    </div>
+  </div>
+
+  <!-- Proyectos -->
+  <div class="card">
+    <h3 style="margin:0 0 .9rem;font-size:1rem;font-weight:700;display:flex;align-items:center;justify-content:space-between">
+      Proyectos
+      <span style="background:rgba(0,149,214,.1);color:#0095d6;padding:.2rem .6rem;border-radius:999px;font-size:.78rem;font-weight:700">{{ proyectosService.proyectos().length }}</span>
+    </h3>
+    <p *ngIf="proyectosService.proyectos().length === 0" class="empty">Sin proyectos registrados.</p>
+    <div *ngFor="let p of proyectosService.proyectos()" style="padding:.6rem 0;border-bottom:1px solid rgba(34,33,33,.07);display:flex;align-items:flex-start;justify-content:space-between;gap:.5rem">
+      <div>
+        <strong style="font-size:.875rem;display:block">{{ p.nombre }}</strong>
+        <span style="font-size:.78rem;color:#6b7280">Cód. {{ p.codigo }}</span>
+      </div>
+      <span style="font-size:.7rem;font-weight:700;padding:.15rem .45rem;border-radius:999px;background:rgba(34,33,33,.07);color:#6b7280;white-space:nowrap;flex-shrink:0">{{ p.estado }}</span>
+    </div>
+  </div>
+
+  <!-- Usuarios -->
+  <div class="card">
+    <h3 style="margin:0 0 .9rem;font-size:1rem;font-weight:700;display:flex;align-items:center;justify-content:space-between">
+      Usuarios
+      <span style="background:rgba(0,149,214,.1);color:#0095d6;padding:.2rem .6rem;border-radius:999px;font-size:.78rem;font-weight:700">{{ usuariosService.usuarios().length }}</span>
+    </h3>
+    <p *ngIf="usuariosService.usuarios().length === 0" class="empty">Sin usuarios registrados.</p>
+    <div *ngFor="let u of usuariosService.usuarios()" style="padding:.6rem 0;border-bottom:1px solid rgba(34,33,33,.07);display:flex;align-items:flex-start;justify-content:space-between;gap:.5rem">
+      <div>
+        <strong style="font-size:.875rem;display:block">{{ u.nombre }}</strong>
+        <span style="font-size:.78rem;color:#6b7280">{{ u.email }}</span>
+      </div>
+      <span style="font-size:.7rem;font-weight:700;padding:.15rem .45rem;border-radius:999px;background:rgba(0,149,214,.1);color:#0095d6;white-space:nowrap;flex-shrink:0">{{ u.rol }}</span>
+    </div>
+  </div>
+
+</div>

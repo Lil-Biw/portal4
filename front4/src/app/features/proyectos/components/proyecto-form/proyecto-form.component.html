@@ -1,0 +1,45 @@
+<form (ngSubmit)="submit()" class="form-grid">
+  <label class="field">
+    <span>Empresa *</span>
+    <select [(ngModel)]="form.cliente_id" name="cliente_id" required (ngModelChange)="onClienteChange()">
+      <option value="">Selecciona empresa</option>
+      <option *ngFor="let c of clientes" [value]="c._id">{{ c.razon_social }}</option>
+    </select>
+  </label>
+  <label class="field">
+    <span>Centro de costos *</span>
+    <select [(ngModel)]="form.centro_costo_id" name="centro_costo_id" required [disabled]="!form.cliente_id">
+      <option value="">{{ form.cliente_id ? 'Selecciona centro' : 'Selecciona empresa primero' }}</option>
+      <option *ngFor="let c of centrosFiltrados" [value]="c._id">{{ c.nombre }}</option>
+    </select>
+  </label>
+  <label class="field">
+    <span>Código *</span>
+    <input [(ngModel)]="form.codigo" name="codigo" required />
+  </label>
+  <label class="field">
+    <span>Nombre *</span>
+    <input [(ngModel)]="form.nombre" name="nombre" required />
+  </label>
+  <label class="field">
+    <span>Estado</span>
+    <select [(ngModel)]="form.estado" name="estado">
+      <option *ngFor="let e of estados" [value]="e.value">{{ e.label }}</option>
+    </select>
+  </label>
+  <label class="field">
+    <span>Fecha inicio</span>
+    <input [(ngModel)]="form.fecha_inicio" name="fecha_inicio" type="date" />
+  </label>
+  <label class="field">
+    <span>Fecha fin</span>
+    <input [(ngModel)]="form.fecha_fin" name="fecha_fin" type="date" />
+  </label>
+  <label class="field" style="grid-column:1/-1">
+    <span>Descripción</span>
+    <input [(ngModel)]="form.descripcion" name="descripcion" />
+  </label>
+  <div class="form-footer">
+    <button type="submit" class="btn-primary">{{ submitLabel }}</button>
+  </div>
+</form>

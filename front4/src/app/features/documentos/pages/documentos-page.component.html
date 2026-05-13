@@ -1,0 +1,89 @@
+<h2 style="margin:0 0 1.25rem;font-size:1.5rem;font-weight:700;color:#1f2937">Documentos</h2>
+
+<!-- Selectores de contexto -->
+<div class="card" style="margin-bottom:1rem">
+  <p style="margin:0 0 .75rem;font-size:.85rem;font-weight:600;color:#374151">Selecciona el contexto</p>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:.75rem">
+    <label class="field">
+      <span>Empresa</span>
+      <select [(ngModel)]="selectedEmpresaId" (ngModelChange)="onEmpresaChange()">
+        <option value="">Todas</option>
+        <option *ngFor="let c of clientesService.clientes()" [value]="c._id">{{ c.razon_social }}</option>
+      </select>
+    </label>
+    <label class="field">
+      <span>Centro de costos</span>
+      <select [(ngModel)]="selectedCentroId" (ngModelChange)="onCentroChange()" [disabled]="!selectedEmpresaId">
+        <option value="">Todos</option>
+        <option *ngFor="let c of centrosFiltrados" [value]="c._id">{{ c.nombre }}</option>
+      </select>
+    </label>
+    <label class="field">
+      <span>Proyecto</span>
+      <select [(ngModel)]="selectedProyectoId" (ngModelChange)="onProyectoChange()" [disabled]="!selectedCentroId">
+        <option value="">Todos</option>
+        <option *ngFor="let p of proyectosFiltrados" [value]="p._id">{{ p.nombre }}</option>
+      </select>
+    </label>
+  </div>
+</div>
+
+<!-- Sección empresa -->
+<div class="card" style="margin-bottom:1rem">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem">
+    <h3 style="margin:0;font-size:.95rem;font-weight:700">Documentos de empresa</h3>
+    <label style="cursor:pointer">
+      <span class="btn-primary" style="display:inline-block;font-size:.8rem;padding:.45rem .9rem">+ Subir PDF</span>
+      <input type="file" accept="application/pdf" style="display:none" (change)="onFileChange($event, 'empresa')" [disabled]="!selectedEmpresaId" />
+    </label>
+  </div>
+  <app-status-banner [status]="service.uploadStatus().empresa"></app-status-banner>
+  <p *ngIf="service.documentosEmpresa().length === 0" class="empty" style="margin-top:.5rem">Sin documentos.</p>
+  <div *ngFor="let d of service.documentosEmpresa()" style="display:flex;align-items:center;justify-content:space-between;padding:.6rem 0;border-bottom:1px solid rgba(34,33,33,.07)">
+    <span style="font-size:.875rem">{{ d.nombre }}</span>
+    <div style="display:flex;gap:.5rem">
+      <button class="btn-ghost" style="font-size:.78rem;padding:.35rem .7rem" (click)="service.descargar(d.url)">Descargar</button>
+      <button class="btn-danger" style="font-size:.78rem;padding:.35rem .7rem" (click)="eliminar(d.nombre, 'empresa')">Eliminar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Sección centro -->
+<div class="card" style="margin-bottom:1rem" *ngIf="selectedEmpresaId">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem">
+    <h3 style="margin:0;font-size:.95rem;font-weight:700">Documentos de centro de costos</h3>
+    <label style="cursor:pointer">
+      <span class="btn-primary" style="display:inline-block;font-size:.8rem;padding:.45rem .9rem">+ Subir PDF</span>
+      <input type="file" accept="application/pdf" style="display:none" (change)="onFileChange($event, 'centro')" [disabled]="!selectedCentroId" />
+    </label>
+  </div>
+  <app-status-banner [status]="service.uploadStatus().centro"></app-status-banner>
+  <p *ngIf="service.documentosCentro().length === 0" class="empty" style="margin-top:.5rem">Sin documentos.</p>
+  <div *ngFor="let d of service.documentosCentro()" style="display:flex;align-items:center;justify-content:space-between;padding:.6rem 0;border-bottom:1px solid rgba(34,33,33,.07)">
+    <span style="font-size:.875rem">{{ d.nombre }}</span>
+    <div style="display:flex;gap:.5rem">
+      <button class="btn-ghost" style="font-size:.78rem;padding:.35rem .7rem" (click)="service.descargar(d.url)">Descargar</button>
+      <button class="btn-danger" style="font-size:.78rem;padding:.35rem .7rem" (click)="eliminar(d.nombre, 'centro')">Eliminar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Sección proyecto -->
+<div class="card" *ngIf="selectedCentroId">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem">
+    <h3 style="margin:0;font-size:.95rem;font-weight:700">Documentos de proyecto</h3>
+    <label style="cursor:pointer">
+      <span class="btn-primary" style="display:inline-block;font-size:.8rem;padding:.45rem .9rem">+ Subir PDF</span>
+      <input type="file" accept="application/pdf" style="display:none" (change)="onFileChange($event, 'proyecto')" [disabled]="!selectedProyectoId" />
+    </label>
+  </div>
+  <app-status-banner [status]="service.uploadStatus().proyecto"></app-status-banner>
+  <p *ngIf="service.documentosProyecto().length === 0" class="empty" style="margin-top:.5rem">Sin documentos.</p>
+  <div *ngFor="let d of service.documentosProyecto()" style="display:flex;align-items:center;justify-content:space-between;padding:.6rem 0;border-bottom:1px solid rgba(34,33,33,.07)">
+    <span style="font-size:.875rem">{{ d.nombre }}</span>
+    <div style="display:flex;gap:.5rem">
+      <button class="btn-ghost" style="font-size:.78rem;padding:.35rem .7rem" (click)="service.descargar(d.url)">Descargar</button>
+      <button class="btn-danger" style="font-size:.78rem;padding:.35rem .7rem" (click)="eliminar(d.nombre, 'proyecto')">Eliminar</button>
+    </div>
+  </div>
+</div>

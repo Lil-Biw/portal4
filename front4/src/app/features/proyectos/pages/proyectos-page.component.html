@@ -1,0 +1,79 @@
+<!-- Encabezado -->
+<div class="page-header">
+  <h2>Proyectos</h2>
+  <div class="header-actions">
+    <button class="btn-ghost" (click)="abrirBuscar()">Buscar</button>
+    <button class="btn-primary" (click)="abrirCrear()">+ Crear</button>
+  </div>
+</div>
+
+<app-status-banner [status]="service.status()"></app-status-banner>
+
+<!-- Lista principal -->
+<app-proyectos-list
+  [proyectos]="service.proyectos()"
+  [clientes]="clientesService.clientes()"
+  [centros]="centrosService.centros()"
+  (editado)="abrirEditar($event)"
+  (eliminado)="eliminar($event)">
+</app-proyectos-list>
+
+<!-- ── Modal ──────────────────────────────────────────── -->
+<div class="modal-backdrop" *ngIf="modal() !== null" (click)="cerrar()">
+  <div class="modal" (click)="$event.stopPropagation()">
+
+    <!-- Crear -->
+    <ng-container *ngIf="modal() === 'crear'">
+      <div class="modal-header">
+        <h3>Nuevo proyecto</h3>
+        <button class="modal-close" (click)="cerrar()">&#x2715;</button>
+      </div>
+      <app-status-banner [status]="service.status()"></app-status-banner>
+      <app-proyecto-form
+        submitLabel="Crear proyecto"
+        [clientes]="clientesService.clientes()"
+        [centros]="centrosService.centros()"
+        (submitted)="crear($event)">
+      </app-proyecto-form>
+    </ng-container>
+
+    <!-- Editar -->
+    <ng-container *ngIf="modal() === 'editar'">
+      <div class="modal-header">
+        <h3>Editar proyecto</h3>
+        <button class="modal-close" (click)="cerrar()">&#x2715;</button>
+      </div>
+      <app-status-banner [status]="service.status()"></app-status-banner>
+      <app-proyecto-form
+        [initial]="service.seleccionado()"
+        [clientes]="clientesService.clientes()"
+        [centros]="centrosService.centros()"
+        submitLabel="Guardar cambios"
+        (submitted)="actualizar($event)">
+      </app-proyecto-form>
+    </ng-container>
+
+    <!-- Buscar -->
+    <ng-container *ngIf="modal() === 'buscar'">
+      <div class="modal-header">
+        <h3>Buscar proyecto</h3>
+        <button class="modal-close" (click)="cerrar()">&#x2715;</button>
+      </div>
+      <input
+        class="search-input"
+        type="text"
+        placeholder="Nombre, código, empresa o centro de costos..."
+        [ngModel]="busqueda()"
+        (ngModelChange)="busqueda.set($event)"
+        autofocus />
+      <app-proyectos-list
+        [proyectos]="proyectosFiltrados()"
+        [clientes]="clientesService.clientes()"
+        [centros]="centrosService.centros()"
+        (editado)="editarDesdeBuscar($event)"
+        (eliminado)="eliminar($event)">
+      </app-proyectos-list>
+    </ng-container>
+
+  </div>
+</div>
