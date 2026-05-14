@@ -1,7 +1,7 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { NgFor, NgIf } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { DocumentosService, DocTipo, CATEGORIAS_DOCUMENTO } from '../documentos.service';
+import { DocumentosService, DocTipo, CATEGORIAS_DOCUMENTO, DocumentoItem } from '../documentos.service';
 import { ClientesService } from '../../clientes/clientes.service';
 import { CentrosService } from '../../centros/centros.service';
 import { ProyectosService } from '../../proyectos/proyectos.service';
@@ -119,7 +119,7 @@ export class DocumentosPageComponent implements OnInit {
     p.showUpload = false;
   }
 
-  docsFiltrados(tipo: DocTipo) {
+  docsFiltrados(tipo: DocTipo): DocumentoItem[] {
     const filtro = this.panels[tipo].filtroCategoria;
     const docs = tipo === 'empresa' ? this.service.documentosEmpresa()
       : tipo === 'centro' ? this.service.documentosCentro()
