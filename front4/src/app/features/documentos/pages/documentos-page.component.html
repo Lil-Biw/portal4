@@ -43,7 +43,7 @@
     <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:.75rem;align-items:end">
       <label class="field" style="margin:0">
         <span>Archivo</span>
-        <input type="file" accept="*/*" (change)="onFileSelected($event,'empresa')" style="padding:.3rem" />
+        <input type="file" (change)="onFileSelected($event,'empresa')" style="padding:.3rem" />
       </label>
       <label class="field" style="margin:0">
         <span>Nombre</span>
@@ -63,12 +63,14 @@
   </div>
 
   <!-- Panel filtro empresa -->
-  <div *ngIf="panels['empresa'].showFilter" style="display:flex;align-items:center;gap:.5rem;margin-bottom:.75rem">
-    <span style="font-size:.85rem;color:#6b7280">Filtrar por tipo:</span>
-    <select [(ngModel)]="panels['empresa'].filtroCategoria" style="font-size:.85rem;padding:.3rem .6rem;border:1px solid #d1d5db;border-radius:.375rem">
-      <option value="Todos">Todos</option>
-      <option *ngFor="let cat of categorias" [value]="cat">{{ cat }}</option>
-    </select>
+  <div *ngIf="panels['empresa'].showFilter" style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:.5rem;padding:.75rem;margin-bottom:.75rem">
+    <p style="margin:0 0 .5rem;font-size:.8rem;font-weight:600;color:#374151">Filtrar por tipo <span style="font-weight:400;color:#9ca3af">(vacío = todos)</span></p>
+    <div style="display:flex;flex-wrap:wrap;gap:.5rem">
+      <label *ngFor="let cat of categorias" style="display:flex;align-items:center;gap:.3rem;font-size:.85rem;cursor:pointer;padding:.3rem .6rem;border:1px solid #d1d5db;border-radius:.375rem" [style.background]="isFiltroSelected('empresa',cat) ? '#e0e7ff' : '#fff'" [style.borderColor]="isFiltroSelected('empresa',cat) ? '#6366f1' : '#d1d5db'">
+        <input type="checkbox" [checked]="isFiltroSelected('empresa',cat)" (change)="toggleFiltroCategoria('empresa',cat)" style="display:none" />
+        {{ cat }}
+      </label>
+    </div>
   </div>
 
   <app-status-banner [status]="service.uploadStatus().empresa"></app-status-banner>
@@ -100,7 +102,7 @@
     <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:.75rem;align-items:end">
       <label class="field" style="margin:0">
         <span>Archivo</span>
-        <input type="file" accept="*/*" (change)="onFileSelected($event,'centro')" style="padding:.3rem" />
+        <input type="file" (change)="onFileSelected($event,'centro')" style="padding:.3rem" />
       </label>
       <label class="field" style="margin:0">
         <span>Nombre</span>
@@ -120,12 +122,14 @@
   </div>
 
   <!-- Panel filtro centro -->
-  <div *ngIf="panels['centro'].showFilter" style="display:flex;align-items:center;gap:.5rem;margin-bottom:.75rem">
-    <span style="font-size:.85rem;color:#6b7280">Filtrar por tipo:</span>
-    <select [(ngModel)]="panels['centro'].filtroCategoria" style="font-size:.85rem;padding:.3rem .6rem;border:1px solid #d1d5db;border-radius:.375rem">
-      <option value="Todos">Todos</option>
-      <option *ngFor="let cat of categorias" [value]="cat">{{ cat }}</option>
-    </select>
+  <div *ngIf="panels['centro'].showFilter" style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:.5rem;padding:.75rem;margin-bottom:.75rem">
+    <p style="margin:0 0 .5rem;font-size:.8rem;font-weight:600;color:#374151">Filtrar por tipo <span style="font-weight:400;color:#9ca3af">(vacío = todos)</span></p>
+    <div style="display:flex;flex-wrap:wrap;gap:.5rem">
+      <label *ngFor="let cat of categorias" style="display:flex;align-items:center;gap:.3rem;font-size:.85rem;cursor:pointer;padding:.3rem .6rem;border:1px solid #d1d5db;border-radius:.375rem" [style.background]="isFiltroSelected('centro',cat) ? '#e0e7ff' : '#fff'" [style.borderColor]="isFiltroSelected('centro',cat) ? '#6366f1' : '#d1d5db'">
+        <input type="checkbox" [checked]="isFiltroSelected('centro',cat)" (change)="toggleFiltroCategoria('centro',cat)" style="display:none" />
+        {{ cat }}
+      </label>
+    </div>
   </div>
 
   <app-status-banner [status]="service.uploadStatus().centro"></app-status-banner>
@@ -157,7 +161,7 @@
     <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:.75rem;align-items:end">
       <label class="field" style="margin:0">
         <span>Archivo</span>
-        <input type="file" accept="*/*" (change)="onFileSelected($event,'proyecto')" style="padding:.3rem" />
+        <input type="file" (change)="onFileSelected($event,'proyecto')" style="padding:.3rem" />
       </label>
       <label class="field" style="margin:0">
         <span>Nombre</span>
@@ -177,12 +181,14 @@
   </div>
 
   <!-- Panel filtro proyecto -->
-  <div *ngIf="panels['proyecto'].showFilter" style="display:flex;align-items:center;gap:.5rem;margin-bottom:.75rem">
-    <span style="font-size:.85rem;color:#6b7280">Filtrar por tipo:</span>
-    <select [(ngModel)]="panels['proyecto'].filtroCategoria" style="font-size:.85rem;padding:.3rem .6rem;border:1px solid #d1d5db;border-radius:.375rem">
-      <option value="Todos">Todos</option>
-      <option *ngFor="let cat of categorias" [value]="cat">{{ cat }}</option>
-    </select>
+  <div *ngIf="panels['proyecto'].showFilter" style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:.5rem;padding:.75rem;margin-bottom:.75rem">
+    <p style="margin:0 0 .5rem;font-size:.8rem;font-weight:600;color:#374151">Filtrar por tipo <span style="font-weight:400;color:#9ca3af">(vacío = todos)</span></p>
+    <div style="display:flex;flex-wrap:wrap;gap:.5rem">
+      <label *ngFor="let cat of categorias" style="display:flex;align-items:center;gap:.3rem;font-size:.85rem;cursor:pointer;padding:.3rem .6rem;border:1px solid #d1d5db;border-radius:.375rem" [style.background]="isFiltroSelected('proyecto',cat) ? '#e0e7ff' : '#fff'" [style.borderColor]="isFiltroSelected('proyecto',cat) ? '#6366f1' : '#d1d5db'">
+        <input type="checkbox" [checked]="isFiltroSelected('proyecto',cat)" (change)="toggleFiltroCategoria('proyecto',cat)" style="display:none" />
+        {{ cat }}
+      </label>
+    </div>
   </div>
 
   <app-status-banner [status]="service.uploadStatus().proyecto"></app-status-banner>

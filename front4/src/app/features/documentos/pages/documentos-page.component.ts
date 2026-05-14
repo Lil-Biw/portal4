@@ -13,7 +13,7 @@ interface PanelState {
   showFilter: boolean;
   nombreInput: string;
   categoriaInput: string;
-  filtroCategoria: string;
+  filtrosCategorias: string[];
   selectedFile: File | null;
 }
 
@@ -42,7 +42,7 @@ export class DocumentosPageComponent implements OnInit {
   };
 
   private emptyPanel(): PanelState {
-    return { showUpload: false, showFilter: false, nombreInput: '', categoriaInput: 'Contrato', filtroCategoria: 'Todos', selectedFile: null };
+    return { showUpload: false, showFilter: false, nombreInput: '', categoriaInput: 'Contrato', filtrosCategorias: [], selectedFile: null };
   }
 
   ngOnInit(): void {
@@ -119,13 +119,24 @@ export class DocumentosPageComponent implements OnInit {
     p.showUpload = false;
   }
 
+  toggleFiltroCategoria(tipo: DocTipo, cat: string): void {
+    const filtros = this.panels[tipo].filtrosCategorias;
+    const idx = filtros.indexOf(cat);
+    if (idx === -1) filtros.push(cat);
+    else filtros.splice(idx, 1);
+  }
+
+  isFiltroSelected(tipo: DocTipo, cat: string): boolean {
+    return this.panels[tipo].filtrosCategorias.includes(cat);
+  }
+
   docsFiltrados(tipo: DocTipo): DocumentoItem[] {
-    const filtro = this.panels[tipo].filtroCategoria;
+    const filtros = this.panels[tipo].filtrosCategorias;
     const docs = tipo === 'empresa' ? this.service.documentosEmpresa()
       : tipo === 'centro' ? this.service.documentosCentro()
       : this.service.documentosProyecto();
-    if (!filtro || filtro === 'Todos') return docs;
-    return docs.filter(d => d.categoria === filtro);
+    if (filtros.length === 0) return docs;
+    return docs.filter(d => filtros.includes(d.categoria));
   }
 
   eliminar(filename: string, tipo: DocTipo): void {

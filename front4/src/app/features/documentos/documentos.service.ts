@@ -74,7 +74,11 @@ export class DocumentosService {
         this.setUploadStatus(tipo, { type: 'ok', text: `${nombreDisplay || file.name} cargado exitosamente` });
         this.cargar(tipo, empresaNombre, centroNombre, proyectoNombre);
       },
-      error: (err) => this.setUploadStatus(tipo, { type: 'error', text: err?.error?.message ?? 'Error al cargar' }),
+      error: (err) => {
+        const raw = err?.error?.message;
+        const text = Array.isArray(raw) ? raw.join('. ') : (raw ?? 'Error al cargar');
+        this.setUploadStatus(tipo, { type: 'error', text });
+      },
     });
   }
 
