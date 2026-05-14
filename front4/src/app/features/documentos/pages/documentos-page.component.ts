@@ -1,12 +1,21 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { NgFor, NgIf } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { DocumentosService, DocTipo } from '../documentos.service';
+import { DocumentosService, DocTipo, CATEGORIAS_DOCUMENTO } from '../documentos.service';
 import { ClientesService } from '../../clientes/clientes.service';
 import { CentrosService } from '../../centros/centros.service';
 import { ProyectosService } from '../../proyectos/proyectos.service';
 import { StatusBannerComponent } from '../../../shared/components/status-banner/status-banner.component';
 import { asId } from '../../../shared/utils';
+
+interface PanelState {
+  showUpload: boolean;
+  showFilter: boolean;
+  nombreInput: string;
+  categoriaInput: string;
+  filtroCategoria: string;
+  selectedFile: File | null;
+}
 
 @Component({
   selector: 'app-documentos-page',
@@ -20,15 +29,26 @@ export class DocumentosPageComponent implements OnInit {
   protected readonly centrosService = inject(CentrosService);
   protected readonly proyectosService = inject(ProyectosService);
 
-  protected selectedEmpresaId = '';
-  protected selectedCentroId  = '';
+  protected readonly categorias = CATEGORIAS_DOCUMENTO;
+
+  protected selectedEmpresaId  = '';
+  protected selectedCentroId   = '';
   protected selectedProyectoId = '';
+
+  protected panels: Record<DocTipo, PanelState> = {
+    empresa:  this.emptyPanel(),
+    centro:   this.emptyPanel(),
+    proyecto: this.emptyPanel(),
+  };
+
+  private emptyPanel(): PanelState {
+    return { showUpload: false, showFilter: false, nombreInput: '', categoriaInput: 'Contrato', filtroCategoria: 'Todos', selectedFile: null };
+  }
 
   ngOnInit(): void {
     this.clientesService.cargar();
     this.centrosService.cargar();
     this.proyectosService.cargar();
-    // Documentos se cargan solo cuando el usuario selecciona empresa/centro/proyecto
   }
 
   get centrosFiltrados() {
@@ -62,16 +82,50 @@ export class DocumentosPageComponent implements OnInit {
     this.service.cargar('proyecto', this.empresaNombre, this.centroNombre, this.proyectoNombre);
   }
 
-  onFileChange(ev: Event, tipo: DocTipo): void {
+  toggleUpload(tipo: DocTipo): void {
+    const p = this.panels[tipo];
+    p.showUpload = !p.showUpload;
+    if (p.showUpload) p.showFilter = false;
+    if (!p.showUpload) { p.selectedFile = null; p.nombreInput = ''; }
+  }
+
+  toggleFilter(tipo: DocTipo): void {
+    const p = this.panels[tipo];
+    p.showFilter = !p.showFilter;
+    if (p.showFilter) p.showUpload = false;
+  }
+
+  onFileSelected(ev: Event, tipo: DocTipo): void {
     const file = (ev.target as HTMLInputElement).files?.[0];
     if (!file) return;
+    const p = this.panels[tipo];
+    p.selectedFile = file;
+    if (!p.nombreInput) p.nombreInput = file.name.replace(/\.[^/.]+$/, '');
+  }
+
+  confirmarSubida(tipo: DocTipo): void {
+    const p = this.panels[tipo];
+    if (!p.selectedFile) return;
     this.service.subir(
-      file, tipo,
+      p.selectedFile, tipo,
       this.empresaNombre, this.centroNombre, this.proyectoNombre,
       this.selectedCentroId || undefined,
       this.selectedProyectoId || undefined,
+      p.nombreInput || undefined,
+      p.categoriaInput || undefined,
     );
-    (ev.target as HTMLInputElement).value = '';
+    p.selectedFile = null;
+    p.nombreInput = '';
+    p.showUpload = false;
+  }
+
+  docsFiltrados(tipo: DocTipo) {
+    const filtro = this.panels[tipo].filtroCategoria;
+    const docs = tipo === 'empresa' ? this.service.documentosEmpresa()
+      : tipo === 'centro' ? this.service.documentosCentro()
+      : this.service.documentosProyecto();
+    if (!filtro || filtro === 'Todos') return docs;
+    return docs.filter(d => d.categoria === filtro);
   }
 
   eliminar(filename: string, tipo: DocTipo): void {
