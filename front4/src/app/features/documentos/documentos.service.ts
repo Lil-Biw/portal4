@@ -90,7 +90,7 @@ export class DocumentosService {
   }
 
   descargar(url: string): void {
-    const fullUrl = url.startsWith('http') ? url : `${this.api.base}${url}`;
+    const fullUrl = url.startsWith('http') ? url : `${new URL(this.api.base).origin}${url}`;
     window.open(fullUrl, '_blank');
   }
 

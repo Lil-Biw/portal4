@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import * as fs from 'fs';
 import * as path from 'path';
 import { CentrosCostosService } from '../centros-costos/centros-costos.service';
+import { ProyectosService } from '../proyectos/proyectos.service';
 
 interface UploadedFile {
   originalname: string;
@@ -9,7 +10,15 @@ interface UploadedFile {
   size: number;
   buffer: Buffer;
 }
-import { ProyectosService } from '../proyectos/proyectos.service';
+
+interface DocMeta {
+  nombre_display: string;
+  categoria: string;
+}
+
+interface MetadataMap {
+  [filename: string]: DocMeta;
+}
 
 @Injectable()
 export class DocumentosService {
@@ -40,6 +49,24 @@ export class DocumentosService {
     return path.join(base, 'documentos');
   }
 
+  private getMetaPath(dirPath: string): string {
+    return path.join(dirPath, 'metadata.json');
+  }
+
+  private readMeta(dirPath: string): MetadataMap {
+    const metaPath = this.getMetaPath(dirPath);
+    if (!fs.existsSync(metaPath)) return {};
+    try {
+      return JSON.parse(fs.readFileSync(metaPath, 'utf-8')) as MetadataMap;
+    } catch {
+      return {};
+    }
+  }
+
+  private writeMeta(dirPath: string, meta: MetadataMap): void {
+    fs.writeFileSync(this.getMetaPath(dirPath), JSON.stringify(meta, null, 2), 'utf-8');
+  }
+
   async subirDocumento(
     tipo: 'empresa' | 'centro' | 'proyecto',
     archivo: UploadedFile,
@@ -48,11 +75,9 @@ export class DocumentosService {
     proyecto_nombre?: string,
     centro_id?: string,
     proyecto_id?: string,
-  ): Promise<{ nombre: string; url: string; tamano_bytes: number; tipo_mime: string }> {
-    if (archivo.mimetype !== 'application/pdf') {
-      throw new Error('Solo se permiten archivos PDF');
-    }
-
+    nombre_display?: string,
+    categoria?: string,
+  ): Promise<{ nombre: string; nombre_display: string; categoria: string; url: string; tamano_bytes: number; tipo_mime: string }> {
     const contextPath = this.getContextPath(tipo, empresa_nombre, centro_nombre, proyecto_nombre);
     const fullDirPath = path.join(this.baseDir, contextPath);
 
@@ -67,25 +92,32 @@ export class DocumentosService {
 
     fs.writeFileSync(filePath, archivo.buffer);
 
+    const resolvedNombre = nombre_display?.trim() || archivo.originalname;
+    const resolvedCategoria = categoria || 'Otro';
+
+    const meta = this.readMeta(fullDirPath);
+    meta[nombre] = { nombre_display: resolvedNombre, categoria: resolvedCategoria };
+    this.writeMeta(fullDirPath, meta);
+
     const url = `/uploads/${contextPath}/${nombre}`.replace(/\\/g, '/');
-    const meta = { nombre, url, tipo_mime: archivo.mimetype, tamano_bytes: archivo.size };
+    const result = { nombre, nombre_display: resolvedNombre, categoria: resolvedCategoria, url, tipo_mime: archivo.mimetype, tamano_bytes: archivo.size };
 
     if (tipo === 'centro' && centro_id) {
       await this.centrosService.agregarDocumento(centro_id, {
-        nombre: meta.nombre,
-        url: meta.url,
-        tipo_mime: meta.tipo_mime,
-        tamano_bytes: meta.tamano_bytes,
+        nombre: result.nombre,
+        url: result.url,
+        tipo_mime: result.tipo_mime,
+        tamano_bytes: result.tamano_bytes,
       });
     } else if (tipo === 'proyecto' && proyecto_id) {
       await this.proyectosService.agregarDocumento(proyecto_id, {
-        nombre: meta.nombre,
-        url: meta.url,
-        tipo_mime: meta.tipo_mime,
+        nombre: result.nombre,
+        url: result.url,
+        tipo_mime: result.tipo_mime,
       });
     }
 
-    return meta;
+    return result;
   }
 
   listarDocumentos(
@@ -93,20 +125,26 @@ export class DocumentosService {
     empresa_nombre?: string,
     centro_nombre?: string,
     proyecto_nombre?: string,
-  ): { nombre: string; url: string; tamano_bytes: number }[] {
+  ): { nombre: string; nombre_display: string; categoria: string; url: string; tamano_bytes: number }[] {
     const contextPath = this.getContextPath(tipo, empresa_nombre, centro_nombre, proyecto_nombre);
     const fullDirPath = path.join(this.baseDir, contextPath);
 
     if (!fs.existsSync(fullDirPath)) return [];
 
-    return fs.readdirSync(fullDirPath).map((filename) => {
-      const stats = fs.statSync(path.join(fullDirPath, filename));
-      return {
-        nombre: filename,
-        url: `/uploads/${contextPath}/${filename}`.replace(/\\/g, '/'),
-        tamano_bytes: stats.size,
-      };
-    });
+    const meta = this.readMeta(fullDirPath);
+    return fs.readdirSync(fullDirPath)
+      .filter(f => f !== 'metadata.json')
+      .map((filename) => {
+        const stats = fs.statSync(path.join(fullDirPath, filename));
+        const fileMeta = meta[filename] ?? { nombre_display: filename, categoria: 'Otro' };
+        return {
+          nombre: filename,
+          nombre_display: fileMeta.nombre_display,
+          categoria: fileMeta.categoria,
+          url: `/uploads/${contextPath}/${filename}`.replace(/\\/g, '/'),
+          tamano_bytes: stats.size,
+        };
+      });
   }
 
   eliminarDocumento(
@@ -117,9 +155,13 @@ export class DocumentosService {
     proyecto_nombre?: string,
   ): boolean {
     const contextPath = this.getContextPath(tipo, empresa_nombre, centro_nombre, proyecto_nombre);
-    const filePath = path.join(this.baseDir, contextPath, filename);
+    const fullDirPath = path.join(this.baseDir, contextPath);
+    const filePath = path.join(fullDirPath, filename);
     if (fs.existsSync(filePath)) {
       fs.unlinkSync(filePath);
+      const meta = this.readMeta(fullDirPath);
+      delete meta[filename];
+      this.writeMeta(fullDirPath, meta);
       return true;
     }
     return false;

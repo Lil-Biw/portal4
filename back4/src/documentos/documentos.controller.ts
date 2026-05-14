@@ -36,6 +36,8 @@ export class DocumentosController {
       dto.proyecto_nombre,
       dto.centro_id,
       dto.proyecto_id,
+      dto.nombre_display,
+      dto.categoria,
     );
   }
 
