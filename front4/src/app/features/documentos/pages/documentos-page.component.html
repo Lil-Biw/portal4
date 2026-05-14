@@ -32,18 +32,55 @@
 <div class="card" style="margin-bottom:1rem">
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem">
     <h3 style="margin:0;font-size:.95rem;font-weight:700">Documentos de empresa</h3>
-    <label style="cursor:pointer">
-      <span class="btn-primary" style="display:inline-block;font-size:.8rem;padding:.45rem .9rem">+ Subir PDF</span>
-      <input type="file" accept="application/pdf" style="display:none" (change)="onFileChange($event, 'empresa')" [disabled]="!selectedEmpresaId" />
-    </label>
-  </div>
-  <app-status-banner [status]="service.uploadStatus().empresa"></app-status-banner>
-  <p *ngIf="service.documentosEmpresa().length === 0" class="empty" style="margin-top:.5rem">Sin documentos.</p>
-  <div *ngFor="let d of service.documentosEmpresa()" style="display:flex;align-items:center;justify-content:space-between;padding:.6rem 0;border-bottom:1px solid rgba(34,33,33,.07)">
-    <span style="font-size:.875rem">{{ d.nombre }}</span>
     <div style="display:flex;gap:.5rem">
-      <button class="btn-ghost" style="font-size:.78rem;padding:.35rem .7rem" (click)="service.descargar(d.url)">Descargar</button>
-      <button class="btn-danger" style="font-size:.78rem;padding:.35rem .7rem" (click)="eliminar(d.nombre, 'empresa')">Eliminar</button>
+      <button class="btn-primary" style="font-size:.8rem;padding:.45rem .9rem" (click)="toggleUpload('empresa')" [disabled]="!selectedEmpresaId">+ Subir</button>
+      <button class="btn-ghost"   style="font-size:.8rem;padding:.45rem .9rem" (click)="toggleFilter('empresa')"  [disabled]="!selectedEmpresaId">Buscar ▾</button>
+    </div>
+  </div>
+
+  <!-- Panel subir empresa -->
+  <div *ngIf="panels['empresa'].showUpload" style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:.5rem;padding:1rem;margin-bottom:.75rem">
+    <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:.75rem;align-items:end">
+      <label class="field" style="margin:0">
+        <span>Archivo</span>
+        <input type="file" accept="*/*" (change)="onFileSelected($event,'empresa')" style="padding:.3rem" />
+      </label>
+      <label class="field" style="margin:0">
+        <span>Nombre</span>
+        <input type="text" [(ngModel)]="panels['empresa'].nombreInput" placeholder="Nombre del documento" />
+      </label>
+      <label class="field" style="margin:0">
+        <span>Tipo</span>
+        <select [(ngModel)]="panels['empresa'].categoriaInput">
+          <option *ngFor="let cat of categorias" [value]="cat">{{ cat }}</option>
+        </select>
+      </label>
+    </div>
+    <div style="display:flex;gap:.5rem;margin-top:.75rem">
+      <button class="btn-primary" style="font-size:.8rem;padding:.45rem .9rem" (click)="confirmarSubida('empresa')" [disabled]="!panels['empresa'].selectedFile">Confirmar subida</button>
+      <button class="btn-ghost"   style="font-size:.8rem;padding:.45rem .9rem" (click)="toggleUpload('empresa')">Cancelar</button>
+    </div>
+  </div>
+
+  <!-- Panel filtro empresa -->
+  <div *ngIf="panels['empresa'].showFilter" style="display:flex;align-items:center;gap:.5rem;margin-bottom:.75rem">
+    <span style="font-size:.85rem;color:#6b7280">Filtrar por tipo:</span>
+    <select [(ngModel)]="panels['empresa'].filtroCategoria" style="font-size:.85rem;padding:.3rem .6rem;border:1px solid #d1d5db;border-radius:.375rem">
+      <option value="Todos">Todos</option>
+      <option *ngFor="let cat of categorias" [value]="cat">{{ cat }}</option>
+    </select>
+  </div>
+
+  <app-status-banner [status]="service.uploadStatus().empresa"></app-status-banner>
+  <p *ngIf="docsFiltrados('empresa').length === 0" class="empty" style="margin-top:.5rem">Sin documentos.</p>
+  <div *ngFor="let d of docsFiltrados('empresa')" style="display:flex;align-items:center;justify-content:space-between;padding:.6rem 0;border-bottom:1px solid rgba(34,33,33,.07)">
+    <div style="display:flex;align-items:center;gap:.5rem">
+      <span style="font-size:.7rem;font-weight:600;padding:.2rem .5rem;border-radius:999px;background:#e0e7ff;color:#3730a3">{{ d.categoria }}</span>
+      <span style="font-size:.875rem">{{ d.nombre_display }}</span>
+    </div>
+    <div style="display:flex;gap:.5rem">
+      <button class="btn-ghost"   style="font-size:.78rem;padding:.35rem .7rem" (click)="service.descargar(d.url)">Descargar</button>
+      <button class="btn-danger"  style="font-size:.78rem;padding:.35rem .7rem" (click)="eliminar(d.nombre,'empresa')">Eliminar</button>
     </div>
   </div>
 </div>
@@ -52,18 +89,55 @@
 <div class="card" style="margin-bottom:1rem" *ngIf="selectedEmpresaId">
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem">
     <h3 style="margin:0;font-size:.95rem;font-weight:700">Documentos de centro de costos</h3>
-    <label style="cursor:pointer">
-      <span class="btn-primary" style="display:inline-block;font-size:.8rem;padding:.45rem .9rem">+ Subir PDF</span>
-      <input type="file" accept="application/pdf" style="display:none" (change)="onFileChange($event, 'centro')" [disabled]="!selectedCentroId" />
-    </label>
-  </div>
-  <app-status-banner [status]="service.uploadStatus().centro"></app-status-banner>
-  <p *ngIf="service.documentosCentro().length === 0" class="empty" style="margin-top:.5rem">Sin documentos.</p>
-  <div *ngFor="let d of service.documentosCentro()" style="display:flex;align-items:center;justify-content:space-between;padding:.6rem 0;border-bottom:1px solid rgba(34,33,33,.07)">
-    <span style="font-size:.875rem">{{ d.nombre }}</span>
     <div style="display:flex;gap:.5rem">
-      <button class="btn-ghost" style="font-size:.78rem;padding:.35rem .7rem" (click)="service.descargar(d.url)">Descargar</button>
-      <button class="btn-danger" style="font-size:.78rem;padding:.35rem .7rem" (click)="eliminar(d.nombre, 'centro')">Eliminar</button>
+      <button class="btn-primary" style="font-size:.8rem;padding:.45rem .9rem" (click)="toggleUpload('centro')" [disabled]="!selectedCentroId">+ Subir</button>
+      <button class="btn-ghost"   style="font-size:.8rem;padding:.45rem .9rem" (click)="toggleFilter('centro')"  [disabled]="!selectedCentroId">Buscar ▾</button>
+    </div>
+  </div>
+
+  <!-- Panel subir centro -->
+  <div *ngIf="panels['centro'].showUpload" style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:.5rem;padding:1rem;margin-bottom:.75rem">
+    <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:.75rem;align-items:end">
+      <label class="field" style="margin:0">
+        <span>Archivo</span>
+        <input type="file" accept="*/*" (change)="onFileSelected($event,'centro')" style="padding:.3rem" />
+      </label>
+      <label class="field" style="margin:0">
+        <span>Nombre</span>
+        <input type="text" [(ngModel)]="panels['centro'].nombreInput" placeholder="Nombre del documento" />
+      </label>
+      <label class="field" style="margin:0">
+        <span>Tipo</span>
+        <select [(ngModel)]="panels['centro'].categoriaInput">
+          <option *ngFor="let cat of categorias" [value]="cat">{{ cat }}</option>
+        </select>
+      </label>
+    </div>
+    <div style="display:flex;gap:.5rem;margin-top:.75rem">
+      <button class="btn-primary" style="font-size:.8rem;padding:.45rem .9rem" (click)="confirmarSubida('centro')" [disabled]="!panels['centro'].selectedFile">Confirmar subida</button>
+      <button class="btn-ghost"   style="font-size:.8rem;padding:.45rem .9rem" (click)="toggleUpload('centro')">Cancelar</button>
+    </div>
+  </div>
+
+  <!-- Panel filtro centro -->
+  <div *ngIf="panels['centro'].showFilter" style="display:flex;align-items:center;gap:.5rem;margin-bottom:.75rem">
+    <span style="font-size:.85rem;color:#6b7280">Filtrar por tipo:</span>
+    <select [(ngModel)]="panels['centro'].filtroCategoria" style="font-size:.85rem;padding:.3rem .6rem;border:1px solid #d1d5db;border-radius:.375rem">
+      <option value="Todos">Todos</option>
+      <option *ngFor="let cat of categorias" [value]="cat">{{ cat }}</option>
+    </select>
+  </div>
+
+  <app-status-banner [status]="service.uploadStatus().centro"></app-status-banner>
+  <p *ngIf="docsFiltrados('centro').length === 0" class="empty" style="margin-top:.5rem">Sin documentos.</p>
+  <div *ngFor="let d of docsFiltrados('centro')" style="display:flex;align-items:center;justify-content:space-between;padding:.6rem 0;border-bottom:1px solid rgba(34,33,33,.07)">
+    <div style="display:flex;align-items:center;gap:.5rem">
+      <span style="font-size:.7rem;font-weight:600;padding:.2rem .5rem;border-radius:999px;background:#e0e7ff;color:#3730a3">{{ d.categoria }}</span>
+      <span style="font-size:.875rem">{{ d.nombre_display }}</span>
+    </div>
+    <div style="display:flex;gap:.5rem">
+      <button class="btn-ghost"   style="font-size:.78rem;padding:.35rem .7rem" (click)="service.descargar(d.url)">Descargar</button>
+      <button class="btn-danger"  style="font-size:.78rem;padding:.35rem .7rem" (click)="eliminar(d.nombre,'centro')">Eliminar</button>
     </div>
   </div>
 </div>
@@ -72,18 +146,55 @@
 <div class="card" *ngIf="selectedCentroId">
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem">
     <h3 style="margin:0;font-size:.95rem;font-weight:700">Documentos de proyecto</h3>
-    <label style="cursor:pointer">
-      <span class="btn-primary" style="display:inline-block;font-size:.8rem;padding:.45rem .9rem">+ Subir PDF</span>
-      <input type="file" accept="application/pdf" style="display:none" (change)="onFileChange($event, 'proyecto')" [disabled]="!selectedProyectoId" />
-    </label>
-  </div>
-  <app-status-banner [status]="service.uploadStatus().proyecto"></app-status-banner>
-  <p *ngIf="service.documentosProyecto().length === 0" class="empty" style="margin-top:.5rem">Sin documentos.</p>
-  <div *ngFor="let d of service.documentosProyecto()" style="display:flex;align-items:center;justify-content:space-between;padding:.6rem 0;border-bottom:1px solid rgba(34,33,33,.07)">
-    <span style="font-size:.875rem">{{ d.nombre }}</span>
     <div style="display:flex;gap:.5rem">
-      <button class="btn-ghost" style="font-size:.78rem;padding:.35rem .7rem" (click)="service.descargar(d.url)">Descargar</button>
-      <button class="btn-danger" style="font-size:.78rem;padding:.35rem .7rem" (click)="eliminar(d.nombre, 'proyecto')">Eliminar</button>
+      <button class="btn-primary" style="font-size:.8rem;padding:.45rem .9rem" (click)="toggleUpload('proyecto')" [disabled]="!selectedProyectoId">+ Subir</button>
+      <button class="btn-ghost"   style="font-size:.8rem;padding:.45rem .9rem" (click)="toggleFilter('proyecto')"  [disabled]="!selectedProyectoId">Buscar ▾</button>
+    </div>
+  </div>
+
+  <!-- Panel subir proyecto -->
+  <div *ngIf="panels['proyecto'].showUpload" style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:.5rem;padding:1rem;margin-bottom:.75rem">
+    <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:.75rem;align-items:end">
+      <label class="field" style="margin:0">
+        <span>Archivo</span>
+        <input type="file" accept="*/*" (change)="onFileSelected($event,'proyecto')" style="padding:.3rem" />
+      </label>
+      <label class="field" style="margin:0">
+        <span>Nombre</span>
+        <input type="text" [(ngModel)]="panels['proyecto'].nombreInput" placeholder="Nombre del documento" />
+      </label>
+      <label class="field" style="margin:0">
+        <span>Tipo</span>
+        <select [(ngModel)]="panels['proyecto'].categoriaInput">
+          <option *ngFor="let cat of categorias" [value]="cat">{{ cat }}</option>
+        </select>
+      </label>
+    </div>
+    <div style="display:flex;gap:.5rem;margin-top:.75rem">
+      <button class="btn-primary" style="font-size:.8rem;padding:.45rem .9rem" (click)="confirmarSubida('proyecto')" [disabled]="!panels['proyecto'].selectedFile">Confirmar subida</button>
+      <button class="btn-ghost"   style="font-size:.8rem;padding:.45rem .9rem" (click)="toggleUpload('proyecto')">Cancelar</button>
+    </div>
+  </div>
+
+  <!-- Panel filtro proyecto -->
+  <div *ngIf="panels['proyecto'].showFilter" style="display:flex;align-items:center;gap:.5rem;margin-bottom:.75rem">
+    <span style="font-size:.85rem;color:#6b7280">Filtrar por tipo:</span>
+    <select [(ngModel)]="panels['proyecto'].filtroCategoria" style="font-size:.85rem;padding:.3rem .6rem;border:1px solid #d1d5db;border-radius:.375rem">
+      <option value="Todos">Todos</option>
+      <option *ngFor="let cat of categorias" [value]="cat">{{ cat }}</option>
+    </select>
+  </div>
+
+  <app-status-banner [status]="service.uploadStatus().proyecto"></app-status-banner>
+  <p *ngIf="docsFiltrados('proyecto').length === 0" class="empty" style="margin-top:.5rem">Sin documentos.</p>
+  <div *ngFor="let d of docsFiltrados('proyecto')" style="display:flex;align-items:center;justify-content:space-between;padding:.6rem 0;border-bottom:1px solid rgba(34,33,33,.07)">
+    <div style="display:flex;align-items:center;gap:.5rem">
+      <span style="font-size:.7rem;font-weight:600;padding:.2rem .5rem;border-radius:999px;background:#e0e7ff;color:#3730a3">{{ d.categoria }}</span>
+      <span style="font-size:.875rem">{{ d.nombre_display }}</span>
+    </div>
+    <div style="display:flex;gap:.5rem">
+      <button class="btn-ghost"   style="font-size:.78rem;padding:.35rem .7rem" (click)="service.descargar(d.url)">Descargar</button>
+      <button class="btn-danger"  style="font-size:.78rem;padding:.35rem .7rem" (click)="eliminar(d.nombre,'proyecto')">Eliminar</button>
     </div>
   </div>
 </div>
