@@ -1,9 +1,12 @@
 import {
   Controller, Get, Post, Put, Delete,
-  Param, Body, Query,
+  Param, Body, Query, UseInterceptors, UploadedFile, BadRequestException,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { memoryStorage } from 'multer';
 import { ClientesService } from './clientes.service';
 import { CreateClienteDto, UpdateClienteDto } from './clientes.dto';
+
 @Controller('clientes')
 export class ClientesController {
   constructor(private readonly clientesService: ClientesService) {}
@@ -35,5 +38,15 @@ export class ClientesController {
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.clientesService.remove(id);
+  }
+
+  @Post(':id/logo')
+  @UseInterceptors(FileInterceptor('logo', { storage: memoryStorage() }))
+  subirLogo(
+    @Param('id') id: string,
+    @UploadedFile() archivo: Express.Multer.File & { buffer: Buffer },
+  ) {
+    if (!archivo) throw new BadRequestException('No se proporcionó imagen');
+    return this.clientesService.subirLogo(id, archivo);
   }
 }

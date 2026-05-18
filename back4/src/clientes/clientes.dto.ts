@@ -23,4 +23,5 @@ export class CreateClienteDto {
 
 export class UpdateClienteDto extends PartialType(CreateClienteDto) {
   @IsBoolean() @IsOptional() activo?: boolean;
+  @IsString() @IsOptional() logo_url?: string;
 }

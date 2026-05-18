@@ -1,44 +1,31 @@
-import { Component, OnInit, inject, signal, computed } from '@angular/core';
-import { NgFor, NgIf } from '@angular/common';
-import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Component, OnInit, inject, computed } from '@angular/core';
 import { StatChipComponent, ChipVariant } from '../../../shared/components/stat-chip/stat-chip.component';
-import { ClientesService } from '../../clientes/clientes.service';
+import { ConsumidorContextService } from '../../../profile/consumidor-context.service';
 import { CentrosService } from '../../centros/centros.service';
 import { asId } from '../../../shared/utils';
 
 @Component({
   selector: 'app-mi-ficha-page',
   standalone: true,
-  imports: [NgFor, FormsModule, StatChipComponent],
+  imports: [StatChipComponent],
   templateUrl: './mi-ficha-page.component.html',
 })
 export class MiFichaPageComponent implements OnInit {
-  private readonly router = inject(Router);
-  protected readonly clientesService = inject(ClientesService);
+  private readonly consumidorContext = inject(ConsumidorContextService);
   protected readonly centrosService  = inject(CentrosService);
 
   readonly fecha = new Date().toLocaleDateString('es-CL', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 
-  protected empresaId = signal('');
+  protected empresaSeleccionada = computed(() => this.consumidorContext.empresaSeleccionada());
 
   protected centrosDeEmpresa = computed(() => {
-    const id = this.empresaId();
-    if (!id) return [];
-    return this.centrosService.centros().filter(c => asId(c.cliente_id) === id);
+    const empresa = this.consumidorContext.empresaSeleccionada();
+    if (!empresa) return [];
+    return this.centrosService.centros().filter(c => asId(c.cliente_id) === asId(empresa._id));
   });
 
-  protected empresaSeleccionada = computed(() =>
-    this.clientesService.clientes().find(c => c._id === this.empresaId()) ?? null
-  );
-
   ngOnInit(): void {
-    this.clientesService.cargar();
     this.centrosService.cargar();
-  }
-
-  protected irADocumentos(): void {
-    this.router.navigate(['/documentos']);
   }
 
   readonly metricas: { label: string; valor: string; chipLabel: string; chipVariant: ChipVariant }[] = [

@@ -32,7 +32,7 @@ export class ProyectosService {
 
   async create(dto: CreateProyectoDto, creadoPor?: string) {
     const existe = await this.proyectoModel.findOne({
-      centro_costo_id: dto.centro_costo_id,
+      centro_costo_id: this.toObjectId(dto.centro_costo_id),
       codigo: dto.codigo,
     });
     if (existe) throw new ConflictException(`Ya existe el código ${dto.codigo} en este centro de costos`);

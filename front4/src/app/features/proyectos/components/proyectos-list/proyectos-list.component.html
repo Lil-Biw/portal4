@@ -19,6 +19,7 @@
         </div>
 
         <!-- Nivel 3: Proyectos -->
+        <p *ngIf="gc.proyectos.length === 0" style="margin:.4rem 0;font-size:.85rem;color:#9ca3af;font-style:italic;padding:.5rem 0">No existen proyectos en este centro de costo.</p>
         <div class="grupo-body list">
           <div
             *ngFor="let p of gc.proyectos"

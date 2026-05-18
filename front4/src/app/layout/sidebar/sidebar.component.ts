@@ -3,6 +3,8 @@ import { NgFor } from '@angular/common';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { ProfileMode } from '../../profile/profile.types';
+import { ConsumidorContextService } from '../../profile/consumidor-context.service';
+import { ApiService } from '../../core/services/api.service';
 
 interface NavItem { label: string; route: string; icon?: string; }
 
@@ -17,20 +19,32 @@ const ICONS: Record<string, string> = {
   help:     `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`,
 };
 
+const BUILDING_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="18"/><rect x="14" y="9" width="7" height="12"/><path d="M10 3h4v4h-4z"/></svg>`;
+
 @Component({
   selector: 'app-sidebar',
   standalone: true,
   imports: [NgFor, RouterLink, RouterLinkActive],
   template: `
     <nav class="sidebar">
+      <!-- Perfil de empresa (consumidor) o logo admin -->
       <div class="profile-logo" [class.admin]="mode === 'admin'" [class.consumidor]="mode === 'consumidor'">
         @if (mode === 'admin') {
           <img src="/SM_logo_2líneas_blanco.png" alt="Smart Clarity" class="profile-img" />
         }
         @if (mode === 'consumidor') {
-          <img src="/favicon.ico" alt="Smart Clarity" class="profile-img profile-img--pill" />
+          <div class="empresa-card">
+            @if (logoUrl) {
+              <img [src]="logoUrl" alt="logo empresa" class="empresa-logo" />
+            } @else {
+              <div class="empresa-icon" [innerHTML]="buildingIcon"></div>
+            }
+            <span class="empresa-nombre">{{ empresa?.razon_social ?? 'Sin empresa' }}</span>
+          </div>
         }
       </div>
+
+      <!-- Menú -->
       <div class="menu">
         <a
           *ngFor="let item of menuItems"
@@ -47,7 +61,6 @@ const ICONS: Record<string, string> = {
   `,
   styles: [`
     :host { display:block; height:100%; }
-
     .sidebar {
       display:flex;
       flex-direction:column;
@@ -59,8 +72,6 @@ const ICONS: Record<string, string> = {
       padding:1rem;
       height:100%;
     }
-
-    /* --- Logo de perfil --- */
     .profile-logo {
       display:flex;
       align-items:center;
@@ -71,19 +82,46 @@ const ICONS: Record<string, string> = {
       min-height:72px;
     }
     .profile-logo.admin      { background:#000000; }
-    .profile-logo.consumidor { background:#ffffff; }
+    .profile-logo.consumidor { background:#f9fafb; }
+    .profile-img { max-width:100%; max-height:56px; object-fit:contain; display:block; }
 
-    .profile-img {
-      max-width:100%;
-      max-height:56px;
-      object-fit:contain;
-      display:block;
+    .empresa-card {
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      gap:.4rem;
+      width:100%;
     }
-    .profile-img--pill { max-height:64px; }
+    .empresa-logo {
+      width:56px;
+      height:56px;
+      object-fit:contain;
+      border-radius:8px;
+      border:1px solid rgba(34,33,33,.08);
+    }
+    .empresa-icon {
+      width:56px;
+      height:56px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      border-radius:8px;
+      border:1px solid rgba(34,33,33,.08);
+      background:#fff;
+    }
+    .empresa-nombre {
+      font-size:.75rem;
+      font-weight:700;
+      color:#374151;
+      text-align:center;
+      line-height:1.3;
+      max-width:100%;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      white-space:nowrap;
+    }
 
-    /* --- Menú --- */
     .menu { display:flex; flex-direction:column; gap:.3rem; flex:1; }
-
     a.item {
       display:flex;
       align-items:center;
@@ -98,23 +136,9 @@ const ICONS: Record<string, string> = {
       transition:all .15s;
       border:1px solid transparent;
     }
-    a.item:hover {
-      background:rgba(34,33,33,.04);
-      color:#374151;
-      border-color:rgba(34,33,33,.08);
-    }
-    a.item.active {
-      background:rgba(0,149,214,.08);
-      color:#0095d6;
-      border-color:rgba(0,149,214,.18);
-    }
-
-    .icon {
-      display:flex;
-      align-items:center;
-      flex-shrink:0;
-      opacity:.75;
-    }
+    a.item:hover { background:rgba(34,33,33,.04); color:#374151; border-color:rgba(34,33,33,.08); }
+    a.item.active { background:rgba(0,149,214,.08); color:#0095d6; border-color:rgba(0,149,214,.18); }
+    .icon { display:flex; align-items:center; flex-shrink:0; opacity:.75; }
     a.item.active .icon { opacity:1; }
   `],
 })
@@ -122,8 +146,24 @@ export class SidebarComponent implements OnChanges {
   @Input() mode: ProfileMode = 'consumidor';
 
   menuItems: NavItem[] = [];
+  readonly buildingIcon: SafeHtml;
 
+  private readonly consumidorContext = inject(ConsumidorContextService);
   private readonly sanitizer = inject(DomSanitizer);
+  private readonly api = inject(ApiService);
+
+  constructor() {
+    this.buildingIcon = this.sanitizer.bypassSecurityTrustHtml(BUILDING_ICON);
+  }
+
+  get empresa() { return this.consumidorContext.empresaSeleccionada(); }
+
+  get logoUrl(): string | null {
+    const url = this.empresa?.logo_url;
+    if (!url) return null;
+    if (url.startsWith('http')) return url;
+    return `${new URL(this.api.base).origin}${url}`;
+  }
 
   private readonly adminItems: NavItem[] = [
     { label: 'Empresas',          route: '/empresa' },
@@ -138,14 +178,14 @@ export class SidebarComponent implements OnChanges {
   ];
 
   private readonly consumidorItems: NavItem[] = [
-    { label: 'Inicio',            route: '/mi-ficha',          icon: 'home' },
-    { label: 'Mi ficha',          route: '/mi-ficha',          icon: 'user' },
-    { label: 'Centro de costos',  route: '/mis-centros',       icon: 'building' },
-    { label: 'Proyectos',         route: '/mis-proyectos',     icon: 'folder' },
-    { label: 'Mantenciones',      route: '/mis-mantenciones',  icon: 'wrench' },
-    { label: 'Documentos',        route: '/documentos',        icon: 'file' },
-    { label: 'Noticias',          route: '/noticias',          icon: 'bell' },
-    { label: 'Ayuda',             route: '/ayuda',             icon: 'help' },
+    { label: 'Inicio',            route: '/mi-ficha',         icon: 'home' },
+    { label: 'Mi ficha',          route: '/mi-ficha',         icon: 'user' },
+    { label: 'Centro de costos',  route: '/mis-centros',      icon: 'building' },
+    { label: 'Proyectos',         route: '/mis-proyectos',    icon: 'folder' },
+    { label: 'Mantenciones',      route: '/mis-mantenciones', icon: 'wrench' },
+    { label: 'Documentos',        route: '/documentos',       icon: 'file' },
+    { label: 'Noticias',          route: '/noticias',         icon: 'bell' },
+    { label: 'Ayuda',             route: '/ayuda',            icon: 'help' },
   ];
 
   ngOnChanges(): void {

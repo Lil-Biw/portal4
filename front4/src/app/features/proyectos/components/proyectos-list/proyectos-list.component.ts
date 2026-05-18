@@ -31,24 +31,25 @@ export class ProyectosListComponent {
   get grupos(): GrupoEmpresa[] {
     const empresaMap = new Map<string, GrupoEmpresa>();
 
-    for (const p of this.proyectos) {
-      const empKey    = asId(p.cliente_id);
-      const centroKey = asId(p.centro_costo_id);
-
+    // Paso 1: construir grupos desde centros (todos aparecen, con o sin proyectos)
+    for (const centro of this.centros) {
+      const empKey = asId(centro.cliente_id);
       if (!empresaMap.has(empKey)) {
         const empresa = this.clientes.find(x => asId(x._id) === empKey);
         if (!empresa) continue;
         empresaMap.set(empKey, { empresa, centros: [] });
       }
-      const grupoEmp = empresaMap.get(empKey)!;
+      empresaMap.get(empKey)!.centros.push({ centro, proyectos: [] });
+    }
 
-      let grupoCentro = grupoEmp.centros.find(gc => asId(gc.centro._id) === centroKey);
-      if (!grupoCentro) {
-        const centro = this.centros.find(x => asId(x._id) === centroKey);
-        if (!centro) continue;
-        grupoCentro = { centro, proyectos: [] };
-        grupoEmp.centros.push(grupoCentro);
-      }
+    // Paso 2: distribuir proyectos en sus centros
+    for (const p of this.proyectos) {
+      const empKey    = asId(p.cliente_id);
+      const centroKey = asId(p.centro_costo_id);
+      const grupoEmp  = empresaMap.get(empKey);
+      if (!grupoEmp) continue;
+      const grupoCentro = grupoEmp.centros.find(gc => asId(gc.centro._id) === centroKey);
+      if (!grupoCentro) continue;
       grupoCentro.proyectos.push(p);
     }
 

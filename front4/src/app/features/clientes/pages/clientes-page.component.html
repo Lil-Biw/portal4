@@ -29,6 +29,7 @@
       <app-status-banner [status]="service.status()"></app-status-banner>
       <app-cliente-form
         submitLabel="Crear empresa"
+        (logoFile)="pendingLogo.set($event)"
         (submitted)="crear($event)">
       </app-cliente-form>
     </ng-container>
@@ -43,6 +44,7 @@
       <app-cliente-form
         [initial]="service.seleccionado()"
         submitLabel="Guardar cambios"
+        (logoFile)="pendingLogo.set($event)"
         (submitted)="actualizar($event)">
       </app-cliente-form>
     </ng-container>

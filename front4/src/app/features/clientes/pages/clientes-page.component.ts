@@ -88,6 +88,7 @@ export class ClientesPageComponent implements OnInit {
 
   protected modal = signal<ModalMode>(null);
   protected busqueda = signal('');
+  protected pendingLogo = signal<File | null>(null);
 
   protected clientesFiltrados = computed(() => {
     const q = this.busqueda().toLowerCase().trim();
@@ -106,6 +107,7 @@ export class ClientesPageComponent implements OnInit {
   protected abrirCrear(): void {
     this.service.seleccionado.set(null);
     this.service.clearStatus();
+    this.pendingLogo.set(null);
     this.modal.set('crear');
   }
 
@@ -117,6 +119,7 @@ export class ClientesPageComponent implements OnInit {
 
   protected abrirEditar(cliente: Cliente): void {
     this.service.seleccionar(cliente);
+    this.pendingLogo.set(null);
     this.modal.set('editar');
   }
 
@@ -124,15 +127,18 @@ export class ClientesPageComponent implements OnInit {
     this.modal.set(null);
     this.service.seleccionado.set(null);
     this.service.clearStatus();
+    this.pendingLogo.set(null);
   }
 
   protected crear(dto: CreateClienteDto): void {
-    this.service.crear(dto);
+    this.service.crear(dto, this.pendingLogo());
+    this.pendingLogo.set(null);
   }
 
   protected actualizar(dto: CreateClienteDto): void {
     const id = this.service.seleccionado()?._id;
-    if (id) this.service.actualizar(id, dto);
+    if (id) this.service.actualizar(id, dto, this.pendingLogo());
+    this.pendingLogo.set(null);
   }
 
   protected eliminar(id: string): void {
@@ -141,6 +147,7 @@ export class ClientesPageComponent implements OnInit {
 
   protected editarDesdeBuscar(cliente: Cliente): void {
     this.service.seleccionar(cliente);
+    this.pendingLogo.set(null);
     this.modal.set('editar');
   }
 }

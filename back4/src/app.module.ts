@@ -9,6 +9,7 @@ import { CentrosCostosModule } from './centros-costos/centros-costos.module';
 import { ProyectosModule } from './proyectos/proyectos.module';
 import { PermisosModule } from './permisos/permisos.module';
 import { DocumentosModule } from './documentos/documentos.module';
+import { SolicitudesModule } from './solicitudes/solicitudes.module';
 
 @Module({
   imports: [
@@ -33,6 +34,7 @@ import { DocumentosModule } from './documentos/documentos.module';
     ProyectosModule,
     PermisosModule,
     DocumentosModule,
+    SolicitudesModule,
   ],
 })
 export class AppModule {}

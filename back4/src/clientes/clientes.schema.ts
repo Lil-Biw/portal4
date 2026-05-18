@@ -24,6 +24,7 @@ export class Cliente {
     pais?: string;
   };
   @Prop({ default: true }) activo: boolean;
+  @Prop({ trim: true }) logo_url?: string;
 }
 
 export const ClienteSchema = SchemaFactory.createForClass(Cliente);

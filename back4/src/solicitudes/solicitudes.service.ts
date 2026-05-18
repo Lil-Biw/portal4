@@ -1,0 +1,80 @@
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model, Types } from 'mongoose';
+import * as fs from 'fs';
+import * as path from 'path';
+import { SolicitudDocument } from './solicitudes.schema';
+import { CreateSolicitudDto, CambiarEstadoDto } from './solicitudes.dto';
+
+@Injectable()
+export class SolicitudesService {
+  constructor(
+    @InjectModel('Solicitud') private solicitudModel: Model<SolicitudDocument>,
+  ) {}
+
+  async create(dto: CreateSolicitudDto) {
+    const doc: any = {
+      ...dto,
+      empresa_id: new Types.ObjectId(dto.empresa_id),
+    };
+    if (dto.centro_id)   doc.centro_id   = new Types.ObjectId(dto.centro_id);
+    if (dto.proyecto_id) doc.proyecto_id = new Types.ObjectId(dto.proyecto_id);
+    return new this.solicitudModel(doc).save();
+  }
+
+  async findByContexto(empresaId: string, centroId?: string, proyectoId?: string, estado?: string) {
+    const filter: any = { empresa_id: new Types.ObjectId(empresaId) };
+    if (centroId)   filter.centro_id   = new Types.ObjectId(centroId);
+    if (proyectoId) filter.proyecto_id = new Types.ObjectId(proyectoId);
+    if (estado)     filter.estado      = estado;
+    return this.solicitudModel.find(filter).sort({ creado_en: -1 }).lean();
+  }
+
+  async cambiarEstado(id: string, dto: CambiarEstadoDto) {
+    const solicitud = await this.solicitudModel
+      .findByIdAndUpdate(id, { estado: dto.estado }, { new: true })
+      .lean();
+    if (!solicitud) throw new NotFoundException(`Solicitud ${id} no encontrada`);
+    return solicitud;
+  }
+
+  async adjuntarArchivo(id: string, archivo: { originalname: string; buffer: Buffer; mimetype: string }) {
+    const solicitud = await this.solicitudModel.findById(id).lean();
+    if (!solicitud) throw new NotFoundException(`Solicitud ${id} no encontrada`);
+
+    if (!['pendiente', 'rechazado'].includes(solicitud.estado)) {
+      throw new BadRequestException(`No se puede adjuntar un archivo a una solicitud en estado "${solicitud.estado}"`);
+    }
+
+    const TIPOS_PERMITIDOS = [
+      'application/pdf',
+      'image/jpeg', 'image/png', 'image/webp',
+      'application/msword',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'application/vnd.ms-excel',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    ];
+    if (!TIPOS_PERMITIDOS.includes(archivo.mimetype)) {
+      throw new BadRequestException('Tipo de archivo no permitido. Se aceptan PDF, imágenes, Word y Excel.');
+    }
+
+    const dir = path.join(process.cwd(), 'uploads', 'solicitudes', id);
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+
+    // Eliminar archivo previo si existe
+    for (const f of fs.readdirSync(dir)) {
+      fs.unlinkSync(path.join(dir, f));
+    }
+
+    const ext = path.extname(archivo.originalname) || '';
+    const filename = `adjunto${ext}`;
+    fs.writeFileSync(path.join(dir, filename), archivo.buffer);
+
+    const archivo_url    = `/uploads/solicitudes/${id}/${filename}`;
+    const archivo_nombre = archivo.originalname;
+
+    return this.solicitudModel
+      .findByIdAndUpdate(id, { archivo_url, archivo_nombre, estado: 'revision' }, { new: true })
+      .lean();
+  }
+}

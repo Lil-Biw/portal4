@@ -28,24 +28,41 @@ export class ClientesService {
     });
   }
 
-  crear(dto: CreateClienteDto): void {
+  crear(dto: CreateClienteDto, logoFile?: File | null): void {
     this.http.post<Cliente>(this.api.url('/clientes'), dto).subscribe({
-      next: () => {
+      next: (cliente) => {
         this.status.set({ type: 'ok', text: 'Empresa creada correctamente' });
-        this.cargar();
+        if (logoFile) {
+          this.subirLogo(cliente._id, logoFile, () => this.cargar());
+        } else {
+          this.cargar();
+        }
       },
       error: (err) => this.setError(err),
     });
   }
 
-  actualizar(id: string, dto: UpdateClienteDto): void {
+  actualizar(id: string, dto: UpdateClienteDto, logoFile?: File | null): void {
     this.http.put<Cliente>(this.api.url(`/clientes/${id}`), dto).subscribe({
       next: () => {
         this.status.set({ type: 'ok', text: 'Empresa actualizada' });
         this.seleccionado.set(null);
-        this.cargar();
+        if (logoFile) {
+          this.subirLogo(id, logoFile, () => this.cargar());
+        } else {
+          this.cargar();
+        }
       },
       error: (err) => this.setError(err),
+    });
+  }
+
+  subirLogo(id: string, file: File, onComplete?: () => void): void {
+    const form = new FormData();
+    form.append('logo', file);
+    this.http.post<Cliente>(this.api.url(`/clientes/${id}/logo`), form).subscribe({
+      next: () => { if (onComplete) onComplete(); else this.cargar(); },
+      error: () => { if (onComplete) onComplete(); },
     });
   }
 

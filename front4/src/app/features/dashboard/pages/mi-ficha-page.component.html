@@ -6,19 +6,6 @@
     </h2>
     <p style="margin:0;font-size:.85rem;color:#6b7280">{{ fecha }}</p>
   </div>
-  <div style="display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;flex-shrink:0">
-    <!-- Selector de empresa -->
-    <select
-      class="empresa-select"
-      [ngModel]="empresaId()"
-      (ngModelChange)="empresaId.set($event)">
-      <option value="">Escoger empresa</option>
-      <option *ngFor="let e of clientesService.clientes()" [value]="e._id">
-        {{ e.razon_social }}
-      </option>
-    </select>
-    <button class="btn-primary" (click)="irADocumentos()">+ Subir documento</button>
-  </div>
 </div>
 
 <!-- Centros de costos -->
@@ -26,7 +13,7 @@
   <div style="margin-bottom:.9rem">
     <h3 style="margin:0 0 .2rem;font-size:1rem;font-weight:700">Centros de costos</h3>
     <p style="margin:0;font-size:.78rem;color:#6b7280">
-      @if (empresaId()) {
+      @if (empresaSeleccionada()) {
         {{ centrosDeEmpresa().length }} centro{{ centrosDeEmpresa().length !== 1 ? 's' : '' }} activo{{ centrosDeEmpresa().length !== 1 ? 's' : '' }}
       } @else {
         Selecciona una empresa para ver sus centros de costos
@@ -34,7 +21,7 @@
     </p>
   </div>
 
-  @if (!empresaId()) {
+  @if (!empresaSeleccionada()) {
     <p style="color:#9ca3af;font-size:.875rem;padding:.5rem 0">Ninguna empresa seleccionada.</p>
   } @else if (centrosDeEmpresa().length === 0) {
     <p style="color:#9ca3af;font-size:.875rem;padding:.5rem 0">Esta empresa no tiene centros de costos registrados.</p>

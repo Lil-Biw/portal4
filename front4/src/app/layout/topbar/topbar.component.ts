@@ -1,9 +1,15 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output, inject } from '@angular/core';
+import { NgFor } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { ProfileMode } from '../../profile/profile.types';
+import { ConsumidorContextService } from '../../profile/consumidor-context.service';
+import { ClientesService } from '../../features/clientes/clientes.service';
 
 @Component({
   selector: 'app-topbar',
   standalone: true,
+  imports: [NgFor, FormsModule],
   templateUrl: './topbar.component.html',
   styles: [`
     :host { display:block; }
@@ -19,16 +25,30 @@ import { ProfileMode } from '../../profile/profile.types';
       box-shadow:0 2px 12px rgba(15,23,42,.06);
       background:#fff;
     }
-    .topbar.admin    { border-left:4px solid #000000; }
+    .topbar.admin      { border-left:4px solid #000000; }
     .topbar.consumidor { border-left:4px solid #0095d6; }
 
-    .brand { display:flex; align-items:center; gap:.6rem; }
+    .brand { display:flex; align-items:center; gap:.6rem; flex-shrink:0; }
     .brand-logo { height:36px; width:auto; display:block; border-radius:8px; }
     .brand-name { font-weight:800; font-size:1.05rem; color:#0095d6; letter-spacing:-.5px; }
 
-    .icons-slot { display:flex; align-items:center; gap:.5rem; flex:1; justify-content:center; }
+    .context-slot { display:flex; align-items:center; gap:.6rem; flex:1; }
+    .empresa-select {
+      padding:.4rem .7rem;
+      border-radius:8px;
+      border:1px solid rgba(0,149,214,.35);
+      font-size:.85rem;
+      color:#374151;
+      background:#fff;
+      cursor:pointer;
+      min-width:180px;
+      max-width:260px;
+    }
+    .empresa-select:focus { outline:none; border-color:#0095d6; }
 
-    .actions { display:flex; align-items:center; gap:.75rem; }
+    .icons-slot { display:flex; align-items:center; gap:.5rem; }
+
+    .actions { display:flex; align-items:center; gap:.75rem; flex-shrink:0; }
     .mode-chip {
       background:#0095d6;
       color:#fff;
@@ -56,9 +76,29 @@ import { ProfileMode } from '../../profile/profile.types';
     .topbar.consumidor .toggle-btn { border-color:#0095d6; color:#0095d6; }
   `],
 })
-export class TopbarComponent {
+export class TopbarComponent implements OnInit {
   @Input() mode: ProfileMode = 'consumidor';
   @Output() modeToggle = new EventEmitter<void>();
 
+  protected readonly clientesService = inject(ClientesService);
+  private readonly consumidorContext = inject(ConsumidorContextService);
+  private readonly router = inject(Router);
+
+  protected localEmpresaId = '';
+
   get modeLabel() { return this.mode === 'admin' ? 'Administrador' : 'Consumidor'; }
+
+  ngOnInit(): void {
+    this.clientesService.cargar();
+    this.localEmpresaId = this.consumidorContext.empresaSeleccionada()?._id ?? '';
+  }
+
+  onEmpresaChange(id: string): void {
+    const empresa = this.clientesService.clientes().find(c => c._id === id) ?? null;
+    this.consumidorContext.seleccionar(empresa);
+  }
+
+  irADocumentos(): void {
+    this.router.navigate(['/documentos']);
+  }
 }
