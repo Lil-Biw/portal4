@@ -57,6 +57,11 @@ export const routes: Routes = [
           import('./features/proyectos/pages/mis-proyectos-page.component').then(m => m.MisProyectosPageComponent),
       },
       {
+        path: 'mis-proyectos/:id',
+        loadComponent: () =>
+          import('./features/proyectos/pages/mi-proyecto-detalle-page.component').then(m => m.MiProyectoDetallePageComponent),
+      },
+      {
         path: 'mis-mantenciones',
         loadComponent: () =>
           import('./features/mantenciones/pages/mis-mantenciones-page.component').then(m => m.MisMantencionesPageComponent),
