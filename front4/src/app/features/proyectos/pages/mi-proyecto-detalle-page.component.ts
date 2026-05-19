@@ -113,8 +113,16 @@ export class MiProyectoDetallePageComponent implements OnInit, OnDestroy {
     this.documentosService.descargar(url);
   }
 
-  protected irA(id: string): void {
-    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  protected irADocumentos(tab: 'documentacion' | 'solicitudes'): void {
+    const c = this.centro();
+    const p = this.proyecto();
+    this.router.navigate(['/documentos'], {
+      queryParams: {
+        tab,
+        ...(c ? { centroId: asId(c._id) } : {}),
+        ...(p ? { proyectoId: asId(p._id) } : {}),
+      },
+    });
   }
 
   volver(): void {

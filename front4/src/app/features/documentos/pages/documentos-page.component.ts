@@ -1,6 +1,7 @@
-import { Component, OnInit, inject, signal, computed, effect } from '@angular/core';
+import { Component, OnInit, inject, signal, computed, effect, untracked } from '@angular/core';
 import { NgFor, NgIf, NgTemplateOutlet } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
 import { DocumentosService, DocTipo, CATEGORIAS_DOCUMENTO, DocumentoItem } from '../documentos.service';
 import { ClientesService } from '../../clientes/clientes.service';
 import { CentrosService } from '../../centros/centros.service';
@@ -41,6 +42,10 @@ export class DocumentosPageComponent implements OnInit {
   protected readonly profileService      = inject(ProfileService);
   protected readonly consumidorContext   = inject(ConsumidorContextService);
   protected readonly solicitudesService  = inject(SolicitudesService);
+  private  readonly route                = inject(ActivatedRoute);
+
+  private _pendingCentroId:   string | null = null;
+  private _pendingProyectoId: string | null = null;
 
   protected readonly categorias = CATEGORIAS_DOCUMENTO;
 
@@ -84,6 +89,12 @@ export class DocumentosPageComponent implements OnInit {
   // ─── computed ─────────────────────────────────────────────────────────────
 
   protected mode = computed(() => this.profileService.mode());
+
+  private readonly centrosFiltradosCSig = computed(() => {
+    const empresa = this.consumidorContext.empresaSeleccionada();
+    if (!empresa) return [];
+    return this.centrosService.centros().filter(c => asId(c.cliente_id) === asId(empresa._id));
+  });
 
   // Admin
   get centrosFiltrados() {
@@ -207,12 +218,34 @@ export class DocumentosPageComponent implements OnInit {
         this.solicitudesService.cargar('');
       }
     });
+
+    // Aplica filtros de navegación (query params) una vez que los centros estén disponibles
+    effect(() => {
+      const centros = this.centrosFiltradosCSig();
+      if (!this._pendingCentroId || centros.length === 0) return;
+      const centroId   = this._pendingCentroId;
+      const proyectoId = this._pendingProyectoId;
+      this._pendingCentroId   = null;
+      this._pendingProyectoId = null;
+      untracked(() => {
+        this.onCentroChangeC(centroId);
+        if (proyectoId) this.onProyectoChangeC(proyectoId);
+      });
+    });
   }
 
   ngOnInit(): void {
     this.clientesService.cargar();
     this.centrosService.cargar();
     this.proyectosService.cargar();
+
+    const params = this.route.snapshot.queryParamMap;
+    const tab       = params.get('tab') as 'documentacion' | 'solicitudes' | null;
+    const centroId  = params.get('centroId');
+    const proyectoId = params.get('proyectoId');
+    if (tab) this.tabConsumidorActiva.set(tab);
+    if (centroId)   this._pendingCentroId   = centroId;
+    if (proyectoId) this._pendingProyectoId = proyectoId;
   }
 
   // ─── admin handlers ───────────────────────────────────────────────────────

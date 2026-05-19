@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, Output, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, Output, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Cliente, CreateClienteDto } from '../../../../shared/models/cliente.model';
 import { ApiService } from '../../../../core/services/api.service';
@@ -11,6 +11,7 @@ import { ApiService } from '../../../../core/services/api.service';
 })
 export class ClienteFormComponent implements OnChanges {
   private readonly api = inject(ApiService);
+  private readonly cdr = inject(ChangeDetectorRef);
 
   @Input() initial: Cliente | null = null;
   @Input() submitLabel = 'Guardar';
@@ -52,7 +53,7 @@ export class ClienteFormComponent implements OnChanges {
     this._logoFile = file;
     if (file) {
       const reader = new FileReader();
-      reader.onload = (e) => { this.logoPreview = e.target?.result as string; };
+      reader.onload = (e) => { this.logoPreview = e.target?.result as string; this.cdr.markForCheck(); };
       reader.readAsDataURL(file);
     } else {
       this.logoPreview = this.resolveLogoUrl(this.initial?.logo_url);
@@ -60,8 +61,8 @@ export class ClienteFormComponent implements OnChanges {
   }
 
   submit(): void {
-    this.submitted.emit(this.form);
     this.logoFile.emit(this._logoFile);
+    this.submitted.emit(this.form);
   }
 
   private empty(): CreateClienteDto {

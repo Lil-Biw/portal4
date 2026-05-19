@@ -52,6 +52,20 @@ export class MiFichaPageComponent implements OnInit {
     };
   });
 
+  protected solicitudesEmpresa = computed(() =>
+    this.solicitudesService.solicitudes().filter(s => !s.centro_costo_id && !s.proyecto_id)
+  );
+
+  protected resumenEmpresa = computed(() => {
+    const sols = this.solicitudesEmpresa();
+    const aprobados  = sols.filter(s => s.estado === 'aprobado').length;
+    const revision   = sols.filter(s => s.estado === 'revision').length;
+    const vencido    = sols.filter(s => s.estado === 'vencido').length;
+    const rechazado  = sols.filter(s => s.estado === 'rechazado').length;
+    const pendiente  = sols.filter(s => s.estado === 'pendiente').length;
+    return { total: sols.length, aprobados, revision, vencido, rechazado, pendiente };
+  });
+
   protected scoreChipVariant = computed((): ChipVariant => {
     const pct = this.scoreDocumental().pct;
     if (pct >= 80) return 'ok';
@@ -78,15 +92,11 @@ export class MiFichaPageComponent implements OnInit {
   readonly mantenciones = [
     { titulo: 'Revisión tablero principal',  fecha: '7 may 2026',  estado: 'Completada' },
     { titulo: 'Auditoría eléctrica anual',   fecha: '18 jun 2026', estado: 'Pendiente'  },
-    { titulo: 'Termografía instalaciones',   fecha: '2 ago 2026',  estado: 'Pendiente'  },
-    { titulo: 'Inspección general HVAC',     fecha: '12 mar 2026', estado: 'Completada' },
   ];
 
   readonly certificados = [
     { nombre: 'Certificado ISO 9001',      vencimiento: '30 nov 2026' },
     { nombre: 'Certificado OHSAS 18001',   vencimiento: '15 ago 2026' },
-    { nombre: 'Permiso de operación 2026', vencimiento: '31 dic 2026' },
-    { nombre: 'Certificado eléctrico SEC', vencimiento: '10 sep 2026' },
   ];
 
   ngOnInit(): void {
@@ -122,12 +132,28 @@ export class MiFichaPageComponent implements OnInit {
     return `${base} · al día`;
   }
 
+  estadoStyle(estado: string): string {
+    const map: Record<string, string> = {
+      pendiente: 'background:#fef3c7;color:#b45309',
+      revision:  'background:#dbeafe;color:#1e40af',
+      aprobado:  'background:#dcfce7;color:#15803d',
+      rechazado: 'background:#fee2e2;color:#dc2626',
+      vencido:   'background:#f3f4f6;color:#374151',
+    };
+    return map[estado] ?? 'background:#f3f4f6;color:#374151';
+  }
+
+  irADocumentosEmpresa(): void {
+    this.router.navigate(['/documentos'], { queryParams: { tab: 'solicitudes' } });
+  }
+
   irACentro(centro: CentroCosto): void {
     this.consumidorContext.seleccionarCentro(centro);
     this.router.navigate(['/mis-centros']);
   }
 
-  irAProyecto(_proyecto: Proyecto): void {
-    this.router.navigate(['/mis-proyectos']);
+  irAProyecto(proyecto: Proyecto): void {
+    this.consumidorContext.seleccionarProyecto(proyecto);
+    this.router.navigate(['/mis-proyectos', proyecto._id]);
   }
 }

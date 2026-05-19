@@ -3,7 +3,9 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { ProfileMode } from '../../profile/profile.types';
 import { ConsumidorContextService } from '../../profile/consumidor-context.service';
+import { CentrosService } from '../../features/centros/centros.service';
 import { ApiService } from '../../core/services/api.service';
+import { asId } from '../../shared/utils';
 
 interface NavItem { label: string; route: string; icon?: string; }
 
@@ -64,7 +66,13 @@ const BUILDING_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="32" height
           }
           <!-- Breadcrumb de proyecto seleccionado bajo "Proyectos" -->
           @if (item.route === '/mis-proyectos' && proyectoSeleccionado()) {
-            <div class="sub-item">
+            @if (centroDelProyecto) {
+              <div class="sub-item">
+                <span class="sub-icon">↳</span>
+                <span class="sub-label">{{ centroDelProyecto }}</span>
+              </div>
+            }
+            <div class="sub-item sub-item--project">
               <span class="sub-icon">↳</span>
               <span class="sub-label">{{ proyectoSeleccionado()!.nombre }}</span>
             </div>
@@ -170,6 +178,7 @@ const BUILDING_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="32" height
     }
     .sub-icon { opacity:.6; flex-shrink:0; }
     .sub-label { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .sub-item--project { padding-left:2.75rem; background:rgba(0,149,214,.03); color:#0369a1; font-size:.76rem; }
   `],
 })
 export class SidebarComponent implements OnChanges {
@@ -179,6 +188,7 @@ export class SidebarComponent implements OnChanges {
   readonly buildingIcon: SafeHtml;
 
   private readonly consumidorContext = inject(ConsumidorContextService);
+  private readonly centrosService    = inject(CentrosService);
   private readonly sanitizer = inject(DomSanitizer);
   private readonly api = inject(ApiService);
 
@@ -186,9 +196,16 @@ export class SidebarComponent implements OnChanges {
     this.buildingIcon = this.sanitizer.bypassSecurityTrustHtml(BUILDING_ICON);
   }
 
-  get empresa()           { return this.consumidorContext.empresaSeleccionada(); }
-  get centroSeleccionado() { return this.consumidorContext.centroSeleccionado; }
+  get empresa()             { return this.consumidorContext.empresaSeleccionada(); }
+  get centroSeleccionado()  { return this.consumidorContext.centroSeleccionado; }
   get proyectoSeleccionado() { return this.consumidorContext.proyectoSeleccionado; }
+
+  get centroDelProyecto(): string | null {
+    const p = this.consumidorContext.proyectoSeleccionado();
+    if (!p) return null;
+    const c = this.centrosService.centros().find(c => asId(c._id) === asId(p.centro_costo_id));
+    return c?.nombre ?? null;
+  }
 
   get logoUrl(): string | null {
     const url = this.empresa?.logo_url;

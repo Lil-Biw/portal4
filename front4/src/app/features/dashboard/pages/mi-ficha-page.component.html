@@ -159,64 +159,131 @@
 
   </div>
 
-  <!-- Centros de costos -->
+  <!-- Documentos de empresa -->
   <div class="card" style="margin-top:1rem">
-    <div style="margin-bottom:.9rem">
-      <h3 style="margin:0 0 .2rem;font-size:.95rem;font-weight:700;color:#1f2937">Centros de costos</h3>
-      <p style="margin:0;font-size:.78rem;color:#6b7280">
-        {{ centrosDeEmpresa().length }} centro{{ centrosDeEmpresa().length !== 1 ? 's' : '' }} activo{{ centrosDeEmpresa().length !== 1 ? 's' : '' }} · haz clic para ver los documentos de cada uno
-      </p>
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:.9rem;flex-wrap:wrap;gap:.5rem">
+      <div>
+        <h3 style="margin:0 0 .2rem;font-size:.95rem;font-weight:700;color:#1f2937">Documentos de empresa</h3>
+        <p style="margin:0;font-size:.78rem;color:#6b7280">
+          {{ resumenEmpresa().total }} solicitud{{ resumenEmpresa().total !== 1 ? 'es' : '' }} a nivel empresa
+        </p>
+      </div>
+      <button
+        class="btn-ghost btn-sm"
+        style="font-size:.78rem;padding:.35rem .75rem"
+        (click)="irADocumentosEmpresa()">
+        Ver en Documentos →
+      </button>
     </div>
-    @if (centrosDeEmpresa().length === 0) {
-      <p style="color:#9ca3af;font-size:.875rem;padding:.25rem 0">Esta empresa no tiene centros de costos registrados.</p>
+
+    @if (solicitudesEmpresa().length === 0) {
+      <p style="color:#9ca3af;font-size:.85rem;padding:.25rem 0">Sin solicitudes documentales registradas para esta empresa.</p>
     } @else {
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:.75rem">
-        @for (c of centrosDeEmpresa(); track c._id) {
-          <div style="border:1px solid rgba(34,33,33,.1);border-radius:10px;padding:.85rem;display:flex;flex-direction:column;gap:.55rem">
+      <!-- Recuadros de estado -->
+      <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:.4rem;margin-bottom:1rem">
+        <div style="padding:.5rem .3rem;border-radius:9px;text-align:center;background:#dcfce7">
+          <p style="margin:0 0 .1rem;font-size:1.3rem;font-weight:700;color:#15803d;line-height:1">{{ resumenEmpresa().aprobados }}</p>
+          <p style="margin:0;font-size:.62rem;font-weight:600;color:#15803d">Aprobados</p>
+        </div>
+        <div style="padding:.5rem .3rem;border-radius:9px;text-align:center;background:#fef3c7">
+          <p style="margin:0 0 .1rem;font-size:1.3rem;font-weight:700;color:#b45309;line-height:1">{{ resumenEmpresa().revision }}</p>
+          <p style="margin:0;font-size:.62rem;font-weight:600;color:#b45309">Revisión</p>
+        </div>
+        <div style="padding:.5rem .3rem;border-radius:9px;text-align:center;background:#fee2e2">
+          <p style="margin:0 0 .1rem;font-size:1.3rem;font-weight:700;color:#dc2626;line-height:1">{{ resumenEmpresa().vencido }}</p>
+          <p style="margin:0;font-size:.62rem;font-weight:600;color:#dc2626">Vencidos</p>
+        </div>
+        <div style="padding:.5rem .3rem;border-radius:9px;text-align:center;background:#fce7f3">
+          <p style="margin:0 0 .1rem;font-size:1.3rem;font-weight:700;color:#9d174d;line-height:1">{{ resumenEmpresa().rechazado }}</p>
+          <p style="margin:0;font-size:.62rem;font-weight:600;color:#9d174d">Rechazados</p>
+        </div>
+        <div style="padding:.5rem .3rem;border-radius:9px;text-align:center;background:#f0f9ff">
+          <p style="margin:0 0 .1rem;font-size:1.3rem;font-weight:700;color:#0369a1;line-height:1">{{ resumenEmpresa().pendiente }}</p>
+          <p style="margin:0;font-size:.62rem;font-weight:600;color:#0369a1">Pendiente</p>
+        </div>
+      </div>
+
+      <!-- Lista de solicitudes -->
+      <div style="display:flex;flex-direction:column;gap:.4rem">
+        @for (s of solicitudesEmpresa(); track s._id) {
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:.55rem .7rem;border-radius:8px;border:1px solid rgba(34,33,33,.08)">
             <div>
-              <strong style="display:block;font-size:.88rem;color:#1f2937">{{ c.nombre }}</strong>
-              <span style="font-size:.76rem;color:#6b7280">{{ resumenCentro(c._id) }}</span>
+              <span style="font-size:.84rem;font-weight:600;color:#1f2937">{{ s.nombre }}</span>
+              <span style="margin-left:.5rem;font-size:.72rem;color:#6b7280">{{ s.tipo }}</span>
             </div>
-            <button
-              class="btn-ghost btn-sm"
-              style="align-self:flex-start;font-size:.78rem;padding:.3rem .65rem"
-              (click)="irACentro(c)">
-              Mostrar Información
-            </button>
+            <span style="font-size:.7rem;font-weight:700;padding:.18rem .5rem;border-radius:999px;white-space:nowrap;flex-shrink:0;margin-left:.5rem"
+                  [style]="estadoStyle(s.estado)">
+              {{ s.estado }}
+            </span>
           </div>
         }
       </div>
     }
   </div>
 
-  <!-- Proyectos -->
-  <div class="card" style="margin-top:1rem">
-    <div style="margin-bottom:.9rem">
-      <h3 style="margin:0 0 .2rem;font-size:.95rem;font-weight:700;color:#1f2937">Proyectos</h3>
-      <p style="margin:0;font-size:.78rem;color:#6b7280">
-        {{ proyectosDeEmpresa().length }} proyecto{{ proyectosDeEmpresa().length !== 1 ? 's' : '' }} · haz clic para ver los documentos de cada uno
-      </p>
-    </div>
-    @if (proyectosDeEmpresa().length === 0) {
-      <p style="color:#9ca3af;font-size:.875rem;padding:.25rem 0">Esta empresa no tiene proyectos registrados.</p>
-    } @else {
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:.75rem">
-        @for (p of proyectosDeEmpresa(); track p._id) {
-          <div style="border:1px solid rgba(34,33,33,.1);border-radius:10px;padding:.85rem;display:flex;flex-direction:column;gap:.55rem">
-            <div>
-              <strong style="display:block;font-size:.88rem;color:#1f2937">{{ p.nombre }}</strong>
-              <span style="font-size:.76rem;color:#6b7280">{{ resumenProyecto(p._id) }}</span>
-            </div>
-            <button
-              class="btn-ghost btn-sm"
-              style="align-self:flex-start;font-size:.78rem;padding:.3rem .65rem"
-              (click)="irAProyecto(p)">
-              Mostrar Información
-            </button>
-          </div>
-        }
+  <!-- Centros de costos y Proyectos en paralelo -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-top:1rem">
+
+    <!-- Centros de costos -->
+    <div class="card">
+      <div style="margin-bottom:.9rem">
+        <h3 style="margin:0 0 .2rem;font-size:.95rem;font-weight:700;color:#1f2937">Centros de costos</h3>
+        <p style="margin:0;font-size:.78rem;color:#6b7280">
+          {{ centrosDeEmpresa().length }} centro{{ centrosDeEmpresa().length !== 1 ? 's' : '' }} activo{{ centrosDeEmpresa().length !== 1 ? 's' : '' }} · haz clic para ver el detalle
+        </p>
       </div>
-    }
+      @if (centrosDeEmpresa().length === 0) {
+        <p style="color:#9ca3af;font-size:.875rem;padding:.25rem 0">Esta empresa no tiene centros de costos registrados.</p>
+      } @else {
+        <div style="display:flex;flex-direction:column;gap:.5rem">
+          @for (c of centrosDeEmpresa(); track c._id) {
+            <div style="border:1px solid rgba(34,33,33,.1);border-radius:10px;padding:.75rem;display:flex;align-items:center;justify-content:space-between;gap:.5rem">
+              <div>
+                <strong style="display:block;font-size:.86rem;color:#1f2937">{{ c.nombre }}</strong>
+                <span style="font-size:.74rem;color:#6b7280">{{ resumenCentro(c._id) }}</span>
+              </div>
+              <button
+                class="btn-ghost btn-sm"
+                style="flex-shrink:0;font-size:.76rem;padding:.28rem .6rem"
+                (click)="irACentro(c)">
+                Ver →
+              </button>
+            </div>
+          }
+        </div>
+      }
+    </div>
+
+    <!-- Proyectos -->
+    <div class="card">
+      <div style="margin-bottom:.9rem">
+        <h3 style="margin:0 0 .2rem;font-size:.95rem;font-weight:700;color:#1f2937">Proyectos</h3>
+        <p style="margin:0;font-size:.78rem;color:#6b7280">
+          {{ proyectosDeEmpresa().length }} proyecto{{ proyectosDeEmpresa().length !== 1 ? 's' : '' }} · haz clic para ver el detalle
+        </p>
+      </div>
+      @if (proyectosDeEmpresa().length === 0) {
+        <p style="color:#9ca3af;font-size:.875rem;padding:.25rem 0">Esta empresa no tiene proyectos registrados.</p>
+      } @else {
+        <div style="display:flex;flex-direction:column;gap:.5rem">
+          @for (p of proyectosDeEmpresa(); track p._id) {
+            <div style="border:1px solid rgba(34,33,33,.1);border-radius:10px;padding:.75rem;display:flex;align-items:center;justify-content:space-between;gap:.5rem">
+              <div>
+                <strong style="display:block;font-size:.86rem;color:#1f2937">{{ p.nombre }}</strong>
+                <span style="font-size:.74rem;color:#6b7280">{{ resumenProyecto(p._id) }}</span>
+              </div>
+              <button
+                class="btn-ghost btn-sm"
+                style="flex-shrink:0;font-size:.76rem;padding:.28rem .6rem"
+                (click)="irAProyecto(p)">
+                Ver →
+              </button>
+            </div>
+          }
+        </div>
+      }
+    </div>
+
   </div>
 
 }
