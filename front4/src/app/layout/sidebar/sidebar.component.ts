@@ -62,6 +62,13 @@ const BUILDING_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="32" height
               <span class="sub-label">{{ centroSeleccionado()!.nombre }}</span>
             </div>
           }
+          <!-- Breadcrumb de proyecto seleccionado bajo "Proyectos" -->
+          @if (item.route === '/mis-proyectos' && proyectoSeleccionado()) {
+            <div class="sub-item">
+              <span class="sub-icon">↳</span>
+              <span class="sub-label">{{ proyectoSeleccionado()!.nombre }}</span>
+            </div>
+          }
         }
       </div>
     </nav>
@@ -181,6 +188,7 @@ export class SidebarComponent implements OnChanges {
 
   get empresa()           { return this.consumidorContext.empresaSeleccionada(); }
   get centroSeleccionado() { return this.consumidorContext.centroSeleccionado; }
+  get proyectoSeleccionado() { return this.consumidorContext.proyectoSeleccionado; }
 
   get logoUrl(): string | null {
     const url = this.empresa?.logo_url;
