@@ -1,27 +1,78 @@
-import { Component, OnInit, inject } from '@angular/core';
-import { NgFor, NgIf } from '@angular/common';
+import { Component, OnInit, inject, computed, signal } from '@angular/core';
+import { Router } from '@angular/router';
 import { ProyectosService } from '../proyectos.service';
+import { CentrosService } from '../../centros/centros.service';
+import { ConsumidorContextService } from '../../../profile/consumidor-context.service';
+import { Proyecto } from '../../../shared/models/proyecto.model';
+import { asId } from '../../../shared/utils';
 
 @Component({
   selector: 'app-mis-proyectos-page',
   standalone: true,
-  imports: [NgFor, NgIf],
-  template: `
-    <h2 style="margin:0 0 1.5rem;font-size:1.5rem;font-weight:700;color:#1f2937">Proyectos</h2>
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1rem">
-      <div class="card" *ngFor="let p of service.proyectos()">
-        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:.5rem;margin-bottom:.5rem">
-          <h3 style="margin:0;font-size:1rem;font-weight:700;color:#1f2937">{{ p.nombre }}</h3>
-          <span style="font-size:.72rem;font-weight:700;padding:.2rem .55rem;border-radius:999px;background:rgba(0,149,214,.1);color:#0095d6;white-space:nowrap">{{ p.estado }}</span>
-        </div>
-        <p style="margin:0 0 .25rem;font-size:.85rem;color:#6b7280">Cód. {{ p.codigo }}</p>
-        <p *ngIf="p.descripcion" style="margin:0;font-size:.82rem;color:#9ca3af">{{ p.descripcion }}</p>
-      </div>
-      <p *ngIf="service.proyectos().length === 0" class="empty">Sin proyectos asignados.</p>
-    </div>
-  `,
+  imports: [],
+  templateUrl: './mis-proyectos-page.component.html',
+  styles: [`
+    .proyecto-card {
+      cursor: pointer;
+      transition: box-shadow .15s, border-color .15s;
+      border: 1px solid rgba(34,33,33,.12);
+    }
+    .proyecto-card:hover {
+      box-shadow: 0 4px 16px rgba(0,149,214,.18);
+      border-color: rgba(0,149,214,.35);
+    }
+  `],
 })
 export class MisProyectosPageComponent implements OnInit {
-  protected readonly service = inject(ProyectosService);
-  ngOnInit(): void { this.service.cargar(); }
+  private  readonly consumidorContext = inject(ConsumidorContextService);
+  private  readonly router            = inject(Router);
+  protected readonly proyectosService = inject(ProyectosService);
+  protected readonly centrosService   = inject(CentrosService);
+
+  protected mostrarBuscar = signal(false);
+  protected busqueda      = signal('');
+
+  get empresa() { return this.consumidorContext.empresaSeleccionada(); }
+
+  protected proyectos = computed(() => {
+    const emp = this.consumidorContext.empresaSeleccionada();
+    if (!emp) return [];
+    return this.proyectosService.proyectos().filter(p => asId(p.cliente_id) === asId(emp._id));
+  });
+
+  protected proyectosFiltrados = computed(() => {
+    const q = this.busqueda().toLowerCase().trim();
+    if (!q) return this.proyectos();
+    return this.proyectos().filter(p =>
+      p.nombre.toLowerCase().includes(q) ||
+      p.codigo.toLowerCase().includes(q) ||
+      (p.descripcion ?? '').toLowerCase().includes(q)
+    );
+  });
+
+  protected nombreCentro(centroCostoId: string): string {
+    const c = this.centrosService.centros().find(c => asId(c._id) === asId(centroCostoId));
+    return c?.nombre ?? '—';
+  }
+
+  protected estadoBadgeStyle(estado: string): string {
+    if (estado === 'activo')   return 'background:rgba(0,149,214,.1);color:#0095d6';
+    if (estado === 'cerrado')  return 'background:rgba(239,68,68,.1);color:#ef4444';
+    return 'background:rgba(34,33,33,.07);color:#6b7280';
+  }
+
+  toggleBuscar(): void {
+    this.mostrarBuscar.update(v => !v);
+    if (!this.mostrarBuscar()) this.busqueda.set('');
+  }
+
+  ngOnInit(): void {
+    this.proyectosService.cargar();
+    this.centrosService.cargar();
+  }
+
+  verDetalle(proyecto: Proyecto): void {
+    this.consumidorContext.seleccionarProyecto(proyecto);
+    this.router.navigate(['/mis-proyectos', proyecto._id]);
+  }
 }
