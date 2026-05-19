@@ -22,6 +22,14 @@ export class ProyectosService {
     });
   }
 
+  cargarUno(id: string): void {
+    this.loading.set(true);
+    this.http.get<Proyecto>(this.api.url(`/proyectos/${id}`)).subscribe({
+      next: (p) => { this.seleccionado.set(p); this.loading.set(false); },
+      error: (err) => { this.setError(err); this.loading.set(false); },
+    });
+  }
+
   crear(dto: CreateProyectoDto): void {
     this.http.post<Proyecto>(this.api.url('/proyectos'), dto).subscribe({
       next: () => { this.status.set({ type: 'ok', text: 'Proyecto creado correctamente' }); this.cargar(); },
