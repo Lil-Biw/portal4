@@ -40,22 +40,32 @@
     Sin resultados para "{{ busqueda() }}"
   </div>
 } @else {
-  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1rem">
-    @for (p of proyectosFiltrados(); track p._id) {
-      <div class="card proyecto-card" (click)="verDetalle(p)">
-        <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:.5rem">
-          <h3 style="margin:0;font-size:1rem;font-weight:700;color:#1f2937">{{ p.nombre }}</h3>
-          <span style="font-size:.72rem;font-weight:700;padding:.2rem .55rem;border-radius:999px;white-space:nowrap;flex-shrink:0;margin-left:.5rem"
-                [style]="estadoBadgeStyle(p.estado)">{{ p.estado }}</span>
+  <div style="display:flex;flex-direction:column;gap:1.25rem">
+    @for (grupo of centrosConProyectos(); track grupo.nombre) {
+      <!-- Recuadro por centro -->
+      <div style="border:1px solid rgba(34,33,33,.12);border-radius:14px;padding:1rem;background:#fff;box-shadow:0 1px 6px rgba(15,23,42,.04)">
+        <h3 style="margin:0 0 .85rem;font-size:.88rem;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.04em;display:flex;align-items:center;gap:.5rem">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="18"/><rect x="14" y="9" width="7" height="12"/><path d="M10 3h4v4h-4z"/></svg>
+          {{ grupo.nombre }}
+        </h3>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:.75rem">
+          @for (p of grupo.proyectos; track p._id) {
+            <div class="card proyecto-card" (click)="verDetalle(p)" style="margin:0">
+              <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:.5rem">
+                <h3 style="margin:0;font-size:1rem;font-weight:700;color:#1f2937">{{ p.nombre }}</h3>
+                <span style="font-size:.72rem;font-weight:700;padding:.2rem .55rem;border-radius:999px;white-space:nowrap;flex-shrink:0;margin-left:.5rem"
+                      [style]="estadoBadgeStyle(p.estado)">{{ p.estado }}</span>
+              </div>
+              <p style="margin:0 0 .3rem;font-size:.8rem;color:#6b7280">Cód. {{ p.codigo }}</p>
+              @if (p.descripcion) {
+                <p style="margin:0;font-size:.8rem;color:#9ca3af;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
+                  {{ p.descripcion }}
+                </p>
+              }
+              <div style="margin-top:.75rem;font-size:.77rem;color:#0095d6;font-weight:600">Ver proyecto →</div>
+            </div>
+          }
         </div>
-        <p style="margin:0 0 .3rem;font-size:.8rem;color:#6b7280">Cód. {{ p.codigo }}</p>
-        <p style="margin:0 0 .3rem;font-size:.8rem;color:#6b7280">{{ nombreCentro(p.centro_costo_id) }}</p>
-        @if (p.descripcion) {
-          <p style="margin:0;font-size:.8rem;color:#9ca3af;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
-            {{ p.descripcion }}
-          </p>
-        }
-        <div style="margin-top:.75rem;font-size:.77rem;color:#0095d6;font-weight:600">Ver proyecto →</div>
       </div>
     }
   </div>

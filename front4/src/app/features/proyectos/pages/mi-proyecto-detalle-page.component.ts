@@ -112,6 +112,10 @@ export class MiProyectoDetallePageComponent implements OnInit, OnDestroy {
     this.documentosService.descargar(url);
   }
 
+  protected irA(id: string): void {
+    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
   volver(): void {
     this.consumidorContext.seleccionarProyecto(null);
     this.router.navigate(['/mis-proyectos']);

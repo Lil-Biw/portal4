@@ -50,10 +50,20 @@ export class MisProyectosPageComponent implements OnInit {
     );
   });
 
-  protected nombreCentro(centroCostoId: string): string {
-    const c = this.centrosService.centros().find(c => asId(c._id) === asId(centroCostoId));
-    return c?.nombre ?? '—';
-  }
+  protected centrosConProyectos = computed(() => {
+    const ps = this.proyectosFiltrados();
+    const centros = this.centrosService.centros();
+    const grupos = new Map<string, { nombre: string; proyectos: Proyecto[] }>();
+    for (const p of ps) {
+      const cId = asId(p.centro_costo_id);
+      if (!grupos.has(cId)) {
+        const c = centros.find(c => asId(c._id) === cId);
+        grupos.set(cId, { nombre: c?.nombre ?? '—', proyectos: [] });
+      }
+      grupos.get(cId)!.proyectos.push(p);
+    }
+    return Array.from(grupos.values());
+  });
 
   protected estadoBadgeStyle(estado: string): string {
     if (estado === 'activo')   return 'background:rgba(0,149,214,.1);color:#0095d6';
