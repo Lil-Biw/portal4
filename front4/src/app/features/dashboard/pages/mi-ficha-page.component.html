@@ -119,18 +119,26 @@
             style="height:100%;background:linear-gradient(90deg,#0095d6,#22c55e);border-radius:999px;transition:width .4s">
           </div>
         </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:.5rem">
-          <div style="padding:.55rem .4rem;border-radius:10px;background:#dcfce7">
-            <p style="margin:0 0 .1rem;font-size:1.4rem;font-weight:700;color:#15803d;line-height:1">{{ scoreDocumental().aprobados }}</p>
-            <p style="margin:0;font-size:.7rem;font-weight:600;color:#15803d">Aprobados</p>
+        <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:.4rem">
+          <div style="padding:.5rem .3rem;border-radius:9px;text-align:center;background:#dcfce7">
+            <p style="margin:0 0 .1rem;font-size:1.3rem;font-weight:700;color:#15803d;line-height:1">{{ scoreDocumental().aprobados }}</p>
+            <p style="margin:0;font-size:.62rem;font-weight:600;color:#15803d">Aprobados</p>
           </div>
-          <div style="padding:.55rem .4rem;border-radius:10px;background:#fef3c7">
-            <p style="margin:0 0 .1rem;font-size:1.4rem;font-weight:700;color:#b45309;line-height:1">{{ scoreDocumental().revision }}</p>
-            <p style="margin:0;font-size:.7rem;font-weight:600;color:#b45309">En revisión</p>
+          <div style="padding:.5rem .3rem;border-radius:9px;text-align:center;background:#fef3c7">
+            <p style="margin:0 0 .1rem;font-size:1.3rem;font-weight:700;color:#b45309;line-height:1">{{ scoreDocumental().revision }}</p>
+            <p style="margin:0;font-size:.62rem;font-weight:600;color:#b45309">Revisión</p>
           </div>
-          <div style="padding:.55rem .4rem;border-radius:10px;background:#fee2e2">
-            <p style="margin:0 0 .1rem;font-size:1.4rem;font-weight:700;color:#dc2626;line-height:1">{{ scoreDocumental().vencido }}</p>
-            <p style="margin:0;font-size:.7rem;font-weight:600;color:#dc2626">Vencidos</p>
+          <div style="padding:.5rem .3rem;border-radius:9px;text-align:center;background:#fee2e2">
+            <p style="margin:0 0 .1rem;font-size:1.3rem;font-weight:700;color:#dc2626;line-height:1">{{ scoreDocumental().vencido }}</p>
+            <p style="margin:0;font-size:.62rem;font-weight:600;color:#dc2626">Vencidos</p>
+          </div>
+          <div style="padding:.5rem .3rem;border-radius:9px;text-align:center;background:#fce7f3">
+            <p style="margin:0 0 .1rem;font-size:1.3rem;font-weight:700;color:#9d174d;line-height:1">{{ scoreDocumental().rechazado }}</p>
+            <p style="margin:0;font-size:.62rem;font-weight:600;color:#9d174d">Rechazados</p>
+          </div>
+          <div style="padding:.5rem .3rem;border-radius:9px;text-align:center;background:#f0f9ff">
+            <p style="margin:0 0 .1rem;font-size:1.3rem;font-weight:700;color:#0369a1;line-height:1">{{ scoreDocumental().pendiente }}</p>
+            <p style="margin:0;font-size:.62rem;font-weight:600;color:#0369a1">Pendiente</p>
           </div>
         </div>
       </div>

@@ -39,14 +39,15 @@ export class MiFichaPageComponent implements OnInit {
 
   protected scoreDocumental = computed(() => {
     const sols = this.solicitudesService.solicitudes();
-    if (sols.length === 0) return { pct: 0, aprobados: 0, revision: 0, vencido: 0, rechazado: 0, total: 0 };
+    if (sols.length === 0) return { pct: 0, aprobados: 0, revision: 0, vencido: 0, rechazado: 0, pendiente: 0, total: 0 };
     const aprobados = sols.filter(s => s.estado === 'aprobado').length;
     const revision  = sols.filter(s => s.estado === 'revision').length;
     const vencido   = sols.filter(s => s.estado === 'vencido').length;
     const rechazado = sols.filter(s => s.estado === 'rechazado').length;
+    const pendiente = sols.filter(s => s.estado === 'pendiente').length;
     return {
       pct: Math.round((aprobados / sols.length) * 100),
-      aprobados, revision, vencido, rechazado,
+      aprobados, revision, vencido, rechazado, pendiente,
       total: sols.length,
     };
   });
