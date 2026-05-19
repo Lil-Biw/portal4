@@ -13,7 +13,8 @@
 <app-clientes-list
   [clientes]="service.clientes()"
   (editado)="abrirEditar($event)"
-  (eliminado)="eliminar($event)">
+  (eliminado)="eliminar($event)"
+  (verFicha)="irAFicha($event)">
 </app-clientes-list>
 
 <!-- ── Modal ──────────────────────────────────────────── -->
@@ -65,7 +66,8 @@
       <app-clientes-list
         [clientes]="clientesFiltrados()"
         (editado)="editarDesdeBuscar($event)"
-        (eliminado)="eliminar($event)">
+        (eliminado)="eliminar($event)"
+        (verFicha)="irAFicha($event)">
       </app-clientes-list>
     </ng-container>
 

@@ -1,11 +1,14 @@
 import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { NgIf } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { ClientesService } from '../clientes.service';
 import { StatusBannerComponent } from '../../../shared/components/status-banner/status-banner.component';
 import { ClienteFormComponent } from '../components/cliente-form/cliente-form.component';
 import { ClientesListComponent } from '../components/clientes-list/clientes-list.component';
 import { Cliente, CreateClienteDto } from '../../../shared/models/cliente.model';
+import { ProfileService } from '../../../profile/profile.service';
+import { ConsumidorContextService } from '../../../profile/consumidor-context.service';
 
 type ModalMode = 'crear' | 'editar' | 'buscar' | null;
 
@@ -84,7 +87,10 @@ type ModalMode = 'crear' | 'editar' | 'buscar' | null;
   `],
 })
 export class ClientesPageComponent implements OnInit {
-  protected readonly service = inject(ClientesService);
+  protected readonly service              = inject(ClientesService);
+  private  readonly profileService        = inject(ProfileService);
+  private  readonly consumidorContext     = inject(ConsumidorContextService);
+  private  readonly router                = inject(Router);
 
   protected modal = signal<ModalMode>(null);
   protected busqueda = signal('');
@@ -150,4 +156,11 @@ export class ClientesPageComponent implements OnInit {
     this.pendingLogo.set(null);
     this.modal.set('editar');
   }
+
+  protected irAFicha(cliente: Cliente): void {
+    this.consumidorContext.seleccionar(cliente);
+    this.profileService.setMode('consumidor');
+    this.router.navigate(['/inicio']);
+  }
+
 }

@@ -1,5 +1,6 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { forkJoin, of } from 'rxjs';
 import { ApiService } from '../../core/services/api.service';
 import { Status } from '../../shared/models/status.model';
 import { encodeQuery } from '../../shared/utils';
@@ -32,12 +33,27 @@ export class DocumentosService {
   private readonly http = inject(HttpClient);
   private readonly api = inject(ApiService);
 
-  readonly documentosEmpresa  = signal<DocumentoItem[]>([]);
-  readonly documentosCentro   = signal<DocumentoItem[]>([]);
-  readonly documentosProyecto = signal<DocumentoItem[]>([]);
+  readonly documentosEmpresa     = signal<DocumentoItem[]>([]);
+  readonly documentosCentro      = signal<DocumentoItem[]>([]);
+  readonly documentosProyecto    = signal<DocumentoItem[]>([]);
+  readonly documentosPorCentro   = signal<{ nombre: string; docs: DocumentoItem[] }[]>([]);
   readonly uploadStatus = signal<Record<DocTipo, Status | null>>({
     empresa: null, centro: null, proyecto: null,
   });
+
+  cargarTodosCentros(empresaNombre: string, centros: { nombre: string }[]): void {
+    this.documentosPorCentro.set([]);
+    if (!centros.length) return;
+    const calls = centros.map(c =>
+      this.http.get<DocumentoItem[]>(`${this.api.url('/documentos/listar')}?${encodeQuery({ tipo: 'centro', empresa_nombre: empresaNombre, centro_nombre: c.nombre })}`)
+    );
+    forkJoin(calls).subscribe({
+      next: results => this.documentosPorCentro.set(
+        centros.map((c, i) => ({ nombre: c.nombre, docs: results[i] })).filter(x => x.docs.length > 0)
+      ),
+      error: () => this.documentosPorCentro.set([]),
+    });
+  }
 
   cargar(tipo: DocTipo, empresaNombre?: string, centroNombre?: string, proyectoNombre?: string): void {
     const qs = encodeQuery({ tipo, empresa_nombre: empresaNombre, centro_nombre: centroNombre, proyecto_nombre: proyectoNombre });

@@ -1,5 +1,4 @@
 import { Component, inject, Input, OnChanges } from '@angular/core';
-import { NgFor } from '@angular/common';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { ProfileMode } from '../../profile/profile.types';
@@ -24,7 +23,7 @@ const BUILDING_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="32" height
 @Component({
   selector: 'app-sidebar',
   standalone: true,
-  imports: [NgFor, RouterLink, RouterLinkActive],
+  imports: [RouterLink, RouterLinkActive],
   template: `
     <nav class="sidebar">
       <!-- Perfil de empresa (consumidor) o logo admin -->
@@ -46,16 +45,24 @@ const BUILDING_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="32" height
 
       <!-- Menú -->
       <div class="menu">
-        <a
-          *ngFor="let item of menuItems"
-          class="item"
-          [routerLink]="item.route"
-          routerLinkActive="active">
-          @if (item.icon) {
-            <span class="icon" [innerHTML]="getIcon(item.icon)"></span>
+        @for (item of menuItems; track item.route) {
+          <a
+            class="item"
+            [routerLink]="item.route"
+            routerLinkActive="active">
+            @if (item.icon) {
+              <span class="icon" [innerHTML]="getIcon(item.icon)"></span>
+            }
+            {{ item.label }}
+          </a>
+          <!-- Breadcrumb de centro seleccionado bajo "Centro de costos" -->
+          @if (item.route === '/mis-centros' && centroSeleccionado()) {
+            <div class="sub-item">
+              <span class="sub-icon">↳</span>
+              <span class="sub-label">{{ centroSeleccionado()!.nombre }}</span>
+            </div>
           }
-          {{ item.label }}
-        </a>
+        }
       </div>
     </nav>
   `,
@@ -140,6 +147,22 @@ const BUILDING_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="32" height
     a.item.active { background:rgba(0,149,214,.08); color:#0095d6; border-color:rgba(0,149,214,.18); }
     .icon { display:flex; align-items:center; flex-shrink:0; opacity:.75; }
     a.item.active .icon { opacity:1; }
+
+    .sub-item {
+      display:flex;
+      align-items:center;
+      gap:.5rem;
+      padding:.4rem 1rem .4rem 1.75rem;
+      font-size:.8rem;
+      font-weight:600;
+      color:#0095d6;
+      background:rgba(0,149,214,.06);
+      border-radius:8px;
+      margin-top:-.15rem;
+      overflow:hidden;
+    }
+    .sub-icon { opacity:.6; flex-shrink:0; }
+    .sub-label { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   `],
 })
 export class SidebarComponent implements OnChanges {
@@ -156,7 +179,8 @@ export class SidebarComponent implements OnChanges {
     this.buildingIcon = this.sanitizer.bypassSecurityTrustHtml(BUILDING_ICON);
   }
 
-  get empresa() { return this.consumidorContext.empresaSeleccionada(); }
+  get empresa()           { return this.consumidorContext.empresaSeleccionada(); }
+  get centroSeleccionado() { return this.consumidorContext.centroSeleccionado; }
 
   get logoUrl(): string | null {
     const url = this.empresa?.logo_url;
@@ -178,7 +202,7 @@ export class SidebarComponent implements OnChanges {
   ];
 
   private readonly consumidorItems: NavItem[] = [
-    { label: 'Inicio',            route: '/mi-ficha',         icon: 'home' },
+    { label: 'Inicio',            route: '/inicio',           icon: 'home' },
     { label: 'Mi ficha',          route: '/mi-ficha',         icon: 'user' },
     { label: 'Centro de costos',  route: '/mis-centros',      icon: 'building' },
     { label: 'Proyectos',         route: '/mis-proyectos',    icon: 'folder' },

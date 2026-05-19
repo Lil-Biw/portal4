@@ -14,7 +14,8 @@
   [centros]="service.centros()"
   [clientes]="clientesService.clientes()"
   (editado)="abrirEditar($event)"
-  (eliminado)="eliminar($event)">
+  (eliminado)="eliminar($event)"
+  (verCentro)="irACentro($event)">
 </app-centros-list>
 
 <!-- ── Modal ──────────────────────────────────────────── -->
@@ -67,7 +68,8 @@
         [centros]="centrosFiltrados()"
         [clientes]="clientesService.clientes()"
         (editado)="editarDesdeBuscar($event)"
-        (eliminado)="eliminar($event)">
+        (eliminado)="eliminar($event)"
+        (verCentro)="irACentro($event)">
       </app-centros-list>
     </ng-container>
 

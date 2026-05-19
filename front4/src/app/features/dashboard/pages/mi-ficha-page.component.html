@@ -1,120 +1,214 @@
 <!-- Header -->
-<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;margin-bottom:1.25rem;flex-wrap:wrap">
-  <div>
-    <h2 style="margin:0 0 .25rem;font-size:1.55rem;font-weight:700;color:#1f2937">
-      {{ empresaSeleccionada()?.razon_social ?? 'Bienvenido' }}
-    </h2>
-    <p style="margin:0;font-size:.85rem;color:#6b7280">{{ fecha }}</p>
-  </div>
+<div style="margin-bottom:1.25rem">
+  <h2 style="margin:0 0 .25rem;font-size:1.55rem;font-weight:700;color:#1f2937">Mi ficha</h2>
+  <p style="margin:0;font-size:.85rem;color:#6b7280">
+    {{ empresa()?.razon_social ?? 'Selecciona una empresa' }}
+  </p>
 </div>
 
-<!-- Centros de costos -->
-<div class="card" style="margin-bottom:1rem">
-  <div style="margin-bottom:.9rem">
-    <h3 style="margin:0 0 .2rem;font-size:1rem;font-weight:700">Centros de costos</h3>
-    <p style="margin:0;font-size:.78rem;color:#6b7280">
-      @if (empresaSeleccionada()) {
-        {{ centrosDeEmpresa().length }} centro{{ centrosDeEmpresa().length !== 1 ? 's' : '' }} activo{{ centrosDeEmpresa().length !== 1 ? 's' : '' }}
-      } @else {
-        Selecciona una empresa para ver sus centros de costos
-      }
-    </p>
+@if (!empresa()) {
+  <div class="card" style="text-align:center;padding:3rem;color:#9ca3af">
+    Selecciona una empresa en la barra superior para ver tu ficha.
   </div>
+} @else {
+  <!-- Grid 2×2 -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
 
-  @if (!empresaSeleccionada()) {
-    <p style="color:#9ca3af;font-size:.875rem;padding:.5rem 0">Ninguna empresa seleccionada.</p>
-  } @else if (centrosDeEmpresa().length === 0) {
-    <p style="color:#9ca3af;font-size:.875rem;padding:.5rem 0">Esta empresa no tiene centros de costos registrados.</p>
-  } @else {
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:.85rem">
-      @for (centro of centrosDeEmpresa(); track centro._id) {
-        <div style="border:1px solid rgba(34,33,33,.12);border-radius:10px;padding:.9rem;cursor:pointer">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.5rem">
-            <div>
-              <strong style="display:block;font-size:.92rem;color:#1f2937">{{ centro.nombre }}</strong>
-              <span style="font-size:.75rem;color:#6b7280">Cód. {{ centro.codigo }}</span>
-            </div>
-            <div class="pct-badge" style="color:#0095d6;border-color:#0095d6;background:rgba(0,149,214,.1)">
-              —
-            </div>
+    <!-- Recuadro 1: Información general de la empresa -->
+    <div class="card">
+      <h3 style="margin:0 0 1rem;font-size:.95rem;font-weight:700;color:#1f2937">Información general</h3>
+      <dl style="margin:0;display:flex;flex-direction:column;gap:.55rem">
+        <div style="display:flex;gap:.5rem">
+          <dt style="font-size:.78rem;color:#6b7280;min-width:90px;flex-shrink:0">Razón social</dt>
+          <dd style="margin:0;font-size:.82rem;color:#1f2937;font-weight:600">{{ empresa()!.razon_social }}</dd>
+        </div>
+        <div style="display:flex;gap:.5rem">
+          <dt style="font-size:.78rem;color:#6b7280;min-width:90px;flex-shrink:0">RUT</dt>
+          <dd style="margin:0;font-size:.82rem;color:#1f2937">{{ empresa()!.rut }}</dd>
+        </div>
+        <div style="display:flex;gap:.5rem">
+          <dt style="font-size:.78rem;color:#6b7280;min-width:90px;flex-shrink:0">Email</dt>
+          <dd style="margin:0;font-size:.82rem;color:#1f2937">{{ empresa()!.email_contacto }}</dd>
+        </div>
+        @if (empresa()!.telefono) {
+          <div style="display:flex;gap:.5rem">
+            <dt style="font-size:.78rem;color:#6b7280;min-width:90px;flex-shrink:0">Teléfono</dt>
+            <dd style="margin:0;font-size:.82rem;color:#1f2937">{{ empresa()!.telefono }}</dd>
           </div>
-          @if (centro.ubicacion_ciudad) {
-            <p style="margin:0;font-size:.78rem;color:#6b7280">
-              {{ centro.ubicacion_ciudad }}{{ centro.ubicacion_region ? ', ' + centro.ubicacion_region : '' }}
-            </p>
+        }
+        @if (empresa()!.direccion?.ciudad) {
+          <div style="display:flex;gap:.5rem">
+            <dt style="font-size:.78rem;color:#6b7280;min-width:90px;flex-shrink:0">Ciudad</dt>
+            <dd style="margin:0;font-size:.82rem;color:#1f2937">
+              {{ empresa()!.direccion!.ciudad }}{{ empresa()!.direccion!.region ? ', ' + empresa()!.direccion!.region : '' }}
+            </dd>
+          </div>
+        }
+        @if (empresa()!.direccion?.calle) {
+          <div style="display:flex;gap:.5rem">
+            <dt style="font-size:.78rem;color:#6b7280;min-width:90px;flex-shrink:0">Dirección</dt>
+            <dd style="margin:0;font-size:.82rem;color:#1f2937">{{ empresa()!.direccion!.calle }}</dd>
+          </div>
+        }
+        <div style="display:flex;gap:.5rem">
+          <dt style="font-size:.78rem;color:#6b7280;min-width:90px;flex-shrink:0">Estado</dt>
+          <dd style="margin:0">
+            <span style="font-size:.72rem;font-weight:700;padding:.2rem .55rem;border-radius:999px;background:#dcfce7;color:#15803d">Activa</span>
+          </dd>
+        </div>
+      </dl>
+    </div>
+
+    <!-- Recuadro 2: Certificados e historial de mantenciones -->
+    <div class="card" style="display:flex;flex-direction:column;gap:1rem">
+      <!-- Certificados -->
+      <div>
+        <h3 style="margin:0 0 .65rem;font-size:.95rem;font-weight:700;color:#1f2937">Certificados vigentes</h3>
+        <div style="display:flex;flex-direction:column;gap:.4rem">
+          @for (cert of certificados; track cert.nombre; let last = $last) {
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:.45rem 0" [style.border-bottom]="last ? 'none' : '1px solid rgba(34,33,33,.07)'">
+              <span style="font-size:.82rem;color:#1f2937;font-weight:500">{{ cert.nombre }}</span>
+              <span style="font-size:.74rem;color:#6b7280;white-space:nowrap;margin-left:.5rem">Vence {{ cert.vencimiento }}</span>
+            </div>
           }
         </div>
-      }
-    </div>
-  }
-</div>
-
-<!-- Métricas -->
-<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:.85rem;margin-bottom:1rem">
-  @for (m of metricas; track m.label) {
-    <div class="card" style="padding:1.1rem">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.4rem">
-        <span style="font-size:.76rem;color:#6b7280;font-weight:500">{{ m.label }}</span>
-        <app-stat-chip [label]="m.chipLabel" [variant]="m.chipVariant"></app-stat-chip>
       </div>
-      <p style="margin:0;font-size:2rem;font-weight:700;color:#1f2937;line-height:1.1">{{ m.valor }}</p>
-    </div>
-  }
-</div>
-
-<!-- Tareas | Mantenciones -->
-<div style="display:grid;grid-template-columns:1fr 1fr;gap:.85rem;margin-bottom:1rem">
-  <div class="card">
-    <h3 style="margin:0 0 .9rem;font-size:1rem;font-weight:700">Tareas pendientes</h3>
-    @for (t of tareas; track t.titulo; let last = $last) {
-      <div style="display:flex;align-items:center;justify-content:space-between;padding:.7rem 0" [style.border-bottom]="last ? 'none' : '1px solid rgba(34,33,33,.07)'">
-        <div style="display:flex;align-items:center;gap:.65rem">
-          <span style="width:8px;height:8px;border-radius:50%;flex-shrink:0" [style.background]="t.color"></span>
-          <span style="font-size:.875rem;color:#1f2937">{{ t.titulo }}</span>
+      <!-- Mantenciones -->
+      <div>
+        <h3 style="margin:0 0 .65rem;font-size:.95rem;font-weight:700;color:#1f2937">Historial de mantenciones</h3>
+        <div style="display:flex;flex-direction:column;gap:.4rem">
+          @for (m of mantenciones; track m.titulo; let last = $last) {
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:.45rem 0" [style.border-bottom]="last ? 'none' : '1px solid rgba(34,33,33,.07)'">
+              <div>
+                <p style="margin:0 0 .1rem;font-size:.82rem;color:#1f2937;font-weight:500">{{ m.titulo }}</p>
+                <span style="font-size:.74rem;color:#9ca3af">{{ m.fecha }}</span>
+              </div>
+              <span
+                style="font-size:.71rem;font-weight:700;padding:.18rem .5rem;border-radius:999px;white-space:nowrap;margin-left:.5rem"
+                [style.background]="m.estado === 'Completada' ? '#dcfce7' : '#fef3c7'"
+                [style.color]="m.estado === 'Completada' ? '#15803d' : '#b45309'">
+                {{ m.estado }}
+              </span>
+            </div>
+          }
         </div>
-        <span style="font-size:.78rem;font-weight:600;white-space:nowrap;margin-left:.5rem" [style.color]="t.color">{{ t.fecha }}</span>
       </div>
-    }
+    </div>
+
+    <!-- Recuadro 3: Score documental de la empresa -->
+    <div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.9rem">
+        <h3 style="margin:0;font-size:.95rem;font-weight:700;color:#1f2937">Score 1 — Cumplimiento documental</h3>
+        <app-stat-chip [label]="scoreChipLabel()" [variant]="scoreChipVariant()"></app-stat-chip>
+      </div>
+      <div style="text-align:center;padding:.25rem 0 .5rem">
+        <p style="margin:0 0 .15rem;line-height:1">
+          <span style="font-size:3rem;font-weight:700;color:#0095d6">{{ scoreDocumental().pct }}</span>
+          <span style="font-size:1.2rem;color:#6b7280;font-weight:400">/ 100</span>
+        </p>
+        @if (scoreDocumental().total > 0) {
+          <p style="margin:.35rem 0 .8rem;font-size:.8rem;color:#6b7280">
+            {{ scoreDocumental().aprobados }} de {{ scoreDocumental().total }} documentos solicitados aprobados
+          </p>
+        } @else {
+          <p style="margin:.35rem 0 .8rem;font-size:.8rem;color:#9ca3af">Sin solicitudes registradas</p>
+        }
+        <div style="background:#e5e7eb;border-radius:999px;height:8px;overflow:hidden;margin-bottom:.8rem">
+          <div
+            [style.width]="scoreDocumental().pct + '%'"
+            style="height:100%;background:linear-gradient(90deg,#0095d6,#22c55e);border-radius:999px;transition:width .4s">
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:.5rem">
+          <div style="padding:.55rem .4rem;border-radius:10px;background:#dcfce7">
+            <p style="margin:0 0 .1rem;font-size:1.4rem;font-weight:700;color:#15803d;line-height:1">{{ scoreDocumental().aprobados }}</p>
+            <p style="margin:0;font-size:.7rem;font-weight:600;color:#15803d">Aprobados</p>
+          </div>
+          <div style="padding:.55rem .4rem;border-radius:10px;background:#fef3c7">
+            <p style="margin:0 0 .1rem;font-size:1.4rem;font-weight:700;color:#b45309;line-height:1">{{ scoreDocumental().revision }}</p>
+            <p style="margin:0;font-size:.7rem;font-weight:600;color:#b45309">En revisión</p>
+          </div>
+          <div style="padding:.55rem .4rem;border-radius:10px;background:#fee2e2">
+            <p style="margin:0 0 .1rem;font-size:1.4rem;font-weight:700;color:#dc2626;line-height:1">{{ scoreDocumental().vencido }}</p>
+            <p style="margin:0;font-size:.7rem;font-weight:600;color:#dc2626">Vencidos</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recuadro 4: Score gráfica de araña nivel empresa -->
+    <div class="card" style="display:flex;flex-direction:column">
+      <h3 style="margin:0 0 .5rem;font-size:.95rem;font-weight:700;color:#1f2937">Score 2 — Evaluación SmartClarity</h3>
+      <p style="margin:0 0 .5rem;font-size:.78rem;color:#6b7280">Nivel empresa</p>
+      <div style="flex:1;display:flex;align-items:center;justify-content:center">
+        <app-spider-chart
+          [labels]="spiderLabels"
+          [values]="spiderValues"
+          [size]="260">
+        </app-spider-chart>
+      </div>
+    </div>
+
   </div>
 
-  <div class="card">
-    <h3 style="margin:0 0 .9rem;font-size:1rem;font-weight:700">Próximas mantenciones</h3>
-    @for (m of mantenciones; track m.titulo; let last = $last) {
-      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:.75rem;padding:.7rem 0" [style.border-bottom]="last ? 'none' : '1px solid rgba(34,33,33,.07)'">
-        <div>
-          <p style="margin:0 0 .15rem;font-size:.875rem;font-weight:600;color:#1f2937">{{ m.titulo }}</p>
-          <span style="font-size:.76rem;color:#6b7280">{{ m.detalle }}</span>
-        </div>
-        <app-stat-chip [label]="m.chipLabel" [variant]="m.chipVariant" style="flex-shrink:0"></app-stat-chip>
-      </div>
-    }
-  </div>
-</div>
-
-<!-- Score | Novedades -->
-<div style="display:grid;grid-template-columns:1fr 1fr;gap:.85rem">
-  <div class="card">
-    <h3 style="margin:0 0 .9rem;font-size:1rem;font-weight:700">Score documental</h3>
-    <div style="text-align:center;padding:.75rem 0 .5rem">
-      <p style="margin:0 0 .2rem;line-height:1">
-        <span style="font-size:3.5rem;font-weight:700;color:#0095d6">78</span>
-        <span style="font-size:1.4rem;color:#6b7280;font-weight:400">/ 100</span>
+  <!-- Centros de costos -->
+  <div class="card" style="margin-top:1rem">
+    <div style="margin-bottom:.9rem">
+      <h3 style="margin:0 0 .2rem;font-size:.95rem;font-weight:700;color:#1f2937">Centros de costos</h3>
+      <p style="margin:0;font-size:.78rem;color:#6b7280">
+        {{ centrosDeEmpresa().length }} centro{{ centrosDeEmpresa().length !== 1 ? 's' : '' }} activo{{ centrosDeEmpresa().length !== 1 ? 's' : '' }} · haz clic para ver los documentos de cada uno
       </p>
-      <p style="margin:.5rem 0 1.1rem;font-size:.83rem;color:#6b7280">14 de 18 documentos solicitados aprobados</p>
-      <div style="background:#e5e7eb;border-radius:999px;height:8px;overflow:hidden">
-        <div style="width:78%;height:100%;background:linear-gradient(90deg,#0095d6,#22c55e);border-radius:999px"></div>
-      </div>
     </div>
-  </div>
-
-  <div class="card">
-    <h3 style="margin:0 0 .9rem;font-size:1rem;font-weight:700">Últimas novedades</h3>
-    @for (n of novedades; track n.titulo; let last = $last) {
-      <div style="padding:.6rem 0" [style.border-bottom]="last ? 'none' : '1px solid rgba(34,33,33,.07)'">
-        <app-stat-chip [label]="n.tipo" [variant]="n.chipVariant" style="display:inline-block;margin-bottom:.28rem"></app-stat-chip>
-        <p style="margin:0 0 .12rem;font-size:.875rem;font-weight:600;color:#1f2937">{{ n.titulo }}</p>
-        <span style="font-size:.74rem;color:#9ca3af">{{ n.fecha }}</span>
+    @if (centrosDeEmpresa().length === 0) {
+      <p style="color:#9ca3af;font-size:.875rem;padding:.25rem 0">Esta empresa no tiene centros de costos registrados.</p>
+    } @else {
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:.75rem">
+        @for (c of centrosDeEmpresa(); track c._id) {
+          <div style="border:1px solid rgba(34,33,33,.1);border-radius:10px;padding:.85rem;display:flex;flex-direction:column;gap:.55rem">
+            <div>
+              <strong style="display:block;font-size:.88rem;color:#1f2937">{{ c.nombre }}</strong>
+              <span style="font-size:.76rem;color:#6b7280">{{ resumenCentro(c._id) }}</span>
+            </div>
+            <button
+              class="btn-ghost btn-sm"
+              style="align-self:flex-start;font-size:.78rem;padding:.3rem .65rem"
+              (click)="irACentro(c)">
+              Mostrar Información
+            </button>
+          </div>
+        }
       </div>
     }
   </div>
-</div>
+
+  <!-- Proyectos -->
+  <div class="card" style="margin-top:1rem">
+    <div style="margin-bottom:.9rem">
+      <h3 style="margin:0 0 .2rem;font-size:.95rem;font-weight:700;color:#1f2937">Proyectos</h3>
+      <p style="margin:0;font-size:.78rem;color:#6b7280">
+        {{ proyectosDeEmpresa().length }} proyecto{{ proyectosDeEmpresa().length !== 1 ? 's' : '' }} · haz clic para ver los documentos de cada uno
+      </p>
+    </div>
+    @if (proyectosDeEmpresa().length === 0) {
+      <p style="color:#9ca3af;font-size:.875rem;padding:.25rem 0">Esta empresa no tiene proyectos registrados.</p>
+    } @else {
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:.75rem">
+        @for (p of proyectosDeEmpresa(); track p._id) {
+          <div style="border:1px solid rgba(34,33,33,.1);border-radius:10px;padding:.85rem;display:flex;flex-direction:column;gap:.55rem">
+            <div>
+              <strong style="display:block;font-size:.88rem;color:#1f2937">{{ p.nombre }}</strong>
+              <span style="font-size:.76rem;color:#6b7280">{{ resumenProyecto(p._id) }}</span>
+            </div>
+            <button
+              class="btn-ghost btn-sm"
+              style="align-self:flex-start;font-size:.78rem;padding:.3rem .65rem"
+              (click)="irAProyecto(p)">
+              Mostrar Información
+            </button>
+          </div>
+        }
+      </div>
+    }
+  </div>
+
+}

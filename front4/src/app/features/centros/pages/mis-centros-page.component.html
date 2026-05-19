@@ -1,0 +1,184 @@
+<!-- ══ VISTA LISTA ══════════════════════════════════════════════════════════ -->
+@if (!centroActivo) {
+  <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;margin-bottom:1.25rem;flex-wrap:wrap">
+    <div>
+      <h2 style="margin:0 0 .25rem;font-size:1.5rem;font-weight:700;color:#1f2937">Centros de costos</h2>
+      <p style="margin:0;font-size:.85rem;color:#6b7280">
+        @if (empresa) {
+          {{ centros().length }} centro{{ centros().length !== 1 ? 's' : '' }} · {{ empresa.razon_social }}
+        } @else {
+          Selecciona una empresa en la barra superior para ver sus centros de costos
+        }
+      </p>
+    </div>
+    @if (empresa) {
+      <button class="btn-ghost" (click)="toggleBuscar()">
+        {{ mostrarBuscar() ? 'Cerrar' : 'Buscar' }}
+      </button>
+    }
+  </div>
+
+  @if (mostrarBuscar()) {
+    <input
+      style="width:100%;padding:.65rem .9rem;border-radius:8px;border:1px solid rgba(34,33,33,.2);font-size:.9rem;font-family:inherit;margin-bottom:1rem;box-sizing:border-box"
+      type="text"
+      placeholder="Nombre, código, ciudad o región..."
+      [ngModel]="busqueda()"
+      (ngModelChange)="busqueda.set($event)"
+      autofocus />
+  }
+
+  @if (!empresa) {
+    <div class="card" style="text-align:center;padding:2.5rem;color:#9ca3af">
+      Ninguna empresa seleccionada.
+    </div>
+  } @else if (centros().length === 0) {
+    <div class="card" style="text-align:center;padding:2.5rem;color:#9ca3af">
+      Esta empresa no tiene centros de costos registrados.
+    </div>
+  } @else if (centrosFiltrados().length === 0) {
+    <div class="card" style="text-align:center;padding:2.5rem;color:#9ca3af">
+      Sin resultados para "{{ busqueda() }}"
+    </div>
+  } @else {
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1rem">
+      @for (c of centrosFiltrados(); track c._id) {
+        <div class="card centro-card"
+             (click)="seleccionarCentro(c)">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:.5rem">
+            <div>
+              <h3 style="margin:0 0 .2rem;font-size:1rem;font-weight:700;color:#1f2937">{{ c.nombre }}</h3>
+              <span style="font-size:.8rem;color:#6b7280">Cód. {{ c.codigo }}</span>
+            </div>
+            <span style="font-size:.72rem;font-weight:600;padding:.2rem .55rem;border-radius:999px;background:rgba(0,149,214,.1);color:#0095d6;white-space:nowrap">Activo</span>
+          </div>
+          <p *ngIf="c.ubicacion_ciudad" style="margin:0 0 .3rem;font-size:.82rem;color:#6b7280">
+            {{ c.ubicacion_ciudad }}{{ c.ubicacion_region ? ', ' + c.ubicacion_region : '' }}
+          </p>
+          <p *ngIf="c.descripcion" style="margin:0;font-size:.8rem;color:#9ca3af;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
+            {{ c.descripcion }}
+          </p>
+          <div style="margin-top:.75rem;font-size:.77rem;color:#0095d6;font-weight:600">Ver detalle →</div>
+        </div>
+      }
+    </div>
+  }
+}
+
+<!-- ══ VISTA DETALLE ════════════════════════════════════════════════════════ -->
+@if (centroActivo) {
+  <!-- Breadcrumb + botón volver -->
+  <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:1.25rem;flex-wrap:wrap">
+    <button
+      (click)="volver()"
+      style="background:none;border:none;cursor:pointer;color:#6b7280;font-size:.85rem;padding:0;display:flex;align-items:center;gap:.35rem;font-weight:500">
+      ← Volver
+    </button>
+    <span style="color:#d1d5db">/</span>
+    <h2 style="margin:0;font-size:1.25rem;font-weight:700;color:#1f2937">{{ centroActivo.nombre }}</h2>
+    <span style="font-size:.78rem;color:#6b7280">Cód. {{ centroActivo.codigo }}</span>
+  </div>
+
+  <!-- Grid 2×2 -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+
+    <!-- Recuadro 1: Información general -->
+    <div class="card" style="min-height:320px">
+      <h3 style="margin:0 0 1rem;font-size:.95rem;font-weight:700;color:#1f2937">Información general</h3>
+      <dl style="margin:0;display:flex;flex-direction:column;gap:.55rem">
+        <div style="display:flex;gap:.5rem">
+          <dt style="font-size:.78rem;color:#6b7280;min-width:80px;flex-shrink:0">Nombre</dt>
+          <dd style="margin:0;font-size:.82rem;color:#1f2937;font-weight:500">{{ centroActivo.nombre }}</dd>
+        </div>
+        <div style="display:flex;gap:.5rem">
+          <dt style="font-size:.78rem;color:#6b7280;min-width:80px;flex-shrink:0">Código</dt>
+          <dd style="margin:0;font-size:.82rem;color:#1f2937">{{ centroActivo.codigo }}</dd>
+        </div>
+        @if (centroActivo.descripcion) {
+          <div style="display:flex;gap:.5rem">
+            <dt style="font-size:.78rem;color:#6b7280;min-width:80px;flex-shrink:0">Descripción</dt>
+            <dd style="margin:0;font-size:.82rem;color:#1f2937">{{ centroActivo.descripcion }}</dd>
+          </div>
+        }
+        @if (centroActivo.ubicacion_direccion) {
+          <div style="display:flex;gap:.5rem">
+            <dt style="font-size:.78rem;color:#6b7280;min-width:80px;flex-shrink:0">Dirección</dt>
+            <dd style="margin:0;font-size:.82rem;color:#1f2937">{{ centroActivo.ubicacion_direccion }}</dd>
+          </div>
+        }
+        @if (centroActivo.ubicacion_ciudad) {
+          <div style="display:flex;gap:.5rem">
+            <dt style="font-size:.78rem;color:#6b7280;min-width:80px;flex-shrink:0">Ciudad</dt>
+            <dd style="margin:0;font-size:.82rem;color:#1f2937">
+              {{ centroActivo.ubicacion_ciudad }}{{ centroActivo.ubicacion_region ? ', ' + centroActivo.ubicacion_region : '' }}
+            </dd>
+          </div>
+        }
+        @if (centroActivo.ubicacion_pais) {
+          <div style="display:flex;gap:.5rem">
+            <dt style="font-size:.78rem;color:#6b7280;min-width:80px;flex-shrink:0">País</dt>
+            <dd style="margin:0;font-size:.82rem;color:#1f2937">{{ centroActivo.ubicacion_pais }}</dd>
+          </div>
+        }
+      </dl>
+    </div>
+
+    <!-- Recuadro 2: Mapa -->
+    <div class="card" style="min-height:320px;padding:.75rem;overflow:hidden;display:flex;flex-direction:column">
+      <h3 style="margin:0 0 .65rem;font-size:.95rem;font-weight:700;color:#1f2937;flex-shrink:0">Localización</h3>
+      @if (centroActivo.ubicacion_ciudad || centroActivo.ubicacion_direccion) {
+        <iframe
+          [src]="mapUrl()"
+          style="flex:1;width:100%;min-height:240px;border:none;border-radius:8px;display:block"
+          loading="lazy"
+          allowfullscreen
+          referrerpolicy="no-referrer-when-downgrade">
+        </iframe>
+      } @else {
+        <div style="flex:1;min-height:240px;display:flex;align-items:center;justify-content:center;color:#9ca3af;font-size:.85rem;background:#f9fafb;border-radius:8px">
+          Sin dirección registrada
+        </div>
+      }
+    </div>
+
+    <!-- Recuadro 3: Score de documentos del centro -->
+    <div class="card" style="min-height:220px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.9rem">
+        <h3 style="margin:0;font-size:.95rem;font-weight:700;color:#1f2937">Score documental</h3>
+        <app-stat-chip [label]="scoreChipLabel()" [variant]="scoreChipVariant()"></app-stat-chip>
+      </div>
+      <div style="text-align:center;padding:.5rem 0">
+        <p style="margin:0 0 .15rem;line-height:1">
+          <span style="font-size:3rem;font-weight:700;color:#0095d6">{{ scoreDelCentro().pct }}</span>
+          <span style="font-size:1.2rem;color:#6b7280;font-weight:400">/ 100</span>
+        </p>
+        @if (scoreDelCentro().total > 0) {
+          <p style="margin:.4rem 0 1rem;font-size:.8rem;color:#6b7280">
+            {{ scoreDelCentro().aprobados }} de {{ scoreDelCentro().total }} solicitudes aprobadas
+          </p>
+        } @else {
+          <p style="margin:.4rem 0 1rem;font-size:.8rem;color:#9ca3af">Sin solicitudes registradas</p>
+        }
+        <div style="background:#e5e7eb;border-radius:999px;height:8px;overflow:hidden">
+          <div
+            [style.width]="scoreDelCentro().pct + '%'"
+            style="height:100%;background:linear-gradient(90deg,#0095d6,#22c55e);border-radius:999px;transition:width .4s">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recuadro 4: Gráfica de araña -->
+    <div class="card" style="min-height:220px;display:flex;flex-direction:column">
+      <h3 style="margin:0 0 .5rem;font-size:.95rem;font-weight:700;color:#1f2937">Score 2 — Evaluación SmartClarity</h3>
+      <div style="flex:1;display:flex;align-items:center;justify-content:center">
+        <app-spider-chart
+          [labels]="spiderLabels"
+          [values]="spiderValues"
+          [size]="260">
+        </app-spider-chart>
+      </div>
+    </div>
+
+  </div>
+}

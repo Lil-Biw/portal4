@@ -1,6 +1,7 @@
-import { Component, EventEmitter, Input, OnChanges, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, Output, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Cliente, CreateClienteDto } from '../../../../shared/models/cliente.model';
+import { ApiService } from '../../../../core/services/api.service';
 
 @Component({
   selector: 'app-cliente-form',
@@ -9,6 +10,8 @@ import { Cliente, CreateClienteDto } from '../../../../shared/models/cliente.mod
   templateUrl: './cliente-form.component.html',
 })
 export class ClienteFormComponent implements OnChanges {
+  private readonly api = inject(ApiService);
+
   @Input() initial: Cliente | null = null;
   @Input() submitLabel = 'Guardar';
   @Output() submitted = new EventEmitter<CreateClienteDto>();
@@ -18,6 +21,13 @@ export class ClienteFormComponent implements OnChanges {
   logoPreview: string | null = null;
   private _logoFile: File | null = null;
 
+  private resolveLogoUrl(url?: string): string | null {
+    if (!url) return null;
+    if (url.startsWith('http')) return url;
+    const origin = new URL(this.api.base).origin;
+    return `${origin}${url}`;
+  }
+
   ngOnChanges(): void {
     this.form = this.initial
       ? {
@@ -25,10 +35,15 @@ export class ClienteFormComponent implements OnChanges {
           rut: this.initial.rut,
           email_contacto: this.initial.email_contacto,
           telefono: this.initial.telefono ?? '',
-          direccion: { ...this.initial.direccion },
+          direccion: {
+            calle:  this.initial.direccion?.calle  ?? '',
+            ciudad: this.initial.direccion?.ciudad ?? '',
+            region: this.initial.direccion?.region ?? '',
+            pais:   this.initial.direccion?.pais   ?? 'Chile',
+          },
         }
       : this.empty();
-    this.logoPreview = this.initial?.logo_url ?? null;
+    this.logoPreview = this.resolveLogoUrl(this.initial?.logo_url);
     this._logoFile = null;
   }
 
@@ -40,13 +55,13 @@ export class ClienteFormComponent implements OnChanges {
       reader.onload = (e) => { this.logoPreview = e.target?.result as string; };
       reader.readAsDataURL(file);
     } else {
-      this.logoPreview = this.initial?.logo_url ?? null;
+      this.logoPreview = this.resolveLogoUrl(this.initial?.logo_url);
     }
   }
 
   submit(): void {
-    this.logoFile.emit(this._logoFile);
     this.submitted.emit(this.form);
+    this.logoFile.emit(this._logoFile);
   }
 
   private empty(): CreateClienteDto {

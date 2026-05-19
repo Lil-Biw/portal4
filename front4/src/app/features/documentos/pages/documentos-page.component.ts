@@ -7,7 +7,7 @@ import { CentrosService } from '../../centros/centros.service';
 import { ProyectosService } from '../../proyectos/proyectos.service';
 import { ProfileService } from '../../../profile/profile.service';
 import { ConsumidorContextService } from '../../../profile/consumidor-context.service';
-import { SolicitudesService, CreateSolicitudDto, EstadoSolicitud, Solicitud } from '../../solicitudes/solicitudes.service';
+import { SolicitudesService, CreateSolicitudDto, UpdateSolicitudDto, EstadoSolicitud, Solicitud } from '../../solicitudes/solicitudes.service';
 import { StatusBannerComponent } from '../../../shared/components/status-banner/status-banner.component';
 import { asId } from '../../../shared/utils';
 
@@ -56,12 +56,20 @@ export class DocumentosPageComponent implements OnInit {
   // Filtro de estado solicitudes — signal para reactividad en computed()
   protected filtroEstado = signal<EstadoSolicitud | ''>('');
 
+  // Pestañas admin y consumidor
+  protected tabAdminActiva       = signal<'documentacion' | 'solicitudes'>('documentacion');
+  protected tabConsumidorActiva  = signal<'documentacion' | 'solicitudes'>('documentacion');
+
   // Admin: nueva solicitud
   protected showSolicitudForm = signal(false);
   protected solicitudForm: CreateSolicitudDto = this.emptySolicitudForm();
 
   // Admin: cambio de estado inline
   protected solicitudEstadoEdit = signal<string | null>(null);
+
+  // Admin: edición inline de solicitud
+  protected solicitudEditando = signal<string | null>(null);
+  protected solicitudEditForm: UpdateSolicitudDto = {};
 
   // Adjuntar archivo a solicitud (consumidor)
   protected solicitudAdjuntando = signal<string | null>(null);
@@ -84,7 +92,8 @@ export class DocumentosPageComponent implements OnInit {
   }
 
   get proyectosFiltrados() {
-    if (!this.selectedEmpresaId || !this.selectedCentroId) return [];
+    // Cuando Centro=Todos solo aplica Ninguno/Todos en proyecto, no proyectos individuales
+    if (!this.selectedEmpresaId || !this.selectedCentroId || this.selectedCentroId === 'todos') return [];
     return this.proyectosService.proyectos().filter(p =>
       asId(p.cliente_id) === this.selectedEmpresaId && asId(p.centro_costo_id) === this.selectedCentroId
     );
@@ -99,40 +108,79 @@ export class DocumentosPageComponent implements OnInit {
 
   get proyectosFiltradosC() {
     const empresa = this.consumidorContext.empresaSeleccionada();
-    if (!empresa || !this.selectedCentroIdC()) return [];
+    const centroId = this.selectedCentroIdC();
+    if (!empresa || !centroId || centroId === 'todos') return [];
     return this.proyectosService.proyectos().filter(p =>
-      asId(p.cliente_id) === asId(empresa._id) && asId(p.centro_costo_id) === this.selectedCentroIdC()
+      asId(p.cliente_id) === asId(empresa._id) && asId(p.centro_costo_id) === centroId
     );
   }
 
-  // Solicitudes consumidor — divididas por contexto y filtradas por estado
+  // Solicitudes consumidor — '' = Ninguno, 'todos' = Todos, id = específico
   protected solicitudesDeEmpresa = computed(() => {
     const estado = this.filtroEstado();
     const sols = this.solicitudesService.solicitudes()
-      .filter(s => !s.centro_id && !s.proyecto_id);
+      .filter(s => !s.centro_costo_id && !s.proyecto_id);
     return estado ? sols.filter(s => s.estado === estado) : sols;
   });
 
   protected solicitudesDeCentro = computed(() => {
     const centroId = this.selectedCentroIdC();
-    if (!centroId) return [];
+    if (!centroId) return []; // Ninguno → no mostrar sección
     const estado = this.filtroEstado();
-    const sols = this.solicitudesService.solicitudes()
-      .filter(s => s.centro_id === centroId && !s.proyecto_id);
+    const all = this.solicitudesService.solicitudes();
+    const sols = centroId === 'todos'
+      ? all.filter(s => s.centro_costo_id && !s.proyecto_id)
+      : all.filter(s => s.centro_costo_id === centroId && !s.proyecto_id);
     return estado ? sols.filter(s => s.estado === estado) : sols;
   });
 
   protected solicitudesDeProyecto = computed(() => {
+    const centroId  = this.selectedCentroIdC();
     const proyectoId = this.selectedProyectoIdC();
-    if (!proyectoId) return [];
+    if (!centroId || !proyectoId) return []; // Ninguno en cualquiera → no mostrar
     const estado = this.filtroEstado();
-    const sols = this.solicitudesService.solicitudes()
-      .filter(s => s.proyecto_id === proyectoId);
+    const all = this.solicitudesService.solicitudes();
+    let sols: Solicitud[];
+    if (proyectoId === 'todos') {
+      if (centroId === 'todos') {
+        sols = all.filter(s => !!s.proyecto_id);
+      } else {
+        const ids = this.proyectosService.proyectos()
+          .filter(p => asId(p.centro_costo_id) === centroId)
+          .map(p => asId(p._id));
+        sols = all.filter(s => s.proyecto_id && ids.includes(s.proyecto_id));
+      }
+    } else {
+      sols = all.filter(s => s.proyecto_id === proyectoId);
+    }
     return estado ? sols.filter(s => s.estado === estado) : sols;
   });
 
-  // Solicitudes admin
-  protected solicitudesAdmin = computed(() => this.solicitudesService.solicitudes());
+  // Solicitudes admin — '' = Ninguno, 'todos' = Todos, id = contexto específico
+  protected solicitudesAdmin = computed(() => {
+    const sols = this.solicitudesService.solicitudes();
+    const centro   = this.selectedCentroId;
+    const proyecto = this.selectedProyectoId;
+
+    if (!centro) {
+      // Ninguno centro → solo empresa-level
+      return sols.filter(s => !s.centro_costo_id && !s.proyecto_id);
+    }
+    if (centro === 'todos') {
+      if (!proyecto) {
+        // Todos centros, Ninguno proyecto → centros sin proyectos
+        return sols.filter(s => s.centro_costo_id && !s.proyecto_id);
+      }
+      // Todos centros, Todos proyectos → todo
+      return sols;
+    }
+    // Centro específico
+    if (!proyecto) {
+      return sols.filter(s => s.centro_costo_id === centro && !s.proyecto_id);
+    }
+    // Todos proyectos → todo lo del centro
+    return sols.filter(s => s.centro_costo_id === centro);
+  });
 
   // ─── getters para nombres ─────────────────────────────────────────────────
 
@@ -178,13 +226,29 @@ export class DocumentosPageComponent implements OnInit {
 
   onCentroChange(): void {
     this.selectedProyectoId = '';
-    this.service.cargar('centro', this.empresaNombre, this.centroNombre);
-    this.solicitudesService.cargar(this.selectedEmpresaId, this.selectedCentroId || undefined);
+    const centroId = (this.selectedCentroId && this.selectedCentroId !== 'todos') ? this.selectedCentroId : undefined;
+    if (this.selectedCentroId === 'todos') {
+      this.service.cargar('empresa', this.empresaNombre);
+      this.service.cargarTodosCentros(this.empresaNombre ?? '', this.centrosFiltrados);
+    } else if (centroId) {
+      this.service.documentosPorCentro.set([]);
+      this.service.cargar('centro', this.empresaNombre, this.centroNombre);
+    } else {
+      this.service.documentosPorCentro.set([]);
+      this.service.cargar('empresa', this.empresaNombre);
+    }
+    this.solicitudesService.cargar(this.selectedEmpresaId, centroId);
   }
 
   onProyectoChange(): void {
-    this.service.cargar('proyecto', this.empresaNombre, this.centroNombre, this.proyectoNombre);
-    this.solicitudesService.cargar(this.selectedEmpresaId, this.selectedCentroId || undefined, this.selectedProyectoId || undefined);
+    const centroId   = (this.selectedCentroId   && this.selectedCentroId   !== 'todos') ? this.selectedCentroId   : undefined;
+    const proyectoId = (this.selectedProyectoId && this.selectedProyectoId !== 'todos') ? this.selectedProyectoId : undefined;
+    if (proyectoId) {
+      this.service.cargar('proyecto', this.empresaNombre, this.centroNombre, this.proyectoNombre);
+    } else {
+      this.service.cargar('centro', this.empresaNombre, this.centroNombre);
+    }
+    this.solicitudesService.cargar(this.selectedEmpresaId, centroId, proyectoId);
   }
 
   // ─── consumidor handlers ──────────────────────────────────────────────────
@@ -193,23 +257,31 @@ export class DocumentosPageComponent implements OnInit {
     this.selectedCentroIdC.set(id);
     this.selectedProyectoIdC.set('');
     const empresa = this.consumidorContext.empresaSeleccionada();
-    if (id) {
+    if (id === 'todos') {
+      this.service.cargar('empresa', this.empresaNombreC);
+      this.service.cargarTodosCentros(this.empresaNombreC ?? '', this.centrosFiltradosC);
+    } else if (id) {
+      this.service.documentosPorCentro.set([]);
       this.service.cargar('centro', this.empresaNombreC, this.centroNombreC);
+    } else {
+      this.service.documentosPorCentro.set([]);
+      this.service.cargar('empresa', this.empresaNombreC);
     }
-    if (empresa) {
-      this.solicitudesService.cargar(empresa._id);
-    }
+    if (empresa) this.solicitudesService.cargar(empresa._id);
   }
 
   onProyectoChangeC(id: string): void {
     this.selectedProyectoIdC.set(id);
     const empresa = this.consumidorContext.empresaSeleccionada();
-    if (id) {
+    const centroId = this.selectedCentroIdC();
+    if (id && id !== 'todos') {
       this.service.cargar('proyecto', this.empresaNombreC, this.centroNombreC, this.proyectoNombreC);
+    } else if (centroId && centroId !== 'todos') {
+      this.service.cargar('centro', this.empresaNombreC, this.centroNombreC);
+    } else {
+      this.service.cargar('empresa', this.empresaNombreC);
     }
-    if (empresa) {
-      this.solicitudesService.cargar(empresa._id);
-    }
+    if (empresa) this.solicitudesService.cargar(empresa._id);
   }
 
   // ─── upload panels ────────────────────────────────────────────────────────
@@ -244,8 +316,8 @@ export class DocumentosPageComponent implements OnInit {
       esConsumidor ? this.empresaNombreC : this.empresaNombre,
       esConsumidor ? this.centroNombreC  : this.centroNombre,
       esConsumidor ? this.proyectoNombreC : this.proyectoNombre,
-      esConsumidor ? this.selectedCentroIdC() || undefined : this.selectedCentroId || undefined,
-      esConsumidor ? this.selectedProyectoIdC() || undefined : this.selectedProyectoId || undefined,
+      esConsumidor ? this.selectedCentroIdC() || undefined : (this.selectedCentroId && this.selectedCentroId !== 'todos') ? this.selectedCentroId : undefined,
+      esConsumidor ? this.selectedProyectoIdC() || undefined : (this.selectedProyectoId && this.selectedProyectoId !== 'todos') ? this.selectedProyectoId : undefined,
       p.nombreInput || undefined,
       p.categoriaInput || undefined,
     );
@@ -301,9 +373,9 @@ export class DocumentosPageComponent implements OnInit {
     this.solicitudesService.crear(
       {
         ...this.solicitudForm,
-        empresa_id:  this.selectedEmpresaId,
-        centro_id:   this.selectedCentroId   || undefined,
-        proyecto_id: this.selectedProyectoId || undefined,
+        empresa_id:      this.selectedEmpresaId,
+        centro_costo_id: (this.selectedCentroId   && this.selectedCentroId   !== 'todos') ? this.selectedCentroId   : undefined,
+        proyecto_id:     (this.selectedProyectoId && this.selectedProyectoId !== 'todos') ? this.selectedProyectoId : undefined,
       },
       () => this.showSolicitudForm.set(false),
     );
@@ -314,6 +386,29 @@ export class DocumentosPageComponent implements OnInit {
     this.solicitudEstadoEdit.set(null);
   }
 
+  abrirEditarSolicitud(s: Solicitud): void {
+    this.solicitudEditando.set(s._id);
+    this.solicitudEstadoEdit.set(null); // cierra panel de estado si estaba abierto
+    this.solicitudEditForm = { nombre: s.nombre, tipo: s.tipo, descripcion: s.descripcion ?? '' };
+    this.solicitudesService.clearStatus();
+  }
+
+  abrirCambioEstado(id: string): void {
+    this.solicitudEstadoEdit.set(id);
+    this.solicitudEditando.set(null); // cierra panel de edición si estaba abierto
+  }
+
+  guardarEdicionSolicitud(): void {
+    const id = this.solicitudEditando();
+    if (!id) return;
+    this.solicitudesService.actualizar(id, this.solicitudEditForm);
+    this.solicitudEditando.set(null);
+  }
+
+  eliminarSolicitud(id: string): void {
+    this.solicitudesService.eliminarSolicitud(id);
+  }
+
   // Estados posibles a los que puede transicionar una solicitud
   estadosDestino(actual: EstadoSolicitud): EstadoDestino[] {
     const map: Record<EstadoSolicitud, EstadoDestino[]> = {
@@ -321,19 +416,26 @@ export class DocumentosPageComponent implements OnInit {
         { valor: 'revision',  label: 'Poner en revisión', colorBg: '#dbeafe', colorText: '#1e40af' },
         { valor: 'aprobado',  label: 'Aprobar',           colorBg: '#dcfce7', colorText: '#14532d' },
         { valor: 'rechazado', label: 'Rechazar',          colorBg: '#fee2e2', colorText: '#7f1d1d' },
+        { valor: 'vencido',   label: 'Marcar vencido',    colorBg: '#f3f4f6', colorText: '#374151' },
       ],
       revision: [
         { valor: 'aprobado',  label: 'Aprobar',           colorBg: '#dcfce7', colorText: '#14532d' },
         { valor: 'rechazado', label: 'Rechazar',          colorBg: '#fee2e2', colorText: '#7f1d1d' },
         { valor: 'pendiente', label: 'Devolver',          colorBg: '#fef3c7', colorText: '#92400e' },
+        { valor: 'vencido',   label: 'Marcar vencido',    colorBg: '#f3f4f6', colorText: '#374151' },
       ],
       aprobado: [
         { valor: 'pendiente', label: 'Reabrir',           colorBg: '#fef3c7', colorText: '#92400e' },
         { valor: 'rechazado', label: 'Rechazar',          colorBg: '#fee2e2', colorText: '#7f1d1d' },
+        { valor: 'vencido',   label: 'Marcar vencido',    colorBg: '#f3f4f6', colorText: '#374151' },
       ],
       rechazado: [
         { valor: 'pendiente', label: 'Reabrir',           colorBg: '#fef3c7', colorText: '#92400e' },
         { valor: 'aprobado',  label: 'Aprobar',           colorBg: '#dcfce7', colorText: '#14532d' },
+        { valor: 'vencido',   label: 'Marcar vencido',    colorBg: '#f3f4f6', colorText: '#374151' },
+      ],
+      vencido: [
+        { valor: 'pendiente', label: 'Reabrir',           colorBg: '#fef3c7', colorText: '#92400e' },
       ],
     };
     return map[actual] ?? [];
@@ -345,9 +447,9 @@ export class DocumentosPageComponent implements OnInit {
       const p = this.proyectosService.proyectos().find(x => x._id === s.proyecto_id);
       return `Proyecto: ${p?.nombre ?? s.proyecto_id}`;
     }
-    if (s.centro_id) {
-      const c = this.centrosService.centros().find(x => x._id === s.centro_id);
-      return `Centro: ${c?.nombre ?? s.centro_id}`;
+    if (s.centro_costo_id) {
+      const c = this.centrosService.centros().find(x => x._id === s.centro_costo_id);
+      return `Centro: ${c?.nombre ?? s.centro_costo_id}`;
     }
     return 'Empresa';
   }
@@ -380,6 +482,7 @@ export class DocumentosPageComponent implements OnInit {
       revision:  { color: '#1e40af', bg: '#dbeafe' },
       aprobado:  { color: '#14532d', bg: '#dcfce7' },
       rechazado: { color: '#7f1d1d', bg: '#fee2e2' },
+      vencido:   { color: '#374151', bg: '#f3f4f6' },
     };
     return map[estado];
   }
@@ -390,6 +493,7 @@ export class DocumentosPageComponent implements OnInit {
       revision:  'En revisión',
       aprobado:  'Aprobado',
       rechazado: 'Rechazado',
+      vencido:   'Vencido',
     };
     return map[estado];
   }

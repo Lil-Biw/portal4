@@ -13,4 +13,5 @@ export class ClientesListComponent {
   @Input() seleccionadoId: string | null = null;
   @Output() editado   = new EventEmitter<Cliente>();
   @Output() eliminado = new EventEmitter<string>();
+  @Output() verFicha  = new EventEmitter<Cliente>();
 }

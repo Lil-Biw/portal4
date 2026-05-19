@@ -3,7 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { ApiService } from '../../core/services/api.service';
 import { CategoriaDocumento } from '../documentos/documentos.service';
 
-export type EstadoSolicitud = 'pendiente' | 'revision' | 'aprobado' | 'rechazado';
+export type EstadoSolicitud = 'pendiente' | 'revision' | 'aprobado' | 'rechazado' | 'vencido';
 
 export interface Solicitud {
   _id: string;
@@ -11,7 +11,7 @@ export interface Solicitud {
   tipo: CategoriaDocumento;
   descripcion?: string;
   empresa_id: string;
-  centro_id?: string;
+  centro_costo_id?: string;
   proyecto_id?: string;
   estado: EstadoSolicitud;
   archivo_nombre?: string;
@@ -24,8 +24,14 @@ export interface CreateSolicitudDto {
   tipo: CategoriaDocumento;
   descripcion?: string;
   empresa_id: string;
-  centro_id?: string;
+  centro_costo_id?: string;
   proyecto_id?: string;
+}
+
+export interface UpdateSolicitudDto {
+  nombre?: string;
+  tipo?: CategoriaDocumento;
+  descripcion?: string;
 }
 
 export interface SolicitudStatus {
@@ -48,7 +54,7 @@ export class SolicitudesService {
     if (!empresaId) { this.solicitudes.set([]); return; }
     this.loading.set(true);
     const params: Record<string, string> = { empresa_id: empresaId };
-    if (centroId)   params['centro_id']   = centroId;
+    if (centroId)   params['centro_costo_id'] = centroId;
     if (proyectoId) params['proyecto_id'] = proyectoId;
     const qs = new URLSearchParams(params).toString();
     this.http.get<Solicitud[]>(`${this.api.url('/solicitudes')}?${qs}`).subscribe({
@@ -66,6 +72,32 @@ export class SolicitudesService {
       },
       error: (err) => {
         const msg = err.error?.message ?? 'Error al crear la solicitud.';
+        this.status.set({ type: 'error', text: Array.isArray(msg) ? msg.join(', ') : msg });
+      },
+    });
+  }
+
+  actualizar(id: string, dto: UpdateSolicitudDto): void {
+    this.http.patch<Solicitud>(this.api.url(`/solicitudes/${id}`), dto).subscribe({
+      next: (actualizada) => {
+        this.solicitudes.update(prev => prev.map(s => s._id === id ? actualizada : s));
+        this.status.set({ type: 'ok', text: 'Solicitud actualizada.' });
+      },
+      error: (err) => {
+        const msg = err.error?.message ?? 'Error al actualizar la solicitud.';
+        this.status.set({ type: 'error', text: Array.isArray(msg) ? msg.join(', ') : msg });
+      },
+    });
+  }
+
+  eliminarSolicitud(id: string): void {
+    this.http.delete(this.api.url(`/solicitudes/${id}`)).subscribe({
+      next: () => {
+        this.solicitudes.update(prev => prev.filter(s => s._id !== id));
+        this.status.set({ type: 'ok', text: 'Solicitud eliminada.' });
+      },
+      error: (err) => {
+        const msg = err.error?.message ?? 'Error al eliminar la solicitud.';
         this.status.set({ type: 'error', text: Array.isArray(msg) ? msg.join(', ') : msg });
       },
     });
@@ -109,6 +141,7 @@ export class SolicitudesService {
     const map: Record<EstadoSolicitud, string> = {
       pendiente: 'Pendiente', revision: 'En revisión',
       aprobado: 'Aprobado',   rechazado: 'Rechazado',
+      vencido: 'Vencido',
     };
     return map[estado];
   }

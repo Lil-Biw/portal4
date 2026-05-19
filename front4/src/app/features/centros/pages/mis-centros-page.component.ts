@@ -1,24 +1,133 @@
-import { Component, OnInit, inject } from '@angular/core';
-import { NgFor, NgIf } from '@angular/common';
+import { Component, OnInit, OnDestroy, inject, computed, signal } from '@angular/core';
+import { NgIf } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { CentrosService } from '../centros.service';
+import { ConsumidorContextService } from '../../../profile/consumidor-context.service';
+import { SolicitudesService } from '../../solicitudes/solicitudes.service';
+import { SpiderChartComponent } from '../../../shared/components/spider-chart/spider-chart.component';
+import { StatChipComponent, ChipVariant } from '../../../shared/components/stat-chip/stat-chip.component';
+import { CentroCosto } from '../../../shared/models/centro.model';
+import { asId } from '../../../shared/utils';
 
 @Component({
   selector: 'app-mis-centros-page',
   standalone: true,
-  imports: [NgFor, NgIf],
-  template: `
-    <h2 style="margin:0 0 1.5rem;font-size:1.5rem;font-weight:700;color:#1f2937">Centros de costos</h2>
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1rem">
-      <div class="card" *ngFor="let c of service.centros()">
-        <h3 style="margin:0 0 .5rem;font-size:1rem;font-weight:700;color:#1f2937">{{ c.nombre }}</h3>
-        <p style="margin:0 0 .25rem;font-size:.85rem;color:#6b7280">Cód. {{ c.codigo }}</p>
-        <p *ngIf="c.ubicacion_ciudad" style="margin:0;font-size:.82rem;color:#9ca3af">{{ c.ubicacion_ciudad }}</p>
-      </div>
-      <p *ngIf="service.centros().length === 0" class="empty">Sin centros asignados.</p>
-    </div>
-  `,
+  imports: [NgIf, FormsModule, SpiderChartComponent, StatChipComponent],
+  templateUrl: './mis-centros-page.component.html',
+  styles: [`
+    .centro-card {
+      cursor: pointer;
+      transition: box-shadow .15s, border-color .15s;
+      border: 1px solid rgba(34,33,33,.12);
+    }
+    .centro-card:hover {
+      box-shadow: 0 4px 16px rgba(0,149,214,.18);
+      border-color: rgba(0,149,214,.35);
+    }
+  `],
 })
-export class MisCentrosPageComponent implements OnInit {
-  protected readonly service = inject(CentrosService);
-  ngOnInit(): void { this.service.cargar(); }
+export class MisCentrosPageComponent implements OnInit, OnDestroy {
+  private  readonly consumidorContext  = inject(ConsumidorContextService);
+  protected readonly service           = inject(CentrosService);
+  protected readonly solicitudesService = inject(SolicitudesService);
+  private  readonly sanitizer          = inject(DomSanitizer);
+
+  get empresa()        { return this.consumidorContext.empresaSeleccionada(); }
+  get centroActivo()   { return this.consumidorContext.centroSeleccionado(); }
+
+  protected centros = computed(() => {
+    const emp = this.consumidorContext.empresaSeleccionada();
+    if (!emp) return [];
+    return this.service.centros().filter(c => asId(c.cliente_id) === asId(emp._id));
+  });
+
+  protected mostrarBuscar = signal(false);
+  protected busqueda       = signal('');
+
+  protected centrosFiltrados = computed(() => {
+    const q = this.busqueda().toLowerCase().trim();
+    if (!q) return this.centros();
+    return this.centros().filter(c =>
+      c.nombre.toLowerCase().includes(q) ||
+      c.codigo.toLowerCase().includes(q) ||
+      (c.ubicacion_ciudad ?? '').toLowerCase().includes(q) ||
+      (c.ubicacion_region ?? '').toLowerCase().includes(q)
+    );
+  });
+
+  toggleBuscar(): void {
+    this.mostrarBuscar.update(v => !v);
+    if (!this.mostrarBuscar()) this.busqueda.set('');
+  }
+
+  // ── Spider chart data (mock por ahora) ──────────────────────────────────
+  readonly spiderLabels = [
+    'RRHH y\ndocumentación',
+    'Normativa',
+    'Suministro',
+    'Seguridad\nOperacional',
+    'Continuidad\nOperacional',
+  ];
+  readonly spiderValues = [72, 58, 84, 67, 75];
+
+  // ── Score documental del centro ─────────────────────────────────────────
+  protected scoreDelCentro = computed(() => {
+    const centro = this.consumidorContext.centroSeleccionado();
+    if (!centro) return { pct: 0, aprobados: 0, total: 0 };
+    const sols = this.solicitudesService.solicitudes()
+      .filter(s => s.centro_costo_id === asId(centro._id));
+    if (sols.length === 0) return { pct: 0, aprobados: 0, total: 0 };
+    const aprobados = sols.filter(s => s.estado === 'aprobado').length;
+    return {
+      pct: Math.round((aprobados / sols.length) * 100),
+      aprobados,
+      total: sols.length,
+    };
+  });
+
+  protected scoreChipVariant = computed((): ChipVariant => {
+    const pct = this.scoreDelCentro().pct;
+    if (pct >= 80) return 'ok';
+    if (pct >= 50) return 'warning';
+    return 'danger';
+  });
+
+  protected scoreChipLabel = computed((): string => {
+    const pct = this.scoreDelCentro().pct;
+    if (pct >= 80) return 'Bueno';
+    if (pct >= 50) return 'Regular';
+    return 'Bajo';
+  });
+
+  // ── Map URL ─────────────────────────────────────────────────────────────
+  protected mapUrl = computed((): SafeResourceUrl => {
+    const c = this.consumidorContext.centroSeleccionado();
+    if (!c) return '';
+    const parts = [c.ubicacion_direccion, c.ubicacion_ciudad, c.ubicacion_region, c.ubicacion_pais]
+      .filter(Boolean).join(', ');
+    const q = encodeURIComponent(parts || c.nombre);
+    return this.sanitizer.bypassSecurityTrustResourceUrl(
+      `https://maps.google.com/maps?q=${q}&output=embed&z=14`
+    );
+  });
+
+  ngOnInit(): void {
+    this.service.cargar();
+    const emp = this.empresa;
+    if (emp) this.solicitudesService.cargar(emp._id);
+  }
+
+  // Limpia el centro al salir de esta página
+  ngOnDestroy(): void {
+    this.consumidorContext.seleccionarCentro(null);
+  }
+
+  seleccionarCentro(centro: CentroCosto): void {
+    this.consumidorContext.seleccionarCentro(centro);
+  }
+
+  volver(): void {
+    this.consumidorContext.seleccionarCentro(null);
+  }
 }

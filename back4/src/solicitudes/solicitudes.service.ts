@@ -4,7 +4,7 @@ import { Model, Types } from 'mongoose';
 import * as fs from 'fs';
 import * as path from 'path';
 import { SolicitudDocument } from './solicitudes.schema';
-import { CreateSolicitudDto, CambiarEstadoDto } from './solicitudes.dto';
+import { CreateSolicitudDto, UpdateSolicitudDto, CambiarEstadoDto } from './solicitudes.dto';
 
 @Injectable()
 export class SolicitudesService {
@@ -17,17 +17,35 @@ export class SolicitudesService {
       ...dto,
       empresa_id: new Types.ObjectId(dto.empresa_id),
     };
-    if (dto.centro_id)   doc.centro_id   = new Types.ObjectId(dto.centro_id);
-    if (dto.proyecto_id) doc.proyecto_id = new Types.ObjectId(dto.proyecto_id);
+    if (dto.centro_costo_id) doc.centro_costo_id = new Types.ObjectId(dto.centro_costo_id);
+    if (dto.proyecto_id)     doc.proyecto_id     = new Types.ObjectId(dto.proyecto_id);
     return new this.solicitudModel(doc).save();
   }
 
   async findByContexto(empresaId: string, centroId?: string, proyectoId?: string, estado?: string) {
     const filter: any = { empresa_id: new Types.ObjectId(empresaId) };
-    if (centroId)   filter.centro_id   = new Types.ObjectId(centroId);
-    if (proyectoId) filter.proyecto_id = new Types.ObjectId(proyectoId);
+    if (centroId)   filter.centro_costo_id = new Types.ObjectId(centroId);
+    if (proyectoId) filter.proyecto_id     = new Types.ObjectId(proyectoId);
     if (estado)     filter.estado      = estado;
     return this.solicitudModel.find(filter).sort({ creado_en: -1 }).lean();
+  }
+
+  async update(id: string, dto: UpdateSolicitudDto) {
+    const solicitud = await this.solicitudModel
+      .findByIdAndUpdate(id, { $set: dto }, { new: true })
+      .lean();
+    if (!solicitud) throw new NotFoundException(`Solicitud ${id} no encontrada`);
+    return solicitud;
+  }
+
+  async remove(id: string) {
+    const solicitud = await this.solicitudModel.findById(id).lean();
+    if (!solicitud) throw new NotFoundException(`Solicitud ${id} no encontrada`);
+    // Eliminar archivos adjuntos si existen
+    const dir = path.join(process.cwd(), 'uploads', 'solicitudes', id);
+    if (fs.existsSync(dir)) fs.rmSync(dir, { recursive: true, force: true });
+    await this.solicitudModel.findByIdAndDelete(id);
+    return { deleted: true };
   }
 
   async cambiarEstado(id: string, dto: CambiarEstadoDto) {
@@ -42,7 +60,7 @@ export class SolicitudesService {
     const solicitud = await this.solicitudModel.findById(id).lean();
     if (!solicitud) throw new NotFoundException(`Solicitud ${id} no encontrada`);
 
-    if (!['pendiente', 'rechazado'].includes(solicitud.estado)) {
+    if (!['pendiente', 'rechazado', 'vencido'].includes(solicitud.estado)) {
       throw new BadRequestException(`No se puede adjuntar un archivo a una solicitud en estado "${solicitud.estado}"`);
     }
 

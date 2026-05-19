@@ -1,6 +1,7 @@
 import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { NgIf } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { CentrosService } from '../centros.service';
 import { ClientesService } from '../../clientes/clientes.service';
 import { StatusBannerComponent } from '../../../shared/components/status-banner/status-banner.component';
@@ -8,6 +9,8 @@ import { CentroFormComponent } from '../components/centro-form/centro-form.compo
 import { CentrosListComponent } from '../components/centros-list/centros-list.component';
 import { CentroCosto, CreateCentroDto } from '../../../shared/models/centro.model';
 import { asId } from '../../../shared/utils';
+import { ProfileService } from '../../../profile/profile.service';
+import { ConsumidorContextService } from '../../../profile/consumidor-context.service';
 
 type ModalMode = 'crear' | 'editar' | 'buscar' | null;
 
@@ -77,8 +80,11 @@ type ModalMode = 'crear' | 'editar' | 'buscar' | null;
   `],
 })
 export class CentrosPageComponent implements OnInit {
-  protected readonly service        = inject(CentrosService);
-  protected readonly clientesService = inject(ClientesService);
+  protected readonly service          = inject(CentrosService);
+  protected readonly clientesService  = inject(ClientesService);
+  private   readonly profileService   = inject(ProfileService);
+  private   readonly consumidorContext = inject(ConsumidorContextService);
+  private   readonly router           = inject(Router);
 
   protected modal    = signal<ModalMode>(null);
   protected busqueda = signal('');
@@ -131,6 +137,16 @@ export class CentrosPageComponent implements OnInit {
   }
 
   protected eliminar(id: string): void { this.service.eliminar(id); }
+
+  protected irACentro(centro: CentroCosto): void {
+    const empresa = this.clientesService.clientes()
+      .find(c => asId(c._id) === asId(centro.cliente_id));
+    if (!empresa) return; // no navegar si la empresa no está cargada
+    this.consumidorContext.seleccionar(empresa);
+    this.consumidorContext.seleccionarCentro(centro);
+    this.profileService.setMode('consumidor');
+    this.router.navigate(['/mis-centros']);
+  }
 
   protected editarDesdeBuscar(centro: CentroCosto): void {
     this.service.seleccionar(centro);

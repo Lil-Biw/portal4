@@ -1,14 +1,20 @@
-import { IsString, IsOptional, IsMongoId, IsEnum, MinLength } from 'class-validator';
+import { IsString, IsOptional, IsMongoId, IsEnum, MinLength, MaxLength } from 'class-validator';
 
 export class CreateSolicitudDto {
   @IsString() @MinLength(2) nombre: string;
-  @IsString() tipo: string;
+  @IsString() @MaxLength(100) tipo: string;
   @IsString() @IsOptional() descripcion?: string;
   @IsMongoId() empresa_id: string;
-  @IsMongoId() @IsOptional() centro_id?: string;
+  @IsMongoId() @IsOptional() centro_costo_id?: string;
   @IsMongoId() @IsOptional() proyecto_id?: string;
 }
 
+export class UpdateSolicitudDto {
+  @IsString() @MinLength(2) @IsOptional() nombre?: string;
+  @IsString() @MaxLength(100) @IsOptional() tipo?: string;
+  @IsString() @IsOptional() descripcion?: string;
+}
+
 export class CambiarEstadoDto {
-  @IsEnum(['pendiente', 'revision', 'aprobado', 'rechazado']) estado: string;
+  @IsEnum(['pendiente', 'revision', 'aprobado', 'rechazado', 'vencido']) estado: string;
 }

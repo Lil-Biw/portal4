@@ -1,12 +1,12 @@
 import {
-  Controller, Get, Post, Put,
+  Controller, Get, Post, Put, Patch, Delete,
   Param, Body, Query,
   UseInterceptors, UploadedFile, BadRequestException,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
 import { SolicitudesService } from './solicitudes.service';
-import { CreateSolicitudDto, CambiarEstadoDto } from './solicitudes.dto';
+import { CreateSolicitudDto, UpdateSolicitudDto, CambiarEstadoDto } from './solicitudes.dto';
 
 @Controller('solicitudes')
 export class SolicitudesController {
@@ -20,12 +20,22 @@ export class SolicitudesController {
   @Get()
   findAll(
     @Query('empresa_id') empresa_id: string,
-    @Query('centro_id')  centro_id?: string,
+    @Query('centro_costo_id') centro_costo_id?: string,
     @Query('proyecto_id') proyecto_id?: string,
     @Query('estado') estado?: string,
   ) {
     if (!empresa_id) throw new BadRequestException('empresa_id es requerido');
-    return this.solicitudesService.findByContexto(empresa_id, centro_id, proyecto_id, estado);
+    return this.solicitudesService.findByContexto(empresa_id, centro_costo_id, proyecto_id, estado);
+  }
+
+  @Patch(':id')
+  update(@Param('id') id: string, @Body() dto: UpdateSolicitudDto) {
+    return this.solicitudesService.update(id, dto);
+  }
+
+  @Delete(':id')
+  remove(@Param('id') id: string) {
+    return this.solicitudesService.remove(id);
   }
 
   @Put(':id/estado')

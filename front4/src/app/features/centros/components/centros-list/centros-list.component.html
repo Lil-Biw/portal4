@@ -1,7 +1,7 @@
-<p *ngIf="grupos.length === 0" class="empty">Sin centros de costos registrados.</p>
+<p *ngIf="grupos().length === 0" class="empty">Sin centros de costos registrados.</p>
 
 <div class="grupos">
-  <div *ngFor="let g of grupos" class="grupo-empresa">
+  <div *ngFor="let g of grupos()" class="grupo-empresa">
 
     <!-- Cabecera empresa -->
     <div class="grupo-header">
@@ -23,6 +23,7 @@
           </span>
         </div>
         <div class="card-actions">
+          <button class="btn-ghost btn-sm" (click)="verCentro.emit(c)">Ver centro</button>
           <button class="btn-ghost btn-sm" (click)="editado.emit(c)">Editar</button>
           <button class="btn-danger"       (click)="eliminado.emit(c._id)">Eliminar</button>
         </div>

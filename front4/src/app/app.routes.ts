@@ -8,6 +8,11 @@ export const routes: Routes = [
     children: [
       // ── Dashboard ─────────────────────────────────────────────────
       {
+        path: 'inicio',
+        loadComponent: () =>
+          import('./features/dashboard/pages/inicio-page.component').then(m => m.InicioPageComponent),
+      },
+      {
         path: 'mi-ficha',
         loadComponent: () =>
           import('./features/dashboard/pages/mi-ficha-page.component').then(m => m.MiFichaPageComponent),
@@ -79,7 +84,7 @@ export const routes: Routes = [
           import('./features/ayuda/pages/ayuda-page.component').then(m => m.AyudaPageComponent),
       },
 
-      { path: '', redirectTo: 'mi-ficha', pathMatch: 'full' },
+      { path: '', redirectTo: 'inicio', pathMatch: 'full' },
     ],
   },
   { path: '**', redirectTo: '' },
