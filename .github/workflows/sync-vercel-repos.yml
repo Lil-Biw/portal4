@@ -16,11 +16,12 @@ jobs:
       - name: Push front4/ a portal4front4
         uses: cpina/github-action-push-to-another-repository@main
         env:
-          API_TOKEN_GITHUB: ${{ secrets.SYNC_TOKEN }}
+          API_TOKEN_GITHUB: ${{ secrets.SYNC_VERCEL }}
         with:
           source-directory: front4
           destination-github-username: Lil-Biw
           destination-repository-name: portal4front4
+          user-email: andresgalaz10@gmail.com
           target-branch: main
           commit-message: "sync: ${{ github.event.head_commit.message }}"
 
@@ -35,10 +36,11 @@ jobs:
       - name: Push back4/ a portal4back4
         uses: cpina/github-action-push-to-another-repository@main
         env:
-          API_TOKEN_GITHUB: ${{ secrets.SYNC_TOKEN }}
+          API_TOKEN_GITHUB: ${{ secrets.SYNC_VERCEL }}
         with:
           source-directory: back4
           destination-github-username: Lil-Biw
           destination-repository-name: portal4back4
+          user-email: andresgalaz10@gmail.com
           target-branch: main
           commit-message: "sync: ${{ github.event.head_commit.message }}"
