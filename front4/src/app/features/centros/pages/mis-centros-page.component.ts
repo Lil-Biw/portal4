@@ -5,6 +5,7 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { CentrosService } from '../centros.service';
 import { ConsumidorContextService } from '../../../profile/consumidor-context.service';
 import { SolicitudesService } from '../../solicitudes/solicitudes.service';
+import { DocumentosService } from '../../documentos/documentos.service';
 import { SpiderChartComponent } from '../../../shared/components/spider-chart/spider-chart.component';
 import { StatChipComponent, ChipVariant } from '../../../shared/components/stat-chip/stat-chip.component';
 import { CentroCosto } from '../../../shared/models/centro.model';
@@ -31,6 +32,7 @@ export class MisCentrosPageComponent implements OnInit, OnDestroy {
   private  readonly consumidorContext  = inject(ConsumidorContextService);
   protected readonly service           = inject(CentrosService);
   protected readonly solicitudesService = inject(SolicitudesService);
+  protected readonly documentosService  = inject(DocumentosService);
   private  readonly sanitizer          = inject(DomSanitizer);
 
   get empresa()        { return this.consumidorContext.empresaSeleccionada(); }
@@ -90,6 +92,24 @@ export class MisCentrosPageComponent implements OnInit, OnDestroy {
     };
   });
 
+  protected solicitudesDelCentro = computed(() => {
+    const centro = this.consumidorContext.centroSeleccionado();
+    if (!centro) return [];
+    return this.solicitudesService.solicitudes()
+      .filter(s => asId(s.centro_costo_id) === asId(centro._id) && !s.proyecto_id);
+  });
+
+  estadoStyle(estado: string): string {
+    const map: Record<string, string> = {
+      pendiente: 'background:#fef3c7;color:#b45309',
+      revision:  'background:#dbeafe;color:#1e40af',
+      aprobado:  'background:#dcfce7;color:#15803d',
+      rechazado: 'background:#fee2e2;color:#dc2626',
+      vencido:   'background:#f3f4f6;color:#374151',
+    };
+    return map[estado] ?? 'background:#f3f4f6;color:#374151';
+  }
+
   protected scoreChipVariant = computed((): ChipVariant => {
     const pct = this.scoreDelCentro().pct;
     if (pct >= 80) return 'ok';
@@ -129,6 +149,8 @@ export class MisCentrosPageComponent implements OnInit, OnDestroy {
 
   seleccionarCentro(centro: CentroCosto): void {
     this.consumidorContext.seleccionarCentro(centro);
+    const emp = this.empresa;
+    if (emp) this.documentosService.cargar('centro', emp.razon_social, centro.nombre);
   }
 
   volver(): void {

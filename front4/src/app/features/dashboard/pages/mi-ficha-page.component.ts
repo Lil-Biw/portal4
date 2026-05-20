@@ -4,6 +4,7 @@ import { ConsumidorContextService } from '../../../profile/consumidor-context.se
 import { SolicitudesService } from '../../solicitudes/solicitudes.service';
 import { CentrosService } from '../../centros/centros.service';
 import { ProyectosService } from '../../proyectos/proyectos.service';
+import { MantencionesService } from '../../mantenciones/mantenciones.service';
 import { StatChipComponent, ChipVariant } from '../../../shared/components/stat-chip/stat-chip.component';
 import { SpiderChartComponent } from '../../../shared/components/spider-chart/spider-chart.component';
 import { CentroCosto } from '../../../shared/models/centro.model';
@@ -17,11 +18,12 @@ import { asId } from '../../../shared/utils';
   templateUrl: './mi-ficha-page.component.html',
 })
 export class MiFichaPageComponent implements OnInit {
-  private readonly consumidorContext  = inject(ConsumidorContextService);
-  private readonly solicitudesService = inject(SolicitudesService);
-  private readonly centrosService     = inject(CentrosService);
-  private readonly proyectosService   = inject(ProyectosService);
-  private readonly router             = inject(Router);
+  private readonly consumidorContext   = inject(ConsumidorContextService);
+  private readonly solicitudesService  = inject(SolicitudesService);
+  private readonly centrosService      = inject(CentrosService);
+  private readonly proyectosService    = inject(ProyectosService);
+  private readonly mantencionesService = inject(MantencionesService);
+  private readonly router              = inject(Router);
 
   protected empresa = computed(() => this.consumidorContext.empresaSeleccionada());
 
@@ -29,6 +31,25 @@ export class MiFichaPageComponent implements OnInit {
     const emp = this.consumidorContext.empresaSeleccionada();
     if (!emp) return [];
     return this.centrosService.centros().filter(c => asId(c.cliente_id) === asId(emp._id));
+  });
+
+  private centroIdsPorEmpresa = computed(() => {
+    const emp = this.consumidorContext.empresaSeleccionada();
+    if (!emp) return new Set<string>();
+    return new Set(
+      this.centrosService.centros()
+        .filter(c => asId(c.cliente_id) === asId(emp._id))
+        .map(c => asId(c._id))
+    );
+  });
+
+  protected mantencionesDeEmpresa = computed(() => {
+    const ids = this.centroIdsPorEmpresa();
+    if (ids.size === 0) return [];
+    return this.mantencionesService.mantenciones()
+      .filter(m => ids.has(asId(m.centro_costo_id)))
+      .sort((a, b) => a.fecha.localeCompare(b.fecha))
+      .slice(0, 6);
   });
 
   protected proyectosDeEmpresa = computed(() => {
@@ -89,11 +110,6 @@ export class MiFichaPageComponent implements OnInit {
   ];
   readonly spiderValues = [72, 58, 84, 67, 75];
 
-  readonly mantenciones = [
-    { titulo: 'Revisión tablero principal',  fecha: '7 may 2026',  estado: 'Completada' },
-    { titulo: 'Auditoría eléctrica anual',   fecha: '18 jun 2026', estado: 'Pendiente'  },
-  ];
-
   readonly certificados = [
     { nombre: 'Certificado ISO 9001',      vencimiento: '30 nov 2026' },
     { nombre: 'Certificado OHSAS 18001',   vencimiento: '15 ago 2026' },
@@ -102,8 +118,17 @@ export class MiFichaPageComponent implements OnInit {
   ngOnInit(): void {
     this.centrosService.cargar();
     this.proyectosService.cargar();
+    this.mantencionesService.cargar();
     const emp = this.empresa();
     if (emp) this.solicitudesService.cargar(emp._id);
+  }
+
+  protected esPasada(fecha: string): boolean {
+    return new Date(fecha) < new Date();
+  }
+
+  protected formatFechaShort(iso: string): string {
+    return new Date(iso).toLocaleDateString('es-CL', { day: '2-digit', month: 'short', year: 'numeric' });
   }
 
   // Resumen de solicitudes para un centro

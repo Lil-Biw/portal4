@@ -203,4 +203,58 @@
     </div>
 
   </div>
+
+  <!-- Documentos y Solicitudes lado a lado -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-top:1rem">
+
+    <!-- Documentos del centro -->
+    <div class="card">
+      <h3 style="margin:0 0 .75rem;font-size:.95rem;font-weight:700;color:#1f2937">Documentos del centro</h3>
+      @if (documentosService.documentosCentro().length === 0) {
+        <p style="color:#9ca3af;font-size:.85rem;margin:0">Sin documentos cargados para este centro.</p>
+      } @else {
+        <div style="display:flex;flex-direction:column;gap:.4rem">
+          @for (d of documentosService.documentosCentro(); track d.nombre) {
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:.5rem .65rem;border-radius:8px;border:1px solid rgba(34,33,33,.08)">
+              <div style="overflow:hidden">
+                <span style="display:block;font-size:.82rem;font-weight:600;color:#1f2937;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ d.nombre_display || d.nombre }}</span>
+                @if (d.categoria) {
+                  <span style="font-size:.72rem;color:#6b7280">{{ d.categoria }}</span>
+                }
+              </div>
+              <button
+                (click)="documentosService.descargar(d.url)"
+                style="background:none;border:none;cursor:pointer;color:#0095d6;font-size:.75rem;font-weight:600;flex-shrink:0;margin-left:.5rem">
+                ↓
+              </button>
+            </div>
+          }
+        </div>
+      }
+    </div>
+
+    <!-- Solicitudes del centro -->
+    <div class="card">
+      <h3 style="margin:0 0 .75rem;font-size:.95rem;font-weight:700;color:#1f2937">Solicitudes documentales</h3>
+      @if (solicitudesDelCentro().length === 0) {
+        <p style="color:#9ca3af;font-size:.85rem;margin:0">Sin solicitudes registradas para este centro.</p>
+      } @else {
+        <div style="display:flex;flex-direction:column;gap:.4rem">
+          @for (s of solicitudesDelCentro(); track s._id) {
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:.55rem .7rem;border-radius:8px;border:1px solid rgba(34,33,33,.08)">
+              <div>
+                <span style="font-size:.84rem;font-weight:600;color:#1f2937">{{ s.nombre }}</span>
+                <span style="margin-left:.5rem;font-size:.72rem;color:#6b7280">{{ s.tipo }}</span>
+              </div>
+              <span style="font-size:.7rem;font-weight:700;padding:.18rem .5rem;border-radius:999px;white-space:nowrap;flex-shrink:0;margin-left:.5rem"
+                    [style]="estadoStyle(s.estado)">
+                {{ s.estado }}
+              </span>
+            </div>
+          }
+        </div>
+      }
+    </div>
+
+  </div>
 }

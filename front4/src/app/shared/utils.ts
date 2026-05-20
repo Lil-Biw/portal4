@@ -12,6 +12,10 @@ export function asId(value: unknown): string {
   return String(value);
 }
 
+export function toDateKey(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
 export function encodeQuery(params: Record<string, unknown>): string {
   return Object.entries(params)
     .filter(([, v]) => v !== undefined && v !== '')

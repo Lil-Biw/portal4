@@ -133,27 +133,35 @@
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:.85rem">
   <div class="card">
     <h3 style="margin:0 0 .9rem;font-size:1rem;font-weight:700">Tareas pendientes</h3>
-    @for (t of tareas; track t.titulo; let last = $last) {
-      <div style="display:flex;align-items:center;justify-content:space-between;padding:.7rem 0" [style.border-bottom]="last ? 'none' : '1px solid rgba(34,33,33,.07)'">
-        <div style="display:flex;align-items:center;gap:.65rem">
-          <span style="width:8px;height:8px;border-radius:50%;flex-shrink:0" [style.background]="t.color"></span>
-          <span style="font-size:.875rem;color:#1f2937">{{ t.titulo }}</span>
+    @if (tareasReales().length === 0) {
+      <p style="font-size:.83rem;color:#9ca3af;padding:.25rem 0">Sin documentos pendientes de acción.</p>
+    } @else {
+      @for (t of tareasReales(); track t._id; let last = $last) {
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:.7rem 0" [style.border-bottom]="last ? 'none' : '1px solid rgba(34,33,33,.07)'">
+          <div style="display:flex;align-items:center;gap:.65rem">
+            <span style="width:8px;height:8px;border-radius:50%;flex-shrink:0" [style.background]="tareaColor(t.estado)"></span>
+            <span style="font-size:.875rem;color:#1f2937">{{ t.nombre }}</span>
+          </div>
+          <span style="font-size:.78rem;font-weight:600;white-space:nowrap;margin-left:.5rem" [style.color]="tareaColor(t.estado)">{{ tareaLabel(t.estado) }}</span>
         </div>
-        <span style="font-size:.78rem;font-weight:600;white-space:nowrap;margin-left:.5rem" [style.color]="t.color">{{ t.fecha }}</span>
-      </div>
+      }
     }
   </div>
 
   <div class="card">
     <h3 style="margin:0 0 .9rem;font-size:1rem;font-weight:700">Próximas mantenciones</h3>
-    @for (m of mantenciones; track m.titulo; let last = $last) {
-      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:.75rem;padding:.7rem 0" [style.border-bottom]="last ? 'none' : '1px solid rgba(34,33,33,.07)'">
-        <div>
-          <p style="margin:0 0 .15rem;font-size:.875rem;font-weight:600;color:#1f2937">{{ m.titulo }}</p>
-          <span style="font-size:.76rem;color:#6b7280">{{ m.detalle }}</span>
+    @if (proxMantenciones().length === 0) {
+      <p style="font-size:.83rem;color:#9ca3af;padding:.25rem 0">Sin mantenciones programadas próximamente.</p>
+    } @else {
+      @for (m of proxMantenciones(); track m._id; let last = $last) {
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:.75rem;padding:.7rem 0" [style.border-bottom]="last ? 'none' : '1px solid rgba(34,33,33,.07)'">
+          <div>
+            <p style="margin:0 0 .15rem;font-size:.875rem;font-weight:600;color:#1f2937">{{ m.nombre }}</p>
+            <span style="font-size:.76rem;color:#6b7280">{{ formatFechaShort(m.fecha) }}</span>
+          </div>
+          <app-stat-chip [label]="proxChip(m.fecha).label" [variant]="proxChip(m.fecha).variant" style="flex-shrink:0"></app-stat-chip>
         </div>
-        <app-stat-chip [label]="m.chipLabel" [variant]="m.chipVariant" style="flex-shrink:0"></app-stat-chip>
-      </div>
+      }
     }
   </div>
 </div>

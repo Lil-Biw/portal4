@@ -3,7 +3,8 @@ import { StatChipComponent, ChipVariant } from '../../../shared/components/stat-
 import { ConsumidorContextService } from '../../../profile/consumidor-context.service';
 import { CentrosService } from '../../centros/centros.service';
 import { ProyectosService } from '../../proyectos/proyectos.service';
-import { SolicitudesService, EstadoSolicitud } from '../../solicitudes/solicitudes.service';
+import { SolicitudesService } from '../../solicitudes/solicitudes.service';
+import { MantencionesService } from '../../mantenciones/mantenciones.service';
 import { asId } from '../../../shared/utils';
 
 interface ResumenSolicitudes {
@@ -23,10 +24,11 @@ interface ResumenSolicitudes {
   templateUrl: './inicio-page.component.html',
 })
 export class InicioPageComponent implements OnInit {
-  private readonly consumidorContext    = inject(ConsumidorContextService);
-  protected readonly centrosService     = inject(CentrosService);
-  protected readonly proyectosService   = inject(ProyectosService);
-  protected readonly solicitudesService = inject(SolicitudesService);
+  private readonly consumidorContext     = inject(ConsumidorContextService);
+  protected readonly centrosService      = inject(CentrosService);
+  protected readonly proyectosService    = inject(ProyectosService);
+  protected readonly solicitudesService  = inject(SolicitudesService);
+  protected readonly mantencionesService = inject(MantencionesService);
 
   readonly fecha = new Date().toLocaleDateString('es-CL', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 
@@ -36,6 +38,33 @@ export class InicioPageComponent implements OnInit {
     const empresa = this.consumidorContext.empresaSeleccionada();
     if (!empresa) return [];
     return this.centrosService.centros().filter(c => asId(c.cliente_id) === asId(empresa._id));
+  });
+
+  private centroIdsPorEmpresa = computed(() => {
+    const empresa = this.consumidorContext.empresaSeleccionada();
+    if (!empresa) return new Set<string>();
+    return new Set(
+      this.centrosService.centros()
+        .filter(c => asId(c.cliente_id) === asId(empresa._id))
+        .map(c => asId(c._id))
+    );
+  });
+
+  protected tareasReales = computed(() =>
+    this.solicitudesService.solicitudes()
+      .filter(s => s.estado === 'pendiente' || s.estado === 'rechazado' || s.estado === 'vencido')
+      .slice(0, 5)
+  );
+
+  protected proxMantenciones = computed(() => {
+    const ids = this.centroIdsPorEmpresa();
+    if (ids.size === 0) return [];
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+    return this.mantencionesService.mantenciones()
+      .filter(m => ids.has(asId(m.centro_costo_id)) && new Date(m.fecha) >= hoy)
+      .sort((a, b) => a.fecha.localeCompare(b.fecha))
+      .slice(0, 5);
   });
 
   protected scoreDocumental = computed(() => {
@@ -78,6 +107,28 @@ export class InicioPageComponent implements OnInit {
   ngOnInit(): void {
     this.centrosService.cargar();
     this.proyectosService.cargar();
+    this.mantencionesService.cargar();
+  }
+
+  protected tareaColor(estado: string): string {
+    if (estado === 'vencido' || estado === 'rechazado') return '#ef4444';
+    return '#0095d6';
+  }
+
+  protected tareaLabel(estado: string): string {
+    const map: Record<string, string> = {
+      pendiente: 'Pendiente', rechazado: 'Rechazado', vencido: 'Vencido',
+    };
+    return map[estado] ?? estado;
+  }
+
+  protected proxChip(fecha: string): { label: string; variant: ChipVariant } {
+    const dias = Math.ceil((new Date(fecha).getTime() - Date.now()) / 86400000);
+    return dias <= 7 ? { label: 'Esta semana', variant: 'warning' } : { label: 'Próximo', variant: 'neutral' };
+  }
+
+  protected formatFechaShort(iso: string): string {
+    return new Date(iso).toLocaleDateString('es-CL', { day: '2-digit', month: 'short', year: 'numeric' });
   }
 
   protected resumenPorCentro = computed((): Map<string, ResumenSolicitudes> => {
@@ -107,18 +158,6 @@ export class InicioPageComponent implements OnInit {
     return this.resumenPorCentro().get(centroId)
       ?? { total: 0, pct: 0, pendiente: 0, revision: 0, aprobado: 0, rechazado: 0, vencido: 0 };
   }
-
-  readonly tareas = [
-    { titulo: 'Protocolo seguridad 2026',                color: '#ef4444', fecha: 'Vencido' },
-    { titulo: 'Confirmar recepción informe eléctrico',   color: '#f59e0b', fecha: 'Hoy'     },
-    { titulo: 'Subir boleta consumo mayo',               color: '#0095d6', fecha: '5 may'   },
-  ];
-
-  readonly mantenciones: { titulo: string; detalle: string; chipLabel: string; chipVariant: ChipVariant }[] = [
-    { titulo: 'Revisión tablero principal',  detalle: '7 may 2026 · Planta Norte',  chipLabel: 'Esta semana', chipVariant: 'warning' },
-    { titulo: 'Auditoría eléctrica anual',   detalle: '18 jun 2026 · Planta Norte', chipLabel: 'Próximo',     chipVariant: 'neutral' },
-    { titulo: 'Termografía instalaciones',   detalle: '2 ago 2026 · Bodega Sur',    chipLabel: 'Próximo',     chipVariant: 'neutral' },
-  ];
 
   readonly novedades: { tipo: string; titulo: string; fecha: string; chipVariant: ChipVariant }[] = [
     { tipo: 'Normativa',      titulo: 'Nueva resolución SEC tableros 2026',        fecha: '28 abr 2026', chipVariant: 'ok' },

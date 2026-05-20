@@ -23,16 +23,17 @@ src/app/
 │   │   ├── centro.model.ts          # CentroCosto, CreateCentroDto, UpdateCentroDto
 │   │   ├── proyecto.model.ts        # Proyecto, CreateProyectoDto, EstadoProyecto
 │   │   ├── usuario.model.ts         # Usuario, CreateUsuarioDto, RolUsuario, PermisoItem
+│   │   ├── mantencion.model.ts      # Mantencion, TipoMantencion, DTOs
 │   │   └── status.model.ts          # Status { type: 'ok'|'error', text: string }
 │   ├── components/
 │   │   ├── status-banner/           # <app-status-banner [status]="...">
 │   │   ├── crud-toolbar/            # <app-crud-toolbar> tabs Crear/Editar/Eliminar/Buscar
 │   │   ├── stat-chip/               # <app-stat-chip [label]="..." [variant]="ok|warning|danger|neutral">
 │   │   └── spider-chart/            # <app-spider-chart [labels]="..." [values]="..." [size]="260">
-│   └── utils.ts                     # asId(v), encodeQuery(params)
+│   └── utils.ts                     # asId(v), encodeQuery(params), toDateKey(d)
 │
 ├── layout/
-│   ├── topbar/                      # Barra superior con toggle de modo y selector de empresa
+│   ├── topbar/                      # Barra superior: toggle modo, selector empresa (consumidor), campana notificaciones
 │   ├── sidebar/                     # Nav con RouterLink — muestra sub-items contextuales (centro/proyecto activo)
 │   └── main-layout/                 # Shell: topbar + sidebar + <router-outlet>
 │
@@ -43,51 +44,25 @@ src/app/
 │
 ├── features/
 │   ├── clientes/                    # COMPLETO — CRUD empresas (admin)
-│   │   ├── clientes.service.ts
-│   │   ├── pages/clientes-page.component.*
-│   │   └── components/
-│   │       ├── cliente-form/        # dumb: emite CreateClienteDto + logoFile
-│   │       └── clientes-list/       # dumb: emite seleccionado/eliminado
-│   │
-│   ├── centros/                     # COMPLETO
-│   │   ├── centros.service.ts
-│   │   ├── pages/
-│   │   │   ├── centros-page.component.*       # CRUD admin
-│   │   │   └── mis-centros-page.component.*   # Vista consumidor (lista + detalle inline)
-│   │   └── components/...
-│   │
-│   ├── proyectos/                   # COMPLETO
-│   │   ├── proyectos.service.ts
-│   │   ├── pages/
-│   │   │   ├── proyectos-page.component.*             # CRUD admin
-│   │   │   ├── mis-proyectos-page.component.*         # Lista consumidor (agrupada por centro)
-│   │   │   └── mi-proyecto-detalle-page.component.*   # Detalle consumidor con score, docs, solicitudes
-│   │   └── components/...
-│   │
+│   ├── centros/                     # COMPLETO — CRUD centros (admin) + vista consumidor con docs y solicitudes
+│   ├── proyectos/                   # COMPLETO — CRUD proyectos (admin) + detalle consumidor
 │   ├── usuarios/                    # COMPLETO
 │   ├── solicitudes/                 # Solo service (sin página propia)
 │   │   └── solicitudes.service.ts   # EstadoSolicitud, CRUD + adjuntar archivo
-│   │
-│   ├── documentos/                  # COMPLETO
-│   │   ├── documentos.service.ts
+│   ├── documentos/                  # COMPLETO — shell detecta modo, sub-componentes por modo
+│   ├── mantenciones/                # COMPLETO
+│   │   ├── mantenciones.service.ts
+│   │   ├── tipos-mantencion.service.ts
 │   │   └── pages/
-│   │       ├── documentos-page.component.*            # Shell — detecta modo, renderiza sub-componente
-│   │       ├── documentos-consumidor-page.component.* # Vista consumidor completa
-│   │       └── documentos-admin-page.component.*      # Vista admin completa
-│   │
-│   ├── mantenciones/                # PARCIAL (páginas placeholder)
-│   │   └── pages/
-│   │       ├── mantenciones-page.component.*      # Admin
-│   │       └── mis-mantenciones-page.component.*  # Consumidor
-│   │
-│   ├── noticias/                    # PARCIAL (página placeholder)
-│   ├── ayuda/                       # PARCIAL (página placeholder)
-│   │
+│   │       ├── mantenciones-page.component.*      # Admin: calendario mes/semana + CRUD modal + tipos + filtro empresa
+│   │       └── mis-mantenciones-page.component.*  # Consumidor: calendario read-only filtrado por empresa del contexto
+│   ├── noticias/                    # Placeholder
+│   ├── ayuda/                       # Placeholder
 │   └── dashboard/
 │       └── pages/
-│           ├── inicio-page.component.*    # Dashboard consumidor: score, centros, tareas, novedades
-│           ├── mi-ficha-page.component.*  # Ficha empresa: info, score, centros, proyectos, docs empresa
-│           └── resumen-page.component.*   # Vista agregada admin
+│           ├── inicio-page.component.*    # Dashboard consumidor
+│           ├── mi-ficha-page.component.*  # Ficha empresa consumidor
+│           └── resumen-page.component.*   # Vista agregada admin (incluye mantenciones)
 │
 ├── app.routes.ts                    # Lazy routes → MainLayout → feature pages
 ├── app.config.ts                    # provideHttpClient, provideRouter
@@ -128,16 +103,16 @@ El sidebar muestra sub-ítems contextuales bajo el ítem activo cuando hay un ce
 Mantiene el contexto global del consumidor mediante signals:
 
 ```ts
-empresaSeleccionada = signal<Cliente | null>(null);
-centroSeleccionado  = signal<CentroCosto | null>(null);
+empresaSeleccionada  = signal<Cliente | null>(null);
+centroSeleccionado   = signal<CentroCosto | null>(null);
 proyectoSeleccionado = signal<Proyecto | null>(null);
 
-seleccionar(cliente)     // limpia centro y proyecto
+seleccionar(cliente)      // limpia centro y proyecto
 seleccionarCentro(c)
 seleccionarProyecto(p)
 ```
 
-Los componentes consumidor reaccionan a `empresaSeleccionada()` para recargar sus datos.
+Los componentes consumidor reaccionan a `empresaSeleccionada()` para filtrar o recargar sus datos.
 
 ## Score documental
 
@@ -169,14 +144,19 @@ export class XxxService {
   readonly status       = signal<Status | null>(null);
   readonly loading      = signal(false);
 
-  cargar(): void { ... }
-  crear(dto): void { ... }
-  actualizar(id, dto): void { ... }
-  eliminar(id): void { ... }
-  seleccionar(item): void { this.seleccionado.set(item); this.clearStatus(); }
+  private setError(err: { error?: { message?: string } }): void {
+    this.status.set({ type: 'error', text: err?.error?.message ?? 'Error inesperado' });
+  }
+
+  cargar(): void { this.loading.set(true); /* GET → .set(data); loading.set(false) en next y error */ }
+  crear(dto): void { /* POST → update signal + status 'ok' */ }
+  actualizar(id, dto): void { /* PUT → map signal + status 'ok' */ }
+  eliminar(id): void { /* DELETE → filter signal + status 'ok' */ }
   clearStatus(): void { this.status.set(null); }
 }
 ```
+
+**Nota:** `MantencionesService` y `TiposMantencionService` no tienen señal `seleccionado` — el estado de edición se maneja en el componente vía `editingId` + `form` (patrón modal, no patrón detalle).
 
 ### Feature page — patrón estándar
 
@@ -186,20 +166,75 @@ export class XxxService {
 // Alterna vistas con @if por `action: CrudAction`
 ```
 
+### Patrón modal con cierre automático en éxito
+
+Para páginas con modal de creación/edición, cerrar el modal reactivamente cuando el server confirma:
+
+```ts
+constructor() {
+  effect(() => {
+    if (this.service.status()?.type === 'ok' && this.showModal()) {
+      this.cerrarModal();
+    }
+  });
+}
+```
+
+Agregar `<app-status-banner>` dentro del modal para mostrar errores sin cerrarlo.
+`abrirCrear()` y `abrirEditar()` deben llamar `service.clearStatus()` al abrir.
+
+## Patrón de calendario — mantenciones
+
+El calendario (vista mes y semana) está implementado en `mantenciones-page.component.ts` y `mis-mantenciones-page.component.ts`.
+
+- **`toDateKey(d: Date): string`** — exportada desde `shared/utils.ts`. Genera `YYYY-MM-DD` para comparar fechas.
+- **`mantencionesEnDia(date)`** — siempre usa `mantencionesFiltradas()`, nunca `service.mantenciones()` directamente.
+- **`filtroEmpresaId`** (admin) — signal que filtra el calendario por empresa. `centroIdsPorEmpresa` computed calcula el Set de IDs, `mantencionesFiltradas` computed aplica el filtro.
+- **Consumidor** — filtra automáticamente por `ctx.empresaSeleccionada()` vía `centroIdsPorEmpresa` computed. Sin UI de filtro.
+- **CSS compartido** — `mis-mantenciones-page.component.ts` usa `styleUrl: './mantenciones-page.component.css'`.
+
+## Topbar — notificaciones
+
+La campana de notificaciones (solo modo consumidor) está en `TopbarComponent`:
+
+- Filtra mantenciones por empresa seleccionada (igual que el calendario consumidor — vía `centroIdsPorEmpresa` computed).
+- Muestra mantenciones próximas en 7 días + solicitudes vencidas/rechazadas.
+- El dropdown usa `position: absolute; top: calc(100% + 8px); right: 0` relativo a `.notif-wrapper` (z-index 1002).
+- Backdrop en `position: fixed; z-index: 1001` para cerrar al hacer clic fuera.
+
+## Backend — respuestas paginadas vs. array plano
+
+Los services del frontend manejan ambos formatos de respuesta:
+
+```ts
+// CentrosService, ClientesService, ProyectosService, UsuariosService
+this.http.get<{ data: T[] } | T[]>(...).subscribe({
+  next: res => this.items.set(Array.isArray(res) ? res : res.data),
+});
+```
+
+`SolicitudesService`, `MantencionesService`, `TiposMantencionService` reciben siempre array plano.
+
+## Solicitudes — campo empresa_id
+
+El campo FK de cliente en solicitudes se llama **`empresa_id`** (no `cliente_id`). Es intencional y consistente con el backend. No confundir con otros módulos.
+
 ## Dependencias entre features
 
-`Centros` necesita `ClientesService` (dropdown de empresa en el form).
-`Proyectos` necesita `ClientesService` + `CentrosService`.
-`Usuarios` necesita `ClientesService` + `CentrosService` (permisos por centro).
-`Documentos` necesita `ClientesService` + `CentrosService` + `ProyectosService` + `SolicitudesService`.
-`Resumen` necesita todos los services (solo lectura).
-`MisCentros / MisProyectos / MiFicha` necesitan `SolicitudesService` para scores documentales.
+```
+Centros       → ClientesService
+Proyectos     → ClientesService + CentrosService
+Usuarios      → ClientesService + CentrosService
+Documentos    → ClientesService + CentrosService + ProyectosService + SolicitudesService
+Mantenciones  → TiposMantencionService + CentrosService + ClientesService
+Topbar        → ClientesService + CentrosService + MantencionesService + TiposMantencionService + SolicitudesService
+Resumen       → todos los services (solo lectura)
+MisCentros/MisProyectos/MiFicha → SolicitudesService + DocumentosService
+```
 
-→ Siempre llamar `.cargar()` en `ngOnInit` de la page para los services dependientes.
+→ Siempre llamar `.cargar()` en `ngOnInit` para los services dependientes.
 
 ## Navegación con query params — Documentos
-
-Desde detalle de proyecto se puede navegar a `/documentos` con filtros preseleccionados:
 
 ```ts
 router.navigate(['/documentos'], {
@@ -207,32 +242,35 @@ router.navigate(['/documentos'], {
 });
 ```
 
-`DocumentosConsumidorPageComponent` lee los params en `ngOnInit` y los aplica reactivamente cuando los centros cargan.
+`DocumentosConsumidorPageComponent` lee los params en `ngOnInit` y los aplica reactivamente.
 
 ## Convenciones de código
 
 - **Todos los componentes son standalone** — no hay NgModule.
-- **Angular 18+ control flow** (`@for`, `@if`, `@let`) — preferir sobre `*ngFor`/`*ngIf`. No mezclar en el mismo componente.
+- **Angular 18+ control flow** (`@for`, `@if`, `@let`) — nunca `*ngFor`/`*ngIf`. No mezclar.
 - **Signals** para todo el estado reactivo — no usar `BehaviorSubject` ni `Subject`.
-- **`asId()`** obligatorio al comparar ObjectIds entre entidades (evita falsos negativos por tipo `string | ObjectId`).
-- Estilos globales en `src/styles.css` (clases `.card`, `.form-grid`, `.field`, `.btn-primary`, `.btn-ghost`, `.btn-danger`, `.btn-sm`, `.list`, `.empty`).
-- Estilos de componente en `styles: []` inline cuando son cortos; archivo `.css` para componentes con estilos extensos.
-- **Componentes grandes de una sola página** (como documentos) se dividen por modo en sub-componentes con un shell que detecta el modo.
+- **`asId()`** obligatorio al comparar ObjectIds entre entidades.
+- **`toDateKey()`** de `shared/utils.ts` para convertir `Date` a `YYYY-MM-DD`. No duplicar en componentes.
+- Estilos globales en `src/styles.css`: `.card`, `.form-grid`, `.field`, `.btn-primary`, `.btn-ghost`, `.btn-danger`, `.btn-sm`, `.list`, `.empty`.
+- Estilos de componente: `styles: []` inline si son cortos; archivo `.css` para extensos.
+- **Sin `any`** — si la API devuelve algo no tipado, extender la interfaz.
 
 ## Guía para el agente IA
 
-1. **Agregar una nueva entidad**: crear carpeta en `features/`, seguir el patrón de `clientes/` exactamente. Agregar la ruta en `app.routes.ts` y el item en `sidebar.component.ts`.
+1. **Agregar una nueva entidad**: crear carpeta en `features/`, seguir el patrón de `clientes/`. Ruta en `app.routes.ts`, ítem en `sidebar.component.ts`.
 
-2. **Agregar un campo a un formulario**: actualizar el modelo en `shared/models/`, el DTO, el método `empty()` del form component, el HTML del form, y el método `actualizar()` de la page si filtra campos.
+2. **Agregar un campo**: actualizar modelo en `shared/models/`, el DTO, el método `empty()` del form, el HTML, y `actualizar()` de la page si filtra campos.
 
-3. **Agregar un shared component**: va en `shared/components/` solo si lo usan 2+ features. Si es específico de una feature, va en `features/<nombre>/components/`.
+3. **Shared component**: en `shared/components/` solo si lo usan 2+ features. Si es de una sola feature, va en `features/<nombre>/components/`.
 
-4. **NO usar `any`** — si la respuesta de la API no encaja con el modelo, extender la interfaz.
+4. **NO usar `any`** — extender la interfaz si la respuesta de la API no encaja.
 
-5. **NO inyectar services en componentes dumb** — toda la lógica HTTP va en el service; los componentes dumb solo reciben datos por `@Input` y emiten eventos por `@Output`. La excepción es `ChangeDetectorRef` para callbacks fuera de la zona Angular (ej. `FileReader.onload`).
+5. **NO inyectar services en componentes dumb** — toda la lógica HTTP va en el service.
 
-6. **Permisos de usuario**: al crear/actualizar un usuario, el payload incluye `permisos: PermisoItem[]` construido desde `UsuariosService.permisosSeleccionados()`.
+6. **Documentos**: backend espera multipart/form-data con campo `archivo`. Usar `DocumentosService.subir()` siempre.
 
-7. **Documentos**: el backend acepta PDF y otros formatos. La validación está en `DocumentosService.subir()`. El backend espera multipart/form-data con campo `archivo`. Los documentos se organizan por carpetas `empresa/centro/proyecto` en el servidor.
+7. **Solicitudes**: estado `pendiente → revision → aprobado/rechazado/vencido`. El consumidor puede adjuntar archivos a solicitudes pendientes/rechazadas/vencidas.
 
-8. **Solicitudes**: entidad independiente (no confundir con documentos). Tienen estado: `pendiente → revision → aprobado/rechazado/vencido`. El consumidor puede adjuntar archivos a solicitudes pendientes/rechazadas/vencidas.
+8. **Mantenciones**: el filtro de empresa es client-side (computed). No recargar el service al cambiar empresa — el computed reacciona automáticamente.
+
+9. **Error handling en services**: siempre usar `private setError(err)` que extrae `err?.error?.message` del backend. Nunca texto hardcodeado genérico.

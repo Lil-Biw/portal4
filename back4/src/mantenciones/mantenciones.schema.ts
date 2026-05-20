@@ -1,0 +1,16 @@
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { Document, Types } from 'mongoose';
+
+export type MantencionDocument = Mantencion & Document;
+
+@Schema({ collection: 'mantenciones', timestamps: { createdAt: 'creado_en', updatedAt: 'actualizado_en' } })
+export class Mantencion {
+  @Prop({ required: true, trim: true }) nombre: string;
+  @Prop({ trim: true }) descripcion?: string;
+  @Prop({ type: Types.ObjectId, ref: 'TipoMantencion', required: true }) tipo_id: Types.ObjectId;
+  @Prop({ type: Types.ObjectId, ref: 'CentroCosto', required: true }) centro_costo_id: Types.ObjectId;
+  @Prop({ required: true }) fecha: Date;
+}
+
+export const MantencionSchema = SchemaFactory.createForClass(Mantencion);
+MantencionSchema.index({ centro_costo_id: 1, fecha: 1 });

@@ -58,9 +58,9 @@ export class CentrosCostosService {
   }
 
   async update(id: string, dto: UpdateCentroCostoDto) {
-    const payload: any = { ...dto };
+    const payload: Record<string, unknown> = { ...dto };
     if (dto.cliente_id) {
-      payload.cliente_id = this.toObjectId(dto.cliente_id);
+      payload['cliente_id'] = this.toObjectId(dto.cliente_id);
     }
 
     const centro = await this.centroCostoModel

@@ -18,10 +18,7 @@ export class ProyectosService {
   private async validarCentroEnCliente(cliente_id: string, centro_costo_id: string) {
     const centro = await this.centroCostoModel.findOne({
       _id: this.toObjectId(centro_costo_id),
-      $or: [
-        { cliente_id: this.toObjectId(cliente_id) },
-        { cliente_id },
-      ],
+      cliente_id: this.toObjectId(cliente_id),
       activo: true,
     }).lean();
 

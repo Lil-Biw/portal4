@@ -1,0 +1,242 @@
+<!-- Header -->
+<div class="mant-header">
+  <div>
+    <h2 class="mant-title">Mantenciones</h2>
+    <p class="mant-subtitle">Calendario de mantenciones por centro de costos</p>
+  </div>
+  <button class="btn-primary" (click)="abrirCrear()">+ Mantención</button>
+</div>
+
+<app-status-banner [status]="service.status()"></app-status-banner>
+
+<!-- Barra de control del calendario -->
+<div class="cal-toolbar">
+  <div class="cal-nav">
+    <button class="cal-nav-btn" (click)="navAnterior()">‹</button>
+    <span class="cal-label">
+      @if (view() === 'month') { {{ monthLabel() }} }
+      @else { {{ weekLabel() }} }
+    </span>
+    <button class="cal-nav-btn" (click)="navSiguiente()">›</button>
+    <button class="cal-today-btn" (click)="irAHoy()">Hoy</button>
+  </div>
+  <div style="display:flex;align-items:center;gap:.75rem;flex-wrap:wrap">
+    <select
+      class="cal-empresa-filter"
+      [ngModel]="filtroEmpresaId()"
+      (ngModelChange)="filtroEmpresaId.set($event)">
+      <option value="">Todas las empresas</option>
+      @for (e of clientesService.clientes(); track e._id) {
+        <option [value]="e._id">{{ e.razon_social }}</option>
+      }
+    </select>
+    <div class="cal-view-toggle">
+      <button [class.active]="view() === 'month'" (click)="setView('month')">Mes</button>
+      <button [class.active]="view() === 'week'"  (click)="setView('week')">Semana</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ VISTA MES ══════════════════════════════════════════════════════════ -->
+@if (view() === 'month') {
+  <div class="card cal-card">
+    <!-- Cabecera días -->
+    <div class="cal-grid-header">
+      @for (d of days; track d) {
+        <div class="cal-day-header">{{ d }}</div>
+      }
+    </div>
+    <!-- Celdas -->
+    <div class="cal-grid-month">
+      @for (cell of calendarDays(); track cell.date.toISOString()) {
+        <div
+          class="cal-cell"
+          [class.other-month]="!cell.currentMonth"
+          [class.today]="isToday(cell.date)"
+          (click)="abrirCrear(cell.date.toISOString().slice(0,10))">
+          <span class="cal-day-num">{{ cell.date.getDate() }}</span>
+          <div class="cal-events">
+            @for (m of mantencionesEnDia(cell.date); track m._id) {
+              <div
+                class="cal-event-chip"
+                [style.background]="colorDeMantencion(m)"
+                (click)="$event.stopPropagation(); abrirEditar(m)"
+                [title]="m.nombre">
+                {{ m.nombre }}
+              </div>
+            }
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+}
+
+<!-- ══ VISTA SEMANA ═══════════════════════════════════════════════════════ -->
+@if (view() === 'week') {
+  <div class="card cal-card">
+    <div class="cal-grid-week">
+      @for (day of weekDays(); track day.toISOString()) {
+        <div class="cal-week-col" [class.today]="isToday(day)">
+          <div class="cal-week-header">
+            <span class="cal-week-dow">{{ days[(day.getDay() + 6) % 7] }}</span>
+            <span class="cal-week-num" [class.today-num]="isToday(day)">{{ day.getDate() }}</span>
+          </div>
+          <div class="cal-week-events" (click)="abrirCrear(day.toISOString().slice(0,10))">
+            @for (m of mantencionesEnDia(day); track m._id) {
+              <div
+                class="cal-event-chip"
+                [style.background]="colorDeMantencion(m)"
+                (click)="$event.stopPropagation(); abrirEditar(m)"
+                [title]="m.nombre">
+                {{ m.nombre }}
+              </div>
+            }
+            @if (mantencionesEnDia(day).length === 0) {
+              <div class="cal-week-empty"></div>
+            }
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+}
+
+<!-- Mensaje cuando no hay mantenciones -->
+@if (!service.loading() && service.mantenciones().length === 0) {
+  <div class="card" style="text-align:center;padding:1.5rem;color:#9ca3af;font-size:.85rem;margin-bottom:1rem">
+    No hay mantenciones registradas. Haz clic en <strong>+ Mantención</strong> para agregar la primera, o en cualquier día del calendario.
+  </div>
+}
+
+<!-- ══ TIPOS DE MANTENCIÓN ════════════════════════════════════════════════ -->
+<div class="tipos-section">
+  <div class="tipos-header" (click)="toggleTipos()">
+    <h3 class="tipos-title">Tipos de mantención ({{ tiposService.tipos().length }})</h3>
+    <div style="display:flex;align-items:center;gap:.5rem">
+      <button class="btn-ghost btn-sm" (click)="$event.stopPropagation(); abrirNuevoTipo()">+ Nuevo tipo</button>
+      <span class="tipos-chevron">{{ showTipos() ? '▲' : '▼' }}</span>
+    </div>
+  </div>
+
+  @if (showTipos()) {
+    <app-status-banner [status]="tiposService.status()"></app-status-banner>
+
+    <!-- Formulario inline para nuevo/editar tipo -->
+    @if (showTipoForm()) {
+      <div class="tipo-form-inline">
+        <input
+          class="tipo-input"
+          type="text"
+          placeholder="Nombre del tipo"
+          [ngModel]="tipoForm().nombre"
+          (ngModelChange)="patchTipoForm('nombre', $event)" />
+        <div style="display:flex;align-items:center;gap:.5rem">
+          <input
+            type="color"
+            [ngModel]="tipoForm().color"
+            (ngModelChange)="patchTipoForm('color', $event)"
+            style="width:36px;height:36px;border:none;padding:0;cursor:pointer;border-radius:6px" />
+          <span style="font-size:.78rem;color:#6b7280">{{ tipoForm().color }}</span>
+        </div>
+        <input
+          class="tipo-input"
+          type="text"
+          placeholder="Descripción (opcional)"
+          [ngModel]="tipoForm().descripcion"
+          (ngModelChange)="patchTipoForm('descripcion', $event)" />
+        <div style="display:flex;gap:.5rem">
+          <button class="btn-primary btn-sm" (click)="guardarTipo()">Guardar</button>
+          <button class="btn-ghost btn-sm" (click)="cerrarTipoForm()">Cancelar</button>
+        </div>
+      </div>
+    }
+
+    @if (tiposService.tipos().length === 0) {
+      <p class="tipos-empty">No hay tipos definidos. Crea uno para comenzar.</p>
+    } @else {
+      <div class="tipos-list">
+        @for (t of tiposService.tipos(); track t._id) {
+          <div class="tipo-item">
+            <span class="tipo-dot" [style.background]="t.color"></span>
+            <span class="tipo-nombre">{{ t.nombre }}</span>
+            @if (t.descripcion) {
+              <span class="tipo-desc">{{ t.descripcion }}</span>
+            }
+            <div class="tipo-actions">
+              <button class="btn-ghost btn-sm" (click)="abrirEditarTipo(t)">Editar</button>
+              <button class="btn-danger btn-sm" (click)="eliminarTipo(t._id)">Eliminar</button>
+            </div>
+          </div>
+        }
+      </div>
+    }
+  }
+</div>
+
+<!-- ══ MODAL MANTENCIÓN ═══════════════════════════════════════════════════ -->
+@if (showModal()) {
+  <div class="modal-overlay" (click)="cerrarModal()">
+    <div class="modal-box" (click)="$event.stopPropagation()">
+      <h3 class="modal-title">{{ editingId() ? 'Editar mantención' : 'Nueva mantención' }}</h3>
+
+      <app-status-banner [status]="service.status()"></app-status-banner>
+
+      <div class="modal-fields">
+        <div class="field">
+          <label>Nombre *</label>
+          <input type="text" [ngModel]="form().nombre" (ngModelChange)="patchForm('nombre', $event)" placeholder="Nombre de la mantención" />
+        </div>
+        <div class="field">
+          <label>Tipo *</label>
+          <select [ngModel]="form().tipo_id" (ngModelChange)="patchForm('tipo_id', $event)">
+            <option value="">Selecciona un tipo</option>
+            @for (t of tiposService.tipos(); track t._id) {
+              <option [value]="t._id">{{ t.nombre }}</option>
+            }
+          </select>
+        </div>
+        <div class="field">
+          <label>Empresa</label>
+          <select [ngModel]="form().empresa_id" (ngModelChange)="patchForm('empresa_id', $event); patchForm('centro_costo_id', '')">
+            <option value="">Todas las empresas</option>
+            @for (e of clientesService.clientes(); track e._id) {
+              <option [value]="e._id">{{ e.razon_social }}</option>
+            }
+          </select>
+        </div>
+        <div class="field">
+          <label>Centro de costos *</label>
+          <select [ngModel]="form().centro_costo_id" (ngModelChange)="patchForm('centro_costo_id', $event)">
+            <option value="">Selecciona un centro</option>
+            @for (c of centrosParaEmpresa(); track c._id) {
+              <option [value]="c._id">{{ c.nombre }}</option>
+            }
+          </select>
+        </div>
+        <div class="field">
+          <label>Fecha *</label>
+          <input type="date" [ngModel]="form().fecha" (ngModelChange)="patchForm('fecha', $event)" />
+        </div>
+        <div class="field">
+          <label>Descripción</label>
+          <textarea
+            rows="2"
+            [ngModel]="form().descripcion"
+            (ngModelChange)="patchForm('descripcion', $event)"
+            placeholder="Descripción opcional..."></textarea>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        @if (editingId()) {
+          <button class="btn-danger btn-sm" (click)="eliminarMant(editingId()!)">Eliminar</button>
+        }
+        <div style="display:flex;gap:.5rem;margin-left:auto">
+          <button class="btn-ghost" (click)="cerrarModal()">Cancelar</button>
+          <button class="btn-primary" (click)="guardar()">Guardar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+}

@@ -6,7 +6,7 @@
     <span class="brand-name">Smart Clarity</span>
   </div>
 
-  <!-- Contexto consumidor: selector de empresa + botón subir -->
+  <!-- Contexto consumidor: selector de empresa -->
   @if (mode === 'consumidor') {
     <div class="context-slot">
       <select class="empresa-select" [(ngModel)]="localEmpresaId" (ngModelChange)="onEmpresaChange($event)">
@@ -15,15 +15,58 @@
           {{ e.razon_social }}
         </option>
       </select>
-      <!-- <button class="btn-primary" style="font-size:.82rem;padding:.4rem .85rem;white-space:nowrap" (click)="irADocumentos()">
-        + Subir documento
-      </button> -->
     </div>
   }
 
   <!-- Iconos configurables (ng-content) -->
   <div class="icons-slot">
     <ng-content select="[topbar-icons]"></ng-content>
+
+    <!-- Campana de notificaciones (solo consumidor) -->
+    @if (mode === 'consumidor') {
+      <div class="notif-wrapper">
+        <button class="notif-btn" (click)="toggleNotifications()" title="Notificaciones">
+          <span [innerHTML]="bellIcon"></span>
+          @if (totalNotificaciones() > 0) {
+            <span class="notif-badge">{{ totalNotificaciones() > 9 ? '9+' : totalNotificaciones() }}</span>
+          }
+        </button>
+
+        @if (showNotifications()) {
+          <!-- Backdrop para cerrar -->
+          <div style="position:fixed;inset:0;z-index:1001" (click)="cerrarNotifications()"></div>
+
+          <div class="notif-dropdown">
+            <div class="notif-header">
+              Notificaciones
+              @if (totalNotificaciones() > 0) {
+                <span style="margin-left:.4rem;background:#ef4444;color:#fff;font-size:.68rem;font-weight:800;padding:.1rem .4rem;border-radius:999px">
+                  {{ totalNotificaciones() }}
+                </span>
+              }
+            </div>
+            <div class="notif-list">
+              @if (notificaciones().length === 0) {
+                <div class="notif-empty">Sin alertas pendientes</div>
+              } @else {
+                @for (n of notificaciones(); track n.titulo + n.detalle) {
+                  <div class="notif-item">
+                    <span class="notif-dot" [style.background]="n.color"></span>
+                    <div class="notif-body">
+                      <div class="notif-titulo">{{ n.titulo }}</div>
+                      <div class="notif-detalle">{{ n.detalle }}</div>
+                    </div>
+                    @if (n.urgente) {
+                      <span style="font-size:.65rem;font-weight:700;color:#dc2626;flex-shrink:0;margin-top:.2rem">!</span>
+                    }
+                  </div>
+                }
+              }
+            </div>
+          </div>
+        }
+      </div>
+    }
   </div>
 
   <!-- Acciones de perfil -->

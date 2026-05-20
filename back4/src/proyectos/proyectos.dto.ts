@@ -1,5 +1,5 @@
 import {
-  IsString, IsOptional, IsBoolean,
+  IsString, IsOptional,
   IsMongoId, IsEnum, IsDateString, MinLength,
 } from 'class-validator';
 import { PartialType } from '@nestjs/mapped-types';
@@ -15,9 +15,7 @@ export class CreateProyectoDto {
   @IsDateString() @IsOptional() fecha_fin?: string;
 }
 
-export class UpdateProyectoDto extends PartialType(CreateProyectoDto) {
-  @IsBoolean() @IsOptional() activo?: boolean;
-}
+export class UpdateProyectoDto extends PartialType(CreateProyectoDto) {}
 
 export class AgregarDocumentoProyectoDto {
   @IsString() nombre: string;

@@ -1,7 +1,6 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ConfigModule } from '@nestjs/config';
-import { MulterModule } from '@nestjs/platform-express';
 // AuthModule removed for DB-only testing
 import { ClientesModule } from './clientes/clientes.module';
 import { UsuariosModule } from './usuarios/usuarios.module';
@@ -10,6 +9,8 @@ import { ProyectosModule } from './proyectos/proyectos.module';
 import { PermisosModule } from './permisos/permisos.module';
 import { DocumentosModule } from './documentos/documentos.module';
 import { SolicitudesModule } from './solicitudes/solicitudes.module';
+import { TiposMantencionModule } from './tipos-mantencion/tipos-mantencion.module';
+import { MantencionesModule } from './mantenciones/mantenciones.module';
 
 @Module({
   imports: [
@@ -17,11 +18,6 @@ import { SolicitudesModule } from './solicitudes/solicitudes.module';
     ConfigModule.forRoot({ 
       isGlobal: true,
       envFilePath: '.env'
-    }),
-
-    // Multer para manejo de archivos
-    MulterModule.register({
-      limits: { fileSize: 10 * 1024 * 1024 }, // 10MB max
     }),
 
     // Conexión a MongoDB
@@ -35,6 +31,8 @@ import { SolicitudesModule } from './solicitudes/solicitudes.module';
     PermisosModule,
     DocumentosModule,
     SolicitudesModule,
+    TiposMantencionModule,
+    MantencionesModule,
   ],
 })
 export class AppModule {}

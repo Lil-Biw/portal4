@@ -53,13 +53,11 @@ export class ClientesService {
     if (!cliente) throw new NotFoundException(`Cliente ${id} no encontrado`);
 
     const logosDir = path.join(process.cwd(), 'uploads', 'logos', id);
-    if (!fs.existsSync(logosDir)) fs.mkdirSync(logosDir, { recursive: true });
+    fs.mkdirSync(logosDir, { recursive: true });
 
     // Eliminar logo anterior si existe
-    if (fs.existsSync(logosDir)) {
-      for (const f of fs.readdirSync(logosDir)) {
-        fs.unlinkSync(path.join(logosDir, f));
-      }
+    for (const f of fs.readdirSync(logosDir)) {
+      fs.unlinkSync(path.join(logosDir, f));
     }
 
     const ext = path.extname(archivo.originalname) || '.png';

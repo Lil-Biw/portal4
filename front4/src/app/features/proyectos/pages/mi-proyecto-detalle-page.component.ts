@@ -82,13 +82,6 @@ export class MiProyectoDetallePageComponent implements OnInit, OnDestroy {
     return this.solicitudesService.solicitudes().filter(s => s.proyecto_id === asId(p._id));
   });
 
-  protected readonly mantenciones = [
-    { titulo: 'Revisión de avance mensual',   fecha: '15 jun 2026', estado: 'Pendiente'  },
-    { titulo: 'Auditoría documental interna', fecha: '2 jul 2026',  estado: 'Pendiente'  },
-    { titulo: 'Entrega parcial Fase 1',       fecha: '28 may 2026', estado: 'Completada' },
-    { titulo: 'Reunión de cierre de etapa',   fecha: '10 ago 2026', estado: 'Pendiente'  },
-  ];
-
   protected estadoBadgeStyle(estado: string): string {
     if (estado === 'activo')   return 'background:rgba(0,149,214,.1);color:#0095d6';
     if (estado === 'cerrado')  return 'background:rgba(239,68,68,.1);color:#ef4444';
