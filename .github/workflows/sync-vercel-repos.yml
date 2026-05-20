@@ -1,0 +1,44 @@
+name: Sync a Vercel repos
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  sync-front:
+    name: Sync front4 → portal4front4
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Push front4/ a portal4front4
+        uses: cpina/github-action-push-to-another-repository@main
+        env:
+          API_TOKEN_GITHUB: ${{ secrets.SYNC_TOKEN }}
+        with:
+          source-directory: front4
+          destination-github-username: Lil-Biw
+          destination-repository-name: portal4front4
+          target-branch: main
+          commit-message: "sync: ${{ github.event.head_commit.message }}"
+
+  sync-back:
+    name: Sync back4 → portal4back4
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Push back4/ a portal4back4
+        uses: cpina/github-action-push-to-another-repository@main
+        env:
+          API_TOKEN_GITHUB: ${{ secrets.SYNC_TOKEN }}
+        with:
+          source-directory: back4
+          destination-github-username: Lil-Biw
+          destination-repository-name: portal4back4
+          target-branch: main
+          commit-message: "sync: ${{ github.event.head_commit.message }}"
