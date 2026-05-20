@@ -21,7 +21,7 @@ jobs:
           source-directory: front4
           destination-github-username: Lil-Biw
           destination-repository-name: portal4front4
-          user-email: 72150533+Lil-Biw@users.noreply.github.com
+          user-email: andresgalaz10@hotmail.com
           target-branch: main
           commit-message: "sync: ${{ github.event.head_commit.message }}"
 
@@ -41,6 +41,6 @@ jobs:
           source-directory: back4
           destination-github-username: Lil-Biw
           destination-repository-name: portal4back4
-          user-email: 72150533+Lil-Biw@users.noreply.github.com
+          user-email: andresgalaz10@hotmail.com
           target-branch: main
           commit-message: "sync: ${{ github.event.head_commit.message }}"
