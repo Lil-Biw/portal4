@@ -121,3 +121,4 @@ curl -X POST http://localhost:3000/api/v1/permisos \
   -H "Content-Type: application/json" \
   -d '{"usuario_id":"...","centro_costo_id":"...","tipo":"editar"}'
 ```
+
