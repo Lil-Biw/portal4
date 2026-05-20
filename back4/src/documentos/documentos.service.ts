@@ -22,15 +22,15 @@ interface MetadataMap {
 
 @Injectable()
 export class DocumentosService {
-  private readonly baseDir = path.join(process.cwd(), 'uploads');
+  private readonly baseDir = process.env['NODE_ENV'] === 'production'
+    ? path.join('/tmp', 'uploads')
+    : path.join(process.cwd(), 'uploads');
 
   constructor(
     private readonly centrosService: CentrosCostosService,
     private readonly proyectosService: ProyectosService,
   ) {
-    if (!fs.existsSync(this.baseDir)) {
-      fs.mkdirSync(this.baseDir, { recursive: true });
-    }
+    fs.mkdirSync(this.baseDir, { recursive: true });
   }
 
   private getContextPath(
