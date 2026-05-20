@@ -12,3 +12,7 @@ front4/.angular/
 # OS
 .DS_Store
 Thumbs.db
+
+# Deploy local
+deploy.sh
+front4/docs/
