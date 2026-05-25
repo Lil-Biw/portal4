@@ -1,0 +1,80 @@
+<div class="wrapper">
+  <!-- Panel izquierdo: branding -->
+  <div class="panel-brand">
+    <div class="brand-content">
+      <img src="/SM_logo_2líneas_blanco.png" alt="SmartClarity" class="logo" />
+      <p class="brand-tagline">Portal de administración interno</p>
+      <div class="brand-features">
+        <div class="feature-item">
+          <span class="feature-dot"></span>
+          Gestión de empresas y centros de costos
+        </div>
+        <div class="feature-item">
+          <span class="feature-dot"></span>
+          Control de proyectos y mantenciones
+        </div>
+        <div class="feature-item">
+          <span class="feature-dot"></span>
+          Administración documental completa
+        </div>
+      </div>
+    </div>
+    <p class="brand-copy">© 2026 SmartClarity · Todos los derechos reservados</p>
+  </div>
+
+  <!-- Panel derecho: formulario -->
+  <div class="panel-form">
+    <div class="form-box">
+      <div class="form-header">
+        <div class="role-badge">Administrador</div>
+        <h1 class="form-title">Iniciar sesión</h1>
+        <p class="form-subtitle">Accede al panel de administración del portal</p>
+      </div>
+
+      <form class="form" (ngSubmit)="onSubmit()">
+        <div class="field">
+          <label>Correo electrónico</label>
+          <input
+            type="email"
+            [(ngModel)]="email"
+            name="email"
+            placeholder="admin@smartclarity.cl"
+            autocomplete="email" />
+        </div>
+        <div class="field">
+          <label>
+            Contraseña
+            <a href="#" class="forgot" tabindex="-1">¿Olvidaste tu contraseña?</a>
+          </label>
+          <div class="input-wrap">
+            <input
+              [type]="showPass() ? 'text' : 'password'"
+              [(ngModel)]="password"
+              name="password"
+              placeholder="••••••••"
+              autocomplete="current-password" />
+            <button type="button" class="toggle-pass" (click)="showPass.update(v => !v)">
+              @if (showPass()) {
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+              } @else {
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              }
+            </button>
+          </div>
+        </div>
+
+        @if (error()) {
+          <div class="error-banner">{{ error() }}</div>
+        }
+
+        <button type="submit" class="btn-submit" [disabled]="!email || !password">
+          Ingresar al portal
+        </button>
+      </form>
+
+      <div class="form-footer">
+        ¿Eres cliente? <a href="/login-consumidor">Accede aquí</a>
+      </div>
+    </div>
+  </div>
+</div>

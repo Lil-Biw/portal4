@@ -94,6 +94,18 @@ body { margin: 0; background: var(--bg); color: var(--ink-900); }
 }
 .btn-danger:hover { background: rgba(239,68,68,.12); }
 
+/* ── Scroll area ─────────────────────────────────────── */
+.scroll-area {
+  overflow-y: auto;
+  max-height: 260px;
+  padding-right: 4px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0,0,0,.13) transparent;
+}
+.scroll-area::-webkit-scrollbar       { width: 4px; }
+.scroll-area::-webkit-scrollbar-track { background: transparent; }
+.scroll-area::-webkit-scrollbar-thumb { background: rgba(0,0,0,.15); border-radius: 4px; }
+
 /* ── Cards ──────────────────────────────────────────── */
 .card {
   background: #fff;

@@ -2,6 +2,18 @@ import { Routes } from '@angular/router';
 import { MainLayoutComponent } from './layout/main-layout/main-layout.component';
 
 export const routes: Routes = [
+  // ── Páginas de acceso (sin layout) ────────────────────────────────────────
+  {
+    path: 'login-admin',
+    loadComponent: () =>
+      import('./features/auth/pages/login-admin-page.component').then(m => m.LoginAdminPageComponent),
+  },
+  {
+    path: 'login-consumidor',
+    loadComponent: () =>
+      import('./features/auth/pages/login-consumidor-page.component').then(m => m.LoginConsumidorPageComponent),
+  },
+
   {
     path: '',
     component: MainLayoutComponent,

@@ -119,11 +119,30 @@
 
   <div class="card">
     <h3 style="margin:0 0 .9rem;font-size:1rem;font-weight:700">Últimas novedades</h3>
-    @for (n of novedades; track n.titulo; let last = $last) {
-      <div style="padding:.6rem 0" [style.border-bottom]="last ? 'none' : '1px solid rgba(34,33,33,.07)'">
-        <app-stat-chip [label]="n.tipo" [variant]="n.chipVariant" style="display:inline-block;margin-bottom:.28rem"></app-stat-chip>
-        <p style="margin:0 0 .12rem;font-size:.875rem;font-weight:600;color:#1f2937">{{ n.titulo }}</p>
-        <span style="font-size:.74rem;color:#9ca3af">{{ n.fecha }}</span>
+    @if (noticiasService.noticias().length === 0) {
+      <p style="font-size:.83rem;color:#9ca3af;padding:.25rem 0">Sin novedades publicadas por el momento.</p>
+    } @else {
+      <div style="display:flex;flex-direction:column;gap:.6rem">
+        @for (n of noticiasService.noticias().slice(0,4); track n._id) {
+          <div
+            style="display:flex;align-items:flex-start;gap:.7rem;cursor:pointer;padding:.5rem;border-radius:10px;border:1px solid rgba(34,33,33,.07);transition:background .15s"
+            (click)="abrirNoticia(n.enlace)"
+            onmouseenter="this.style.background='rgba(0,149,214,.04)'"
+            onmouseleave="this.style.background='transparent'">
+            <!-- Miniatura -->
+            <div style="width:60px;height:60px;flex-shrink:0;border-radius:8px;overflow:hidden;background:linear-gradient(135deg,#1a237e,#3949ab)">
+              @if (noticiasService.imagenUrl(n); as src) {
+                <img [src]="src" alt="" style="width:100%;height:100%;object-fit:cover" />
+              }
+            </div>
+            <!-- Texto -->
+            <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:.18rem">
+              <p style="margin:0;font-size:.82rem;font-weight:700;color:#1f2937;line-height:1.3">{{ n.titulo }}</p>
+              <p style="margin:0;font-size:.75rem;color:#6b7280;line-height:1.45;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">{{ n.resumen }}</p>
+              <span style="font-size:.7rem;color:#9ca3af">{{ formatFechaShort(n.creado_en) }}</span>
+            </div>
+          </div>
+        }
       </div>
     }
   </div>
@@ -149,9 +168,9 @@
   </div>
 
   <div class="card">
-    <h3 style="margin:0 0 .9rem;font-size:1rem;font-weight:700">Próximas mantenciones</h3>
+    <h3 style="margin:0 0 .9rem;font-size:1rem;font-weight:700">Mantenciones</h3>
     @if (proxMantenciones().length === 0) {
-      <p style="font-size:.83rem;color:#9ca3af;padding:.25rem 0">Sin mantenciones programadas próximamente.</p>
+      <p style="font-size:.83rem;color:#9ca3af;padding:.25rem 0">Sin mantenciones registradas para esta empresa.</p>
     } @else {
       @for (m of proxMantenciones(); track m._id; let last = $last) {
         <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:.75rem;padding:.7rem 0" [style.border-bottom]="last ? 'none' : '1px solid rgba(34,33,33,.07)'">

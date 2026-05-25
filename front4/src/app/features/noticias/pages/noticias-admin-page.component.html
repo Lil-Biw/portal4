@@ -1,0 +1,83 @@
+<div class="header">
+  <div>
+    <h2 class="titulo">Noticias</h2>
+    <p class="subtitulo">Gestiona las noticias publicadas en el portal</p>
+  </div>
+</div>
+
+@if (service.status(); as s) {
+  <app-status-banner [status]="s" (closed)="service.clearStatus()" style="margin-bottom:1rem;display:block" />
+}
+
+<div class="grid">
+  <!-- Tarjeta crear -->
+  <div class="card card--add" (click)="abrirModal()">
+    <div class="add-icon">+</div>
+    <span class="add-label">Nueva noticia</span>
+  </div>
+
+  <!-- Noticias publicadas -->
+  @for (n of service.noticias(); track n._id) {
+    <div class="card card--noticia" (click)="abrirEnlace(n.enlace)">
+      <div class="card-img">
+        @if (service.imagenUrl(n); as src) {
+          <img [src]="src" alt="imagen noticia" />
+        } @else {
+          <div class="img-placeholder"></div>
+        }
+      </div>
+      <div class="card-body">
+        <h3 class="card-titulo">{{ n.titulo }}</h3>
+        <p class="card-resumen">{{ n.resumen }}</p>
+        <div class="card-footer">
+          <span class="card-fecha">{{ formatFecha(n.creado_en) }}</span>
+          <button class="btn-delete" (click)="eliminar($event, n._id)" title="Eliminar noticia">−</button>
+        </div>
+      </div>
+    </div>
+  }
+</div>
+
+<!-- Modal -->
+@if (showModal()) {
+  <div class="backdrop" (click)="cerrarModal()"></div>
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Nueva noticia</h3>
+      <button class="btn-close" (click)="cerrarModal()">×</button>
+    </div>
+
+    @if (service.status(); as s) {
+      @if (s.type === 'error') {
+        <app-status-banner [status]="s" (closed)="service.clearStatus()" style="margin-bottom:.75rem;display:block" />
+      }
+    }
+
+    <div class="form-grid">
+      <div class="field">
+        <label>Título *</label>
+        <input [(ngModel)]="form.titulo" placeholder="Ej: Nuevo portal disponible" />
+      </div>
+      <div class="field">
+        <label>Enlace *</label>
+        <input [(ngModel)]="form.enlace" placeholder="https://..." type="url" />
+      </div>
+      <div class="field field--full">
+        <label>Resumen *</label>
+        <textarea [(ngModel)]="form.resumen" rows="3" placeholder="Descripción breve de la noticia..."></textarea>
+      </div>
+      <div class="field field--full">
+        <label>Imagen</label>
+        <input type="file" accept="image/*" (change)="onFileChange($event)" />
+        @if (imagenPreview()) {
+          <img [src]="imagenPreview()!" class="img-preview" alt="preview" />
+        }
+      </div>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn-ghost" (click)="cerrarModal()">Cancelar</button>
+      <button class="btn-primary" (click)="publicar()" [disabled]="!formValido()">Publicar</button>
+    </div>
+  </div>
+}

@@ -11,6 +11,7 @@ import { DocumentosModule } from './documentos/documentos.module';
 import { SolicitudesModule } from './solicitudes/solicitudes.module';
 import { TiposMantencionModule } from './tipos-mantencion/tipos-mantencion.module';
 import { MantencionesModule } from './mantenciones/mantenciones.module';
+import { NoticiasModule } from './noticias/noticias.module';
 
 @Module({
   imports: [
@@ -33,6 +34,7 @@ import { MantencionesModule } from './mantenciones/mantenciones.module';
     SolicitudesModule,
     TiposMantencionModule,
     MantencionesModule,
+    NoticiasModule,
   ],
 })
 export class AppModule {}

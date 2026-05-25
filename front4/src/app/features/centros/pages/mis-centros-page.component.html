@@ -43,8 +43,8 @@
   } @else {
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1rem">
       @for (c of centrosFiltrados(); track c._id) {
-        <div class="card centro-card"
-             (click)="seleccionarCentro(c)">
+        @let sc = scoreDeCentro(c._id);
+        <div class="card centro-card" (click)="seleccionarCentro(c)">
           <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:.5rem">
             <div>
               <h3 style="margin:0 0 .2rem;font-size:1rem;font-weight:700;color:#1f2937">{{ c.nombre }}</h3>
@@ -55,10 +55,26 @@
           <p *ngIf="c.ubicacion_ciudad" style="margin:0 0 .3rem;font-size:.82rem;color:#6b7280">
             {{ c.ubicacion_ciudad }}{{ c.ubicacion_region ? ', ' + c.ubicacion_region : '' }}
           </p>
-          <p *ngIf="c.descripcion" style="margin:0;font-size:.8rem;color:#9ca3af;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
-            {{ c.descripcion }}
-          </p>
-          <div style="margin-top:.75rem;font-size:.77rem;color:#0095d6;font-weight:600">Ver detalle →</div>
+          <!-- Mini score -->
+          @if (sc.total > 0) {
+            <div style="display:flex;align-items:center;gap:.5rem;margin-top:.55rem;padding:.5rem .6rem;border-radius:9px;background:#f9fafb;border:1px solid rgba(34,33,33,.06)">
+              <div style="text-align:center;min-width:44px">
+                <span style="font-size:1.4rem;font-weight:700;color:#0095d6;line-height:1">{{ sc.pct }}</span>
+                <span style="font-size:.7rem;color:#9ca3af;font-weight:400">/100</span>
+              </div>
+              <div style="flex:1">
+                <div style="background:#e5e7eb;border-radius:999px;height:5px;overflow:hidden;margin-bottom:.4rem">
+                  <div [style.width]="sc.pct + '%'" style="height:100%;background:linear-gradient(90deg,#0095d6,#22c55e);border-radius:999px"></div>
+                </div>
+                <div style="display:flex;gap:.3rem">
+                  <span style="font-size:.68rem;font-weight:700;padding:.1rem .3rem;border-radius:5px;background:#dcfce7;color:#15803d">{{ sc.aprobados }}</span>
+                  <span style="font-size:.68rem;font-weight:700;padding:.1rem .3rem;border-radius:5px;background:#fef3c7;color:#b45309">{{ sc.revision }}</span>
+                  <span style="font-size:.68rem;font-weight:700;padding:.1rem .3rem;border-radius:5px;background:#fee2e2;color:#dc2626">{{ sc.vencido }}</span>
+                </div>
+              </div>
+            </div>
+          }
+          <div style="margin-top:.65rem;font-size:.77rem;color:#0095d6;font-weight:600">Ver detalle →</div>
         </div>
       }
     </div>

@@ -99,6 +99,22 @@ export class MisCentrosPageComponent implements OnInit, OnDestroy {
       .filter(s => asId(s.centro_costo_id) === asId(centro._id) && !s.proyecto_id);
   });
 
+  scoreDeCentro(centroId: string) {
+    const sols = this.solicitudesService.solicitudes()
+      .filter(s => s.centro_costo_id === centroId);
+    if (sols.length === 0) return { pct: 0, aprobados: 0, revision: 0, vencido: 0, rechazado: 0, pendiente: 0, total: 0 };
+    const aprobados = sols.filter(s => s.estado === 'aprobado').length;
+    return {
+      pct: Math.round((aprobados / sols.length) * 100),
+      aprobados,
+      revision:  sols.filter(s => s.estado === 'revision').length,
+      vencido:   sols.filter(s => s.estado === 'vencido').length,
+      rechazado: sols.filter(s => s.estado === 'rechazado').length,
+      pendiente: sols.filter(s => s.estado === 'pendiente').length,
+      total: sols.length,
+    };
+  }
+
   estadoStyle(estado: string): string {
     const map: Record<string, string> = {
       pendiente: 'background:#fef3c7;color:#b45309',

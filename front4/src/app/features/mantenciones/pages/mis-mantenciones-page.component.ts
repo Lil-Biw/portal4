@@ -1,4 +1,5 @@
 import { Component, OnInit, inject, signal, computed } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { MantencionesService } from '../mantenciones.service';
 import { TiposMantencionService } from '../tipos-mantencion.service';
 import { CentrosService } from '../../centros/centros.service';
@@ -16,7 +17,7 @@ const MONTHS = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto
 @Component({
   selector: 'app-mis-mantenciones-page',
   standalone: true,
-  imports: [],
+  imports: [FormsModule],
   templateUrl: './mis-mantenciones-page.component.html',
   styleUrl: './mantenciones-page.component.css',
 })
@@ -36,11 +37,20 @@ export class MisMantencionesPageComponent implements OnInit {
     );
   });
 
+  protected filtroTipoId = signal<string>('');
+
   protected mantencionesFiltradas = computed(() => {
     const empresa = this.ctx.empresaSeleccionada();
-    if (!empresa) return this.service.mantenciones();
-    const ids = this.centroIdsPorEmpresa();
-    return this.service.mantenciones().filter(m => ids.has(asId(m.centro_costo_id)));
+    const tipoId  = this.filtroTipoId();
+    let list = this.service.mantenciones();
+    if (empresa) {
+      const ids = this.centroIdsPorEmpresa();
+      list = list.filter(m => ids.has(asId(m.centro_costo_id)));
+    }
+    if (tipoId) {
+      list = list.filter(m => asId(typeof m.tipo_id === 'object' ? (m.tipo_id as TipoMantencion)._id : m.tipo_id as string) === tipoId);
+    }
+    return list;
   });
 
   readonly days   = DAYS;

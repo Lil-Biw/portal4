@@ -50,6 +50,7 @@
         </h3>
         <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:.75rem">
           @for (p of grupo.proyectos; track p._id) {
+            @let sc = scoreDeProyecto(p._id);
             <div class="card proyecto-card" (click)="verDetalle(p)" style="margin:0">
               <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:.5rem">
                 <h3 style="margin:0;font-size:1rem;font-weight:700;color:#1f2937">{{ p.nombre }}</h3>
@@ -58,11 +59,29 @@
               </div>
               <p style="margin:0 0 .3rem;font-size:.8rem;color:#6b7280">Cód. {{ p.codigo }}</p>
               @if (p.descripcion) {
-                <p style="margin:0;font-size:.8rem;color:#9ca3af;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
+                <p style="margin:0 0 .45rem;font-size:.8rem;color:#9ca3af;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
                   {{ p.descripcion }}
                 </p>
               }
-              <div style="margin-top:.75rem;font-size:.77rem;color:#0095d6;font-weight:600">Ver proyecto →</div>
+              @if (sc.total > 0) {
+                <div style="display:flex;align-items:center;gap:.5rem;padding:.45rem .55rem;border-radius:8px;background:#f9fafb;border:1px solid rgba(34,33,33,.06)">
+                  <div style="text-align:center;min-width:40px">
+                    <span style="font-size:1.3rem;font-weight:700;color:#0095d6;line-height:1">{{ sc.pct }}</span>
+                    <span style="font-size:.66rem;color:#9ca3af">/100</span>
+                  </div>
+                  <div style="flex:1">
+                    <div style="background:#e5e7eb;border-radius:999px;height:4px;overflow:hidden;margin-bottom:.35rem">
+                      <div [style.width]="sc.pct + '%'" style="height:100%;background:linear-gradient(90deg,#0095d6,#22c55e);border-radius:999px"></div>
+                    </div>
+                    <div style="display:flex;gap:.25rem">
+                      <span style="font-size:.65rem;font-weight:700;padding:.08rem .28rem;border-radius:4px;background:#dcfce7;color:#15803d">{{ sc.aprobados }}</span>
+                      <span style="font-size:.65rem;font-weight:700;padding:.08rem .28rem;border-radius:4px;background:#fef3c7;color:#b45309">{{ sc.revision }}</span>
+                      <span style="font-size:.65rem;font-weight:700;padding:.08rem .28rem;border-radius:4px;background:#fee2e2;color:#dc2626">{{ sc.vencido }}</span>
+                    </div>
+                  </div>
+                </div>
+              }
+              <div style="margin-top:.6rem;font-size:.77rem;color:#0095d6;font-weight:600">Ver proyecto →</div>
             </div>
           }
         </div>

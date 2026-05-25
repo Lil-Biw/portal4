@@ -59,8 +59,9 @@ export class MantencionesPageComponent implements OnInit {
     return this.centrosService.centros().filter(c => asId(c.cliente_id) === empId);
   });
 
-  // ── Filtro de empresa para el calendario ────────────────────────────────
+  // ── Filtros del calendario ───────────────────────────────────────────────
   protected filtroEmpresaId = signal<string>('');
+  protected filtroTipoId    = signal<string>('');
 
   private centroIdsPorEmpresa = computed((): Set<string> => {
     const empId = this.filtroEmpresaId();
@@ -73,10 +74,17 @@ export class MantencionesPageComponent implements OnInit {
   });
 
   protected mantencionesFiltradas = computed(() => {
-    const empId = this.filtroEmpresaId();
-    if (!empId) return this.service.mantenciones();
-    const ids = this.centroIdsPorEmpresa();
-    return this.service.mantenciones().filter(m => ids.has(asId(m.centro_costo_id)));
+    const empId  = this.filtroEmpresaId();
+    const tipoId = this.filtroTipoId();
+    let list = this.service.mantenciones();
+    if (empId) {
+      const ids = this.centroIdsPorEmpresa();
+      list = list.filter(m => ids.has(asId(m.centro_costo_id)));
+    }
+    if (tipoId) {
+      list = list.filter(m => asId(typeof m.tipo_id === 'object' ? (m.tipo_id as TipoMantencion)._id : m.tipo_id as string) === tipoId);
+    }
+    return list;
   });
 
   readonly days  = DAYS;

@@ -46,10 +46,13 @@ export class MiFichaPageComponent implements OnInit {
   protected mantencionesDeEmpresa = computed(() => {
     const ids = this.centroIdsPorEmpresa();
     if (ids.size === 0) return [];
+    const hace30 = new Date();
+    hace30.setDate(hace30.getDate() - 30);
+    hace30.setHours(0, 0, 0, 0);
     return this.mantencionesService.mantenciones()
-      .filter(m => ids.has(asId(m.centro_costo_id)))
-      .sort((a, b) => a.fecha.localeCompare(b.fecha))
-      .slice(0, 6);
+      .filter(m => ids.has(asId(m.centro_costo_id)) && new Date(m.fecha) >= hace30)
+      .sort((a, b) => b.fecha.localeCompare(a.fecha))
+      .slice(0, 3);
   });
 
   protected proyectosDeEmpresa = computed(() => {
@@ -74,18 +77,13 @@ export class MiFichaPageComponent implements OnInit {
   });
 
   protected solicitudesEmpresa = computed(() =>
-    this.solicitudesService.solicitudes().filter(s => !s.centro_costo_id && !s.proyecto_id)
+    this.solicitudesService.solicitudes()
   );
 
-  protected resumenEmpresa = computed(() => {
-    const sols = this.solicitudesEmpresa();
-    const aprobados  = sols.filter(s => s.estado === 'aprobado').length;
-    const revision   = sols.filter(s => s.estado === 'revision').length;
-    const vencido    = sols.filter(s => s.estado === 'vencido').length;
-    const rechazado  = sols.filter(s => s.estado === 'rechazado').length;
-    const pendiente  = sols.filter(s => s.estado === 'pendiente').length;
-    return { total: sols.length, aprobados, revision, vencido, rechazado, pendiente };
-  });
+  protected docsNivelEmpresa = computed(() =>
+    this.solicitudesService.solicitudes()
+      .filter(s => !s.centro_costo_id && !s.proyecto_id)
+  );
 
   protected scoreChipVariant = computed((): ChipVariant => {
     const pct = this.scoreDocumental().pct;

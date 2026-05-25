@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output, inject, signal, computed } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output, inject, signal, computed, effect, untracked } from '@angular/core';
 import { NgFor } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -190,6 +190,10 @@ export class TopbarComponent implements OnInit {
 
   constructor() {
     this.bellIcon = this.sanitizer.bypassSecurityTrustHtml(BELL_SVG);
+    effect(() => {
+      const empresa = this.consumidorContext.empresaSeleccionada();
+      untracked(() => this.solicitudesService.cargar(empresa?._id ?? ''));
+    });
   }
 
   get modeLabel() { return this.mode === 'admin' ? 'Administrador' : 'Consumidor'; }
@@ -234,17 +238,16 @@ export class TopbarComponent implements OnInit {
         });
       });
 
-    // Solicitudes vencidas o rechazadas
+    // Solicitudes pendientes, vencidas o rechazadas
     this.solicitudesService.solicitudes()
-      .filter(s => s.estado === 'vencido' || s.estado === 'rechazado')
-      .slice(0, 5)
+      .filter(s => s.estado === 'pendiente' || s.estado === 'vencido' || s.estado === 'rechazado')
       .forEach(s => {
         result.push({
           tipo:    'solicitud',
           titulo:  s.nombre,
           detalle: `Solicitud ${s.estado}`,
-          color:   s.estado === 'vencido' ? '#374151' : '#dc2626',
-          urgente: true,
+          color:   s.estado === 'vencido' ? '#f59e0b' : s.estado === 'rechazado' ? '#ef4444' : '#0095d6',
+          urgente: s.estado !== 'pendiente',
         });
       });
 

@@ -3,105 +3,169 @@
   <button class="btn-primary" (click)="refresh()">Actualizar todo</button>
 </div>
 
-<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1rem">
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1rem;align-items:start">
 
-  <!-- Empresas -->
-  <div class="card">
-    <h3 style="margin:0 0 .9rem;font-size:1rem;font-weight:700;display:flex;align-items:center;justify-content:space-between">
+  <!-- 1. Empresas -->
+  <div class="card" style="display:flex;flex-direction:column">
+    <h3 style="margin:0 0 .75rem;font-size:1rem;font-weight:700;display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
       Empresas
       <span style="background:rgba(0,149,214,.1);color:#0095d6;padding:.2rem .6rem;border-radius:999px;font-size:.78rem;font-weight:700">{{ clientesService.clientes().length }}</span>
     </h3>
-    @if (clientesService.clientes().length === 0) {
-      <p class="empty">Sin empresas registradas.</p>
-    }
-    @for (c of clientesService.clientes(); track c._id) {
-      <div style="padding:.6rem 0;border-bottom:1px solid rgba(34,33,33,.07)">
-        <strong style="font-size:.875rem;display:block">{{ c.razon_social }}</strong>
-        <span style="font-size:.78rem;color:#6b7280">{{ c.rut }} · {{ c.email_contacto }}</span>
-      </div>
-    }
+    <div class="scroll-area">
+      @if (clientesService.clientes().length === 0) {
+        <p class="empty">Sin empresas registradas.</p>
+      }
+      @for (c of clientesService.clientes(); track c._id) {
+        <div style="padding:.55rem 0;border-bottom:1px solid rgba(34,33,33,.07)">
+          <strong style="font-size:.875rem;display:block">{{ c.razon_social }}</strong>
+          <span style="font-size:.78rem;color:#6b7280">{{ c.rut }} · {{ c.email_contacto }}</span>
+        </div>
+      }
+    </div>
   </div>
 
-  <!-- Centros -->
-  <div class="card">
-    <h3 style="margin:0 0 .9rem;font-size:1rem;font-weight:700;display:flex;align-items:center;justify-content:space-between">
+  <!-- 2. Centro de costos -->
+  <div class="card" style="display:flex;flex-direction:column">
+    <h3 style="margin:0 0 .75rem;font-size:1rem;font-weight:700;display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
       Centros de costos
       <span style="background:rgba(0,149,214,.1);color:#0095d6;padding:.2rem .6rem;border-radius:999px;font-size:.78rem;font-weight:700">{{ centrosService.centros().length }}</span>
     </h3>
-    @if (centrosService.centros().length === 0) {
-      <p class="empty">Sin centros registrados.</p>
-    }
-    @for (c of centrosService.centros(); track c._id) {
-      <div style="padding:.6rem 0;border-bottom:1px solid rgba(34,33,33,.07)">
-        <strong style="font-size:.875rem;display:block">{{ c.nombre }}</strong>
-        <span style="font-size:.78rem;color:#6b7280">Cód. {{ c.codigo }}{{ c.ubicacion_ciudad ? ' · ' + c.ubicacion_ciudad : '' }}</span>
-      </div>
-    }
+    <div class="scroll-area">
+      @if (centrosService.centros().length === 0) {
+        <p class="empty">Sin centros registrados.</p>
+      }
+      @for (c of centrosService.centros(); track c._id) {
+        <div style="padding:.55rem 0;border-bottom:1px solid rgba(34,33,33,.07)">
+          <strong style="font-size:.875rem;display:block">{{ c.nombre }}</strong>
+          <span style="font-size:.78rem;color:#6b7280">Cód. {{ c.codigo }}{{ c.ubicacion_ciudad ? ' · ' + c.ubicacion_ciudad : '' }}</span>
+        </div>
+      }
+    </div>
   </div>
 
-  <!-- Proyectos -->
-  <div class="card">
-    <h3 style="margin:0 0 .9rem;font-size:1rem;font-weight:700;display:flex;align-items:center;justify-content:space-between">
+  <!-- 3. Proyectos -->
+  <div class="card" style="display:flex;flex-direction:column">
+    <h3 style="margin:0 0 .75rem;font-size:1rem;font-weight:700;display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
       Proyectos
       <span style="background:rgba(0,149,214,.1);color:#0095d6;padding:.2rem .6rem;border-radius:999px;font-size:.78rem;font-weight:700">{{ proyectosService.proyectos().length }}</span>
     </h3>
-    @if (proyectosService.proyectos().length === 0) {
-      <p class="empty">Sin proyectos registrados.</p>
-    }
-    @for (p of proyectosService.proyectos(); track p._id) {
-      <div style="padding:.6rem 0;border-bottom:1px solid rgba(34,33,33,.07);display:flex;align-items:flex-start;justify-content:space-between;gap:.5rem">
-        <div>
-          <strong style="font-size:.875rem;display:block">{{ p.nombre }}</strong>
-          <span style="font-size:.78rem;color:#6b7280">Cód. {{ p.codigo }}</span>
+    <div class="scroll-area">
+      @if (proyectosService.proyectos().length === 0) {
+        <p class="empty">Sin proyectos registrados.</p>
+      }
+      @for (p of proyectosService.proyectos(); track p._id) {
+        <div style="padding:.55rem 0;border-bottom:1px solid rgba(34,33,33,.07);display:flex;align-items:flex-start;justify-content:space-between;gap:.5rem">
+          <div>
+            <strong style="font-size:.875rem;display:block">{{ p.nombre }}</strong>
+            <span style="font-size:.78rem;color:#6b7280">Cód. {{ p.codigo }}</span>
+          </div>
+          <span style="font-size:.7rem;font-weight:700;padding:.15rem .45rem;border-radius:999px;background:rgba(34,33,33,.07);color:#6b7280;white-space:nowrap;flex-shrink:0">{{ p.estado }}</span>
         </div>
-        <span style="font-size:.7rem;font-weight:700;padding:.15rem .45rem;border-radius:999px;background:rgba(34,33,33,.07);color:#6b7280;white-space:nowrap;flex-shrink:0">{{ p.estado }}</span>
-      </div>
-    }
+      }
+    </div>
   </div>
 
-  <!-- Usuarios -->
-  <div class="card">
-    <h3 style="margin:0 0 .9rem;font-size:1rem;font-weight:700;display:flex;align-items:center;justify-content:space-between">
-      Usuarios
-      <span style="background:rgba(0,149,214,.1);color:#0095d6;padding:.2rem .6rem;border-radius:999px;font-size:.78rem;font-weight:700">{{ usuariosService.usuarios().length }}</span>
-    </h3>
-    @if (usuariosService.usuarios().length === 0) {
-      <p class="empty">Sin usuarios registrados.</p>
-    }
-    @for (u of usuariosService.usuarios(); track u._id) {
-      <div style="padding:.6rem 0;border-bottom:1px solid rgba(34,33,33,.07);display:flex;align-items:flex-start;justify-content:space-between;gap:.5rem">
-        <div>
-          <strong style="font-size:.875rem;display:block">{{ u.nombre }}</strong>
-          <span style="font-size:.78rem;color:#6b7280">{{ u.email }}</span>
-        </div>
-        <span style="font-size:.7rem;font-weight:700;padding:.15rem .45rem;border-radius:999px;background:rgba(0,149,214,.1);color:#0095d6;white-space:nowrap;flex-shrink:0">{{ u.rol }}</span>
-      </div>
-    }
-  </div>
-
-  <!-- Mantenciones -->
-  <div class="card">
-    <h3 style="margin:0 0 .9rem;font-size:1rem;font-weight:700;display:flex;align-items:center;justify-content:space-between">
+  <!-- 4. Mantenciones -->
+  <div class="card" style="display:flex;flex-direction:column">
+    <h3 style="margin:0 0 .75rem;font-size:1rem;font-weight:700;display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
       Mantenciones
       <span style="background:rgba(0,149,214,.1);color:#0095d6;padding:.2rem .6rem;border-radius:999px;font-size:.78rem;font-weight:700">{{ mantencionesService.mantenciones().length }}</span>
     </h3>
-    @if (mantencionesService.loading()) {
-      <p class="empty">Cargando...</p>
-    } @else if (mantencionesService.mantenciones().length === 0) {
-      <p class="empty">Sin mantenciones registradas.</p>
+    <div class="scroll-area">
+      @if (mantencionesService.loading()) {
+        <p class="empty">Cargando...</p>
+      } @else if (mantencionesService.mantenciones().length === 0) {
+        <p class="empty">Sin mantenciones registradas.</p>
+      } @else {
+        @for (m of mantencionesService.mantenciones(); track m._id) {
+          <div style="padding:.55rem 0;border-bottom:1px solid rgba(34,33,33,.07);display:flex;align-items:flex-start;justify-content:space-between;gap:.5rem">
+            <strong style="font-size:.875rem;display:block">{{ m.nombre }}</strong>
+            <span style="font-size:.78rem;color:#6b7280;flex-shrink:0">{{ m.fecha.slice(0,10) }}</span>
+          </div>
+        }
+      }
+    </div>
+  </div>
+
+  <!-- 5. Documentos -->
+  <div class="card" style="display:flex;flex-direction:column">
+    <h3 style="margin:0 0 .75rem;font-size:1rem;font-weight:700;display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
+      Documentos
+      <span style="background:rgba(0,149,214,.1);color:#0095d6;padding:.2rem .6rem;border-radius:999px;font-size:.78rem;font-weight:700">{{ todasSolicitudes().length }}</span>
+    </h3>
+    @if (loadingDocs()) {
+      <p class="empty">Cargando solicitudes…</p>
+    } @else if (todasSolicitudes().length === 0) {
+      <p class="empty">Sin solicitudes registradas.</p>
     } @else {
-      @for (m of mantencionesService.mantenciones().slice(0, 8); track m._id) {
-        <div style="padding:.6rem 0;border-bottom:1px solid rgba(34,33,33,.07);display:flex;align-items:flex-start;justify-content:space-between;gap:.5rem">
-          <strong style="font-size:.875rem;display:block">{{ m.nombre }}</strong>
-          <span style="font-size:.78rem;color:#6b7280;flex-shrink:0">{{ m.fecha.slice(0,10) }}</span>
+      <div class="scroll-area" style="display:flex;flex-direction:column;gap:.4rem">
+        @for (emp of resumenEmpresas(); track emp.nombre) {
+          <div style="display:flex;align-items:center;justify-content:space-between;padding-top:.25rem">
+            <span style="font-size:.82rem;font-weight:700;color:#1f2937">{{ emp.nombre }}</span>
+            <span style="font-size:.75rem;font-weight:700;color:#0095d6;background:rgba(0,149,214,.08);padding:.1rem .45rem;border-radius:999px">{{ emp.total }}</span>
+          </div>
+          @for (cr of emp.centros; track cr.centro._id) {
+            <div style="display:flex;align-items:center;justify-content:space-between;padding-left:.9rem">
+              <span style="font-size:.77rem;color:#374151;display:flex;align-items:center;gap:.35rem">
+                <span style="width:1px;height:12px;background:rgba(34,33,33,.15);display:inline-block"></span>
+                {{ cr.centro.nombre }}
+              </span>
+              <span style="font-size:.72rem;color:#6b7280;font-weight:600">{{ cr.total }}</span>
+            </div>
+            @for (pr of cr.proyectos; track pr.proyecto._id) {
+              <div style="display:flex;align-items:center;justify-content:space-between;padding-left:1.75rem">
+                <span style="font-size:.73rem;color:#6b7280;display:flex;align-items:center;gap:.3rem">
+                  <span style="width:1px;height:10px;background:rgba(34,33,33,.1);display:inline-block"></span>
+                  {{ pr.proyecto.nombre }}
+                </span>
+                <span style="font-size:.7rem;color:#9ca3af;font-weight:600">{{ pr.total }}</span>
+              </div>
+            }
+          }
+        }
+      </div>
+    }
+  </div>
+
+  <!-- 6. Noticias -->
+  <div class="card" style="display:flex;flex-direction:column">
+    <h3 style="margin:0 0 .75rem;font-size:1rem;font-weight:700;display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
+      Noticias
+      <span style="background:rgba(0,149,214,.1);color:#0095d6;padding:.2rem .6rem;border-radius:999px;font-size:.78rem;font-weight:700">{{ noticiasService.noticias().length }}</span>
+    </h3>
+    <div class="scroll-area">
+      @if (noticiasService.noticias().length === 0) {
+        <p class="empty">Sin noticias publicadas.</p>
+      }
+      @for (n of noticiasService.noticias(); track n._id) {
+        <div style="padding:.55rem 0;border-bottom:1px solid rgba(34,33,33,.07)">
+          <strong style="font-size:.875rem;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ n.titulo }}</strong>
+          <span style="font-size:.78rem;color:#6b7280">{{ n.creado_en | slice:0:10 }}</span>
         </div>
       }
-      @if (mantencionesService.mantenciones().length > 8) {
-        <p style="margin:.5rem 0 0;font-size:.75rem;color:#9ca3af;text-align:center">
-          y {{ mantencionesService.mantenciones().length - 8 }} más…
-        </p>
+    </div>
+  </div>
+
+  <!-- 7. Usuarios -->
+  <div class="card" style="display:flex;flex-direction:column">
+    <h3 style="margin:0 0 .75rem;font-size:1rem;font-weight:700;display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
+      Usuarios
+      <span style="background:rgba(0,149,214,.1);color:#0095d6;padding:.2rem .6rem;border-radius:999px;font-size:.78rem;font-weight:700">{{ usuariosService.usuarios().length }}</span>
+    </h3>
+    <div class="scroll-area">
+      @if (usuariosService.usuarios().length === 0) {
+        <p class="empty">Sin usuarios registrados.</p>
       }
-    }
+      @for (u of usuariosService.usuarios(); track u._id) {
+        <div style="padding:.55rem 0;border-bottom:1px solid rgba(34,33,33,.07);display:flex;align-items:flex-start;justify-content:space-between;gap:.5rem">
+          <div>
+            <strong style="font-size:.875rem;display:block">{{ u.nombre }}</strong>
+            <span style="font-size:.78rem;color:#6b7280">{{ u.email }}</span>
+          </div>
+          <span style="font-size:.7rem;font-weight:700;padding:.15rem .45rem;border-radius:999px;background:rgba(0,149,214,.1);color:#0095d6;white-space:nowrap;flex-shrink:0">{{ u.rol }}</span>
+        </div>
+      }
+    </div>
   </div>
 
 </div>

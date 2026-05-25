@@ -20,33 +20,55 @@
   <!-- Grid 2×2 -->
   <div class="cards-grid">
 
-    <!-- Card 1: Información general -->
-    <div class="card">
-      <h3 class="section-title">Información general</h3>
-      <div class="dl-row">
-        <span class="dl-label">Nombre</span>
-        <span class="dl-value">{{ proyecto()!.nombre }}</span>
-      </div>
-      <div class="dl-row">
-        <span class="dl-label">Código</span>
-        <span class="dl-value">{{ proyecto()!.codigo }}</span>
-      </div>
-      <div class="dl-row">
-        <span class="dl-label">Estado</span>
-        <span class="dl-value">{{ proyecto()!.estado }}</span>
-      </div>
-      @if (empresa()) {
+    <!-- Card 1: Información general + mini score -->
+    <div class="card" style="display:flex;gap:1rem">
+      <div style="flex:1">
+        <h3 class="section-title">Información general</h3>
         <div class="dl-row">
-          <span class="dl-label">Empresa</span>
-          <span class="dl-value">{{ empresa()!.razon_social }}</span>
+          <span class="dl-label">Código</span>
+          <span class="dl-value">{{ proyecto()!.codigo }}</span>
         </div>
-      }
-      @if (centro()) {
         <div class="dl-row">
-          <span class="dl-label">Centro</span>
-          <span class="dl-value">{{ centro()!.nombre }}</span>
+          <span class="dl-label">Estado</span>
+          <span class="dl-value">{{ proyecto()!.estado }}</span>
         </div>
-      }
+        @if (empresa()) {
+          <div class="dl-row">
+            <span class="dl-label">Empresa</span>
+            <span class="dl-value">{{ empresa()!.razon_social }}</span>
+          </div>
+        }
+        @if (centro()) {
+          <div class="dl-row">
+            <span class="dl-label">Centro</span>
+            <span class="dl-value">{{ centro()!.nombre }}</span>
+          </div>
+        }
+        @if (proyecto()!.descripcion) {
+          <div class="dl-row" style="flex-direction:column;gap:.2rem;margin-top:.25rem">
+            <span class="dl-label">Descripción</span>
+            <span style="font-size:.82rem;color:#374151;line-height:1.5">{{ proyecto()!.descripcion }}</span>
+          </div>
+        }
+      </div>
+      <!-- Mini score documental -->
+      <div style="min-width:110px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:.75rem;border-radius:12px;border:1px solid rgba(34,33,33,.09);background:#f9fafb;gap:.4rem">
+        <div style="text-align:center">
+          <span style="font-size:2.2rem;font-weight:700;color:#0095d6;line-height:1">{{ scoreDoc().pct }}</span>
+          <span style="font-size:.85rem;color:#9ca3af;font-weight:400">/ 100</span>
+        </div>
+        <div style="width:100%;background:#e5e7eb;border-radius:999px;height:5px;overflow:hidden">
+          <div [style.width]="scoreDoc().pct + '%'" style="height:100%;background:linear-gradient(90deg,#0095d6,#22c55e);border-radius:999px"></div>
+        </div>
+        <div style="display:flex;gap:.3rem;flex-wrap:wrap;justify-content:center">
+          <span style="font-size:.7rem;font-weight:700;padding:.15rem .38rem;border-radius:6px;background:#dcfce7;color:#15803d">{{ scoreDoc().aprobados }}</span>
+          <span style="font-size:.7rem;font-weight:700;padding:.15rem .38rem;border-radius:6px;background:#fef3c7;color:#b45309">{{ scoreDoc().revision }}</span>
+          <span style="font-size:.7rem;font-weight:700;padding:.15rem .38rem;border-radius:6px;background:#fee2e2;color:#dc2626">{{ scoreDoc().vencido }}</span>
+        </div>
+        @if (scoreDoc().total === 0) {
+          <span style="font-size:.68rem;color:#9ca3af;text-align:center">Sin docs</span>
+        }
+      </div>
     </div>
 
     <!-- Card 2: Alcance -->

@@ -5,7 +5,3 @@ export class AsignarPermisoDto {
   @IsMongoId() centro_costo_id: string;
   @IsEnum(['ver', 'editar']) tipo: 'ver' | 'editar';
 }
-
-export class ActualizarPermisoDto {
-  @IsEnum(['ver', 'editar']) tipo: 'ver' | 'editar';
-}

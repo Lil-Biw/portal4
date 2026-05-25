@@ -17,9 +17,20 @@
     <button class="cal-nav-btn" (click)="navSiguiente()">›</button>
     <button class="cal-today-btn" (click)="irAHoy()">Hoy</button>
   </div>
-  <div class="cal-view-toggle">
-    <button [class.active]="view() === 'month'" (click)="setView('month')">Mes</button>
-    <button [class.active]="view() === 'week'"  (click)="setView('week')">Semana</button>
+  <div style="display:flex;align-items:center;gap:.75rem;flex-wrap:wrap">
+    <select
+      class="cal-empresa-filter"
+      [ngModel]="filtroTipoId()"
+      (ngModelChange)="filtroTipoId.set($event)">
+      <option value="">Todos los tipos</option>
+      @for (t of tiposService.tipos(); track t._id) {
+        <option [value]="t._id">{{ t.nombre }}</option>
+      }
+    </select>
+    <div class="cal-view-toggle">
+      <button [class.active]="view() === 'month'" (click)="setView('month')">Mes</button>
+      <button [class.active]="view() === 'week'"  (click)="setView('week')">Semana</button>
+    </div>
   </div>
 </div>
 

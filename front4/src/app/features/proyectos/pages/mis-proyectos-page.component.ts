@@ -1,7 +1,8 @@
-import { Component, OnInit, inject, computed, signal } from '@angular/core';
+import { Component, OnInit, inject, computed, signal, effect } from '@angular/core';
 import { Router } from '@angular/router';
 import { ProyectosService } from '../proyectos.service';
 import { CentrosService } from '../../centros/centros.service';
+import { SolicitudesService } from '../../solicitudes/solicitudes.service';
 import { ConsumidorContextService } from '../../../profile/consumidor-context.service';
 import { Proyecto } from '../../../shared/models/proyecto.model';
 import { asId } from '../../../shared/utils';
@@ -24,10 +25,11 @@ import { asId } from '../../../shared/utils';
   `],
 })
 export class MisProyectosPageComponent implements OnInit {
-  private  readonly consumidorContext = inject(ConsumidorContextService);
-  private  readonly router            = inject(Router);
-  protected readonly proyectosService = inject(ProyectosService);
-  protected readonly centrosService   = inject(CentrosService);
+  private  readonly consumidorContext   = inject(ConsumidorContextService);
+  private  readonly router              = inject(Router);
+  protected readonly proyectosService   = inject(ProyectosService);
+  protected readonly centrosService     = inject(CentrosService);
+  protected readonly solicitudesService = inject(SolicitudesService);
 
   protected mostrarBuscar = signal(false);
   protected busqueda      = signal('');
@@ -76,9 +78,30 @@ export class MisProyectosPageComponent implements OnInit {
     if (!this.mostrarBuscar()) this.busqueda.set('');
   }
 
+  constructor() {
+    effect(() => {
+      const emp = this.consumidorContext.empresaSeleccionada();
+      if (emp) this.solicitudesService.cargar(emp._id);
+    });
+  }
+
   ngOnInit(): void {
     this.proyectosService.cargar();
     this.centrosService.cargar();
+  }
+
+  scoreDeProyecto(proyectoId: string) {
+    const sols = this.solicitudesService.solicitudes()
+      .filter(s => s.proyecto_id === proyectoId);
+    if (sols.length === 0) return { pct: 0, aprobados: 0, revision: 0, vencido: 0, total: 0 };
+    const aprobados = sols.filter(s => s.estado === 'aprobado').length;
+    return {
+      pct: Math.round((aprobados / sols.length) * 100),
+      aprobados,
+      revision: sols.filter(s => s.estado === 'revision').length,
+      vencido:  sols.filter(s => s.estado === 'vencido').length,
+      total: sols.length,
+    };
   }
 
   verDetalle(proyecto: Proyecto): void {
