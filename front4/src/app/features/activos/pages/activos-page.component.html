@@ -16,57 +16,59 @@
 </app-activos-list>
 
 <!-- Modal -->
-<div class="modal-backdrop" *ngIf="modal() !== null" (click)="cerrar()">
-  <div class="modal" (click)="$event.stopPropagation()">
+@if (modal() !== null) {
+  <div class="modal-backdrop" (click)="cerrar()">
+    <div class="modal" (click)="$event.stopPropagation()">
 
-    <!-- Crear -->
-    <ng-container *ngIf="modal() === 'crear'">
-      <div class="modal-header">
-        <h3>Nuevo activo</h3>
-        <button class="modal-close" (click)="cerrar()">&#x2715;</button>
-      </div>
-      <app-status-banner [status]="service.status()"></app-status-banner>
-      <app-activos-form
-        submitLabel="Crear activo"
-        [centros]="centrosService.centros()"
-        (submitted)="crear($event)">
-      </app-activos-form>
-    </ng-container>
+      <!-- Crear -->
+      @if (modal() === 'crear') {
+        <div class="modal-header">
+          <h3>Nuevo activo</h3>
+          <button class="modal-close" (click)="cerrar()">&#x2715;</button>
+        </div>
+        <app-status-banner [status]="service.status()"></app-status-banner>
+        <app-activos-form
+          submitLabel="Crear activo"
+          [centros]="centrosService.centros()"
+          (submitted)="crear($event)">
+        </app-activos-form>
+      }
 
-    <!-- Editar -->
-    <ng-container *ngIf="modal() === 'editar'">
-      <div class="modal-header">
-        <h3>Editar activo</h3>
-        <button class="modal-close" (click)="cerrar()">&#x2715;</button>
-      </div>
-      <app-status-banner [status]="service.status()"></app-status-banner>
-      <app-activos-form
-        [initial]="service.seleccionado()"
-        [centros]="centrosService.centros()"
-        submitLabel="Guardar cambios"
-        (submitted)="actualizar($event)">
-      </app-activos-form>
-    </ng-container>
+      <!-- Editar -->
+      @if (modal() === 'editar') {
+        <div class="modal-header">
+          <h3>Editar activo</h3>
+          <button class="modal-close" (click)="cerrar()">&#x2715;</button>
+        </div>
+        <app-status-banner [status]="service.status()"></app-status-banner>
+        <app-activos-form
+          [initial]="service.seleccionado()"
+          [centros]="centrosService.centros()"
+          submitLabel="Guardar cambios"
+          (submitted)="actualizar($event)">
+        </app-activos-form>
+      }
 
-    <!-- Buscar -->
-    <ng-container *ngIf="modal() === 'buscar'">
-      <div class="modal-header">
-        <h3>Buscar activo</h3>
-        <button class="modal-close" (click)="cerrar()">&#x2715;</button>
-      </div>
-      <input
-        class="search-input"
-        type="text"
-        placeholder="Nombre o tipo..."
-        [ngModel]="busqueda()"
-        (ngModelChange)="busqueda.set($event)"
-        autofocus />
-      <app-activos-list
-        [activos]="activosFiltrados()"
-        (editado)="editarDesdeBuscar($event)"
-        (eliminado)="eliminar($event)">
-      </app-activos-list>
-    </ng-container>
+      <!-- Buscar -->
+      @if (modal() === 'buscar') {
+        <div class="modal-header">
+          <h3>Buscar activo</h3>
+          <button class="modal-close" (click)="cerrar()">&#x2715;</button>
+        </div>
+        <input
+          class="search-input"
+          type="text"
+          placeholder="Nombre o tipo..."
+          [ngModel]="busqueda()"
+          (ngModelChange)="busqueda.set($event)"
+          autofocus />
+        <app-activos-list
+          [activos]="activosFiltrados()"
+          (editado)="editarDesdeBuscar($event)"
+          (eliminado)="eliminar($event)">
+        </app-activos-list>
+      }
 
+    </div>
   </div>
-</div>
+}

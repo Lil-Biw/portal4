@@ -1,5 +1,4 @@
 import { Component, OnInit, inject, signal, computed, effect } from '@angular/core';
-import { NgIf } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivosService } from '../activos.service';
 import { CentrosService } from '../../centros/centros.service';
@@ -13,7 +12,7 @@ type ModalMode = 'crear' | 'editar' | 'buscar' | null;
 @Component({
   selector: 'app-activos-page',
   standalone: true,
-  imports: [NgIf, FormsModule, StatusBannerComponent, ActivosFormComponent, ActivosListComponent],
+  imports: [FormsModule, StatusBannerComponent, ActivosFormComponent, ActivosListComponent],
   templateUrl: './activos-page.component.html',
   styles: [`
     .page-header {
