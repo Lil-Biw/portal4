@@ -95,9 +95,10 @@ export type UpdateActivoDto = Partial<CreateActivoDto>;
 
 **`activos-form/activos-form.component.ts`** (dumb):
 - `@Input() initial: Activo | null` — para editar.
-- `@Input() centros: CentroCosto[]` — lista de centros para el selector.
+- `@Input() centroFijo: CentroCosto | null` — cuando se abre desde un centro específico, el campo centro queda fijo y oculto.
+- `@Input() centros: CentroCosto[]` — lista para el selector cuando no hay `centroFijo`.
 - `@Output() submitted = new EventEmitter<CreateActivoDto>()`.
-- Campos: nombre, tipo_activo, selector de centro_costo_id, descripcion.
+- Campos: nombre, tipo_activo, descripcion. El `centro_costo_id` se toma de `centroFijo` si existe, o se muestra como selector si no.
 
 **`activos-list/activos-list.component.ts`** (dumb):
 - `@Input() activos: Activo[]`, `@Input() mostrarAcciones = true`.
@@ -107,8 +108,24 @@ export type UpdateActivoDto = Partial<CreateActivoDto>;
 **`activos-page.component.ts`** (admin, smart):
 - Ruta: `/activos`.
 - Modal para crear/editar/buscar, igual que `centros-page`.
-- Inyecta `ActivosService` + `CentrosService` (para el selector de centro en el form).
+- Inyecta `ActivosService` + `CentrosService`.
 - Agrega ítem `{ label: 'Activos', route: '/activos' }` al sidebar admin (sin icono — modo admin no usa iconos).
+
+### Parte 2c — Botón "Agregar activo" en centros admin
+
+En la vista admin de centros (`centros-list.component.html`), cada fila/card de centro tiene actualmente botones de editar y eliminar. Se agrega un botón **"+ Activo"** junto a ellos.
+
+Al hacer clic:
+- Emite un nuevo `@Output() agregarActivo = new EventEmitter<CentroCosto>()` en `CentrosListComponent`.
+- `CentrosPageComponent` recibe ese evento, guarda el centro como `centroParaActivo = signal<CentroCosto | null>(null)`, y abre un modal de creación de activo.
+
+**Modal de activo en centros-page:**
+- Se agrega a `centros-page.component.html` un modal adicional (junto a los modales de crear/editar/buscar centro ya existentes).
+- El modal muestra un título "Nuevo activo — {centro.nombre}" y renderiza `<app-activos-form>` con `[centroFijo]="centroParaActivo()"`.
+- Al enviar el form, llama `activosService.crear(dto)` y cierra el modal cuando el status es `ok` (patrón modal existente con `effect`).
+- Al abrir el modal se llama `activosService.clearStatus()`.
+
+`CentrosPageComponent` inyecta `ActivosService` para este flujo.
 
 **Vista consumidor**: no tiene página propia. Se embebe en `mis-centros-page` como recuadro 5 (ver Parte 2b).
 
@@ -217,6 +234,10 @@ mantenciones (campo agregado)
 ### Frontend (modificados)
 - `front4/src/app/layout/sidebar/sidebar.component.ts` — Eclarity + Activos (admin)
 - `front4/src/app/app.routes.ts` — ruta `/activos`
+- `front4/src/app/features/centros/components/centros-list/centros-list.component.html` — botón "+ Activo"
+- `front4/src/app/features/centros/components/centros-list/centros-list.component.ts` — @Output agregarActivo
+- `front4/src/app/features/centros/pages/centros-page.component.html` — modal nuevo activo
+- `front4/src/app/features/centros/pages/centros-page.component.ts` — centroParaActivo + ActivosService
 - `front4/src/app/features/centros/pages/mis-centros-page.component.html` — recuadro 5
 - `front4/src/app/features/centros/pages/mis-centros-page.component.ts` — inyectar ActivosService
 - `front4/src/app/features/mantenciones/pages/mantenciones-page.component.ts` — activo_id + computed
