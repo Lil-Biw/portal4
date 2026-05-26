@@ -11,6 +11,7 @@
 
 <app-activos-list
   [activos]="service.activos()"
+  [centros]="centrosService.centros()"
   (editado)="abrirEditar($event)"
   (eliminado)="eliminar($event)">
 </app-activos-list>
@@ -64,6 +65,7 @@
           autofocus />
         <app-activos-list
           [activos]="activosFiltrados()"
+          [centros]="centrosService.centros()"
           (editado)="editarDesdeBuscar($event)"
           (eliminado)="eliminar($event)">
         </app-activos-list>

@@ -1,5 +1,7 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { Activo } from '../../../../shared/models/activo.model';
+import { CentroCosto } from '../../../../shared/models/centro.model';
+import { asId } from '../../../../shared/utils';
 
 @Component({
   selector: 'app-activos-list',
@@ -14,6 +16,9 @@ import { Activo } from '../../../../shared/models/activo.model';
             <div>
               <strong style="display:block;font-size:.9rem;color:#1f2937">{{ a.nombre }}</strong>
               <span style="font-size:.78rem;color:#6b7280">{{ a.tipo_activo }}</span>
+              @if (centroNombre(a)) {
+                <span style="display:block;font-size:.75rem;color:#0095d6;font-weight:500">{{ centroNombre(a) }}</span>
+              }
               @if (a.descripcion) {
                 <span style="display:block;font-size:.78rem;color:#9ca3af">{{ a.descripcion }}</span>
               }
@@ -32,7 +37,12 @@ import { Activo } from '../../../../shared/models/activo.model';
 })
 export class ActivosListComponent {
   @Input() activos: Activo[] = [];
+  @Input() centros: CentroCosto[] = [];
   @Input() mostrarAcciones = true;
   @Output() editado   = new EventEmitter<Activo>();
   @Output() eliminado = new EventEmitter<string>();
+
+  centroNombre(a: Activo): string {
+    return this.centros.find(c => asId(c._id) === asId(a.centro_costo_id))?.nombre ?? '';
+  }
 }
