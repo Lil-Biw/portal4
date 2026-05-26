@@ -1,6 +1,7 @@
 import { Component, OnInit, OnDestroy, inject, computed, signal } from '@angular/core';
 import { NgIf } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { CentrosService } from '../centros.service';
 import { ConsumidorContextService } from '../../../profile/consumidor-context.service';
@@ -31,6 +32,7 @@ import { asId } from '../../../shared/utils';
 })
 export class MisCentrosPageComponent implements OnInit, OnDestroy {
   private  readonly consumidorContext  = inject(ConsumidorContextService);
+  private  readonly router             = inject(Router);
   protected readonly service           = inject(CentrosService);
   protected readonly solicitudesService = inject(SolicitudesService);
   protected readonly documentosService  = inject(DocumentosService);
@@ -170,6 +172,13 @@ export class MisCentrosPageComponent implements OnInit, OnDestroy {
     const emp = this.empresa;
     if (emp) this.documentosService.cargar('centro', emp.razon_social, centro.nombre);
     this.activosService.cargar(asId(centro._id));
+  }
+
+  irADocumentos(tab: 'documentacion' | 'solicitudes'): void {
+    const c = this.centroActivo;
+    this.router.navigate(['/documentos'], {
+      queryParams: { tab, ...(c ? { centroId: asId(c._id) } : {}) },
+    });
   }
 
   volver(): void {

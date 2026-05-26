@@ -1,13 +1,17 @@
 import { IsMongoId, IsEnum, IsOptional, IsString, MaxLength } from 'class-validator';
 
 export const CATEGORIAS_DOCUMENTO = [
-  'Contrato',
-  'Factura',
-  'Boleta',
-  'Recibo',
-  'Certificado',
-  'Informe',
-  'Otro',
+  'Planos/Diagramas',
+  'Informes',
+  '[ENERGIA]Boleta/Factura/BNE',
+  '[AGUA]Boleta/Factura',
+  '[GAS]Boleta/Factura',
+  '[COMBUSTIBLE]Boleta/Factura',
+  'Contratos',
+  'Certificados',
+  'Auditorias',
+  'OT',
+  'Otros',
 ] as const;
 
 export type CategoriaDocumento = (typeof CATEGORIAS_DOCUMENTO)[number];

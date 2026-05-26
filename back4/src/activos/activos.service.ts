@@ -10,7 +10,11 @@ export class ActivosService {
 
   async findAll(centroCostoId?: string) {
     const filter: Record<string, unknown> = { activo: true };
-    if (centroCostoId) filter['centro_costo_id'] = new Types.ObjectId(centroCostoId);
+    if (centroCostoId) {
+      filter['centro_costo_id'] = {
+        $in: [centroCostoId, new Types.ObjectId(centroCostoId)],
+      };
+    }
     return this.activoModel.find(filter).lean();
   }
 
@@ -21,7 +25,10 @@ export class ActivosService {
   }
 
   async create(dto: CreateActivoDto) {
-    const activo = new this.activoModel(dto);
+    const activo = new this.activoModel({
+      ...dto,
+      centro_costo_id: new Types.ObjectId(dto.centro_costo_id),
+    });
     return activo.save();
   }
 

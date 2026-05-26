@@ -93,7 +93,7 @@ export class DocumentosService {
     fs.writeFileSync(filePath, archivo.buffer);
 
     const resolvedNombre = nombre_display?.trim() || archivo.originalname;
-    const resolvedCategoria = categoria || 'Otro';
+    const resolvedCategoria = categoria || 'Otros';
 
     const meta = this.readMeta(fullDirPath);
     meta[nombre] = { nombre_display: resolvedNombre, categoria: resolvedCategoria };
@@ -136,7 +136,7 @@ export class DocumentosService {
       .filter(f => f !== 'metadata.json')
       .map((filename) => {
         const stats = fs.statSync(path.join(fullDirPath, filename));
-        const fileMeta = meta[filename] ?? { nombre_display: filename, categoria: 'Otro' };
+        const fileMeta = meta[filename] ?? { nombre_display: filename, categoria: 'Otros' };
         return {
           nombre: filename,
           nombre_display: fileMeta.nombre_display,

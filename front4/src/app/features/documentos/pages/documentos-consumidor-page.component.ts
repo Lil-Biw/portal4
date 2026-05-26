@@ -309,6 +309,6 @@ export class DocumentosConsumidorPageComponent implements OnInit {
   // ─── private helpers ─────────────────────────────────────────────────────
 
   private emptyPanel(): PanelState {
-    return { showUpload: false, showFilter: false, nombreInput: '', categoriaInput: 'Contrato', filtrosCategorias: [], selectedFile: null };
+    return { showUpload: false, showFilter: false, nombreInput: '', categoriaInput: 'Contratos', filtrosCategorias: [], selectedFile: null };
   }
 }
