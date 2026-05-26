@@ -273,4 +273,28 @@
     </div>
 
   </div>
+
+  <!-- Recuadro 5: Activos del centro -->
+  <div class="card" style="margin-top:1rem">
+    <h3 style="margin:0 0 .75rem;font-size:.95rem;font-weight:700;color:#1f2937">Activos del centro</h3>
+    @if (activosService.loading()) {
+      <p style="color:#9ca3af;font-size:.85rem;margin:0">Cargando activos...</p>
+    } @else if (activosService.activos().length === 0) {
+      <p style="color:#9ca3af;font-size:.85rem;margin:0">Sin activos registrados para este centro.</p>
+    } @else {
+      <div style="display:flex;flex-direction:column;gap:.4rem">
+        @for (a of activosService.activos(); track a._id) {
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:.5rem .65rem;border-radius:8px;border:1px solid rgba(34,33,33,.08)">
+            <div>
+              <span style="display:block;font-size:.84rem;font-weight:600;color:#1f2937">{{ a.nombre }}</span>
+              <span style="font-size:.74rem;color:#6b7280">{{ a.tipo_activo }}</span>
+              @if (a.descripcion) {
+                <span style="display:block;font-size:.74rem;color:#9ca3af">{{ a.descripcion }}</span>
+              }
+            </div>
+          </div>
+        }
+      </div>
+    }
+  </div>
 }

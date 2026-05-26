@@ -6,6 +6,7 @@ import { CentrosService } from '../centros.service';
 import { ConsumidorContextService } from '../../../profile/consumidor-context.service';
 import { SolicitudesService } from '../../solicitudes/solicitudes.service';
 import { DocumentosService } from '../../documentos/documentos.service';
+import { ActivosService } from '../../activos/activos.service';
 import { SpiderChartComponent } from '../../../shared/components/spider-chart/spider-chart.component';
 import { StatChipComponent, ChipVariant } from '../../../shared/components/stat-chip/stat-chip.component';
 import { CentroCosto } from '../../../shared/models/centro.model';
@@ -33,6 +34,7 @@ export class MisCentrosPageComponent implements OnInit, OnDestroy {
   protected readonly service           = inject(CentrosService);
   protected readonly solicitudesService = inject(SolicitudesService);
   protected readonly documentosService  = inject(DocumentosService);
+  protected readonly activosService     = inject(ActivosService);
   private  readonly sanitizer          = inject(DomSanitizer);
 
   get empresa()        { return this.consumidorContext.empresaSeleccionada(); }
@@ -167,6 +169,7 @@ export class MisCentrosPageComponent implements OnInit, OnDestroy {
     this.consumidorContext.seleccionarCentro(centro);
     const emp = this.empresa;
     if (emp) this.documentosService.cargar('centro', emp.razon_social, centro.nombre);
+    this.activosService.cargar(asId(centro._id));
   }
 
   volver(): void {
