@@ -56,6 +56,11 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/usuarios/pages/usuarios-page.component').then(m => m.UsuariosPageComponent),
       },
+      {
+        path: 'activos',
+        loadComponent: () =>
+          import('./features/activos/pages/activos-page.component').then(m => m.ActivosPageComponent),
+      },
 
       // ── Consumidor (solo lectura) ──────────────────────────────────
       {

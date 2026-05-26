@@ -236,6 +236,7 @@ export class SidebarComponent implements OnChanges {
     { label: 'Documentos',        route: '/documentos' },
     { label: 'Noticias',          route: '/noticias' },
     { label: 'Usuarios',          route: '/usuarios' },
+    { label: 'Activos',           route: '/activos' },
     { label: 'Ayuda',             route: '/ayuda' },
     { label: 'Resumen general',   route: '/resumen' },
     { label: 'Eclarity', href: 'https://app.clarityenergy.cl/loginv5/', external: true, icon: 'eclarity' },
