@@ -9,6 +9,7 @@ export class Mantencion {
   @Prop({ trim: true }) descripcion?: string;
   @Prop({ type: Types.ObjectId, ref: 'TipoMantencion', required: true }) tipo_id: Types.ObjectId;
   @Prop({ type: Types.ObjectId, ref: 'CentroCosto', required: true }) centro_costo_id: Types.ObjectId;
+  @Prop({ type: Types.ObjectId, ref: 'Activo' }) activo_id?: Types.ObjectId;
   @Prop({ required: true }) fecha: Date;
 }
 
