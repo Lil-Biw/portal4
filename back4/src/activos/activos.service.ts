@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { Activo, ActivoDocument } from './activos.schema';
 import { CreateActivoDto, UpdateActivoDto } from './activos.dto';
 
@@ -10,7 +10,7 @@ export class ActivosService {
 
   async findAll(centroCostoId?: string) {
     const filter: Record<string, unknown> = { activo: true };
-    if (centroCostoId) filter['centro_costo_id'] = centroCostoId;
+    if (centroCostoId) filter['centro_costo_id'] = new Types.ObjectId(centroCostoId);
     return this.activoModel.find(filter).lean();
   }
 
