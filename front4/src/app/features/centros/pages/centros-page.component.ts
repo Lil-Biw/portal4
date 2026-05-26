@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal, computed } from '@angular/core';
+import { Component, OnInit, inject, signal, computed, effect } from '@angular/core';
 import { NgIf } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -8,16 +8,19 @@ import { StatusBannerComponent } from '../../../shared/components/status-banner/
 import { CentroFormComponent } from '../components/centro-form/centro-form.component';
 import { CentrosListComponent } from '../components/centros-list/centros-list.component';
 import { CentroCosto, CreateCentroDto } from '../../../shared/models/centro.model';
+import { ActivosService } from '../../activos/activos.service';
+import { ActivosFormComponent } from '../../activos/components/activos-form/activos-form.component';
+import { CreateActivoDto } from '../../../shared/models/activo.model';
 import { asId } from '../../../shared/utils';
 import { ProfileService } from '../../../profile/profile.service';
 import { ConsumidorContextService } from '../../../profile/consumidor-context.service';
 
-type ModalMode = 'crear' | 'editar' | 'buscar' | null;
+type ModalMode = 'crear' | 'editar' | 'buscar' | 'activo' | null;
 
 @Component({
   selector: 'app-centros-page',
   standalone: true,
-  imports: [NgIf, FormsModule, StatusBannerComponent, CentroFormComponent, CentrosListComponent],
+  imports: [NgIf, FormsModule, StatusBannerComponent, CentroFormComponent, CentrosListComponent, ActivosFormComponent],
   templateUrl: './centros-page.component.html',
   styles: [`
     .page-header {
@@ -85,9 +88,19 @@ export class CentrosPageComponent implements OnInit {
   private   readonly profileService   = inject(ProfileService);
   private   readonly consumidorContext = inject(ConsumidorContextService);
   private   readonly router           = inject(Router);
+  protected readonly activosService   = inject(ActivosService);
 
-  protected modal    = signal<ModalMode>(null);
-  protected busqueda = signal('');
+  protected modal           = signal<ModalMode>(null);
+  protected busqueda        = signal('');
+  protected centroParaActivo = signal<CentroCosto | null>(null);
+
+  constructor() {
+    effect(() => {
+      if (this.activosService.status()?.type === 'ok' && this.modal() === 'activo') {
+        this.cerrar();
+      }
+    });
+  }
 
   protected centrosFiltrados = computed(() => {
     const q = this.busqueda().toLowerCase().trim();
@@ -127,6 +140,18 @@ export class CentrosPageComponent implements OnInit {
     this.modal.set(null);
     this.service.seleccionado.set(null);
     this.service.clearStatus();
+    this.centroParaActivo.set(null);
+    this.activosService.clearStatus();
+  }
+
+  protected abrirAgregarActivo(centro: CentroCosto): void {
+    this.centroParaActivo.set(centro);
+    this.activosService.clearStatus();
+    this.modal.set('activo');
+  }
+
+  protected crearActivo(dto: CreateActivoDto): void {
+    this.activosService.crear(dto);
   }
 
   protected crear(dto: CreateCentroDto): void   { this.service.crear(dto); }

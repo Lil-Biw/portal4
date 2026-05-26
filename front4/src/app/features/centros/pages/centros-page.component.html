@@ -15,7 +15,8 @@
   [clientes]="clientesService.clientes()"
   (editado)="abrirEditar($event)"
   (eliminado)="eliminar($event)"
-  (verCentro)="irACentro($event)">
+  (verCentro)="irACentro($event)"
+  (agregarActivo)="abrirAgregarActivo($event)">
 </app-centros-list>
 
 <!-- ── Modal ──────────────────────────────────────────── -->
@@ -71,6 +72,20 @@
         (eliminado)="eliminar($event)"
         (verCentro)="irACentro($event)">
       </app-centros-list>
+    </ng-container>
+
+    <!-- Agregar activo a un centro -->
+    <ng-container *ngIf="modal() === 'activo'">
+      <div class="modal-header">
+        <h3>Nuevo activo — {{ centroParaActivo()?.nombre }}</h3>
+        <button class="modal-close" (click)="cerrar()">&#x2715;</button>
+      </div>
+      <app-status-banner [status]="activosService.status()"></app-status-banner>
+      <app-activos-form
+        submitLabel="Crear activo"
+        [centroFijo]="centroParaActivo()"
+        (submitted)="crearActivo($event)">
+      </app-activos-form>
     </ng-container>
 
   </div>
