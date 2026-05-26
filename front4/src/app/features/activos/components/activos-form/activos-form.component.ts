@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Activo, CreateActivoDto } from '../../../../shared/models/activo.model';
 import { CentroCosto } from '../../../../shared/models/centro.model';
@@ -52,7 +52,7 @@ export class ActivosFormComponent implements OnChanges {
 
   form: CreateActivoDto = { nombre: '', tipo_activo: '', centro_costo_id: '', descripcion: '' };
 
-  ngOnChanges(): void {
+  ngOnChanges(_changes: SimpleChanges): void {
     if (this.initial) {
       this.form = {
         nombre: this.initial.nombre,
