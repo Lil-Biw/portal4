@@ -25,7 +25,10 @@ async function bootstrap() {
   const corsOrigin = process.env.CORS_ORIGIN || '*';
   app.enableCors({
     origin: corsOrigin === '*' ? '*' : corsOrigin.split(',').map(s => s.trim()),
-    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    preflightContinue: false,
+    optionsSuccessStatus: 204,
   });
 
   await app.init();
@@ -33,16 +36,6 @@ async function bootstrap() {
 }
 
 export default async (req: Request, res: Response) => {
-  const origin = process.env.CORS_ORIGIN || '*';
-  res.setHeader('Access-Control-Allow-Origin', origin);
-  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,PATCH,DELETE,OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization');
-
-  if (req.method === 'OPTIONS') {
-    res.status(204).end();
-    return;
-  }
-
   await bootstrap();
   server(req, res);
 };
