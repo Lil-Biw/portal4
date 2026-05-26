@@ -223,6 +223,17 @@
             }
           </select>
         </div>
+        @if (form().centro_costo_id && activosParaCentro().length > 0) {
+          <div class="field">
+            <label>Activo (opcional)</label>
+            <select [ngModel]="form().activo_id" (ngModelChange)="patchForm('activo_id', $event)" name="activo_id">
+              <option value="">— Sin activo —</option>
+              @for (a of activosParaCentro(); track a._id) {
+                <option [value]="a._id">{{ a.nombre }}</option>
+              }
+            </select>
+          </div>
+        }
         <div class="field">
           <label>Fecha *</label>
           <input type="date" [ngModel]="form().fecha" (ngModelChange)="patchForm('fecha', $event)" />

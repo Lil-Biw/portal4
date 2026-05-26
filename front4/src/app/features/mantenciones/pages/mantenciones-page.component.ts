@@ -4,6 +4,7 @@ import { MantencionesService } from '../mantenciones.service';
 import { TiposMantencionService } from '../tipos-mantencion.service';
 import { CentrosService } from '../../centros/centros.service';
 import { ClientesService } from '../../clientes/clientes.service';
+import { ActivosService } from '../../activos/activos.service';
 import { StatusBannerComponent } from '../../../shared/components/status-banner/status-banner.component';
 import { Mantencion, TipoMantencion } from '../../../shared/models/mantencion.model';
 import { asId, toDateKey } from '../../../shared/utils';
@@ -21,6 +22,7 @@ interface MantencionForm {
   tipo_id: string;
   empresa_id: string;
   centro_costo_id: string;
+  activo_id: string;
   fecha: string;
 }
 
@@ -31,7 +33,7 @@ interface TipoForm {
 }
 
 function emptyForm(fecha = ''): MantencionForm {
-  return { nombre: '', descripcion: '', tipo_id: '', empresa_id: '', centro_costo_id: '', fecha };
+  return { nombre: '', descripcion: '', tipo_id: '', empresa_id: '', centro_costo_id: '', activo_id: '', fecha };
 }
 function emptyTipoForm(): TipoForm {
   return { nombre: '', color: '#0095d6', descripcion: '' };
@@ -52,12 +54,17 @@ export class MantencionesPageComponent implements OnInit {
   protected readonly tiposService    = inject(TiposMantencionService);
   protected readonly centrosService  = inject(CentrosService);
   protected readonly clientesService = inject(ClientesService);
+  protected readonly activosService  = inject(ActivosService);
 
   protected centrosParaEmpresa = computed(() => {
     const empId = this.form().empresa_id;
     if (!empId) return this.centrosService.centros();
     return this.centrosService.centros().filter(c => asId(c.cliente_id) === empId);
   });
+
+  protected activosParaCentro = computed(() =>
+    this.activosService.activos().filter(a => asId(a.centro_costo_id) === this.form().centro_costo_id)
+  );
 
   // ── Filtros del calendario ───────────────────────────────────────────────
   protected filtroEmpresaId = signal<string>('');
@@ -213,6 +220,7 @@ export class MantencionesPageComponent implements OnInit {
       tipo_id:         asId(typeof m.tipo_id === 'object' ? (m.tipo_id as TipoMantencion)._id : m.tipo_id),
       empresa_id:      centro ? asId(centro.cliente_id) : '',
       centro_costo_id: centroId,
+      activo_id:       m.activo_id ?? '',
       fecha:           m.fecha.slice(0, 10),
     });
     this.showModal.set(true);
@@ -226,7 +234,11 @@ export class MantencionesPageComponent implements OnInit {
   }
 
   patchForm(field: keyof MantencionForm, value: string): void {
-    this.form.update(f => ({ ...f, [field]: value }));
+    if (field === 'centro_costo_id') {
+      this.form.update(f => ({ ...f, centro_costo_id: value, activo_id: '' }));
+    } else {
+      this.form.update(f => ({ ...f, [field]: value }));
+    }
   }
 
   guardar(): void {
@@ -237,6 +249,7 @@ export class MantencionesPageComponent implements OnInit {
       descripcion:     f.descripcion.trim() || undefined,
       tipo_id:         f.tipo_id,
       centro_costo_id: f.centro_costo_id,
+      activo_id:       f.activo_id || undefined,
       fecha:           f.fecha,
     };
     const id = this.editingId();
@@ -307,6 +320,7 @@ export class MantencionesPageComponent implements OnInit {
     this.tiposService.cargar();
     this.centrosService.cargar();
     this.clientesService.cargar();
+    this.activosService.cargar();
   }
 }
 
