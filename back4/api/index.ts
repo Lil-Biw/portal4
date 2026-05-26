@@ -22,20 +22,33 @@ async function bootstrap() {
     transform: true,
   }));
 
-  const corsOrigin = process.env.CORS_ORIGIN || '*';
-  app.enableCors({
-    origin: corsOrigin === '*' ? '*' : corsOrigin.split(',').map(s => s.trim()),
-    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
-    preflightContinue: false,
-    optionsSuccessStatus: 204,
-  });
+  // CORS manejado en el handler de Vercel antes de llegar a NestJS
 
   await app.init();
   isBootstrapped = true;
 }
 
 export default async (req: Request, res: Response) => {
+  const corsOrigin = process.env.CORS_ORIGIN || '*';
+  const allowedOrigins = corsOrigin === '*' ? null : corsOrigin.split(',').map(s => s.trim());
+  const requestOrigin = req.headers['origin'] as string | undefined;
+
+  const originToSet =
+    !allowedOrigins ? '*' :
+    requestOrigin && allowedOrigins.includes(requestOrigin) ? requestOrigin : '';
+
+  if (originToSet) {
+    res.setHeader('Access-Control-Allow-Origin', originToSet);
+    res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,PATCH,DELETE,OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization');
+    res.setHeader('Vary', 'Origin');
+  }
+
+  if (req.method === 'OPTIONS') {
+    res.status(204).end();
+    return;
+  }
+
   await bootstrap();
   server(req, res);
 };
