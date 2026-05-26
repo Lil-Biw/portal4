@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, OnChanges, Output, computed, signal } from '@angular/core';
-import { NgFor, NgIf } from '@angular/common';
+
 import { CentroCosto } from '../../../../shared/models/centro.model';
 import { Cliente } from '../../../../shared/models/cliente.model';
 import { asId } from '../../../../shared/utils';
@@ -9,7 +9,7 @@ interface GrupoEmpresa { empresa: Cliente; centros: CentroCosto[]; }
 @Component({
   selector: 'app-centros-list',
   standalone: true,
-  imports: [NgFor, NgIf],
+  imports: [],
   templateUrl: './centros-list.component.html',
 })
 export class CentrosListComponent implements OnChanges {

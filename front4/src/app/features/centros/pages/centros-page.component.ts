@@ -1,5 +1,4 @@
 import { Component, OnInit, inject, signal, computed, effect } from '@angular/core';
-import { NgIf } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { CentrosService } from '../centros.service';
@@ -20,7 +19,7 @@ type ModalMode = 'crear' | 'editar' | 'buscar' | 'activo' | null;
 @Component({
   selector: 'app-centros-page',
   standalone: true,
-  imports: [NgIf, FormsModule, StatusBannerComponent, CentroFormComponent, CentrosListComponent, ActivosFormComponent],
+  imports: [FormsModule, StatusBannerComponent, CentroFormComponent, CentrosListComponent, ActivosFormComponent],
   templateUrl: './centros-page.component.html',
   styles: [`
     .page-header {
