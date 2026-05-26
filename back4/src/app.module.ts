@@ -11,6 +11,7 @@ import { DocumentosModule } from './documentos/documentos.module';
 import { SolicitudesModule } from './solicitudes/solicitudes.module';
 import { TiposMantencionModule } from './tipos-mantencion/tipos-mantencion.module';
 import { MantencionesModule } from './mantenciones/mantenciones.module';
+import { ActivosModule } from './activos/activos.module';
 import { NoticiasModule } from './noticias/noticias.module';
 
 @Module({
@@ -34,6 +35,7 @@ import { NoticiasModule } from './noticias/noticias.module';
     SolicitudesModule,
     TiposMantencionModule,
     MantencionesModule,
+    ActivosModule,
     NoticiasModule,
   ],
 })
