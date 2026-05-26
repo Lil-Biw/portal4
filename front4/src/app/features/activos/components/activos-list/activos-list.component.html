@@ -1,0 +1,50 @@
+@if (grupos().length === 0) {
+  <p class="empty">Sin activos registrados.</p>
+}
+
+<div class="grupos">
+  @for (ge of grupos(); track ge.empresa._id) {
+    <div class="grupo-empresa">
+
+      <!-- Cabecera empresa -->
+      <div class="grupo-header">
+        <span class="grupo-label">{{ ge.empresa.razon_social }}</span>
+        <span class="grupo-count">{{ totalActivos(ge) }} activo{{ totalActivos(ge) !== 1 ? 's' : '' }}</span>
+      </div>
+
+      <div class="grupo-body" style="gap:.75rem">
+        @for (gc of ge.centros; track gc.centro._id) {
+          <div class="grupo-centro">
+            <!-- Cabecera centro -->
+            <div class="grupo-header grupo-header--centro">
+              <span class="grupo-label grupo-label--centro">{{ gc.centro.nombre }}</span>
+              <span class="grupo-count">Cód. {{ gc.centro.codigo }}</span>
+            </div>
+
+            <!-- Activos del centro -->
+            <div class="grupo-body list">
+              @for (a of gc.activos; track a._id) {
+                <div class="card">
+                  <div class="card-main">
+                    <strong>{{ a.nombre }}</strong>
+                    <span class="rut">{{ a.tipo_activo }}</span>
+                    @if (a.descripcion) {
+                      <span class="email">{{ a.descripcion }}</span>
+                    }
+                  </div>
+                  @if (mostrarAcciones) {
+                    <div class="card-actions">
+                      <button class="btn-ghost btn-sm" (click)="editado.emit(a)">Editar</button>
+                      <button class="btn-danger"       (click)="eliminado.emit(a._id)">Eliminar</button>
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+          </div>
+        }
+      </div>
+
+    </div>
+  }
+</div>

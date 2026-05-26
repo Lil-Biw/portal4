@@ -2,6 +2,7 @@ import { Component, OnInit, inject, signal, computed, effect } from '@angular/co
 import { FormsModule } from '@angular/forms';
 import { ActivosService } from '../activos.service';
 import { CentrosService } from '../../centros/centros.service';
+import { ClientesService } from '../../clientes/clientes.service';
 import { StatusBannerComponent } from '../../../shared/components/status-banner/status-banner.component';
 import { ActivosFormComponent } from '../components/activos-form/activos-form.component';
 import { ActivosListComponent } from '../components/activos-list/activos-list.component';
@@ -74,8 +75,9 @@ type ModalMode = 'crear' | 'editar' | 'buscar' | null;
   `],
 })
 export class ActivosPageComponent implements OnInit {
-  protected readonly service        = inject(ActivosService);
-  protected readonly centrosService = inject(CentrosService);
+  protected readonly service         = inject(ActivosService);
+  protected readonly centrosService  = inject(CentrosService);
+  protected readonly clientesService = inject(ClientesService);
 
   protected modal    = signal<ModalMode>(null);
   protected busqueda = signal('');
@@ -99,6 +101,7 @@ export class ActivosPageComponent implements OnInit {
   ngOnInit(): void {
     this.service.cargar();
     this.centrosService.cargar();
+    this.clientesService.cargar();
   }
 
   protected abrirCrear(): void {

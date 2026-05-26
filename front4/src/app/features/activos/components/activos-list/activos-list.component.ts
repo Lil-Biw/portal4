@@ -1,48 +1,67 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, computed, signal } from '@angular/core';
 import { Activo } from '../../../../shared/models/activo.model';
 import { CentroCosto } from '../../../../shared/models/centro.model';
+import { Cliente } from '../../../../shared/models/cliente.model';
 import { asId } from '../../../../shared/utils';
+
+interface GrupoCentro  { centro: CentroCosto; activos: Activo[]; }
+interface GrupoEmpresa { empresa: Cliente; centros: GrupoCentro[]; }
 
 @Component({
   selector: 'app-activos-list',
   standalone: true,
-  template: `
-    @if (activos.length === 0) {
-      <p class="empty">Sin activos registrados.</p>
-    } @else {
-      <div class="list">
-        @for (a of activos; track a._id) {
-          <div class="card" style="display:flex;align-items:center;justify-content:space-between;gap:1rem">
-            <div>
-              <strong style="display:block;font-size:.9rem;color:#1f2937">{{ a.nombre }}</strong>
-              <span style="font-size:.78rem;color:#6b7280">{{ a.tipo_activo }}</span>
-              @if (centroNombre(a)) {
-                <span style="display:block;font-size:.75rem;color:#0095d6;font-weight:500">{{ centroNombre(a) }}</span>
-              }
-              @if (a.descripcion) {
-                <span style="display:block;font-size:.78rem;color:#9ca3af">{{ a.descripcion }}</span>
-              }
-            </div>
-            @if (mostrarAcciones) {
-              <div style="display:flex;gap:.5rem;flex-shrink:0">
-                <button class="btn-ghost btn-sm" (click)="editado.emit(a)">Editar</button>
-                <button class="btn-danger btn-sm" (click)="eliminado.emit(a._id)">Eliminar</button>
-              </div>
-            }
-          </div>
-        }
-      </div>
-    }
-  `,
+  templateUrl: './activos-list.component.html',
 })
-export class ActivosListComponent {
-  @Input() activos: Activo[] = [];
+export class ActivosListComponent implements OnChanges {
+  @Input() activos: Activo[]      = [];
   @Input() centros: CentroCosto[] = [];
+  @Input() clientes: Cliente[]    = [];
   @Input() mostrarAcciones = true;
   @Output() editado   = new EventEmitter<Activo>();
   @Output() eliminado = new EventEmitter<string>();
 
+  private _activos  = signal<Activo[]>([]);
+  private _centros  = signal<CentroCosto[]>([]);
+  private _clientes = signal<Cliente[]>([]);
+
+  ngOnChanges(_: SimpleChanges): void {
+    this._activos.set(this.activos);
+    this._centros.set(this.centros);
+    this._clientes.set(this.clientes);
+  }
+
+  grupos = computed((): GrupoEmpresa[] => {
+    const map = new Map<string, GrupoEmpresa>();
+
+    for (const activo of this._activos()) {
+      const centro = this._centros().find(c => asId(c._id) === asId(activo.centro_costo_id));
+      if (!centro) continue;
+
+      const empresaId = asId(centro.cliente_id);
+      const empresa   = this._clientes().find(e => asId(e._id) === empresaId);
+      if (!empresa) continue;
+
+      if (!map.has(empresaId)) {
+        map.set(empresaId, { empresa, centros: [] });
+      }
+      const ge = map.get(empresaId)!;
+
+      let gc = ge.centros.find(x => asId(x.centro._id) === asId(centro._id));
+      if (!gc) {
+        gc = { centro, activos: [] };
+        ge.centros.push(gc);
+      }
+      gc.activos.push(activo);
+    }
+
+    return Array.from(map.values());
+  });
+
+  totalActivos(ge: GrupoEmpresa): number {
+    return ge.centros.reduce((sum, gc) => sum + gc.activos.length, 0);
+  }
+
   centroNombre(a: Activo): string {
-    return this.centros.find(c => asId(c._id) === asId(a.centro_costo_id))?.nombre ?? '';
+    return this._centros().find(c => asId(c._id) === asId(a.centro_costo_id))?.nombre ?? '';
   }
 }

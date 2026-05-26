@@ -12,6 +12,7 @@
 <app-activos-list
   [activos]="service.activos()"
   [centros]="centrosService.centros()"
+  [clientes]="clientesService.clientes()"
   (editado)="abrirEditar($event)"
   (eliminado)="eliminar($event)">
 </app-activos-list>
@@ -66,6 +67,7 @@
         <app-activos-list
           [activos]="activosFiltrados()"
           [centros]="centrosService.centros()"
+          [clientes]="clientesService.clientes()"
           (editado)="editarDesdeBuscar($event)"
           (eliminado)="eliminar($event)">
         </app-activos-list>
