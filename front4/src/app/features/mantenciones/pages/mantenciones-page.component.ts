@@ -22,7 +22,7 @@ interface MantencionForm {
   tipo_id: string;
   empresa_id: string;
   centro_costo_id: string;
-  activo_id: string;
+  activo_ids: string[];
   fecha: string;
 }
 
@@ -33,7 +33,7 @@ interface TipoForm {
 }
 
 function emptyForm(fecha = ''): MantencionForm {
-  return { nombre: '', descripcion: '', tipo_id: '', empresa_id: '', centro_costo_id: '', activo_id: '', fecha };
+  return { nombre: '', descripcion: '', tipo_id: '', empresa_id: '', centro_costo_id: '', activo_ids: [], fecha };
 }
 function emptyTipoForm(): TipoForm {
   return { nombre: '', color: '#0095d6', descripcion: '' };
@@ -220,7 +220,7 @@ export class MantencionesPageComponent implements OnInit {
       tipo_id:         asId(typeof m.tipo_id === 'object' ? (m.tipo_id as TipoMantencion)._id : m.tipo_id),
       empresa_id:      centro ? asId(centro.cliente_id) : '',
       centro_costo_id: centroId,
-      activo_id:       m.activo_id ?? '',
+      activo_ids:      m.activo_ids ?? [],
       fecha:           m.fecha.slice(0, 10),
     });
     this.showModal.set(true);
@@ -233,12 +233,21 @@ export class MantencionesPageComponent implements OnInit {
     this.confirmDelete.set(null);
   }
 
-  patchForm(field: keyof MantencionForm, value: string): void {
+  patchForm(field: keyof MantencionForm, value: string | string[]): void {
     if (field === 'centro_costo_id') {
-      this.form.update(f => ({ ...f, centro_costo_id: value, activo_id: '' }));
+      this.form.update(f => ({ ...f, centro_costo_id: value as string, activo_ids: [] }));
     } else {
       this.form.update(f => ({ ...f, [field]: value }));
     }
+  }
+
+  toggleActivo(activoId: string): void {
+    this.form.update(f => {
+      const ids = f.activo_ids.includes(activoId)
+        ? f.activo_ids.filter(id => id !== activoId)
+        : [...f.activo_ids, activoId];
+      return { ...f, activo_ids: ids };
+    });
   }
 
   guardar(): void {
@@ -249,7 +258,7 @@ export class MantencionesPageComponent implements OnInit {
       descripcion:     f.descripcion.trim() || undefined,
       tipo_id:         f.tipo_id,
       centro_costo_id: f.centro_costo_id,
-      activo_id:       f.activo_id || undefined,
+      activo_ids:      f.activo_ids.length > 0 ? f.activo_ids : undefined,
       fecha:           f.fecha,
     };
     const id = this.editingId();
