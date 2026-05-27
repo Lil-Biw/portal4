@@ -13,7 +13,7 @@ export interface Mantencion {
   descripcion?: string;
   tipo_id: TipoMantencion | string;
   centro_costo_id: string;
-  activo_id?: string;
+  activo_ids?: string[];
   fecha: string;
   creado_en?: string;
   actualizado_en?: string;
@@ -24,7 +24,7 @@ export interface CreateMantencionDto {
   descripcion?: string;
   tipo_id: string;
   centro_costo_id: string;
-  activo_id?: string;
+  activo_ids?: string[];
   fecha: string;
 }
 
@@ -33,7 +33,7 @@ export interface UpdateMantencionDto {
   descripcion?: string;
   tipo_id?: string;
   centro_costo_id?: string;
-  activo_id?: string;
+  activo_ids?: string[];
   fecha?: string;
 }
 
