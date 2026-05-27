@@ -225,13 +225,20 @@
         </div>
         @if (form().centro_costo_id && activosParaCentro().length > 0) {
           <div class="field">
-            <label>Activo (opcional)</label>
-            <select [ngModel]="form().activo_id" (ngModelChange)="patchForm('activo_id', $event)" name="activo_id">
-              <option value="">— Sin activo —</option>
+            <label>Activos (opcional)</label>
+            <div style="display:flex;flex-direction:column;gap:.35rem;max-height:160px;overflow-y:auto;border:1px solid rgba(34,33,33,.2);border-radius:8px;padding:.5rem .75rem">
               @for (a of activosParaCentro(); track a._id) {
-                <option [value]="a._id">{{ a.nombre }}</option>
+                <label style="display:flex;align-items:center;gap:.5rem;cursor:pointer;font-size:.875rem;color:#374151">
+                  <input
+                    type="checkbox"
+                    [checked]="form().activo_ids.includes(a._id)"
+                    (change)="toggleActivo(a._id)"
+                    style="accent-color:#0095d6;width:15px;height:15px" />
+                  <span>{{ a.nombre }}</span>
+                  <span style="font-size:.75rem;color:#9ca3af">{{ a.tipo_activo }}</span>
+                </label>
               }
-            </select>
+            </div>
           </div>
         }
         <div class="field">
