@@ -36,6 +36,7 @@ export class MantencionesService {
       ...dto,
       tipo_id: new Types.ObjectId(dto.tipo_id),
       centro_costo_id: new Types.ObjectId(dto.centro_costo_id),
+      activo_ids: (dto.activo_ids ?? []).map(id => new Types.ObjectId(id)),
       fecha: new Date(dto.fecha),
     }).save();
     return this.mantencionModel.findById(m._id).populate('tipo_id').lean();
@@ -46,6 +47,9 @@ export class MantencionesService {
     if (dto.tipo_id) payload['tipo_id'] = new Types.ObjectId(dto.tipo_id);
     if (dto.centro_costo_id) payload['centro_costo_id'] = new Types.ObjectId(dto.centro_costo_id);
     if (dto.fecha) payload['fecha'] = new Date(dto.fecha);
+    if (dto.activo_ids !== undefined) {
+      payload['activo_ids'] = dto.activo_ids.map(aid => new Types.ObjectId(aid));
+    }
 
     const m = await this.mantencionModel
       .findByIdAndUpdate(id, payload, { new: true })
