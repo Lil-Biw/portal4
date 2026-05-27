@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsMongoId, IsDateString, MinLength } from 'class-validator';
+import { IsString, IsOptional, IsMongoId, IsDateString, MinLength, IsArray } from 'class-validator';
 import { PartialType } from '@nestjs/mapped-types';
 
 export class CreateMantencionDto {
@@ -6,7 +6,7 @@ export class CreateMantencionDto {
   @IsString() @IsOptional() descripcion?: string;
   @IsMongoId() tipo_id: string;
   @IsMongoId() centro_costo_id: string;
-  @IsMongoId() @IsOptional() activo_id?: string;
+  @IsArray() @IsMongoId({ each: true }) @IsOptional() activo_ids?: string[];
   @IsDateString() fecha: string;
 }
 
