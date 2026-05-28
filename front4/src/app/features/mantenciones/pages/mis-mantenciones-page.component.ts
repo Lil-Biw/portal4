@@ -1,8 +1,10 @@
 import { Component, OnInit, inject, signal, computed } from '@angular/core';
+import { SlicePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MantencionesService } from '../mantenciones.service';
 import { TiposMantencionService } from '../tipos-mantencion.service';
 import { CentrosService } from '../../centros/centros.service';
+import { ActivosService } from '../../activos/activos.service';
 import { ConsumidorContextService } from '../../../profile/consumidor-context.service';
 import { Mantencion, TipoMantencion } from '../../../shared/models/mantencion.model';
 import { asId, toDateKey } from '../../../shared/utils';
@@ -17,7 +19,7 @@ const MONTHS = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto
 @Component({
   selector: 'app-mis-mantenciones-page',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, SlicePipe],
   templateUrl: './mis-mantenciones-page.component.html',
   styleUrl: './mantenciones-page.component.css',
 })
@@ -26,6 +28,7 @@ export class MisMantencionesPageComponent implements OnInit {
   protected readonly tiposService   = inject(TiposMantencionService);
   protected readonly centrosService = inject(CentrosService);
   private readonly ctx              = inject(ConsumidorContextService);
+  protected readonly activosService = inject(ActivosService);
 
   private centroIdsPorEmpresa = computed((): Set<string> => {
     const empresa = this.ctx.empresaSeleccionada();
@@ -38,6 +41,29 @@ export class MisMantencionesPageComponent implements OnInit {
   });
 
   protected filtroTipoId = signal<string>('');
+
+  protected mantencionDetalle = signal<Mantencion | null>(null);
+
+  protected activosDetalle = computed(() => {
+    const m = this.mantencionDetalle();
+    if (!m || !m.activo_ids?.length) return [];
+    return this.activosService.activos().filter(a => m.activo_ids!.includes(asId(a._id)));
+  });
+
+  protected historialDetalle = computed(() => {
+    const m = this.mantencionDetalle();
+    if (!m) return [];
+    const tipoId   = asId(typeof m.tipo_id === 'object' ? (m.tipo_id as TipoMantencion)._id : m.tipo_id as string);
+    const centroId = asId(m.centro_costo_id);
+    return this.service.mantenciones()
+      .filter(x =>
+        x._id !== m._id &&
+        asId(typeof x.tipo_id === 'object' ? (x.tipo_id as TipoMantencion)._id : x.tipo_id as string) === tipoId &&
+        asId(x.centro_costo_id) === centroId
+      )
+      .sort((a, b) => b.fecha.localeCompare(a.fecha))
+      .slice(0, 5);
+  });
 
   protected mantencionesFiltradas = computed(() => {
     const empresa = this.ctx.empresaSeleccionada();
@@ -101,6 +127,18 @@ export class MisMantencionesPageComponent implements OnInit {
     });
   });
 
+  protected centroNombre(m: Mantencion): string {
+    return this.centrosService.centros().find(c => asId(c._id) === asId(m.centro_costo_id))?.nombre ?? '';
+  }
+
+  protected tipoDeMantencion(m: Mantencion): TipoMantencion | null {
+    if (typeof m.tipo_id === 'object') return m.tipo_id as TipoMantencion;
+    return this.tiposService.tipos().find(t => t._id === asId(m.tipo_id as string)) ?? null;
+  }
+
+  abrirDetalle(m: Mantencion): void { this.mantencionDetalle.set(m); }
+  cerrarDetalle(): void { this.mantencionDetalle.set(null); }
+
   mantencionesEnDia(date: Date): Mantencion[] {
     const key = toDateKey(date);
     return this.mantencionesFiltradas().filter(m => m.fecha.slice(0, 10) === key);
@@ -143,6 +181,7 @@ export class MisMantencionesPageComponent implements OnInit {
     this.tiposService.cargar();
     this.service.cargar();
     this.centrosService.cargar();
+    this.activosService.cargar();
   }
 }
 

@@ -8,6 +8,7 @@ import { StatusBannerComponent } from '../../../shared/components/status-banner/
 import { UsuarioFormComponent, UsuarioFormOutput } from '../components/usuario-form/usuario-form.component';
 import { UsuariosListComponent } from '../components/usuarios-list/usuarios-list.component';
 import { Usuario } from '../../../shared/models/usuario.model';
+import { asId } from '../../../shared/utils';
 
 type ModalMode = 'crear' | 'editar' | 'buscar' | null;
 
@@ -74,6 +75,19 @@ type ModalMode = 'crear' | 'editar' | 'buscar' | null;
       box-sizing: border-box;
     }
     .search-input:focus { outline: none; border-color: #0095d6; }
+
+    .empresa-grupo { margin-bottom: 1.5rem; }
+    .empresa-titulo {
+      font-size: .8rem;
+      font-weight: 700;
+      color: #6b7280;
+      text-transform: uppercase;
+      letter-spacing: .6px;
+      margin: 0 0 .5rem;
+      padding: .4rem .6rem;
+      background: rgba(34,33,33,.05);
+      border-radius: 6px;
+    }
   `],
 })
 export class UsuariosPageComponent implements OnInit {
@@ -91,6 +105,26 @@ export class UsuariosPageComponent implements OnInit {
       u.nombre.toLowerCase().includes(q) ||
       u.email.toLowerCase().includes(q)
     );
+  });
+
+  protected usuariosAgrupados = computed(() => {
+    const clientes = this.clientesService.clientes();
+    const usuarios = this.service.usuarios();
+    const grupos = new Map<string, { empresa: string; usuarios: typeof usuarios }>();
+
+    for (const u of usuarios) {
+      const cid = u.cliente_id ? String(u.cliente_id) : '__sin_empresa__';
+      if (!grupos.has(cid)) {
+        const cliente = clientes.find(c => asId(c._id) === cid);
+        grupos.set(cid, {
+          empresa: cliente?.razon_social ?? (cid === '__sin_empresa__' ? 'Sin empresa asignada' : 'Empresa desconocida'),
+          usuarios: [],
+        });
+      }
+      grupos.get(cid)!.usuarios.push(u);
+    }
+
+    return [...grupos.values()].sort((a, b) => a.empresa.localeCompare(b.empresa));
   });
 
   ngOnInit(): void {
@@ -132,9 +166,9 @@ export class UsuariosPageComponent implements OnInit {
     const id = this.service.seleccionado()?._id;
     if (!id) return;
     const centrosDisponibles = this.centrosService.centros()
-      .filter(c => c.cliente_id === output.dto.cliente_id);
+      .filter(c => asId(c.cliente_id) === asId(output.dto.cliente_id));
     const permisos = output.permisos.filter(p =>
-      centrosDisponibles.some(c => c._id === p.centro_costo_id)
+      centrosDisponibles.some(c => asId(c._id) === asId(p.centro_costo_id))
     );
     this.service.actualizar(id, {
       nombre: output.dto.nombre,

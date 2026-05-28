@@ -1,19 +1,23 @@
-import { Injectable, NotFoundException, ConflictException, BadRequestException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException, ConflictException, BadRequestException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import * as bcrypt from 'bcryptjs';
 import { UsuarioDocument } from './usuarios.schema';
 import { CreateUsuarioDto, UpdateUsuarioDto, CambiarPasswordDto, PermisoUsuarioDto } from './usuarios.dto';
 import { PermisosService } from '../permisos/permisos.service';
+import { MailService } from '../mail/mail.service';
 
 const SALT_ROUNDS = 10;
 
 @Injectable()
 export class UsuariosService {
+  private readonly logger = new Logger(UsuariosService.name);
+
   constructor(
     @InjectModel('Usuario') private usuarioModel: Model<UsuarioDocument>,
     @InjectModel('CentroCosto') private centroCostoModel: Model<any>,
     private permisosService: PermisosService,
+    private mailService: MailService,
   ) {}
 
   private async validarCentrosDeCliente(clienteId: string, permisos?: PermisoUsuarioDto[]) {
@@ -34,6 +38,8 @@ export class UsuariosService {
   private async sincronizarPermisos(usuarioId: string, clienteId: string, permisos?: PermisoUsuarioDto[]) {
     if (permisos === undefined) return;
 
+    this.logger.log(`sincronizarPermisos usuarioId=${usuarioId} clienteId=${clienteId} permisos=${JSON.stringify(permisos)}`);
+
     await this.validarCentrosDeCliente(clienteId, permisos);
 
     const permisosActuales = await this.permisosService.findByUsuario(usuarioId);
@@ -47,12 +53,14 @@ export class UsuariosService {
     }
 
     for (const permiso of permisos || []) {
+      this.logger.log(`asignando permiso centro=${permiso.centro_costo_id} tipo=${permiso.tipo}`);
       await this.permisosService.asignar(
         { usuario_id: usuarioId, centro_costo_id: permiso.centro_costo_id, tipo: permiso.tipo },
         usuarioId,
         clienteId,
       );
     }
+    this.logger.log(`sincronizarPermisos completado`);
   }
 
   async create(dto: CreateUsuarioDto) {
@@ -63,10 +71,18 @@ export class UsuariosService {
     const password_hash = await bcrypt.hash(password, SALT_ROUNDS);
     const permisoPorDefecto = permiso_acceso || (rest.rol === 'admin_cliente' ? 'editar' : 'ver');
 
-    const usuario = new this.usuarioModel({ ...rest, permiso_acceso: permisoPorDefecto, password_hash });
+    const cliente_id = rest.cliente_id ? new Types.ObjectId(rest.cliente_id) : undefined;
+    const usuario = new this.usuarioModel({ ...rest, cliente_id, permiso_acceso: permisoPorDefecto, password_hash });
     const saved = await usuario.save();
 
-    await this.sincronizarPermisos(saved._id.toString(), rest.cliente_id.toString(), permisos);
+    await this.sincronizarPermisos(saved._id.toString(), rest.cliente_id?.toString() ?? '', permisos);
+
+    // Notificar al usuario por correo (no bloquea la respuesta si falla)
+    this.mailService.notificarNuevoUsuario({
+      nombre:   rest.nombre,
+      email:    dto.email,
+      password: dto.password,
+    });
 
     const { password_hash: _, ...result } = saved.toObject();
     return result;
@@ -97,12 +113,14 @@ export class UsuariosService {
   }
 
   async update(id: string, dto: UpdateUsuarioDto) {
+    this.logger.log(`update usuario=${id} permisos=${JSON.stringify(dto.permisos ?? 'undefined')}`);
+    const { permisos, ...camposMongo } = dto;
     const usuario = await this.usuarioModel
-      .findByIdAndUpdate(id, dto, { new: true })
+      .findByIdAndUpdate(id, camposMongo, { new: true })
       .lean();
     if (!usuario) throw new NotFoundException(`Usuario ${id} no encontrado`);
 
-    await this.sincronizarPermisos(id, usuario.cliente_id.toString(), dto.permisos as PermisoUsuarioDto[] | undefined);
+    await this.sincronizarPermisos(id, usuario.cliente_id.toString(), permisos as PermisoUsuarioDto[] | undefined);
     return usuario;
   }
 

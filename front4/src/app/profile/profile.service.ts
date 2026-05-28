@@ -2,7 +2,7 @@ import { Injectable, PLATFORM_ID, computed, inject, signal } from '@angular/core
 import { isPlatformBrowser } from '@angular/common';
 import { ProfileMode } from './profile.types';
 
-const STORAGE_KEY = 'portal3_profile_mode';
+const STORAGE_KEY = 'portal4_profile_mode';
 const DEFAULT: ProfileMode = 'consumidor';
 
 @Injectable({ providedIn: 'root' })

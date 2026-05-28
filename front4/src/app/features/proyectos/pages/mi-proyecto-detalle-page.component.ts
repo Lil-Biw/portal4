@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, inject, computed } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, computed, effect, untracked } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ConsumidorContextService } from '../../../profile/consumidor-context.service';
 import { ProyectosService } from '../proyectos.service';
@@ -48,7 +48,7 @@ export class MiProyectoDetallePageComponent implements OnInit, OnDestroy {
   protected scoreDoc = computed(() => {
     const p = this.proyecto();
     const sols = this.solicitudesService.solicitudes().filter(s =>
-      p ? s.proyecto_id === asId(p._id) : false
+      p ? asId(s.proyecto_id) === asId(p._id) : false
     );
     if (sols.length === 0) return { pct: 0, aprobados: 0, revision: 0, vencido: 0, rechazado: 0, pendiente: 0, total: 0 };
     const aprobados = sols.filter(s => s.estado === 'aprobado').length;
@@ -79,8 +79,19 @@ export class MiProyectoDetallePageComponent implements OnInit, OnDestroy {
   protected solicitudesProyecto = computed(() => {
     const p = this.proyecto();
     if (!p) return [];
-    return this.solicitudesService.solicitudes().filter(s => s.proyecto_id === asId(p._id));
+    return this.solicitudesService.solicitudes().filter(s => asId(s.proyecto_id) === asId(p._id));
   });
+
+  constructor() {
+    // Carga documentos cuando el proyecto está disponible (puede llegar async via cargarUno)
+    effect(() => {
+      const p   = this.proyecto();
+      const emp = this.empresa();
+      const c   = this.centro();
+      if (!p || !emp) return;
+      untracked(() => this.documentosService.cargar('proyecto', emp.razon_social, c?.nombre, p.nombre));
+    });
+  }
 
   protected estadoBadgeStyle(estado: string): string {
     if (estado === 'activo')   return 'background:rgba(0,149,214,.1);color:#0095d6';
@@ -124,20 +135,16 @@ export class MiProyectoDetallePageComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    const id = this.route.snapshot.paramMap.get('id')!;
+    const id  = this.route.snapshot.paramMap.get('id')!;
+    const emp = this.empresa();
     this.centrosService.cargar();
     if (!this.consumidorContext.proyectoSeleccionado()) {
       this.proyectosService.cargarUno(id);
     }
-    const emp = this.empresa();
     if (emp) {
       this.solicitudesService.cargar(emp._id, undefined, id);
-      const p = this.proyecto();
-      const c = this.centro();
-      if (p) {
-        this.documentosService.cargar('proyecto', emp.razon_social, c?.nombre, p.nombre);
-      }
     }
+    // documentosService.cargar() se ejecuta en el effect del constructor
   }
 
   ngOnDestroy(): void {

@@ -63,12 +63,12 @@
           </div>
         </div>
 
-        @if (error()) {
-          <div class="error-banner">{{ error() }}</div>
+        @if (auth.error()) {
+          <div class="error-banner">{{ auth.error() }}</div>
         }
 
-        <button type="submit" class="btn-submit" [disabled]="!email || !password">
-          Ingresar al portal
+        <button type="submit" class="btn-submit" [disabled]="!email || !password || auth.cargando()">
+          {{ auth.cargando() ? 'Ingresando...' : 'Ingresar al portal' }}
         </button>
       </form>
 

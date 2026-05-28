@@ -11,8 +11,8 @@ import { ActivosService } from '../../activos/activos.service';
 import { ActivosFormComponent } from '../../activos/components/activos-form/activos-form.component';
 import { CreateActivoDto } from '../../../shared/models/activo.model';
 import { asId } from '../../../shared/utils';
-import { ProfileService } from '../../../profile/profile.service';
 import { ConsumidorContextService } from '../../../profile/consumidor-context.service';
+import { ProfileService } from '../../../profile/profile.service';
 
 type ModalMode = 'crear' | 'editar' | 'buscar' | 'activo' | null;
 
@@ -84,8 +84,8 @@ type ModalMode = 'crear' | 'editar' | 'buscar' | 'activo' | null;
 export class CentrosPageComponent implements OnInit {
   protected readonly service          = inject(CentrosService);
   protected readonly clientesService  = inject(ClientesService);
-  private   readonly profileService   = inject(ProfileService);
   private   readonly consumidorContext = inject(ConsumidorContextService);
+  private   readonly profileService    = inject(ProfileService);
   private   readonly router           = inject(Router);
   protected readonly activosService   = inject(ActivosService);
 
@@ -165,7 +165,7 @@ export class CentrosPageComponent implements OnInit {
   protected irACentro(centro: CentroCosto): void {
     const empresa = this.clientesService.clientes()
       .find(c => asId(c._id) === asId(centro.cliente_id));
-    if (!empresa) return; // no navegar si la empresa no está cargada
+    if (!empresa) return;
     this.consumidorContext.seleccionar(empresa);
     this.consumidorContext.seleccionarCentro(centro);
     this.profileService.setMode('consumidor');

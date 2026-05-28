@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { PermisoDocument } from './permisos.schema';
@@ -6,12 +6,15 @@ import { AsignarPermisoDto } from './permisos.dto';
 
 @Injectable()
 export class PermisosService {
+  private readonly logger = new Logger(PermisosService.name);
+
   constructor(@InjectModel('Permiso') private permisoModel: Model<PermisoDocument>) {}
 
   async asignar(dto: AsignarPermisoDto, asignadoPor?: string, clienteId?: string) {
+    this.logger.log(`asignar: usuario=${dto.usuario_id} centro=${dto.centro_costo_id} tipo=${dto.tipo}`);
     const existe = await this.permisoModel.findOne({
-      usuario_id: dto.usuario_id,
-      centro_costo_id: dto.centro_costo_id,
+      usuario_id: new Types.ObjectId(dto.usuario_id),
+      centro_costo_id: new Types.ObjectId(dto.centro_costo_id),
     });
 
     if (existe) {

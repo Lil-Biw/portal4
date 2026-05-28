@@ -1,5 +1,6 @@
-import { Component, signal } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { AuthService } from '../auth.service';
 
 @Component({
   selector: 'app-login-admin-page',
@@ -9,15 +10,14 @@ import { FormsModule } from '@angular/forms';
   styleUrl: './login-admin-page.component.css',
 })
 export class LoginAdminPageComponent {
+  readonly auth = inject(AuthService);
+
   email    = '';
   password = '';
   showPass = signal(false);
-  error    = signal('');
 
   onSubmit(): void {
-    this.error.set('');
     if (!this.email || !this.password) return;
-    // Endpoint de autenticación pendiente de integrar
-    this.error.set('Autenticación no habilitada en esta versión.');
+    this.auth.login(this.email, this.password, 'admin');
   }
 }

@@ -11,11 +11,11 @@ export class PermisoUsuarioDto {
 }
 
 export class CreateUsuarioDto {
-  @IsMongoId() cliente_id: string;
+  @IsMongoId() @IsOptional() cliente_id?: string;
   @IsString() @MinLength(3) nombre: string;
   @IsEmail() email: string;
   @IsString() @MinLength(8) password: string;
-  @IsEnum(['admin_cliente', 'usuario']) @IsOptional() rol?: string;
+  @IsEnum(['super_admin', 'admin_cliente', 'usuario']) @IsOptional() rol?: string;
   @IsEnum(['ver', 'editar']) @IsOptional() permiso_acceso?: 'ver' | 'editar';
   @IsArray() @ValidateNested({ each: true }) @Type(() => PermisoUsuarioDto) @IsOptional() permisos?: PermisoUsuarioDto[];
 }

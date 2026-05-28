@@ -1,9 +1,9 @@
-import { Component, EventEmitter, Input, OnInit, Output, inject, signal, computed, effect, untracked } from '@angular/core';
-import { NgFor } from '@angular/common';
-import { FormsModule } from '@angular/forms';
+import { Component, Input, OnInit, inject, signal, computed, effect, untracked } from '@angular/core';
+import { AuthService } from '../../features/auth/auth.service';
 import { Router } from '@angular/router';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { ProfileMode } from '../../profile/profile.types';
+import { ProfileService } from '../../profile/profile.service';
 import { ConsumidorContextService } from '../../profile/consumidor-context.service';
 import { ClientesService } from '../../features/clientes/clientes.service';
 import { CentrosService } from '../../features/centros/centros.service';
@@ -26,7 +26,7 @@ interface Notificacion {
 @Component({
   selector: 'app-topbar',
   standalone: true,
-  imports: [NgFor, FormsModule],
+  imports: [],
   templateUrl: './topbar.component.html',
   styles: [`
     :host { display:block; }
@@ -173,26 +173,41 @@ interface Notificacion {
 })
 export class TopbarComponent implements OnInit {
   @Input() mode: ProfileMode = 'consumidor';
-  @Output() modeToggle = new EventEmitter<void>();
 
+  readonly authService                   = inject(AuthService);
+  protected readonly profileService      = inject(ProfileService);
   protected readonly clientesService     = inject(ClientesService);
   protected readonly centrosService      = inject(CentrosService);
   protected readonly mantencionesService = inject(MantencionesService);
   protected readonly tiposService        = inject(TiposMantencionService);
   protected readonly solicitudesService  = inject(SolicitudesService);
-  private readonly consumidorContext     = inject(ConsumidorContextService);
+  readonly consumidorContext             = inject(ConsumidorContextService);
   private readonly router                = inject(Router);
   private readonly sanitizer             = inject(DomSanitizer);
 
-  protected localEmpresaId    = '';
+  protected get esSuperAdmin() {
+    return this.authService.usuarioActual()?.rol === 'super_admin';
+  }
+
   protected showNotifications = signal(false);
   readonly bellIcon: SafeHtml;
 
   constructor() {
     this.bellIcon = this.sanitizer.bypassSecurityTrustHtml(BELL_SVG);
+
+    // Recarga solicitudes cuando cambia la empresa seleccionada
     effect(() => {
       const empresa = this.consumidorContext.empresaSeleccionada();
       untracked(() => this.solicitudesService.cargar(empresa?._id ?? ''));
+    });
+
+    // Auto-selecciona la empresa del consumidor logueado cuando cargan los clientes
+    effect(() => {
+      const clientes  = this.clientesService.clientes();
+      const usuario   = this.authService.usuarioActual();
+      if (!usuario?.cliente_id || clientes.length === 0) return;
+      const empresa = clientes.find(c => c._id === usuario.cliente_id) ?? null;
+      if (empresa) untracked(() => this.consumidorContext.seleccionar(empresa));
     });
   }
 
@@ -262,15 +277,25 @@ export class TopbarComponent implements OnInit {
   ngOnInit(): void {
     this.clientesService.cargar();
     this.centrosService.cargar();
-    this.localEmpresaId = this.consumidorContext.empresaSeleccionada()?._id ?? '';
-  }
-
-  onEmpresaChange(id: string): void {
-    const empresa = this.clientesService.clientes().find(c => c._id === id) ?? null;
-    this.consumidorContext.seleccionar(empresa);
   }
 
   irADocumentos(): void {
     this.router.navigate(['/documentos']);
+  }
+
+  activarVistaConsumidor(): void {
+    this.profileService.setMode('consumidor');
+    this.router.navigate(['/inicio']);
+  }
+
+  volverAAdmin(): void {
+    this.consumidorContext.seleccionar(null as never);
+    this.profileService.setMode('admin');
+    this.router.navigate(['/empresa']);
+  }
+
+  seleccionarEmpresaVista(empresaId: string): void {
+    const empresa = this.clientesService.clientes().find(c => c._id === empresaId) ?? null;
+    if (empresa) this.consumidorContext.seleccionar(empresa);
   }
 }

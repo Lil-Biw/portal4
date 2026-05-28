@@ -1,13 +1,20 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { MantencionDocument } from './mantenciones.schema';
+import { CentroCostoDocument } from '../centros-costos/centros-costos.schema';
 import { CreateMantencionDto, UpdateMantencionDto } from './mantenciones.dto';
+import { MailService } from '../mail/mail.service';
 
 @Injectable()
 export class MantencionesService {
+  private readonly logger = new Logger(MantencionesService.name);
+
   constructor(
     @InjectModel('Mantencion') private mantencionModel: Model<MantencionDocument>,
+    @InjectModel('CentroCosto') private centroCostoModel: Model<CentroCostoDocument>,
+    @InjectModel('Usuario') private usuarioModel: Model<{ nombre: string; email: string; cliente_id: Types.ObjectId; activo: boolean }>,
+    private mailService: MailService,
   ) {}
 
   findAll(centroCostoId?: string, desde?: string, hasta?: string) {
@@ -39,7 +46,46 @@ export class MantencionesService {
       activo_ids: (dto.activo_ids ?? []).map(id => new Types.ObjectId(id)),
       fecha: new Date(dto.fecha),
     }).save();
-    return this.mantencionModel.findById(m._id).populate('tipo_id').lean();
+
+    const result = await this.mantencionModel.findById(m._id).populate('tipo_id').lean();
+
+    // Notificar a los usuarios del centro (no bloquea la respuesta)
+    this.notificarUsuariosCentro(dto.centro_costo_id, result!);
+
+    return result;
+  }
+
+  private async notificarUsuariosCentro(centroCostoId: string, m: Record<string, unknown>) {
+    try {
+      const centro = await this.centroCostoModel.findById(centroCostoId).lean();
+      if (!centro) return;
+
+      const usuarios = await this.usuarioModel
+        .find({ cliente_id: new Types.ObjectId(String(centro.cliente_id)), activo: true })
+        .select('nombre email')
+        .lean();
+
+      this.logger.log(`Notificación mantención: centro=${centroCostoId} usuarios=${usuarios.length}`);
+
+      const destinatarios = usuarios.filter(u => u.email);
+      if (destinatarios.length === 0) return;
+
+      const tipo = m.tipo_id as Record<string, unknown> | null;
+
+      await this.mailService.notificarNuevaMantencion({
+        destinatarios,
+        mantencion: {
+          nombre:      String(m.nombre ?? ''),
+          tipo:        String(tipo?.nombre ?? 'Sin tipo'),
+          fecha:       m.fecha as Date,
+          descripcion: m.descripcion ? String(m.descripcion) : undefined,
+          centro:      String(centro.nombre),
+        },
+      });
+      this.logger.log(`Correos de mantención enviados a ${destinatarios.length} usuario(s)`);
+    } catch (err: unknown) {
+      this.logger.error('Error al notificar mantención:', err);
+    }
   }
 
   async update(id: string, dto: UpdateMantencionDto) {

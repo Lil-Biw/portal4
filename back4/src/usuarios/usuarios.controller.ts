@@ -11,7 +11,7 @@ export class UsuariosController {
   constructor(private readonly usuariosService: UsuariosService) {}
 
   @Post()
-  @Roles('admin_cliente')
+  @Roles('super_admin')
   create(@Body() dto: CreateUsuarioDto) {
     return this.usuariosService.create(dto);
   }
@@ -27,13 +27,13 @@ export class UsuariosController {
   }
 
   @Put(':id')
-  @Roles('admin_cliente')
+  @Roles('super_admin')
   update(@Param('id') id: string, @Body() dto: UpdateUsuarioDto) {
     return this.usuariosService.update(id, dto);
   }
 
   @Delete(':id')
-  @Roles('admin_cliente')
+  @Roles('super_admin')
   remove(@Param('id') id: string) {
     return this.usuariosService.remove(id);
   }

@@ -48,7 +48,8 @@
           <span class="cal-day-num">{{ cell.date.getDate() }}</span>
           <div class="cal-events">
             @for (m of mantencionesEnDia(cell.date); track m._id) {
-              <div class="cal-event-chip" [style.background]="colorDeMantencion(m)" [title]="m.nombre">
+              <div class="cal-event-chip" [style.background]="colorDeMantencion(m)" [title]="m.nombre"
+                   style="cursor:pointer" (click)="abrirDetalle(m)">
                 {{ m.nombre }}
               </div>
             }
@@ -69,9 +70,10 @@
             <span class="cal-week-dow">{{ days[(day.getDay() + 6) % 7] }}</span>
             <span class="cal-week-num" [class.today-num]="isToday(day)">{{ day.getDate() }}</span>
           </div>
-          <div class="cal-week-events" style="cursor:default">
+          <div class="cal-week-events">
             @for (m of mantencionesEnDia(day); track m._id) {
-              <div class="cal-event-chip" [style.background]="colorDeMantencion(m)" [title]="m.nombre">
+              <div class="cal-event-chip" [style.background]="colorDeMantencion(m)" [title]="m.nombre"
+                   style="cursor:pointer" (click)="abrirDetalle(m)">
                 {{ m.nombre }}
               </div>
             }
@@ -81,6 +83,76 @@
           </div>
         </div>
       }
+    </div>
+  </div>
+}
+
+<!-- Modal de detalle de mantención -->
+@if (mantencionDetalle()) {
+  <div style="position:fixed;inset:0;background:rgba(15,23,42,.45);display:flex;align-items:center;justify-content:center;z-index:100;padding:1rem"
+       (click)="cerrarDetalle()">
+    <div style="background:#fff;border-radius:16px;box-shadow:0 20px 60px rgba(15,23,42,.18);width:100%;max-width:520px;max-height:85vh;overflow-y:auto;padding:1.5rem"
+         (click)="$event.stopPropagation()">
+
+      <!-- Cabecera -->
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:1.25rem">
+        <div style="display:flex;align-items:center;gap:.75rem">
+          <span style="width:14px;height:14px;border-radius:50%;flex-shrink:0;margin-top:2px"
+                [style.background]="colorDeMantencion(mantencionDetalle()!)"></span>
+          <div>
+            <h3 style="margin:0;font-size:1.05rem;font-weight:700;color:#111827">{{ mantencionDetalle()!.nombre }}</h3>
+            <p style="margin:0;font-size:.82rem;color:#6b7280">{{ centroNombre(mantencionDetalle()!) }}</p>
+          </div>
+        </div>
+        <button (click)="cerrarDetalle()"
+                style="background:none;border:none;font-size:1.4rem;line-height:1;cursor:pointer;color:#6b7280;padding:0 .25rem">&#x2715;</button>
+      </div>
+
+      <!-- Datos principales -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem;margin-bottom:1.25rem">
+        <div style="background:#f9fafb;border-radius:8px;padding:.75rem">
+          <p style="margin:0 0 .25rem;font-size:.72rem;font-weight:700;color:#9ca3af;text-transform:uppercase">Fecha</p>
+          <p style="margin:0;font-size:.9rem;font-weight:600;color:#111827">{{ mantencionDetalle()!.fecha | slice:0:10 }}</p>
+        </div>
+        <div style="background:#f9fafb;border-radius:8px;padding:.75rem">
+          <p style="margin:0 0 .25rem;font-size:.72rem;font-weight:700;color:#9ca3af;text-transform:uppercase">Tipo</p>
+          <p style="margin:0;font-size:.9rem;font-weight:600;color:#111827">{{ tipoDeMantencion(mantencionDetalle()!)?.nombre ?? '—' }}</p>
+        </div>
+      </div>
+
+      <!-- Descripción -->
+      @if (mantencionDetalle()!.descripcion) {
+        <div style="margin-bottom:1.25rem">
+          <p style="margin:0 0 .4rem;font-size:.78rem;font-weight:700;color:#6b7280;text-transform:uppercase">Descripción</p>
+          <p style="margin:0;font-size:.88rem;color:#374151;line-height:1.5">{{ mantencionDetalle()!.descripcion }}</p>
+        </div>
+      }
+
+      <!-- Activos asociados -->
+      @if (activosDetalle().length > 0) {
+        <div style="margin-bottom:1.25rem">
+          <p style="margin:0 0 .5rem;font-size:.78rem;font-weight:700;color:#6b7280;text-transform:uppercase">Activos</p>
+          @for (a of activosDetalle(); track a._id) {
+            <div style="background:#f0f9ff;border-radius:6px;padding:.5rem .75rem;margin-bottom:.35rem;font-size:.85rem;color:#0369a1;font-weight:500">
+              {{ a.nombre }}
+            </div>
+          }
+        </div>
+      }
+
+      <!-- Historial reciente del mismo tipo en el mismo centro -->
+      @if (historialDetalle().length > 0) {
+        <div>
+          <p style="margin:0 0 .5rem;font-size:.78rem;font-weight:700;color:#6b7280;text-transform:uppercase">Historial reciente</p>
+          @for (h of historialDetalle(); track h._id) {
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:.4rem 0;border-bottom:1px solid #f3f4f6">
+              <span style="font-size:.83rem;color:#374151">{{ h.nombre }}</span>
+              <span style="font-size:.78rem;color:#9ca3af">{{ h.fecha | slice:0:10 }}</span>
+            </div>
+          }
+        </div>
+      }
+
     </div>
   </div>
 }

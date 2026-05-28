@@ -6,6 +6,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
 import { NoticiasService } from './noticias.service';
 import { CreateNoticiaDto } from './noticias.dto';
+import { Roles } from '../common/guards/guards';
 
 @Controller('noticias')
 export class NoticiasController {
@@ -17,11 +18,13 @@ export class NoticiasController {
   }
 
   @Post()
+  @Roles('super_admin')
   create(@Body() dto: CreateNoticiaDto) {
     return this.noticiasService.create(dto);
   }
 
   @Post(':id/imagen')
+  @Roles('super_admin')
   @UseInterceptors(FileInterceptor('imagen', { storage: memoryStorage() }))
   subirImagen(
     @Param('id') id: string,
@@ -31,6 +34,7 @@ export class NoticiasController {
   }
 
   @Delete(':id')
+  @Roles('super_admin')
   remove(@Param('id') id: string) {
     return this.noticiasService.remove(id);
   }

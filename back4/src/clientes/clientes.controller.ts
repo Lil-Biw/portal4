@@ -6,12 +6,14 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
 import { ClientesService } from './clientes.service';
 import { CreateClienteDto, UpdateClienteDto } from './clientes.dto';
+import { Roles } from '../common/guards/guards';
 
 @Controller('clientes')
 export class ClientesController {
   constructor(private readonly clientesService: ClientesService) {}
 
   @Post()
+  @Roles('super_admin')
   create(@Body() dto: CreateClienteDto) {
     return this.clientesService.create(dto);
   }
@@ -31,16 +33,19 @@ export class ClientesController {
   }
 
   @Put(':id')
+  @Roles('super_admin')
   update(@Param('id') id: string, @Body() dto: UpdateClienteDto) {
     return this.clientesService.update(id, dto);
   }
 
   @Delete(':id')
+  @Roles('super_admin')
   remove(@Param('id') id: string) {
     return this.clientesService.remove(id);
   }
 
   @Post(':id/logo')
+  @Roles('super_admin')
   @UseInterceptors(FileInterceptor('logo', { storage: memoryStorage() }))
   subirLogo(
     @Param('id') id: string,

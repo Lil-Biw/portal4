@@ -48,5 +48,4 @@ export class MainLayoutComponent {
   protected readonly profileService = inject(ProfileService);
 
   protected get mode() { return this.profileService.mode; }
-  protected toggleMode() { this.profileService.toggleMode(); }
 }

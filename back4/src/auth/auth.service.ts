@@ -38,6 +38,7 @@ export class AuthService {
         nombre: usuario.nombre,
         email: usuario.email,
         rol: usuario.rol,
+        cliente_id: usuario.cliente_id ? usuario.cliente_id.toString() : null,
       },
     };
   }

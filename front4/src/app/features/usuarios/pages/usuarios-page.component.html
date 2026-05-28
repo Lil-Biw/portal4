@@ -9,12 +9,20 @@
 
 <app-status-banner [status]="service.status()"></app-status-banner>
 
-<!-- Lista principal -->
-<app-usuarios-list
-  [usuarios]="service.usuarios()"
-  (editado)="abrirEditar($event)"
-  (eliminado)="eliminar($event)">
-</app-usuarios-list>
+<!-- Lista principal agrupada por empresa -->
+@for (grupo of usuariosAgrupados(); track grupo.empresa) {
+  <div class="empresa-grupo">
+    <p class="empresa-titulo">{{ grupo.empresa }}</p>
+    <app-usuarios-list
+      [usuarios]="grupo.usuarios"
+      (editado)="abrirEditar($event)"
+      (eliminado)="eliminar($event)">
+    </app-usuarios-list>
+  </div>
+}
+@if (service.usuarios().length === 0) {
+  <p class="empty">Sin usuarios registrados.</p>
+}
 
 <!-- ── Modal ──────────────────────────────────────────── -->
 <div class="modal-backdrop" *ngIf="modal() !== null" (click)="cerrar()">

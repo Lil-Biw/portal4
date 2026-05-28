@@ -1,5 +1,11 @@
 # Guía de despliegue — PORTAL4
 
+> **ANTES DE DESPLEGAR** revisar `PORTAL4_problemas.md`. Issues críticos que bloquean producción:
+> - `environment.prod.ts` apunta a `localhost:3000` — corregir con `set-env.js` + variable `API_URL`
+> - `JWT_SECRET` en `.env` es débil — generar uno nuevo con `openssl rand -hex 64`
+> - Credenciales SMTP en `.env` deben rotarse si el archivo fue compartido
+> - Path traversal en módulo documentos — parchar antes de exponer al público
+
 Frontend (Angular) y backend (NestJS) se despliegan por separado.
 
 ---
@@ -31,9 +37,11 @@ Frontend (Angular) y backend (NestJS) se despliegan por separado.
 | Variable | Valor |
 |---|---|
 | `MONGODB_URI` | `mongodb+srv://...` (de Atlas) |
-| `JWT_SECRET` | string largo y aleatorio |
+| `JWT_SECRET` | string 64+ chars aleatorios (`openssl rand -hex 64`) |
 | `CORS_ORIGIN` | URL del frontend (ej: `https://portal4-front.vercel.app`) |
 | `NODE_ENV` | `production` |
+| `MAIL_USER` | cuenta Gmail para notificaciones |
+| `MAIL_PASS` | contraseña de app Gmail (no la contraseña de cuenta) |
 
 5. Deploy → copiar la URL del backend (ej: `https://portal4-back.vercel.app`)
 

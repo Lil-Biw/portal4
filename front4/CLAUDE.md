@@ -15,7 +15,9 @@ npm test           # Vitest
 ```
 src/app/
 ├── core/
-│   └── services/api.service.ts      # URL base: http://localhost:3000/api/v1
+│   └── services/api.service.ts      # URL base: inyectada desde environment.apiUrl
+│                                     # ADVERTENCIA: environment.prod.ts apunta a localhost:3000
+│                                     # Usar set-env.js + variable API_URL en build de producción
 │
 ├── shared/
 │   ├── models/                      # Interfaces tipadas (sin `any`)
@@ -185,6 +187,8 @@ Agregar `<app-status-banner>` dentro del modal para mostrar errores sin cerrarlo
 
 ## Patrón de calendario — mantenciones
 
+**Deuda técnica:** La lógica de calendario (~94 líneas) está duplicada entre `mantenciones-page.component.ts` y `mis-mantenciones-page.component.ts`. El algoritmo de relleno de celdas ya diverge sutilmente. Antes de modificar el calendario, considerar extraer un `CalendarService` o componente `<app-calendar>` compartido.
+
 El calendario (vista mes y semana) está implementado en `mantenciones-page.component.ts` y `mis-mantenciones-page.component.ts`.
 
 - **`toDateKey(d: Date): string`** — exportada desde `shared/utils.ts`. Genera `YYYY-MM-DD` para comparar fechas.
@@ -254,6 +258,17 @@ router.navigate(['/documentos'], {
 - Estilos globales en `src/styles.css`: `.card`, `.form-grid`, `.field`, `.btn-primary`, `.btn-ghost`, `.btn-danger`, `.btn-sm`, `.list`, `.empty`.
 - Estilos de componente: `styles: []` inline si son cortos; archivo `.css` para extensos.
 - **Sin `any`** — si la API devuelve algo no tipado, extender la interfaz.
+
+## Problemas de seguridad conocidos
+
+Ver `PORTAL4_problemas.md` (raíz del repo) para el listado completo. Los más relevantes para el frontend:
+
+- **JWT en localStorage** — `auth.service.ts` guarda token en `localStorage`. Vulnerable a XSS.
+- **Interceptor sin 401** — `auth.interceptor.ts` no detecta token expirado ni redirige al login.
+- **`environment.prod.ts`** — apunta a `localhost:3000`. Corregir antes de cualquier deploy.
+- **Modo admin/consumidor** — `profile.service.ts` usa `localStorage`; manipulable desde DevTools. Las rutas admin siguen protegidas por `soloAdminGuard` (seguro), pero la lógica UI que depende solo de `profile.mode()` puede ser engañada.
+- **`scoreDeProyecto()`** en `mis-proyectos-page` — método ordinario llamado en el template; recalcula en cada change detection. Convertir a `computed` antes de agregar más lógica.
+- **`effect()` sin cleanup** en `documentos-consumidor-page.component.ts` — inyectar `DestroyRef` al agregar nuevos efectos.
 
 ## Guía para el agente IA
 

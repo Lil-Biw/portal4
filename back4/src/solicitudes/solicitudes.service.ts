@@ -1,25 +1,69 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import * as fs from 'fs';
 import * as path from 'path';
 import { SolicitudDocument } from './solicitudes.schema';
+import { CentroCostoDocument } from '../centros-costos/centros-costos.schema';
 import { CreateSolicitudDto, UpdateSolicitudDto, CambiarEstadoDto } from './solicitudes.dto';
+import { MailService } from '../mail/mail.service';
 
 @Injectable()
 export class SolicitudesService {
+  private readonly logger = new Logger(SolicitudesService.name);
+
   constructor(
     @InjectModel('Solicitud') private solicitudModel: Model<SolicitudDocument>,
+    @InjectModel('CentroCosto') private centroCostoModel: Model<CentroCostoDocument>,
+    @InjectModel('Usuario') private usuarioModel: Model<{ nombre: string; email: string; cliente_id: Types.ObjectId; activo: boolean }>,
+    private mailService: MailService,
   ) {}
 
   async create(dto: CreateSolicitudDto) {
-    const doc: any = {
+    const doc: Record<string, unknown> = {
       ...dto,
       empresa_id: new Types.ObjectId(dto.empresa_id),
     };
-    if (dto.centro_costo_id) doc.centro_costo_id = new Types.ObjectId(dto.centro_costo_id);
-    if (dto.proyecto_id)     doc.proyecto_id     = new Types.ObjectId(dto.proyecto_id);
-    return new this.solicitudModel(doc).save();
+    if (dto.centro_costo_id) doc['centro_costo_id'] = new Types.ObjectId(dto.centro_costo_id);
+    if (dto.proyecto_id)     doc['proyecto_id']     = new Types.ObjectId(dto.proyecto_id);
+    const saved = await new this.solicitudModel(doc).save();
+
+    // Notificar solo si la solicitud tiene centro de costos asignado
+    if (dto.centro_costo_id) {
+      this.notificarUsuariosCentro(dto.centro_costo_id, dto);
+    }
+
+    return saved;
+  }
+
+  private async notificarUsuariosCentro(centroCostoId: string, dto: CreateSolicitudDto) {
+    try {
+      const centro = await this.centroCostoModel.findById(centroCostoId).lean();
+      if (!centro) return;
+
+      const usuarios = await this.usuarioModel
+        .find({ cliente_id: new Types.ObjectId(String(centro.cliente_id)), activo: true })
+        .select('nombre email')
+        .lean();
+
+      this.logger.log(`Notificación solicitud: centro=${centroCostoId} usuarios=${usuarios.length}`);
+
+      const destinatarios = usuarios.filter(u => u.email);
+      if (destinatarios.length === 0) return;
+
+      await this.mailService.notificarNuevaSolicitud({
+        destinatarios,
+        solicitud: {
+          nombre:      dto.nombre,
+          tipo:        dto.tipo,
+          descripcion: dto.descripcion,
+          centro:      String(centro.nombre),
+        },
+      });
+      this.logger.log(`Correos de solicitud enviados a ${destinatarios.length} usuario(s)`);
+    } catch (err: unknown) {
+      this.logger.error('Error al notificar solicitud:', err);
+    }
   }
 
   async findByContexto(empresaId: string, centroId?: string, proyectoId?: string, estado?: string) {

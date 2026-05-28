@@ -14,10 +14,17 @@ npm run start:prod  # Producción: node dist/main
 
 ```
 MONGODB_URI=mongodb://localhost:27017/portal_clientes
-JWT_SECRET=valorultrasecreto
+JWT_SECRET=<generar con: openssl rand -hex 64>
 PORT=3000
 CORS_ORIGIN=http://localhost:4200
+MAIL_USER=<cuenta gmail>
+MAIL_PASS=<contraseña de app gmail>
+NODE_ENV=development
 ```
+
+> NUNCA commitear `.env`. JWT_SECRET debe ser un secreto de al menos 64 caracteres
+> aleatorios. Sin fallback en código fuente — si la variable no existe, el arranque
+> debe fallar con error explícito.
 
 ## Base de datos
 
@@ -45,8 +52,8 @@ src/
 ├── main.ts                        # Bootstrap: ValidationPipe global, CORS, prefijo /api/v1
 ├── app.module.ts                  # Registro de todos los módulos de negocio
 ├── common/
-│   └── guards/guards.ts           # Guards neutralizados (retornan true) — pendiente activar auth
-├── auth/                          # Módulo de autenticación (JWT) — implementado pero desconectado de app.module.ts
+│   └── guards/guards.ts           # JwtAuthGuard + RolesGuard + PermisosGuard — ACTIVOS en app.module.ts
+├── auth/                          # Módulo de autenticación (JWT) — registrado en app.module.ts
 │
 ├── clientes/                      # Módulo de referencia — seguir este patrón
 ├── centros-costos/
@@ -187,13 +194,19 @@ Endpoints (no siguen convención REST estándar):
 - `GET    /documentos/listar?tipo=&empresa_nombre=&centro_nombre=&proyecto_nombre=`
 - `DELETE /documentos/eliminar/:filename?tipo=&...`
 
-**Riesgo:** si se renombra una empresa o centro, los documentos quedan huérfanos porque la ruta usa el nombre, no el ID.
+**ADVERTENCIA — path traversal:** Los parámetros `empresa_nombre`, `centro_nombre`, `proyecto_nombre` y `filename` se usan sin sanitizar en `path.join()`. Antes de escribir cualquier lógica nueva en este módulo, verificar que la ruta resultante quede dentro de `baseDir` con `path.resolve()`.
 
-## Autenticación (pendiente)
+**Riesgo adicional:** si se renombra una empresa o centro, los documentos quedan huérfanos porque la ruta usa el nombre, no el ID.
 
-`AuthModule` está implementado en `src/auth/` (login, JWT, bcrypt) pero **no está registrado en `app.module.ts`**. Todos los endpoints son actualmente públicos. Los guards en `common/guards/guards.ts` retornan `true` incondicionalmente.
+## Autenticación
 
-Cuando se active: importar `AuthModule` en `app.module.ts` y cambiar los guards.
+`AuthModule` está registrado en `app.module.ts`. `JwtAuthGuard` y `RolesGuard` están activos como guards globales vía `APP_GUARD`.
+
+**Problemas de seguridad conocidos (ver PORTAL4_problemas.md):**
+- Endpoints `GET /usuarios` sin `@Roles()` — cualquier usuario autenticado puede enumerar todos los usuarios
+- Ningún endpoint valida que el recurso pertenezca al tenant del usuario (cross-tenant leak)
+- Sin rate limiting en `POST /auth/login`
+- Path traversal en módulo documentos via `empresa_nombre`/`filename`
 
 ## Convenciones
 

@@ -11,6 +11,7 @@ export const CATEGORIAS_DOCUMENTO = [
   'Certificados',
   'Auditorias',
   'OT',
+  'Lista de Activos',
   'Otros',
 ] as const;
 

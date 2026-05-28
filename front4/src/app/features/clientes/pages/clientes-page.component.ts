@@ -160,7 +160,7 @@ export class ClientesPageComponent implements OnInit {
   protected irAFicha(cliente: Cliente): void {
     this.consumidorContext.seleccionar(cliente);
     this.profileService.setMode('consumidor');
-    this.router.navigate(['/inicio']);
+    this.router.navigate(['/mi-ficha']);
   }
 
 }

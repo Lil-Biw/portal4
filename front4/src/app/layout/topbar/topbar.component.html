@@ -6,19 +6,7 @@
     <span class="brand-name">Smart Clarity</span>
   </div>
 
-  <!-- Contexto consumidor: selector de empresa -->
-  @if (mode === 'consumidor') {
-    <div class="context-slot">
-      <select class="empresa-select" [(ngModel)]="localEmpresaId" (ngModelChange)="onEmpresaChange($event)">
-        <option value="">Seleccionar empresa</option>
-        <option *ngFor="let e of clientesService.clientes()" [value]="e._id">
-          {{ e.razon_social }}
-        </option>
-      </select>
-    </div>
-  }
-
-  <!-- Iconos configurables (ng-content) -->
+<!-- Iconos configurables (ng-content) -->
   <div class="icons-slot">
     <ng-content select="[topbar-icons]"></ng-content>
 
@@ -69,10 +57,39 @@
     }
   </div>
 
+  <!-- Vista consumidor: dropdown de empresa (super_admin en modo consumidor) -->
+  @if (esSuperAdmin && mode === 'consumidor') {
+    <div class="context-slot">
+      <select
+        class="empresa-select"
+        [value]="consumidorContext.empresaSeleccionada()?._id ?? ''"
+        (change)="seleccionarEmpresaVista($any($event.target).value)">
+        <option value="" disabled>Seleccionar empresa…</option>
+        @for (c of clientesService.clientes(); track c._id) {
+          <option [value]="c._id">{{ c.razon_social }}</option>
+        }
+      </select>
+    </div>
+  }
+
   <!-- Acciones de perfil -->
   <div class="actions">
     <span class="mode-chip">{{ modeLabel }}</span>
-    <button class="toggle-btn" (click)="modeToggle.emit()">Cambiar modo</button>
+
+    @if (esSuperAdmin && mode === 'admin') {
+      <button class="toggle-btn" (click)="activarVistaConsumidor()" title="Previsualizar como consumidor">
+        Vista consumidor
+      </button>
+    }
+    @if (esSuperAdmin && mode === 'consumidor') {
+      <button class="toggle-btn" style="color:#000;border-color:#000" (click)="volverAAdmin()">
+        ← Volver a admin
+      </button>
+    }
+
+    <button class="toggle-btn" style="color:#dc2626;border-color:#dc2626" (click)="authService.logout()">
+      Cerrar sesión
+    </button>
   </div>
 
 </div>

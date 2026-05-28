@@ -1,7 +1,9 @@
 import { Module } from '@nestjs/common';
+import { APP_GUARD } from '@nestjs/core';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ConfigModule } from '@nestjs/config';
-// AuthModule removed for DB-only testing
+import { JwtAuthGuard, RolesGuard, PermisosGuard } from './common/guards/guards';
+import { AuthModule } from './auth/auth.module';
 import { ClientesModule } from './clientes/clientes.module';
 import { UsuariosModule } from './usuarios/usuarios.module';
 import { CentrosCostosModule } from './centros-costos/centros-costos.module';
@@ -26,6 +28,7 @@ import { NoticiasModule } from './noticias/noticias.module';
     MongooseModule.forRoot(process.env.MONGODB_URI || 'mongodb://localhost:27017/portal_clientes'),
 
     // Módulos de negocio
+    AuthModule,
     ClientesModule,
     UsuariosModule,
     CentrosCostosModule,
@@ -37,6 +40,11 @@ import { NoticiasModule } from './noticias/noticias.module';
     MantencionesModule,
     ActivosModule,
     NoticiasModule,
+  ],
+  providers: [
+    { provide: APP_GUARD, useClass: JwtAuthGuard },
+    { provide: APP_GUARD, useClass: RolesGuard },
+    { provide: APP_GUARD, useClass: PermisosGuard },
   ],
 })
 export class AppModule {}
