@@ -46,7 +46,10 @@ export class UsuariosService {
     const permisosSeleccionados = new Map((permisos || []).map((permiso) => [permiso.centro_costo_id, permiso]));
 
     for (const permisoActual of permisosActuales) {
-      const centroId = permisoActual?.centro_costo_id?._id?.toString?.() || permisoActual?.centro_costo_id?.toString?.() || '';
+      const centroId = (permisoActual?.centro_costo_id as any)?._id?.toString?.()
+        || permisoActual?.centro_costo_id?.toString?.()
+        || '';
+      if (!centroId) continue;
       if (!permisosSeleccionados.has(centroId)) {
         await this.permisosService.revocar(usuarioId, centroId);
       }

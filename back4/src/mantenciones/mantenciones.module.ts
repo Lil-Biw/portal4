@@ -5,6 +5,7 @@ import { MantencionesController } from './mantenciones.controller';
 import { MantencionesService } from './mantenciones.service';
 import { CentroCostoSchema } from '../centros-costos/centros-costos.schema';
 import { UsuarioSchema } from '../usuarios/usuarios.schema';
+import { PermisoSchema } from '../permisos/permisos.schema';
 import { MailModule } from '../mail/mail.module';
 
 @Module({
@@ -13,6 +14,7 @@ import { MailModule } from '../mail/mail.module';
       { name: 'Mantencion', schema: MantencionSchema },
       { name: 'CentroCosto', schema: CentroCostoSchema },
       { name: 'Usuario', schema: UsuarioSchema },
+      { name: 'Permiso', schema: PermisoSchema },
     ]),
     MailModule,
   ],

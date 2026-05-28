@@ -46,15 +46,11 @@ export class PermisosService {
   }
 
   async revocar(usuario_id: string, centro_costo_id: string) {
-    const resultado = await this.permisoModel.deleteOne({
+    if (!usuario_id || !centro_costo_id) return { message: 'Permiso revocado correctamente' };
+    await this.permisoModel.deleteOne({
       usuario_id: new Types.ObjectId(usuario_id),
       centro_costo_id: new Types.ObjectId(centro_costo_id),
     });
-
-    if (resultado.deletedCount === 0) {
-      throw new NotFoundException('No se encontró el permiso para revocar');
-    }
-
     return { message: 'Permiso revocado correctamente' };
   }
 }
