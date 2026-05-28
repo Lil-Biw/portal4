@@ -77,8 +77,7 @@ export class UsuariosService {
 
     await this.sincronizarPermisos(saved._id.toString(), rest.cliente_id?.toString() ?? '', permisos);
 
-    // Notificar al usuario por correo (no bloquea la respuesta si falla)
-    this.mailService.notificarNuevoUsuario({
+    await this.mailService.notificarNuevoUsuario({
       nombre:   rest.nombre,
       email:    dto.email,
       password: dto.password,
