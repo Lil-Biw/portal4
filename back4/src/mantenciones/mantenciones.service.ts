@@ -49,8 +49,7 @@ export class MantencionesService {
 
     const result = await this.mantencionModel.findById(m._id).populate('tipo_id').lean();
 
-    // Notificar a los usuarios del centro (no bloquea la respuesta)
-    this.notificarUsuariosCentro(dto.centro_costo_id, result!);
+    await this.notificarUsuariosCentro(dto.centro_costo_id, result!);
 
     return result;
   }

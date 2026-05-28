@@ -30,7 +30,7 @@ export class SolicitudesService {
 
     // Notificar solo si la solicitud tiene centro de costos asignado
     if (dto.centro_costo_id) {
-      this.notificarUsuariosCentro(dto.centro_costo_id, dto);
+      await this.notificarUsuariosCentro(dto.centro_costo_id, dto);
     }
 
     return saved;
