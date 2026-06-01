@@ -166,13 +166,13 @@ export class SolicitudesService {
   }
 
   // Compatible con los templates que llaman descargar(s.archivo_url)
-  descargar(url: string): void {
+  descargar(url: string, nombreDisplay?: string): void {
     this.http.get(url, { responseType: 'blob' }).subscribe({
       next: (blob) => {
         const objectUrl = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = objectUrl;
-        a.download = 'adjunto';
+        a.download = nombreDisplay || 'adjunto';
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);

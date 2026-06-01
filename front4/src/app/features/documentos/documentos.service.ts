@@ -182,14 +182,13 @@ export class DocumentosService {
     });
   }
 
-  // Descarga via blob con auth header (compatible con templates que llaman service.descargar(d.url))
-  descargar(url: string): void {
+  descargar(url: string, nombreDisplay?: string): void {
     this.http.get(url, { responseType: 'blob' }).subscribe({
       next: (blob) => {
         const objectUrl = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = objectUrl;
-        a.download = 'documento';
+        a.download = nombreDisplay || 'documento';
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);

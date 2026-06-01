@@ -113,8 +113,8 @@ export class MiProyectoDetallePageComponent implements OnInit, OnDestroy {
     return d.toLocaleDateString('es-CL', { day: '2-digit', month: 'short', year: 'numeric' });
   }
 
-  protected descargarDoc(url: string): void {
-    this.documentosService.descargar(url);
+  protected descargarDoc(url: string, nombreDisplay?: string): void {
+    this.documentosService.descargar(url, nombreDisplay);
   }
 
   protected irADocumentos(tab: 'documentacion' | 'solicitudes'): void {
