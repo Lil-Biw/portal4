@@ -74,3 +74,21 @@ export class PermisosGuard implements CanActivate {
     return user.permiso_acceso === 'editar';
   }
 }
+
+// ── EmpresaAccessGuard ────────────────────────────────────────────────────────────
+// Verifica que el usuario tenga acceso al :empresaId del route param.
+// super_admin tiene acceso a todo. Usuarios normales solo a su propia empresa.
+// Si la ruta no tiene :empresaId el guard deja pasar (para rutas sin contexto).
+
+@Injectable()
+export class EmpresaAccessGuard implements CanActivate {
+  canActivate(context: ExecutionContext): boolean {
+    const req = context.switchToHttp().getRequest();
+    const user = req.user;
+    if (!user) return false;
+    if (user.rol === 'super_admin') return true;
+    const empresaId = req.params['empresaId'];
+    if (!empresaId) return true;
+    return String(user.cliente_id) === String(empresaId);
+  }
+}
