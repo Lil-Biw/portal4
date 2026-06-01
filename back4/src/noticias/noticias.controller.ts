@@ -1,9 +1,10 @@
 import {
   Controller, Get, Post, Delete, Param, Body,
-  UseInterceptors, UploadedFile,
+  UseInterceptors, UploadedFile, Res,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
+import { Response } from 'express';
 import { NoticiasService } from './noticias.service';
 import { CreateNoticiaDto } from './noticias.dto';
 import { Roles } from '../common/guards/guards';
@@ -15,6 +16,13 @@ export class NoticiasController {
   @Get()
   findAll() {
     return this.noticiasService.findAll();
+  }
+
+  @Get(':id/imagen')
+  async getImagen(@Param('id') id: string, @Res() res: Response) {
+    const { data, mimetype } = await this.noticiasService.getImagen(id);
+    res.setHeader('Content-Type', mimetype);
+    res.send(data);
   }
 
   @Post()
