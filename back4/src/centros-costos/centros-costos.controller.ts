@@ -1,9 +1,13 @@
 import {
   Controller, Get, Post, Put, Delete,
-  Param, Body, Query, UseGuards,
+  Param, Body, Query, UseGuards, Res,
+  UseInterceptors, UploadedFile, BadRequestException,
 } from '@nestjs/common';
+import { Response } from 'express';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { memoryStorage } from 'multer';
 import { CentrosCostosService } from './centros-costos.service';
-import { CreateCentroCostoDto, UpdateCentroCostoDto, AgregarDocumentoDto } from './centros-costos.dto';
+import { CreateCentroCostoDto, UpdateCentroCostoDto } from './centros-costos.dto';
 import { EmpresaAccessGuard, Roles } from '../common/guards/guards';
 
 @Controller('empresas/:empresaId/centros')
@@ -45,11 +49,31 @@ export class CentrosCostosController {
 
   @Post(':centroId/documentos')
   @Roles('super_admin')
-  agregarDocumento(
+  @UseInterceptors(FileInterceptor('archivo', { storage: memoryStorage() }))
+  subirDocumento(
     @Param('centroId') centroId: string,
-    @Body() dto: AgregarDocumentoDto,
+    @UploadedFile() archivo: Express.Multer.File & { buffer: Buffer },
+    @Body('nombre_display') nombreDisplay?: string,
   ) {
-    return this.centrosCostosService.agregarDocumento(centroId, dto);
+    if (!archivo) throw new BadRequestException('No se proporcionó archivo');
+    return this.centrosCostosService.agregarDocumento(centroId, archivo, nombreDisplay);
+  }
+
+  @Get(':centroId/documentos')
+  listarDocumentos(@Param('centroId') centroId: string) {
+    return this.centrosCostosService.listarDocumentos(centroId);
+  }
+
+  @Get(':centroId/documentos/:docId')
+  async descargarDocumento(
+    @Param('centroId') centroId: string,
+    @Param('docId') docId: string,
+    @Res() res: Response,
+  ) {
+    const { buffer, tipo_mime, nombre_display } = await this.centrosCostosService.servirDocumento(centroId, docId);
+    res.setHeader('Content-Type', tipo_mime);
+    res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(nombre_display)}"`);
+    res.send(buffer);
   }
 
   @Delete(':centroId/documentos/:docId')

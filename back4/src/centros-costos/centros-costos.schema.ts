@@ -5,10 +5,11 @@ export type CentroCostoDocument = CentroCosto & Document;
 
 class Documento {
   @Prop({ required: true }) nombre: string;
-  @Prop({ required: true }) url: string;
+  @Prop({ required: true }) nombre_display: string;
   @Prop({ required: true }) tipo_mime: string;
-  @Prop() tamano_bytes?: number;
-  @Prop({ type: Types.ObjectId, ref: 'Usuario', required: true }) subido_por: Types.ObjectId;
+  @Prop({ required: true }) tamano_bytes: number;
+  @Prop({ type: Buffer, required: true }) contenido: Buffer;
+  @Prop({ type: Types.ObjectId, ref: 'Usuario' }) subido_por?: Types.ObjectId;
   @Prop({ default: Date.now }) subido_en: Date;
 }
 

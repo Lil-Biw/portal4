@@ -1,6 +1,6 @@
 import {
   IsString, IsOptional, IsBoolean,
-  IsMongoId, IsUrl, IsNumber, MinLength,
+  IsMongoId, MinLength,
 } from 'class-validator';
 import { PartialType } from '@nestjs/mapped-types';
 
@@ -17,11 +17,4 @@ export class CreateCentroCostoDto {
 
 export class UpdateCentroCostoDto extends PartialType(CreateCentroCostoDto) {
   @IsBoolean() @IsOptional() activo?: boolean;
-}
-
-export class AgregarDocumentoDto {
-  @IsString() nombre: string;
-  @IsUrl() url: string;
-  @IsString() tipo_mime: string;
-  @IsNumber() @IsOptional() tamano_bytes?: number;
 }
