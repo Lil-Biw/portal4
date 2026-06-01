@@ -16,14 +16,21 @@ export class CentrosCostosService {
 
   async create(dto: CreateCentroCostoDto) {
     const existe = await this.centroCostoModel.findOne({
-      cliente_id: dto.cliente_id,
+      cliente_id: this.toObjectId(dto.cliente_id!),
       codigo: dto.codigo,
     });
-    if (existe) throw new ConflictException(`Ya existe el código ${dto.codigo} en este cliente`);
-    return new this.centroCostoModel({
-      ...dto,
-      cliente_id: this.toObjectId(dto.cliente_id!),
-    }).save();
+    if (existe) throw new ConflictException(`El código "${dto.codigo}" ya existe en esta empresa. Usa un código distinto.`);
+    try {
+      return await new this.centroCostoModel({
+        ...dto,
+        cliente_id: this.toObjectId(dto.cliente_id!),
+      }).save();
+    } catch (err: any) {
+      if (err?.code === 11000) {
+        throw new ConflictException(`El código "${dto.codigo}" ya existe en esta empresa. Usa un código distinto.`);
+      }
+      throw err;
+    }
   }
 
   async findAll(page = 1, limit = 20) {
