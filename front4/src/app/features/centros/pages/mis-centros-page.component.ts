@@ -157,9 +157,13 @@ export class MisCentrosPageComponent implements OnInit, OnDestroy {
   });
 
   ngOnInit(): void {
-    this.service.cargar();
     const emp = this.empresa;
-    if (emp) this.solicitudesService.cargar(emp._id);
+    if (emp) {
+      this.service.cargarPorEmpresa(emp._id);
+      this.solicitudesService.cargar(emp._id);
+    } else {
+      this.service.cargar();
+    }
   }
 
   // Limpia el centro al salir de esta página
@@ -170,7 +174,7 @@ export class MisCentrosPageComponent implements OnInit, OnDestroy {
   seleccionarCentro(centro: CentroCosto): void {
     this.consumidorContext.seleccionarCentro(centro);
     const emp = this.empresa;
-    if (emp) this.documentosService.cargar('centro', emp.razon_social, centro.nombre);
+    if (emp) this.documentosService.cargar('centro', emp._id, asId(centro._id));
     this.activosService.cargar(asId(centro._id));
   }
 

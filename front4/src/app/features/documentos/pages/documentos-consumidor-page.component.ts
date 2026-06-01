@@ -125,7 +125,10 @@ export class DocumentosConsumidorPageComponent implements OnInit {
       this.selectedCentroIdC.set('');
       this.selectedProyectoIdC.set('');
       if (empresa) {
-        this.service.cargar('empresa', empresa.razon_social);
+        this.service.documentosEmpresa.set([]);
+        this.service.documentosCentro.set([]);
+        this.service.documentosProyecto.set([]);
+        this.service.documentosPorCentro.set([]);
         this.solicitudesService.cargar(empresa._id);
       } else {
         this.solicitudesService.cargar('');
@@ -165,15 +168,16 @@ export class DocumentosConsumidorPageComponent implements OnInit {
     this.selectedCentroIdC.set(id);
     this.selectedProyectoIdC.set('');
     const empresa = this.consumidorContext.empresaSeleccionada();
+    const empresaId = empresa?._id ?? '';
     if (id === 'todos') {
-      this.service.cargar('empresa', this.empresaNombreC);
-      this.service.cargarTodosCentros(this.empresaNombreC ?? '', this.centrosFiltradosC);
+      this.service.documentosCentro.set([]);
+      this.service.cargarTodosCentros(empresaId, this.centrosFiltradosC);
     } else if (id) {
       this.service.documentosPorCentro.set([]);
-      this.service.cargar('centro', this.empresaNombreC, this.centroNombreC);
+      this.service.cargar('centro', empresaId, id);
     } else {
       this.service.documentosPorCentro.set([]);
-      this.service.cargar('empresa', this.empresaNombreC);
+      this.service.documentosCentro.set([]);
     }
     if (empresa) this.solicitudesService.cargar(empresa._id);
   }
@@ -181,13 +185,15 @@ export class DocumentosConsumidorPageComponent implements OnInit {
   onProyectoChangeC(id: string): void {
     this.selectedProyectoIdC.set(id);
     const empresa = this.consumidorContext.empresaSeleccionada();
+    const empresaId = empresa?._id ?? '';
     const centroId = this.selectedCentroIdC();
-    if (id && id !== 'todos') {
-      this.service.cargar('proyecto', this.empresaNombreC, this.centroNombreC, this.proyectoNombreC);
+    if (id && id !== 'todos' && centroId && centroId !== 'todos') {
+      this.service.cargar('proyecto', empresaId, centroId, id);
     } else if (centroId && centroId !== 'todos') {
-      this.service.cargar('centro', this.empresaNombreC, this.centroNombreC);
+      this.service.cargar('centro', empresaId, centroId);
     } else {
-      this.service.cargar('empresa', this.empresaNombreC);
+      this.service.documentosCentro.set([]);
+      this.service.documentosProyecto.set([]);
     }
     if (empresa) this.solicitudesService.cargar(empresa._id);
   }
@@ -218,15 +224,13 @@ export class DocumentosConsumidorPageComponent implements OnInit {
   confirmarSubida(tipo: DocTipo): void {
     const p = this.panels[tipo];
     if (!p.selectedFile) return;
+    const empresaId = this.consumidorContext.empresaSeleccionada()?._id ?? '';
     this.service.subir(
       p.selectedFile, tipo,
-      this.empresaNombreC,
-      this.centroNombreC,
-      this.proyectoNombreC,
+      empresaId,
       this.selectedCentroIdC() || undefined,
       this.selectedProyectoIdC() || undefined,
       p.nombreInput || undefined,
-      p.categoriaInput || undefined,
     );
     p.selectedFile = null;
     p.nombreInput = '';
@@ -245,20 +249,18 @@ export class DocumentosConsumidorPageComponent implements OnInit {
   }
 
   docsFiltrados(tipo: DocTipo): DocumentoItem[] {
-    const filtros = this.panels[tipo].filtrosCategorias;
-    const docs = tipo === 'empresa' ? this.service.documentosEmpresa()
+    return tipo === 'empresa' ? this.service.documentosEmpresa()
       : tipo === 'centro' ? this.service.documentosCentro()
       : this.service.documentosProyecto();
-    if (filtros.length === 0) return docs;
-    return docs.filter(d => filtros.includes(d.categoria));
   }
 
-  eliminar(filename: string, tipo: DocTipo): void {
+  eliminar(docId: string, tipo: DocTipo): void {
+    const empresaId = this.consumidorContext.empresaSeleccionada()?._id ?? '';
     this.service.eliminar(
-      filename, tipo,
-      this.empresaNombreC,
-      this.centroNombreC,
-      this.proyectoNombreC,
+      docId, tipo,
+      empresaId,
+      this.selectedCentroIdC() || undefined,
+      this.selectedProyectoIdC() || undefined,
     );
   }
 

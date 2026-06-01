@@ -15,8 +15,11 @@ export interface Solicitud {
   proyecto_id?: string;
   estado: EstadoSolicitud;
   motivo_rechazo?: string;
-  archivo_nombre?: string;
+  // adjunto viene del backend como { tipo_mime, nombre } (sin contenido)
+  adjunto?: { tipo_mime: string; nombre: string };
+  // archivo_url se computa en el service para compatibilidad con templates
   archivo_url?: string;
+  archivo_nombre?: string;
   creado_en: string;
 }
 
@@ -51,23 +54,42 @@ export class SolicitudesService {
 
   clearStatus(): void { this.status.set(null); }
 
+  private computarAdjuntoUrl(s: Solicitud): Solicitud {
+    if ((s as any).adjunto) {
+      return {
+        ...s,
+        archivo_url: this.api.url(`/empresas/${s.empresa_id}/solicitudes/${s._id}/adjunto`),
+        archivo_nombre: (s as any).adjunto.nombre,
+      };
+    }
+    return s;
+  }
+
+  private getEmpresaId(id: string): string | undefined {
+    return this.solicitudes().find(s => s._id === id)?.empresa_id;
+  }
+
   cargar(empresaId: string, centroId?: string, proyectoId?: string): void {
     if (!empresaId) { this.solicitudes.set([]); return; }
     this.loading.set(true);
-    const params: Record<string, string> = { empresa_id: empresaId };
-    if (centroId)   params['centro_costo_id'] = centroId;
-    if (proyectoId) params['proyecto_id'] = proyectoId;
-    const qs = new URLSearchParams(params).toString();
-    this.http.get<Solicitud[]>(`${this.api.url('/solicitudes')}?${qs}`).subscribe({
-      next: (data) => { this.solicitudes.set(data); this.loading.set(false); },
-      error: ()     => { this.solicitudes.set([]); this.loading.set(false); },
+    const params: Record<string, string> = {};
+    if (centroId)   params['centroId']   = centroId;
+    if (proyectoId) params['proyectoId'] = proyectoId;
+    const qs = Object.keys(params).length ? '?' + new URLSearchParams(params).toString() : '';
+    this.http.get<Solicitud[]>(`${this.api.url(`/empresas/${empresaId}/solicitudes`)}${qs}`).subscribe({
+      next: (data) => {
+        this.solicitudes.set(data.map(s => this.computarAdjuntoUrl(s)));
+        this.loading.set(false);
+      },
+      error: () => { this.solicitudes.set([]); this.loading.set(false); },
     });
   }
 
   crear(dto: CreateSolicitudDto, onSuccess?: () => void): void {
-    this.http.post<Solicitud>(this.api.url('/solicitudes'), dto).subscribe({
+    const { empresa_id, ...body } = dto;
+    this.http.post<Solicitud>(this.api.url(`/empresas/${empresa_id}/solicitudes`), body).subscribe({
       next: (nueva) => {
-        this.solicitudes.update(prev => [nueva, ...prev]);
+        this.solicitudes.update(prev => [this.computarAdjuntoUrl(nueva), ...prev]);
         this.status.set({ type: 'ok', text: 'Solicitud creada correctamente.' });
         onSuccess?.();
       },
@@ -79,9 +101,11 @@ export class SolicitudesService {
   }
 
   actualizar(id: string, dto: UpdateSolicitudDto): void {
-    this.http.patch<Solicitud>(this.api.url(`/solicitudes/${id}`), dto).subscribe({
+    const empresaId = this.getEmpresaId(id);
+    if (!empresaId) return;
+    this.http.patch<Solicitud>(this.api.url(`/empresas/${empresaId}/solicitudes/${id}`), dto).subscribe({
       next: (actualizada) => {
-        this.solicitudes.update(prev => prev.map(s => s._id === id ? actualizada : s));
+        this.solicitudes.update(prev => prev.map(s => s._id === id ? this.computarAdjuntoUrl(actualizada) : s));
         this.status.set({ type: 'ok', text: 'Solicitud actualizada.' });
       },
       error: (err) => {
@@ -92,7 +116,9 @@ export class SolicitudesService {
   }
 
   eliminarSolicitud(id: string): void {
-    this.http.delete(this.api.url(`/solicitudes/${id}`)).subscribe({
+    const empresaId = this.getEmpresaId(id);
+    if (!empresaId) return;
+    this.http.delete(this.api.url(`/empresas/${empresaId}/solicitudes/${id}`)).subscribe({
       next: () => {
         this.solicitudes.update(prev => prev.filter(s => s._id !== id));
         this.status.set({ type: 'ok', text: 'Solicitud eliminada.' });
@@ -105,11 +131,13 @@ export class SolicitudesService {
   }
 
   adjuntar(id: string, archivo: File, onSuccess?: () => void): void {
+    const empresaId = this.getEmpresaId(id);
+    if (!empresaId) return;
     const form = new FormData();
     form.append('archivo', archivo);
-    this.http.post<Solicitud>(this.api.url(`/solicitudes/${id}/adjuntar`), form).subscribe({
+    this.http.post<Solicitud>(this.api.url(`/empresas/${empresaId}/solicitudes/${id}/adjuntar`), form).subscribe({
       next: (actualizada) => {
-        this.solicitudes.update(prev => prev.map(s => s._id === id ? actualizada : s));
+        this.solicitudes.update(prev => prev.map(s => s._id === id ? this.computarAdjuntoUrl(actualizada) : s));
         this.status.set({ type: 'ok', text: 'Archivo adjuntado. Estado actualizado a "En revisión".' });
         onSuccess?.();
       },
@@ -121,11 +149,13 @@ export class SolicitudesService {
   }
 
   cambiarEstado(id: string, estado: EstadoSolicitud, motivoRechazo?: string): void {
+    const empresaId = this.getEmpresaId(id);
+    if (!empresaId) return;
     const body: Record<string, string> = { estado };
     if (estado === 'rechazado' && motivoRechazo) body['motivo_rechazo'] = motivoRechazo;
-    this.http.put<Solicitud>(this.api.url(`/solicitudes/${id}/estado`), body).subscribe({
+    this.http.put<Solicitud>(this.api.url(`/empresas/${empresaId}/solicitudes/${id}/estado`), body).subscribe({
       next: (actualizada) => {
-        this.solicitudes.update(prev => prev.map(s => s._id === id ? actualizada : s));
+        this.solicitudes.update(prev => prev.map(s => s._id === id ? this.computarAdjuntoUrl(actualizada) : s));
         this.status.set({ type: 'ok', text: `Estado actualizado a "${this.estadoLabel(estado)}".` });
       },
       error: (err) => {
@@ -135,9 +165,21 @@ export class SolicitudesService {
     });
   }
 
+  // Compatible con los templates que llaman descargar(s.archivo_url)
   descargar(url: string): void {
-    const fullUrl = url.startsWith('http') ? url : `${new URL(this.api.base).origin}${url}`;
-    window.open(fullUrl, '_blank');
+    this.http.get(url, { responseType: 'blob' }).subscribe({
+      next: (blob) => {
+        const objectUrl = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = objectUrl;
+        a.download = 'adjunto';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(objectUrl);
+      },
+      error: () => this.status.set({ type: 'error', text: 'Error al descargar el archivo.' }),
+    });
   }
 
   private estadoLabel(estado: EstadoSolicitud): string {

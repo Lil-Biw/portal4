@@ -89,7 +89,7 @@ export class MiProyectoDetallePageComponent implements OnInit, OnDestroy {
       const emp = this.empresa();
       const c   = this.centro();
       if (!p || !emp) return;
-      untracked(() => this.documentosService.cargar('proyecto', emp.razon_social, c?.nombre, p.nombre));
+      untracked(() => this.documentosService.cargar('proyecto', emp._id, c?._id, p._id));
     });
   }
 

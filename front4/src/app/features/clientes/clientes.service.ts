@@ -16,7 +16,7 @@ export class ClientesService {
 
   cargar(): void {
     this.loading.set(true);
-    this.http.get<{ data: Cliente[] } | Cliente[]>(this.api.url('/clientes')).subscribe({
+    this.http.get<{ data: Cliente[] } | Cliente[]>(this.api.url('/empresas')).subscribe({
       next: (res) => {
         this.clientes.set(Array.isArray(res) ? res : res.data);
         this.loading.set(false);
@@ -29,7 +29,7 @@ export class ClientesService {
   }
 
   crear(dto: CreateClienteDto, logoFile?: File | null): void {
-    this.http.post<Cliente>(this.api.url('/clientes'), dto).subscribe({
+    this.http.post<Cliente>(this.api.url('/empresas'), dto).subscribe({
       next: (cliente) => {
         this.status.set({ type: 'ok', text: 'Empresa creada correctamente' });
         if (logoFile) {
@@ -43,7 +43,7 @@ export class ClientesService {
   }
 
   actualizar(id: string, dto: UpdateClienteDto, logoFile?: File | null): void {
-    this.http.put<Cliente>(this.api.url(`/clientes/${id}`), dto).subscribe({
+    this.http.put<Cliente>(this.api.url(`/empresas/${id}`), dto).subscribe({
       next: () => {
         this.status.set({ type: 'ok', text: 'Empresa actualizada' });
         this.seleccionado.set(null);
@@ -59,15 +59,15 @@ export class ClientesService {
 
   subirLogo(id: string, file: File, onComplete?: () => void): void {
     const form = new FormData();
-    form.append('logo', file);
-    this.http.post<Cliente>(this.api.url(`/clientes/${id}/logo`), form).subscribe({
+    form.append('archivo', file);
+    this.http.post<Cliente>(this.api.url(`/empresas/${id}/logo`), form).subscribe({
       next: () => { if (onComplete) onComplete(); else this.cargar(); },
       error: () => { if (onComplete) onComplete(); },
     });
   }
 
   eliminar(id: string): void {
-    this.http.delete(this.api.url(`/clientes/${id}`)).subscribe({
+    this.http.delete(this.api.url(`/empresas/${id}`)).subscribe({
       next: () => {
         this.status.set({ type: 'ok', text: 'Empresa eliminada' });
         this.seleccionado.set(null);
@@ -78,7 +78,7 @@ export class ClientesService {
   }
 
   buscarPorId(id: string): void {
-    this.http.get<Cliente>(this.api.url(`/clientes/${id}`)).subscribe({
+    this.http.get<Cliente>(this.api.url(`/empresas/${id}`)).subscribe({
       next: (res) => {
         this.seleccionado.set(res);
         this.status.set({ type: 'ok', text: 'Empresa encontrada' });

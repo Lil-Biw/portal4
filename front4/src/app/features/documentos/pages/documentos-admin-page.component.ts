@@ -116,7 +116,10 @@ export class DocumentosAdminPageComponent implements OnInit {
   onEmpresaChange(): void {
     this.selectedCentroId = '';
     this.selectedProyectoId = '';
-    this.service.cargar('empresa', this.empresaNombre);
+    this.service.documentosEmpresa.set([]);
+    this.service.documentosCentro.set([]);
+    this.service.documentosProyecto.set([]);
+    this.service.documentosPorCentro.set([]);
     this.solicitudesService.cargar(this.selectedEmpresaId);
   }
 
@@ -124,14 +127,14 @@ export class DocumentosAdminPageComponent implements OnInit {
     this.selectedProyectoId = '';
     const centroId = (this.selectedCentroId && this.selectedCentroId !== 'todos') ? this.selectedCentroId : undefined;
     if (this.selectedCentroId === 'todos') {
-      this.service.cargar('empresa', this.empresaNombre);
-      this.service.cargarTodosCentros(this.empresaNombre ?? '', this.centrosFiltrados);
+      this.service.documentosCentro.set([]);
+      this.service.cargarTodosCentros(this.selectedEmpresaId, this.centrosFiltrados);
     } else if (centroId) {
       this.service.documentosPorCentro.set([]);
-      this.service.cargar('centro', this.empresaNombre, this.centroNombre);
+      this.service.cargar('centro', this.selectedEmpresaId, centroId);
     } else {
       this.service.documentosPorCentro.set([]);
-      this.service.cargar('empresa', this.empresaNombre);
+      this.service.documentosCentro.set([]);
     }
     this.solicitudesService.cargar(this.selectedEmpresaId, centroId);
   }
@@ -139,10 +142,10 @@ export class DocumentosAdminPageComponent implements OnInit {
   onProyectoChange(): void {
     const centroId   = (this.selectedCentroId   && this.selectedCentroId   !== 'todos') ? this.selectedCentroId   : undefined;
     const proyectoId = (this.selectedProyectoId && this.selectedProyectoId !== 'todos') ? this.selectedProyectoId : undefined;
-    if (proyectoId) {
-      this.service.cargar('proyecto', this.empresaNombre, this.centroNombre, this.proyectoNombre);
-    } else {
-      this.service.cargar('centro', this.empresaNombre, this.centroNombre);
+    if (proyectoId && centroId) {
+      this.service.cargar('proyecto', this.selectedEmpresaId, centroId, proyectoId);
+    } else if (centroId) {
+      this.service.cargar('centro', this.selectedEmpresaId, centroId);
     }
     this.solicitudesService.cargar(this.selectedEmpresaId, centroId, proyectoId);
   }
@@ -175,13 +178,10 @@ export class DocumentosAdminPageComponent implements OnInit {
     if (!p.selectedFile) return;
     this.service.subir(
       p.selectedFile, tipo,
-      this.empresaNombre,
-      this.centroNombre,
-      this.proyectoNombre,
+      this.selectedEmpresaId,
       (this.selectedCentroId && this.selectedCentroId !== 'todos') ? this.selectedCentroId : undefined,
       (this.selectedProyectoId && this.selectedProyectoId !== 'todos') ? this.selectedProyectoId : undefined,
       p.nombreInput || undefined,
-      p.categoriaInput || undefined,
     );
     p.selectedFile = null;
     p.nombreInput = '';
@@ -200,20 +200,18 @@ export class DocumentosAdminPageComponent implements OnInit {
   }
 
   docsFiltrados(tipo: DocTipo): DocumentoItem[] {
-    const filtros = this.panels[tipo].filtrosCategorias;
     const docs = tipo === 'empresa' ? this.service.documentosEmpresa()
       : tipo === 'centro' ? this.service.documentosCentro()
       : this.service.documentosProyecto();
-    if (filtros.length === 0) return docs;
-    return docs.filter(d => filtros.includes(d.categoria));
+    return docs;
   }
 
-  eliminar(filename: string, tipo: DocTipo): void {
+  eliminar(docId: string, tipo: DocTipo): void {
     this.service.eliminar(
-      filename, tipo,
-      this.empresaNombre,
-      this.centroNombre,
-      this.proyectoNombre,
+      docId, tipo,
+      this.selectedEmpresaId,
+      (this.selectedCentroId && this.selectedCentroId !== 'todos') ? this.selectedCentroId : undefined,
+      (this.selectedProyectoId && this.selectedProyectoId !== 'todos') ? this.selectedProyectoId : undefined,
     );
   }
 

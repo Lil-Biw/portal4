@@ -108,7 +108,7 @@
       </div>
       <div style="display:flex;gap:.5rem">
         <button class="btn-ghost"  style="font-size:.78rem;padding:.35rem .7rem" (click)="service.descargar(d.url)">Descargar</button>
-        <button class="btn-danger" style="font-size:.78rem;padding:.35rem .7rem" (click)="eliminar(d.nombre,'empresa')">Eliminar</button>
+        <button class="btn-danger" style="font-size:.78rem;padding:.35rem .7rem" (click)="eliminar(d._id,'empresa')">Eliminar</button>
       </div>
     </div>
   </div>
@@ -155,7 +155,7 @@
         </div>
         <div style="display:flex;gap:.5rem">
           <button class="btn-ghost"  style="font-size:.78rem;padding:.35rem .7rem" (click)="service.descargar(d.url)">Descargar</button>
-          <button class="btn-danger" style="font-size:.78rem;padding:.35rem .7rem" (click)="eliminar(d.nombre,'centro')">Eliminar</button>
+          <button class="btn-danger" style="font-size:.78rem;padding:.35rem .7rem" (click)="eliminar(d._id,'centro')">Eliminar</button>
         </div>
       </div>
     </div>
@@ -229,7 +229,7 @@
         </div>
         <div style="display:flex;gap:.5rem">
           <button class="btn-ghost"  style="font-size:.78rem;padding:.35rem .7rem" (click)="service.descargar(d.url)">Descargar</button>
-          <button class="btn-danger" style="font-size:.78rem;padding:.35rem .7rem" (click)="eliminar(d.nombre,'proyecto')">Eliminar</button>
+          <button class="btn-danger" style="font-size:.78rem;padding:.35rem .7rem" (click)="eliminar(d._id,'proyecto')">Eliminar</button>
         </div>
       </div>
     </div>

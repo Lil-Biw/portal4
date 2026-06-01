@@ -15,8 +15,10 @@ export interface CentroCosto {
 }
 
 export interface DocumentoRef {
+  _id?: string;
   nombre: string;
-  url: string;
+  nombre_display?: string;
+  url?: string;
   tipo_mime: string;
   tamano_bytes?: number;
   subido_en?: string;

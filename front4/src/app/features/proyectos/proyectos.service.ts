@@ -14,6 +14,7 @@ export class ProyectosService {
   readonly status = signal<Status | null>(null);
   readonly loading = signal(false);
 
+  // Admin: carga todos los proyectos (endpoint plano admin)
   cargar(): void {
     this.loading.set(true);
     this.http.get<{ data: Proyecto[] } | Proyecto[]>(this.api.url('/proyectos')).subscribe({
@@ -30,22 +31,45 @@ export class ProyectosService {
     });
   }
 
+  // Consumidor: carga un proyecto con contexto de empresa y centro
+  cargarUnoConContexto(empresaId: string, centroId: string, id: string): void {
+    this.loading.set(true);
+    this.http.get<Proyecto>(
+      this.api.url(`/empresas/${empresaId}/centros/${centroId}/proyectos/${id}`)
+    ).subscribe({
+      next: (p) => { this.seleccionado.set(p); this.loading.set(false); },
+      error: (err) => { this.setError(err); this.loading.set(false); },
+    });
+  }
+
   crear(dto: CreateProyectoDto): void {
-    this.http.post<Proyecto>(this.api.url('/proyectos'), dto).subscribe({
+    this.http.post<Proyecto>(
+      this.api.url(`/empresas/${dto.cliente_id}/centros/${dto.centro_costo_id}/proyectos`),
+      dto
+    ).subscribe({
       next: () => { this.status.set({ type: 'ok', text: 'Proyecto creado correctamente' }); this.cargar(); },
       error: (err) => this.setError(err),
     });
   }
 
   actualizar(id: string, dto: UpdateProyectoDto): void {
-    this.http.put<Proyecto>(this.api.url(`/proyectos/${id}`), dto).subscribe({
+    const empresaId = dto.cliente_id ?? this.seleccionado()?.cliente_id;
+    const centroId  = dto.centro_costo_id ?? this.seleccionado()?.centro_costo_id;
+    if (!empresaId || !centroId) { this.setError({ error: { message: 'Contexto de empresa/centro no disponible' } }); return; }
+    this.http.put<Proyecto>(
+      this.api.url(`/empresas/${empresaId}/centros/${centroId}/proyectos/${id}`),
+      dto
+    ).subscribe({
       next: () => { this.status.set({ type: 'ok', text: 'Proyecto actualizado' }); this.seleccionado.set(null); this.cargar(); },
       error: (err) => this.setError(err),
     });
   }
 
   eliminar(id: string): void {
-    this.http.delete(this.api.url(`/proyectos/${id}`)).subscribe({
+    const empresaId = this.seleccionado()?.cliente_id;
+    const centroId  = this.seleccionado()?.centro_costo_id;
+    if (!empresaId || !centroId) { this.setError({ error: { message: 'Contexto de empresa/centro no disponible' } }); return; }
+    this.http.delete(this.api.url(`/empresas/${empresaId}/centros/${centroId}/proyectos/${id}`)).subscribe({
       next: () => { this.status.set({ type: 'ok', text: 'Proyecto eliminado' }); this.seleccionado.set(null); this.cargar(); },
       error: (err) => this.setError(err),
     });
