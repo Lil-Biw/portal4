@@ -1,52 +1,71 @@
 import {
   Controller, Get, Post, Put, Delete,
-  Param, Body, Query,
+  Param, Body, Query, UseGuards,
 } from '@nestjs/common';
 import { ProyectosService } from './proyectos.service';
 import { CreateProyectoDto, UpdateProyectoDto, AgregarDocumentoProyectoDto } from './proyectos.dto';
-import { Roles } from '../common/guards/guards';
+import { EmpresaAccessGuard, Roles } from '../common/guards/guards';
 
-@Controller('proyectos')
+@Controller('empresas/:empresaId/centros/:centroId/proyectos')
+@UseGuards(EmpresaAccessGuard)
 export class ProyectosController {
   constructor(private readonly proyectosService: ProyectosService) {}
 
   @Post()
   @Roles('super_admin')
-  create(@Body() dto: CreateProyectoDto) {
-    return this.proyectosService.create(dto);
+  create(
+    @Param('empresaId') empresaId: string,
+    @Param('centroId') centroId: string,
+    @Body() dto: CreateProyectoDto,
+  ) {
+    return this.proyectosService.create({
+      ...dto,
+      cliente_id: empresaId,
+      centro_costo_id: centroId,
+    });
   }
 
   @Get()
-  findAll(@Query('page') page = '1', @Query('limit') limit = '20') {
-    return this.proyectosService.findAll(+page, +limit);
+  findAll(
+    @Param('centroId') centroId: string,
+    @Query('page') page = '1',
+    @Query('limit') limit = '20',
+  ) {
+    return this.proyectosService.findAllByCentro(centroId, +page, +limit);
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.proyectosService.findOne(id);
+  @Get(':proyectoId')
+  findOne(@Param('proyectoId') proyectoId: string) {
+    return this.proyectosService.findOne(proyectoId);
   }
 
-  @Put(':id')
+  @Put(':proyectoId')
   @Roles('super_admin')
-  update(@Param('id') id: string, @Body() dto: UpdateProyectoDto) {
-    return this.proyectosService.update(id, dto);
+  update(@Param('proyectoId') proyectoId: string, @Body() dto: UpdateProyectoDto) {
+    return this.proyectosService.update(proyectoId, dto);
   }
 
-  @Delete(':id')
+  @Delete(':proyectoId')
   @Roles('super_admin')
-  remove(@Param('id') id: string) {
-    return this.proyectosService.remove(id);
+  remove(@Param('proyectoId') proyectoId: string) {
+    return this.proyectosService.remove(proyectoId);
   }
 
-  @Post(':id/documentos')
+  @Post(':proyectoId/documentos')
   @Roles('super_admin')
-  agregarDocumento(@Param('id') id: string, @Body() dto: AgregarDocumentoProyectoDto) {
-    return this.proyectosService.agregarDocumento(id, dto);
+  agregarDocumento(
+    @Param('proyectoId') proyectoId: string,
+    @Body() dto: AgregarDocumentoProyectoDto,
+  ) {
+    return this.proyectosService.agregarDocumento(proyectoId, dto);
   }
 
-  @Delete(':id/documentos/:docId')
+  @Delete(':proyectoId/documentos/:docId')
   @Roles('super_admin')
-  eliminarDocumento(@Param('id') id: string, @Param('docId') docId: string) {
-    return this.proyectosService.eliminarDocumento(id, docId);
+  eliminarDocumento(
+    @Param('proyectoId') proyectoId: string,
+    @Param('docId') docId: string,
+  ) {
+    return this.proyectosService.eliminarDocumento(proyectoId, docId);
   }
 }
