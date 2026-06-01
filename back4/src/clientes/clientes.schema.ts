@@ -24,7 +24,14 @@ export class Cliente {
     pais?: string;
   };
   @Prop({ default: true }) activo: boolean;
-  @Prop({ trim: true }) logo_url?: string;
+  @Prop({
+    type: {
+      contenido: Buffer,
+      tipo_mime: String,
+      nombre: String,
+    },
+  })
+  logo?: { contenido: Buffer; tipo_mime: string; nombre: string };
 }
 
 export const ClienteSchema = SchemaFactory.createForClass(Cliente);
