@@ -13,6 +13,7 @@ export interface Cliente {
   telefono?: string;
   direccion?: Direccion;
   activo: boolean;
+  logo?: { tipo_mime: string; nombre: string };
   logo_url?: string;
   creado_en?: string;
   actualizado_en?: string;

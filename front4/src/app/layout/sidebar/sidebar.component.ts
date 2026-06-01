@@ -222,10 +222,9 @@ export class SidebarComponent implements OnChanges {
   }
 
   get logoUrl(): string | null {
-    const url = this.empresa?.logo_url;
-    if (!url) return null;
-    if (url.startsWith('http')) return url;
-    return `${new URL(this.api.base).origin}${url}`;
+    const empresa = this.empresa;
+    if (!empresa?._id || !empresa?.logo) return null;
+    return this.api.url(`/empresas/${empresa._id}/logo`);
   }
 
   private readonly adminItems: NavItem[] = [

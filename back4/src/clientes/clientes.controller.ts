@@ -8,7 +8,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
 import { ClientesService } from './clientes.service';
 import { CreateClienteDto, UpdateClienteDto } from './clientes.dto';
-import { Roles } from '../common/guards/guards';
+import { Roles, Public } from '../common/guards/guards';
 
 @Controller('empresas')
 export class ClientesController {
@@ -54,6 +54,7 @@ export class ClientesController {
   }
 
   @Get(':id/logo')
+  @Public()
   async servirLogo(@Param('id') id: string, @Res() res: Response) {
     const { buffer, tipo_mime, nombre } = await this.clientesService.servirLogo(id);
     res.setHeader('Content-Type', tipo_mime);
