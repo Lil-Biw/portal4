@@ -5,7 +5,7 @@ export class CreateMantencionDto {
   @IsString() @MinLength(3) nombre: string;
   @IsString() @IsOptional() descripcion?: string;
   @IsMongoId() tipo_id: string;
-  @IsMongoId() centro_costo_id: string;
+  @IsMongoId() @IsOptional() centro_costo_id?: string;
   @IsArray() @IsMongoId({ each: true }) @IsOptional() activo_ids?: string[];
   @IsDateString() fecha: string;
 }
