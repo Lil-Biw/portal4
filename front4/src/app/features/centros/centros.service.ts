@@ -42,6 +42,10 @@ export class CentrosService {
 
   crear(dto: CreateCentroDto): void {
     const { cliente_id, ...body } = dto;
+    if (!cliente_id) {
+      this.status.set({ type: 'error', text: 'Debes seleccionar una empresa.' });
+      return;
+    }
     this.http.post<CentroCosto>(this.api.url(`/empresas/${cliente_id}/centros`), body).subscribe({
       next: () => { this.status.set({ type: 'ok', text: 'Centro creado correctamente' }); this.cargar(); },
       error: (err) => this.setError(err),
