@@ -49,6 +49,16 @@ export class DocumentosService {
     empresa: null, centro: null, proyecto: null,
   });
 
+  // Carga documentos de una empresa
+  cargarEmpresa(empresaId: string): void {
+    this.http.get<DocumentoItem[]>(this.api.url(`/empresas/${empresaId}/documentos`)).subscribe({
+      next: (docs) => this.documentosEmpresa.set(
+        docs.map(d => this.addUrl(d, `/empresas/${empresaId}/documentos/${d._id}`))
+      ),
+      error: () => this.documentosEmpresa.set([]),
+    });
+  }
+
   // Carga documentos de un centro específico
   cargarCentro(empresaId: string, centroId: string): void {
     this.http.get<DocumentoItem[]>(
@@ -95,12 +105,9 @@ export class DocumentosService {
   // En la nueva versión, el componente debe pasar IDs en lugar de nombres.
   // Mantenemos la firma pero usamos los IDs del contexto si se pasan.
   cargar(tipo: DocTipo, empresaId?: string, centroId?: string, proyectoId?: string): void {
-    if (tipo === 'empresa') {
-      // Las empresas no tienen documentos genéricos en la nueva API (solo logo)
-      this.documentosEmpresa.set([]);
-      return;
-    }
-    if (tipo === 'centro' && empresaId && centroId) {
+    if (tipo === 'empresa' && empresaId) {
+      this.cargarEmpresa(empresaId);
+    } else if (tipo === 'centro' && empresaId && centroId) {
       this.cargarCentro(empresaId, centroId);
     } else if (tipo === 'proyecto' && empresaId && centroId && proyectoId) {
       this.cargarProyecto(empresaId, centroId, proyectoId);
@@ -114,11 +121,8 @@ export class DocumentosService {
     centroId?: string,
     proyectoId?: string,
     nombreDisplay?: string,
+    categoria?: string,
   ): void {
-    if (tipo === 'empresa') {
-      this.setUploadStatus(tipo, { type: 'error', text: 'Los documentos de empresa ahora se gestionan desde los centros de costos.' });
-      return;
-    }
     if (!empresaId) { this.setUploadStatus(tipo, { type: 'error', text: 'Empresa no seleccionada' }); return; }
     if (tipo === 'centro' && !centroId) { this.setUploadStatus(tipo, { type: 'error', text: 'Selecciona un centro de costos primero.' }); return; }
     if (tipo === 'proyecto' && (!centroId || !proyectoId)) { this.setUploadStatus(tipo, { type: 'error', text: 'Selecciona un proyecto primero.' }); return; }
@@ -126,9 +130,12 @@ export class DocumentosService {
     const form = new FormData();
     form.append('archivo', file);
     if (nombreDisplay) form.append('nombre_display', nombreDisplay);
+    if (categoria) form.append('categoria', categoria);
 
     let url: string;
-    if (tipo === 'proyecto' && centroId && proyectoId) {
+    if (tipo === 'empresa') {
+      url = this.api.url(`/empresas/${empresaId}/documentos`);
+    } else if (tipo === 'proyecto' && centroId && proyectoId) {
       url = this.api.url(`/empresas/${empresaId}/centros/${centroId}/proyectos/${proyectoId}/documentos`);
     } else if (tipo === 'centro' && centroId) {
       url = this.api.url(`/empresas/${empresaId}/centros/${centroId}/documentos`);
@@ -140,7 +147,8 @@ export class DocumentosService {
     this.http.post(url, form).subscribe({
       next: () => {
         this.setUploadStatus(tipo, { type: 'ok', text: `${nombreDisplay || file.name} cargado exitosamente` });
-        if (tipo === 'centro' && centroId) this.cargarCentro(empresaId, centroId);
+        if (tipo === 'empresa') this.cargarEmpresa(empresaId);
+        else if (tipo === 'centro' && centroId) this.cargarCentro(empresaId, centroId);
         else if (tipo === 'proyecto' && centroId && proyectoId) this.cargarProyecto(empresaId, centroId, proyectoId);
       },
       error: (err) => {
@@ -152,18 +160,23 @@ export class DocumentosService {
   }
 
   eliminar(docId: string, tipo: DocTipo, empresaId?: string, centroId?: string, proyectoId?: string): void {
-    if (!empresaId || !centroId) { this.setUploadStatus(tipo, { type: 'error', text: 'Contexto insuficiente' }); return; }
+    if (!empresaId) { this.setUploadStatus(tipo, { type: 'error', text: 'Contexto insuficiente' }); return; }
     let url: string;
-    if (tipo === 'proyecto' && proyectoId) {
+    if (tipo === 'empresa') {
+      url = this.api.url(`/empresas/${empresaId}/documentos/${docId}`);
+    } else if (tipo === 'proyecto' && centroId && proyectoId) {
       url = this.api.url(`/empresas/${empresaId}/centros/${centroId}/proyectos/${proyectoId}/documentos/${docId}`);
-    } else {
+    } else if (tipo === 'centro' && centroId) {
       url = this.api.url(`/empresas/${empresaId}/centros/${centroId}/documentos/${docId}`);
+    } else {
+      this.setUploadStatus(tipo, { type: 'error', text: 'Contexto insuficiente' }); return;
     }
     this.http.delete(url).subscribe({
       next: () => {
         this.setUploadStatus(tipo, { type: 'ok', text: 'Documento eliminado' });
-        if (tipo === 'centro') this.cargarCentro(empresaId, centroId);
-        else if (tipo === 'proyecto' && proyectoId) this.cargarProyecto(empresaId, centroId, proyectoId);
+        if (tipo === 'empresa') this.cargarEmpresa(empresaId);
+        else if (tipo === 'centro' && centroId) this.cargarCentro(empresaId, centroId);
+        else if (tipo === 'proyecto' && centroId && proyectoId) this.cargarProyecto(empresaId, centroId, proyectoId);
       },
       error: (err) => this.setUploadStatus(tipo, { type: 'error', text: err?.error?.message ?? 'Error al eliminar' }),
     });

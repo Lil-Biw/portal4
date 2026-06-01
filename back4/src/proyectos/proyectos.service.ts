@@ -98,6 +98,7 @@ export class ProyectosService {
     id: string,
     archivo: { originalname: string; buffer: Buffer; mimetype: string; size: number },
     nombreDisplay?: string,
+    categoria?: string,
     usuarioId?: string,
   ) {
     const timestamp = Date.now();
@@ -111,6 +112,7 @@ export class ProyectosService {
       contenido: archivo.buffer,
       subido_en: new Date(),
     };
+    if (categoria) nuevoDoc['categoria'] = categoria;
     if (usuarioId) nuevoDoc['subido_por'] = new Types.ObjectId(usuarioId);
     const proyecto = await this.proyectoModel
       .findByIdAndUpdate(id, { $push: { documentos: nuevoDoc } }, { new: true })

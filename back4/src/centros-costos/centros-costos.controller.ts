@@ -54,9 +54,10 @@ export class CentrosCostosController {
     @Param('centroId') centroId: string,
     @UploadedFile() archivo: Express.Multer.File & { buffer: Buffer },
     @Body('nombre_display') nombreDisplay?: string,
+    @Body('categoria') categoria?: string,
   ) {
     if (!archivo) throw new BadRequestException('No se proporcionó archivo');
-    return this.centrosCostosService.agregarDocumento(centroId, archivo, nombreDisplay);
+    return this.centrosCostosService.agregarDocumento(centroId, archivo, nombreDisplay, categoria);
   }
 
   @Get(':centroId/documentos')

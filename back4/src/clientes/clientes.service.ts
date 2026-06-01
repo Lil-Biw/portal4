@@ -68,4 +68,59 @@ export class ClientesService {
     const buffer = Buffer.isBuffer(raw) ? raw : Buffer.from(raw as ArrayBuffer);
     return { buffer, tipo_mime: cliente.logo.tipo_mime, nombre: cliente.logo.nombre };
   }
+
+  async agregarDocumento(
+    id: string,
+    archivo: { originalname: string; buffer: Buffer; mimetype: string; size: number },
+    nombreDisplay?: string,
+    categoria?: string,
+  ) {
+    const timestamp = Date.now();
+    const rand = Math.random().toString(36).substring(7);
+    const nombre = `${timestamp}_${rand}_${archivo.originalname}`;
+    const nuevoDoc: Record<string, unknown> = {
+      nombre,
+      nombre_display: nombreDisplay?.trim() || archivo.originalname,
+      tipo_mime: archivo.mimetype,
+      tamano_bytes: archivo.size,
+      contenido: archivo.buffer,
+      subido_en: new Date(),
+    };
+    if (categoria) nuevoDoc['categoria'] = categoria;
+    const cliente = await this.clienteModel
+      .findByIdAndUpdate(id, { $push: { documentos: nuevoDoc } }, { new: true })
+      .select('-logo.contenido -documentos.contenido')
+      .lean();
+    if (!cliente) throw new NotFoundException(`Cliente ${id} no encontrado`);
+    return cliente.documentos[cliente.documentos.length - 1];
+  }
+
+  async listarDocumentos(id: string) {
+    const cliente = await this.clienteModel.findById(id).select('-logo.contenido -documentos.contenido').lean();
+    if (!cliente) throw new NotFoundException(`Cliente ${id} no encontrado`);
+    return cliente.documentos ?? [];
+  }
+
+  async servirDocumento(clienteId: string, docId: string): Promise<{ buffer: Buffer; tipo_mime: string; nombre_display: string }> {
+    const cliente = await this.clienteModel.findById(clienteId);
+    if (!cliente) throw new NotFoundException(`Cliente ${clienteId} no encontrado`);
+    const doc = (cliente.documentos ?? []).find(d => String((d as any)._id) === docId);
+    if (!doc) throw new NotFoundException(`Documento ${docId} no encontrado`);
+    const raw = (doc as any).contenido as unknown;
+    const buffer = Buffer.isBuffer(raw) ? raw : Buffer.from(raw as ArrayBuffer);
+    return { buffer, tipo_mime: (doc as any).tipo_mime, nombre_display: (doc as any).nombre_display };
+  }
+
+  async eliminarDocumento(clienteId: string, docId: string) {
+    const { Types } = await import('mongoose');
+    const cliente = await this.clienteModel
+      .findByIdAndUpdate(
+        clienteId,
+        { $pull: { documentos: { _id: new Types.ObjectId(docId) } } },
+        { new: true },
+      )
+      .lean();
+    if (!cliente) throw new NotFoundException(`Cliente ${clienteId} no encontrado`);
+    return { message: 'Documento eliminado', docId };
+  }
 }

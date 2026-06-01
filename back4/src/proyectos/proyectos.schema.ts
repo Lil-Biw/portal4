@@ -9,6 +9,7 @@ class Documento {
   @Prop({ required: true }) tipo_mime: string;
   @Prop() tamano_bytes?: number;
   @Prop({ type: Buffer, required: true }) contenido: Buffer;
+  @Prop({ trim: true }) categoria?: string;
   @Prop({ type: Types.ObjectId, ref: 'Usuario' }) subido_por?: Types.ObjectId;
   @Prop({ default: Date.now }) subido_en: Date;
 }

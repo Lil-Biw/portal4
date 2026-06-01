@@ -231,6 +231,7 @@ export class DocumentosConsumidorPageComponent implements OnInit {
       this.selectedCentroIdC() || undefined,
       this.selectedProyectoIdC() || undefined,
       p.nombreInput || undefined,
+      p.categoriaInput || undefined,
     );
     p.selectedFile = null;
     p.nombreInput = '';

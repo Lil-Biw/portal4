@@ -87,6 +87,7 @@ export class CentrosCostosService {
     id: string,
     archivo: { originalname: string; buffer: Buffer; mimetype: string; size: number },
     nombreDisplay?: string,
+    categoria?: string,
     usuarioId?: string,
   ) {
     const timestamp = Date.now();
@@ -100,6 +101,7 @@ export class CentrosCostosService {
       contenido: archivo.buffer,
       subido_en: new Date(),
     };
+    if (categoria) nuevoDoc['categoria'] = categoria;
     if (usuarioId) nuevoDoc['subido_por'] = new Types.ObjectId(usuarioId);
     const centro = await this.centroCostoModel
       .findByIdAndUpdate(id, { $push: { documentos: nuevoDoc } }, { new: true })

@@ -116,10 +116,11 @@ export class DocumentosAdminPageComponent implements OnInit {
   onEmpresaChange(): void {
     this.selectedCentroId = '';
     this.selectedProyectoId = '';
-    this.service.documentosEmpresa.set([]);
     this.service.documentosCentro.set([]);
     this.service.documentosProyecto.set([]);
     this.service.documentosPorCentro.set([]);
+    if (this.selectedEmpresaId) this.service.cargarEmpresa(this.selectedEmpresaId);
+    else this.service.documentosEmpresa.set([]);
     this.solicitudesService.cargar(this.selectedEmpresaId);
   }
 
@@ -182,6 +183,7 @@ export class DocumentosAdminPageComponent implements OnInit {
       (this.selectedCentroId && this.selectedCentroId !== 'todos') ? this.selectedCentroId : undefined,
       (this.selectedProyectoId && this.selectedProyectoId !== 'todos') ? this.selectedProyectoId : undefined,
       p.nombreInput || undefined,
+      p.categoriaInput || undefined,
     );
     p.selectedFile = null;
     p.nombreInput = '';

@@ -58,9 +58,10 @@ export class ProyectosController {
     @Param('proyectoId') proyectoId: string,
     @UploadedFile() archivo: Express.Multer.File & { buffer: Buffer },
     @Body('nombre_display') nombreDisplay?: string,
+    @Body('categoria') categoria?: string,
   ) {
     if (!archivo) throw new BadRequestException('No se proporcionó archivo');
-    return this.proyectosService.agregarDocumento(proyectoId, archivo, nombreDisplay);
+    return this.proyectosService.agregarDocumento(proyectoId, archivo, nombreDisplay, categoria);
   }
 
   @Get(':proyectoId/documentos')

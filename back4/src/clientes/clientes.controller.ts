@@ -61,4 +61,40 @@ export class ClientesController {
     res.setHeader('Content-Disposition', `inline; filename="${encodeURIComponent(nombre)}"`);
     res.send(buffer);
   }
+
+  @Post(':id/documentos')
+  @Roles('super_admin', 'admin_cliente')
+  @UseInterceptors(FileInterceptor('archivo', { storage: memoryStorage() }))
+  subirDocumento(
+    @Param('id') id: string,
+    @UploadedFile() archivo: Express.Multer.File & { buffer: Buffer },
+    @Body('nombre_display') nombreDisplay?: string,
+    @Body('categoria') categoria?: string,
+  ) {
+    if (!archivo) throw new BadRequestException('No se proporcionó archivo');
+    return this.clientesService.agregarDocumento(id, archivo, nombreDisplay, categoria);
+  }
+
+  @Get(':id/documentos')
+  listarDocumentos(@Param('id') id: string) {
+    return this.clientesService.listarDocumentos(id);
+  }
+
+  @Get(':id/documentos/:docId')
+  async descargarDocumento(
+    @Param('id') id: string,
+    @Param('docId') docId: string,
+    @Res() res: Response,
+  ) {
+    const { buffer, tipo_mime, nombre_display } = await this.clientesService.servirDocumento(id, docId);
+    res.setHeader('Content-Type', tipo_mime);
+    res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(nombre_display)}"`);
+    res.send(buffer);
+  }
+
+  @Delete(':id/documentos/:docId')
+  @Roles('super_admin', 'admin_cliente')
+  eliminarDocumento(@Param('id') id: string, @Param('docId') docId: string) {
+    return this.clientesService.eliminarDocumento(id, docId);
+  }
 }
