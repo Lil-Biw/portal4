@@ -16,10 +16,3 @@ export class CreateProyectoDto {
 }
 
 export class UpdateProyectoDto extends PartialType(CreateProyectoDto) {}
-
-export class AgregarDocumentoProyectoDto {
-  @IsString() nombre: string;
-  @IsString() url: string;
-  @IsString() tipo_mime: string;
-  @IsOptional() tamano_bytes?: number;
-}

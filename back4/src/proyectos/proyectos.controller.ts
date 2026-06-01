@@ -1,9 +1,13 @@
 import {
   Controller, Get, Post, Put, Delete,
-  Param, Body, Query, UseGuards,
+  Param, Body, Query, UseGuards, Res,
+  UseInterceptors, UploadedFile, BadRequestException,
 } from '@nestjs/common';
+import { Response } from 'express';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { memoryStorage } from 'multer';
 import { ProyectosService } from './proyectos.service';
-import { CreateProyectoDto, UpdateProyectoDto, AgregarDocumentoProyectoDto } from './proyectos.dto';
+import { CreateProyectoDto, UpdateProyectoDto } from './proyectos.dto';
 import { EmpresaAccessGuard, Roles } from '../common/guards/guards';
 
 @Controller('empresas/:empresaId/centros/:centroId/proyectos')
@@ -18,11 +22,7 @@ export class ProyectosController {
     @Param('centroId') centroId: string,
     @Body() dto: CreateProyectoDto,
   ) {
-    return this.proyectosService.create({
-      ...dto,
-      cliente_id: empresaId,
-      centro_costo_id: centroId,
-    });
+    return this.proyectosService.create({ ...dto, cliente_id: empresaId, centro_costo_id: centroId });
   }
 
   @Get()
@@ -53,11 +53,31 @@ export class ProyectosController {
 
   @Post(':proyectoId/documentos')
   @Roles('super_admin')
-  agregarDocumento(
+  @UseInterceptors(FileInterceptor('archivo', { storage: memoryStorage() }))
+  subirDocumento(
     @Param('proyectoId') proyectoId: string,
-    @Body() dto: AgregarDocumentoProyectoDto,
+    @UploadedFile() archivo: Express.Multer.File & { buffer: Buffer },
+    @Body('nombre_display') nombreDisplay?: string,
   ) {
-    return this.proyectosService.agregarDocumento(proyectoId, dto);
+    if (!archivo) throw new BadRequestException('No se proporcionó archivo');
+    return this.proyectosService.agregarDocumento(proyectoId, archivo, nombreDisplay);
+  }
+
+  @Get(':proyectoId/documentos')
+  listarDocumentos(@Param('proyectoId') proyectoId: string) {
+    return this.proyectosService.listarDocumentos(proyectoId);
+  }
+
+  @Get(':proyectoId/documentos/:docId')
+  async descargarDocumento(
+    @Param('proyectoId') proyectoId: string,
+    @Param('docId') docId: string,
+    @Res() res: Response,
+  ) {
+    const { buffer, tipo_mime, nombre_display } = await this.proyectosService.servirDocumento(proyectoId, docId);
+    res.setHeader('Content-Type', tipo_mime);
+    res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(nombre_display)}"`);
+    res.send(buffer);
   }
 
   @Delete(':proyectoId/documentos/:docId')
