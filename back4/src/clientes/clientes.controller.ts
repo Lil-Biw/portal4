@@ -8,7 +8,7 @@ import { ClientesService } from './clientes.service';
 import { CreateClienteDto, UpdateClienteDto } from './clientes.dto';
 import { Roles } from '../common/guards/guards';
 
-@Controller('clientes')
+@Controller('empresas')
 export class ClientesController {
   constructor(private readonly clientesService: ClientesService) {}
 
