@@ -5,7 +5,7 @@ import {
 import { PartialType } from '@nestjs/mapped-types';
 
 export class CreateCentroCostoDto {
-  @IsMongoId() cliente_id: string;
+  @IsMongoId() @IsOptional() cliente_id?: string;
   @IsString() @MinLength(2) codigo: string;
   @IsString() @MinLength(3) nombre: string;
   @IsString() @IsOptional() descripcion?: string;
