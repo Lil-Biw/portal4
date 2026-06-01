@@ -1,8 +1,9 @@
 import {
   Controller, Get, Post, Put, Patch, Delete,
-  Param, Body, Query, UseGuards,
+  Param, Body, Query, UseGuards, Res,
   UseInterceptors, UploadedFile, BadRequestException,
 } from '@nestjs/common';
+import { Response } from 'express';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
 import { SolicitudesService } from './solicitudes.service';
@@ -52,5 +53,13 @@ export class SolicitudesController {
   ) {
     if (!archivo) throw new BadRequestException('No se proporcionó archivo');
     return this.solicitudesService.adjuntarArchivo(solicitudId, archivo);
+  }
+
+  @Get(':solicitudId/adjunto')
+  async servirAdjunto(@Param('solicitudId') solicitudId: string, @Res() res: Response) {
+    const { buffer, tipo_mime, nombre } = await this.solicitudesService.servirAdjunto(solicitudId);
+    res.setHeader('Content-Type', tipo_mime);
+    res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(nombre)}"`);
+    res.send(buffer);
   }
 }

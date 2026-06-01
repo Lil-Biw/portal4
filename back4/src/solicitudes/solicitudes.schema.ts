@@ -12,8 +12,15 @@ export class Solicitud {
   @Prop({ type: Types.ObjectId, ref: 'CentroCosto' }) centro_costo_id?: Types.ObjectId;
   @Prop({ type: Types.ObjectId, ref: 'Proyecto' }) proyecto_id?: Types.ObjectId;
   @Prop({ enum: ['pendiente', 'revision', 'aprobado', 'rechazado', 'vencido'], default: 'pendiente' }) estado: string;
-  @Prop({ trim: true }) archivo_nombre?: string;
-  @Prop({ trim: true }) archivo_url?: string;
+  @Prop({ trim: true }) motivo_rechazo?: string;
+  @Prop({
+    type: {
+      contenido: Buffer,
+      tipo_mime: String,
+      nombre: String,
+    },
+  })
+  adjunto?: { contenido: Buffer; tipo_mime: string; nombre: string };
 }
 
 export const SolicitudSchema = SchemaFactory.createForClass(Solicitud);
