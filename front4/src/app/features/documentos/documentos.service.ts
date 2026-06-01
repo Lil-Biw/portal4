@@ -27,11 +27,11 @@ export interface DocumentoItem {
   _id: string;
   nombre: string;
   nombre_display: string;
-  // url se computa en el service para compatibilidad con templates que llaman service.descargar(d.url)
   url: string;
   tipo_mime: string;
   tamano_bytes?: number;
   subido_en?: string;
+  categoria?: string;
 }
 
 export type DocTipo = 'empresa' | 'centro' | 'proyecto';
