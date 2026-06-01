@@ -115,7 +115,14 @@ export class DocumentosService {
     proyectoId?: string,
     nombreDisplay?: string,
   ): void {
+    if (tipo === 'empresa') {
+      this.setUploadStatus(tipo, { type: 'error', text: 'Los documentos de empresa ahora se gestionan desde los centros de costos.' });
+      return;
+    }
     if (!empresaId) { this.setUploadStatus(tipo, { type: 'error', text: 'Empresa no seleccionada' }); return; }
+    if (tipo === 'centro' && !centroId) { this.setUploadStatus(tipo, { type: 'error', text: 'Selecciona un centro de costos primero.' }); return; }
+    if (tipo === 'proyecto' && (!centroId || !proyectoId)) { this.setUploadStatus(tipo, { type: 'error', text: 'Selecciona un proyecto primero.' }); return; }
+
     const form = new FormData();
     form.append('archivo', file);
     if (nombreDisplay) form.append('nombre_display', nombreDisplay);
