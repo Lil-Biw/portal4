@@ -1,7 +1,8 @@
 import {
   Controller, Get, Post, Put, Patch, Delete,
-  Param, Body, Query, Request,
+  Param, Body, Query, Req, ForbiddenException,
 } from '@nestjs/common';
+import { Request } from 'express';
 import { UsuariosService } from './usuarios.service';
 import { CreateUsuarioDto, UpdateUsuarioDto, CambiarPasswordDto } from './usuarios.dto';
 import { Roles } from '../common/guards/guards';
@@ -36,5 +37,14 @@ export class UsuariosController {
   @Roles('super_admin')
   remove(@Param('id') id: string) {
     return this.usuariosService.remove(id);
+  }
+
+  @Patch(':id/password')
+  cambiarPassword(@Param('id') id: string, @Body() dto: CambiarPasswordDto, @Req() req: Request) {
+    const user = (req as any).user;
+    if (user?.sub !== id && user?.rol !== 'super_admin') {
+      throw new ForbiddenException('Solo puedes cambiar tu propia contraseña');
+    }
+    return this.usuariosService.cambiarPassword(id, dto);
   }
 }

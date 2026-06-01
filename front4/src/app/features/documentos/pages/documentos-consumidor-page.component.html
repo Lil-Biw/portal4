@@ -292,6 +292,11 @@
         <span style="font-size:.75rem;font-weight:600;padding:.2rem .55rem;border-radius:999px;background:#e0e7ff;color:#3730a3;flex-shrink:0">{{ s.tipo }}</span>
       </div>
       <p *ngIf="s.descripcion" style="margin:0 0 .6rem;font-size:.82rem;color:#6b7280;font-style:italic">{{ s.descripcion }}</p>
+      <!-- Motivo de rechazo -->
+      <div *ngIf="s.estado === 'rechazado' && s.motivo_rechazo" style="background:#fff1f2;border:1px solid #fecdd3;border-radius:6px;padding:.5rem .75rem;margin-bottom:.5rem">
+        <span style="font-size:.72rem;font-weight:700;color:#9f1239;display:block;margin-bottom:.2rem">Motivo del rechazo</span>
+        <span style="font-size:.85rem;color:#374151">{{ s.motivo_rechazo }}</span>
+      </div>
       <!-- Archivo adjunto -->
       <div *ngIf="s.archivo_nombre" style="display:flex;align-items:center;gap:.5rem;margin-bottom:.5rem">
         <span style="font-size:.8rem;color:#22c55e">✓ {{ s.archivo_nombre }}</span>

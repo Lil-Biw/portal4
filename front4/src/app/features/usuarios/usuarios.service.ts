@@ -1,7 +1,7 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { ApiService } from '../../core/services/api.service';
-import { Usuario, CreateUsuarioDto, UpdateUsuarioDto, PermisoItem } from '../../shared/models/usuario.model';
+import { Usuario, CreateUsuarioDto, UpdateUsuarioDto } from '../../shared/models/usuario.model';
 import { Status } from '../../shared/models/status.model';
 import { asId } from '../../shared/utils';
 
@@ -10,11 +10,11 @@ export class UsuariosService {
   private readonly http = inject(HttpClient);
   private readonly api = inject(ApiService);
 
-  readonly usuarios = signal<Usuario[]>([]);
-  readonly seleccionado = signal<Usuario | null>(null);
-  readonly permisosSeleccionados = signal<string[]>([]);
-  readonly status = signal<Status | null>(null);
-  readonly loading = signal(false);
+  readonly usuarios          = signal<Usuario[]>([]);
+  readonly seleccionado      = signal<Usuario | null>(null);
+  readonly centrosSeleccionados = signal<string[]>([]);
+  readonly status            = signal<Status | null>(null);
+  readonly loading           = signal(false);
 
   cargar(): void {
     this.loading.set(true);
@@ -24,24 +24,21 @@ export class UsuariosService {
     });
   }
 
-  cargarPermisos(usuarioId: string): void {
-    if (!usuarioId) { this.permisosSeleccionados.set([]); return; }
-    this.http.get<{ centro_costo_id: string }[]>(this.api.url(`/permisos/usuario/${usuarioId}`)).subscribe({
-      next: (res) => this.permisosSeleccionados.set(res.map(p => asId(p.centro_costo_id)).filter(Boolean)),
-      error: () => this.permisosSeleccionados.set([]),
-    });
-  }
-
-  crear(dto: CreateUsuarioDto, permisos: PermisoItem[]): void {
-    this.http.post<Usuario>(this.api.url('/usuarios'), { ...dto, permisos }).subscribe({
-      next: () => { this.status.set({ type: 'ok', text: 'Usuario creado correctamente' }); this.cargar(); },
+  crear(dto: CreateUsuarioDto): void {
+    this.http.post<Usuario>(this.api.url('/usuarios'), dto).subscribe({
+      next: () => { this.status.set({ type: 'ok', text: 'Usuario creado. Se enviaron las credenciales por correo.' }); this.cargar(); },
       error: (err) => this.setError(err),
     });
   }
 
   actualizar(id: string, dto: UpdateUsuarioDto): void {
     this.http.put<Usuario>(this.api.url(`/usuarios/${id}`), dto).subscribe({
-      next: () => { this.status.set({ type: 'ok', text: 'Usuario actualizado' }); this.seleccionado.set(null); this.permisosSeleccionados.set([]); this.cargar(); },
+      next: () => {
+        this.status.set({ type: 'ok', text: 'Usuario actualizado' });
+        this.seleccionado.set(null);
+        this.centrosSeleccionados.set([]);
+        this.cargar();
+      },
       error: (err) => this.setError(err),
     });
   }
@@ -55,19 +52,22 @@ export class UsuariosService {
 
   seleccionar(usuario: Usuario): void {
     this.seleccionado.set(usuario);
-    this.cargarPermisos(usuario._id);
+    // Cargar centros asignados directamente desde el documento del usuario
+    const centros = (usuario.centros_asignados ?? []).map(id => asId(id)).filter(Boolean);
+    this.centrosSeleccionados.set(centros);
     this.clearStatus();
   }
 
-  togglePermiso(centroId: string, checked: boolean): void {
-    const set = new Set(this.permisosSeleccionados());
+  toggleCentro(centroId: string, checked: boolean): void {
+    const set = new Set(this.centrosSeleccionados());
     checked ? set.add(centroId) : set.delete(centroId);
-    this.permisosSeleccionados.set(Array.from(set));
+    this.centrosSeleccionados.set(Array.from(set));
   }
 
   clearStatus(): void { this.status.set(null); }
 
   private setError(err: { error?: { message?: string } }): void {
-    this.status.set({ type: 'error', text: err?.error?.message ?? 'Error inesperado' });
+    const msg = err?.error?.message;
+    this.status.set({ type: 'error', text: Array.isArray(msg) ? msg.join('. ') : (msg ?? 'Error inesperado') });
   }
 }

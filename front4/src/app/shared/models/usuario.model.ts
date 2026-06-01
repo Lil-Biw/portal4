@@ -8,6 +8,7 @@ export interface Usuario {
   email: string;
   rol: RolUsuario;
   permiso_acceso: PermisoAcceso;
+  centros_asignados: string[];
   activo: boolean;
   ultimo_acceso?: string;
   creado_en?: string;
@@ -18,9 +19,9 @@ export interface CreateUsuarioDto {
   cliente_id: string;
   nombre: string;
   email: string;
-  password: string;
   rol?: RolUsuario;
   permiso_acceso?: PermisoAcceso;
+  centros_asignados?: string[];
 }
 
 export interface UpdateUsuarioDto {
@@ -28,10 +29,5 @@ export interface UpdateUsuarioDto {
   email?: string;
   rol?: RolUsuario;
   permiso_acceso?: PermisoAcceso;
-  permisos?: PermisoItem[];
-}
-
-export interface PermisoItem {
-  centro_costo_id: string;
-  tipo: PermisoAcceso;
+  centros_asignados?: string[];
 }

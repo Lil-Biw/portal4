@@ -39,6 +39,7 @@ export class AuthService {
         email: usuario.email,
         rol: usuario.rol,
         cliente_id: usuario.cliente_id ? usuario.cliente_id.toString() : null,
+        debe_cambiar_password: usuario.debe_cambiar_password ?? false,
       },
     };
   }

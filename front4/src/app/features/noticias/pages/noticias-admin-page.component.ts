@@ -2,6 +2,7 @@ import { Component, inject, effect, signal, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { NoticiasService } from '../noticias.service';
 import { StatusBannerComponent } from '../../../shared/components/status-banner/status-banner.component';
+import { SECCIONES, SeccionNoticia } from '../../../shared/models/noticia.model';
 
 @Component({
   selector: 'app-noticias-admin-page',
@@ -11,12 +12,13 @@ import { StatusBannerComponent } from '../../../shared/components/status-banner/
   styleUrl: './noticias-admin-page.component.css',
 })
 export class NoticiasAdminPageComponent implements OnInit {
-  protected readonly service = inject(NoticiasService);
+  protected readonly service  = inject(NoticiasService);
+  protected readonly secciones = SECCIONES;
 
-  protected showModal   = signal(false);
+  protected showModal    = signal(false);
   protected imagenPreview = signal<string | null>(null);
-  protected imagenFile  = signal<File | null>(null);
-  protected form = { titulo: '', enlace: '', resumen: '' };
+  protected imagenFile   = signal<File | null>(null);
+  protected form = { titulo: '', enlace: '', resumen: '', seccion: 'novedades' as SeccionNoticia };
 
   constructor() {
     effect(() => {
@@ -28,9 +30,13 @@ export class NoticiasAdminPageComponent implements OnInit {
 
   ngOnInit() { this.service.cargar(); }
 
+  get seccionActual() {
+    return this.secciones.find(s => s.value === this.service.seccionActiva())!;
+  }
+
   abrirModal() {
     this.service.clearStatus();
-    this.form = { titulo: '', enlace: '', resumen: '' };
+    this.form = { titulo: '', enlace: '', resumen: '', seccion: this.service.seccionActiva() };
     this.imagenFile.set(null);
     this.imagenPreview.set(null);
     this.showModal.set(true);
@@ -56,7 +62,7 @@ export class NoticiasAdminPageComponent implements OnInit {
   publicar(): void {
     if (!this.formValido()) return;
     this.service.crear(
-      { titulo: this.form.titulo.trim(), enlace: this.form.enlace.trim(), resumen: this.form.resumen.trim() },
+      { titulo: this.form.titulo.trim(), enlace: this.form.enlace.trim(), resumen: this.form.resumen.trim(), seccion: this.form.seccion },
       this.imagenFile() ?? undefined,
     );
   }
@@ -64,6 +70,10 @@ export class NoticiasAdminPageComponent implements OnInit {
   eliminar(event: MouseEvent, id: string): void {
     event.stopPropagation();
     this.service.eliminar(id);
+  }
+
+  countSeccion(seccion: SeccionNoticia): number {
+    return this.service.noticias().filter(n => n.seccion === seccion).length;
   }
 
   abrirEnlace(url: string): void {

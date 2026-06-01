@@ -49,7 +49,9 @@ export class DocumentosAdminPageComponent implements OnInit {
   protected showSolicitudForm   = signal(false);
   protected solicitudForm: CreateSolicitudDto = this.emptySolicitudForm();
 
-  protected solicitudEstadoEdit = signal<string | null>(null);
+  protected solicitudEstadoEdit    = signal<string | null>(null);
+  protected rechazandoId           = signal<string | null>(null);
+  protected motivoRechazoInput     = '';
 
   protected solicitudEditando   = signal<string | null>(null);
   protected solicitudEditForm: UpdateSolicitudDto = {};
@@ -240,9 +242,32 @@ export class DocumentosAdminPageComponent implements OnInit {
     );
   }
 
+  iniciarCambioEstado(id: string, estado: EstadoSolicitud): void {
+    if (estado === 'rechazado') {
+      this.rechazandoId.set(id);
+      this.motivoRechazoInput = '';
+      this.solicitudEstadoEdit.set(null);
+    } else {
+      this.solicitudesService.cambiarEstado(id, estado);
+      this.solicitudEstadoEdit.set(null);
+    }
+  }
+
+  confirmarRechazo(): void {
+    const id = this.rechazandoId();
+    if (!id) return;
+    this.solicitudesService.cambiarEstado(id, 'rechazado', this.motivoRechazoInput);
+    this.rechazandoId.set(null);
+    this.motivoRechazoInput = '';
+  }
+
+  cancelarRechazo(): void {
+    this.rechazandoId.set(null);
+    this.motivoRechazoInput = '';
+  }
+
   cambiarEstadoSolicitud(id: string, estado: EstadoSolicitud): void {
-    this.solicitudesService.cambiarEstado(id, estado);
-    this.solicitudEstadoEdit.set(null);
+    this.iniciarCambioEstado(id, estado);
   }
 
   abrirEditarSolicitud(s: Solicitud): void {

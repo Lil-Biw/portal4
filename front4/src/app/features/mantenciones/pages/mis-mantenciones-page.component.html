@@ -140,6 +140,23 @@
         </div>
       }
 
+      <!-- Documentos adjuntos -->
+      @if (mantencionDetalle()!.documentos?.length) {
+        <div style="margin-bottom:1.25rem">
+          <p style="margin:0 0 .5rem;font-size:.78rem;font-weight:700;color:#6b7280;text-transform:uppercase">Documentos</p>
+          @for (doc of mantencionDetalle()!.documentos!; track doc.nombre) {
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:.5rem;padding:.45rem 0;border-bottom:1px solid #f3f4f6">
+              <span style="font-size:.83rem;color:#374151;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;flex:1">{{ doc.nombre_display }}</span>
+              <button
+                style="background:none;border:1px solid #e5e7eb;border-radius:6px;padding:.25rem .65rem;font-size:.78rem;cursor:pointer;color:#0095d6;font-weight:600;flex-shrink:0"
+                (click)="descargarDocMantencion(mantencionDetalle()!._id, doc.nombre, doc.nombre_display)">
+                Descargar
+              </button>
+            </div>
+          }
+        </div>
+      }
+
       <!-- Historial reciente del mismo tipo en el mismo centro -->
       @if (historialDetalle().length > 0) {
         <div>

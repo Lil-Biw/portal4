@@ -14,6 +14,7 @@ export interface Solicitud {
   centro_costo_id?: string;
   proyecto_id?: string;
   estado: EstadoSolicitud;
+  motivo_rechazo?: string;
   archivo_nombre?: string;
   archivo_url?: string;
   creado_en: string;
@@ -119,8 +120,10 @@ export class SolicitudesService {
     });
   }
 
-  cambiarEstado(id: string, estado: EstadoSolicitud): void {
-    this.http.put<Solicitud>(this.api.url(`/solicitudes/${id}/estado`), { estado }).subscribe({
+  cambiarEstado(id: string, estado: EstadoSolicitud, motivoRechazo?: string): void {
+    const body: Record<string, string> = { estado };
+    if (estado === 'rechazado' && motivoRechazo) body['motivo_rechazo'] = motivoRechazo;
+    this.http.put<Solicitud>(this.api.url(`/solicitudes/${id}/estado`), body).subscribe({
       next: (actualizada) => {
         this.solicitudes.update(prev => prev.map(s => s._id === id ? actualizada : s));
         this.status.set({ type: 'ok', text: `Estado actualizado a "${this.estadoLabel(estado)}".` });

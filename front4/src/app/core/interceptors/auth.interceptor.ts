@@ -1,12 +1,27 @@
 import { HttpInterceptorFn } from '@angular/common/http';
 import { inject } from '@angular/core';
+import { catchError, throwError } from 'rxjs';
 import { AuthService } from '../../features/auth/auth.service';
 
-export const authInterceptor: HttpInterceptorFn = (req, next) => {
-  const token = inject(AuthService).getToken();
-  if (!token) return next(req);
+let loggingOut = false;
 
-  return next(req.clone({
-    setHeaders: { Authorization: `Bearer ${token}` },
-  }));
+export const authInterceptor: HttpInterceptorFn = (req, next) => {
+  const auth = inject(AuthService);
+  const token = auth.getToken();
+
+  const request = token
+    ? req.clone({ setHeaders: { Authorization: `Bearer ${token}` } })
+    : req;
+
+  return next(request).pipe(
+    catchError(err => {
+      if (err.status === 401 && !loggingOut) {
+        loggingOut = true;
+        auth.logout();
+        // Resetear el flag después de la navegación para no bloquear futuros logins
+        setTimeout(() => { loggingOut = false; }, 2000);
+      }
+      return throwError(() => err);
+    }),
+  );
 };

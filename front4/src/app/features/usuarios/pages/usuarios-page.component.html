@@ -39,8 +39,8 @@
         submitLabel="Crear usuario"
         [clientes]="clientesService.clientes()"
         [centros]="centrosService.centros()"
-        [permisosSeleccionados]="service.permisosSeleccionados()"
-        (permisoToggle)="service.togglePermiso($event.centroId, $event.checked)"
+        [centrosSeleccionados]="service.centrosSeleccionados()"
+        (centroToggle)="service.toggleCentro($event.centroId, $event.checked)"
         (submitted)="crear($event)">
       </app-usuario-form>
     </ng-container>
@@ -56,10 +56,10 @@
         [initial]="service.seleccionado()"
         [clientes]="clientesService.clientes()"
         [centros]="centrosService.centros()"
-        [permisosSeleccionados]="service.permisosSeleccionados()"
+        [centrosSeleccionados]="service.centrosSeleccionados()"
         [isEdit]="true"
         submitLabel="Guardar cambios"
-        (permisoToggle)="service.togglePermiso($event.centroId, $event.checked)"
+        (centroToggle)="service.toggleCentro($event.centroId, $event.checked)"
         (submitted)="actualizar($event)">
       </app-usuario-form>
     </ng-container>

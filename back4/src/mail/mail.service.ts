@@ -4,6 +4,8 @@ import * as nodemailer from 'nodemailer';
 import { nuevoUsuarioHtml } from './templates/nuevo-usuario.template';
 import { nuevaMantencionHtml } from './templates/nueva-mantencion.template';
 import { nuevaSolicitudHtml } from './templates/nueva-solicitud.template';
+import { solicitudRechazadaHtml } from './templates/solicitud-rechazada.template';
+import { nuevaNoticiaHtml } from './templates/nueva-noticia.template';
 
 @Injectable()
 export class MailService {
@@ -28,7 +30,7 @@ export class MailService {
 
   async notificarNuevaMantencion(params: {
     destinatarios: { nombre: string; email: string }[];
-    mantencion: { nombre: string; tipo: string; fecha: Date; descripcion?: string; centro: string };
+    mantencion: { nombre: string; tipo: string; fecha: Date; descripcion?: string; centro: string; activos: string[] };
   }): Promise<void> {
     const portalUrl = this.config.get<string>('PORTAL_URL') ?? 'http://localhost:4200';
     const fecha = params.mantencion.fecha.toLocaleDateString('es-CL', {
@@ -48,6 +50,7 @@ export class MailService {
             fecha,
             descripcion:  params.mantencion.descripcion,
             centro:       params.mantencion.centro,
+            activos:      params.mantencion.activos,
             portalUrl,
           }),
         });
@@ -84,6 +87,64 @@ export class MailService {
       } catch (err: unknown) {
         const mensaje = err instanceof Error ? err.message : String(err);
         this.logger.error(`Error al notificar solicitud a ${dest.email}: ${mensaje}`);
+      }
+    }
+  }
+
+  async notificarRechazoSolicitud(params: {
+    destinatarios: { nombre: string; email: string }[];
+    solicitud: { nombre: string; tipo: string; motivo_rechazo: string; centro: string };
+  }): Promise<void> {
+    const portalUrl = this.config.get<string>('PORTAL_URL') ?? 'http://localhost:4200';
+
+    for (const dest of params.destinatarios) {
+      try {
+        await this.transporter.sendMail({
+          from: this.from,
+          to: dest.email,
+          subject: `Solicitud rechazada — ${params.solicitud.nombre}`,
+          html: solicitudRechazadaHtml({
+            destinatario:   dest.nombre,
+            nombre:         params.solicitud.nombre,
+            tipo:           params.solicitud.tipo,
+            motivo_rechazo: params.solicitud.motivo_rechazo,
+            centro:         params.solicitud.centro,
+            portalUrl,
+          }),
+        });
+        this.logger.log(`Notificación de rechazo enviada a ${dest.email}`);
+      } catch (err: unknown) {
+        const mensaje = err instanceof Error ? err.message : String(err);
+        this.logger.error(`Error al notificar rechazo a ${dest.email}: ${mensaje}`);
+      }
+    }
+  }
+
+  async notificarNuevaNoticia(params: {
+    destinatarios: { nombre: string; email: string }[];
+    noticia: { titulo: string; resumen: string; enlace: string; seccion: string };
+  }): Promise<void> {
+    const portalUrl = this.config.get<string>('PORTAL_URL') ?? 'http://localhost:4200';
+
+    for (const dest of params.destinatarios) {
+      try {
+        await this.transporter.sendMail({
+          from: this.from,
+          to:   dest.email,
+          subject: `[${params.noticia.seccion.charAt(0).toUpperCase() + params.noticia.seccion.slice(1)}] ${params.noticia.titulo}`,
+          html: nuevaNoticiaHtml({
+            destinatario: dest.nombre,
+            titulo:   params.noticia.titulo,
+            resumen:  params.noticia.resumen,
+            enlace:   params.noticia.enlace,
+            seccion:  params.noticia.seccion,
+            portalUrl,
+          }),
+        });
+        this.logger.log(`Notificación de noticia enviada a ${dest.email}`);
+      } catch (err: unknown) {
+        const mensaje = err instanceof Error ? err.message : String(err);
+        this.logger.error(`Error al notificar noticia a ${dest.email}: ${mensaje}`);
       }
     }
   }

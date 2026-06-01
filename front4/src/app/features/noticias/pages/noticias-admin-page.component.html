@@ -9,15 +9,29 @@
   <app-status-banner [status]="s" (closed)="service.clearStatus()" style="margin-bottom:1rem;display:block" />
 }
 
+<!-- Tabs de sección -->
+<div class="tabs">
+  @for (sec of secciones; track sec.value) {
+    <button
+      class="tab"
+      [class.tab--active]="service.seccionActiva() === sec.value"
+      [style.--tab-color]="sec.color"
+      (click)="service.seccionActiva.set(sec.value)">
+      {{ sec.label }}
+      <span class="tab-count">{{ countSeccion(sec.value) }}</span>
+    </button>
+  }
+</div>
+
 <div class="grid">
   <!-- Tarjeta crear -->
-  <div class="card card--add" (click)="abrirModal()">
+  <div class="card card--add" (click)="abrirModal()" [style.--accent]="seccionActual.color">
     <div class="add-icon">+</div>
-    <span class="add-label">Nueva noticia</span>
+    <span class="add-label">Nueva {{ seccionActual.labelMin }}</span>
   </div>
 
-  <!-- Noticias publicadas -->
-  @for (n of service.noticias(); track n._id) {
+  <!-- Noticias de la sección activa -->
+  @for (n of service.noticiasFiltradas(); track n._id) {
     <div class="card card--noticia" (click)="abrirEnlace(n.enlace)">
       <div class="card-img">
         @if (service.imagenUrl(n); as src) {
@@ -36,6 +50,10 @@
       </div>
     </div>
   }
+
+  @if (service.noticiasFiltradas().length === 0 && !service.loading()) {
+    <p class="empty" style="grid-column:1/-1">No hay {{ seccionActual.labelMin }} publicadas.</p>
+  }
 </div>
 
 <!-- Modal -->
@@ -43,7 +61,7 @@
   <div class="backdrop" (click)="cerrarModal()"></div>
   <div class="modal">
     <div class="modal-header">
-      <h3>Nueva noticia</h3>
+      <h3>Nueva {{ seccionActual.labelMin }}</h3>
       <button class="btn-close" (click)="cerrarModal()">×</button>
     </div>
 
@@ -55,16 +73,24 @@
 
     <div class="form-grid">
       <div class="field">
+        <label>Sección</label>
+        <select [(ngModel)]="form.seccion" name="seccion">
+          @for (sec of secciones; track sec.value) {
+            <option [value]="sec.value">{{ sec.label }}</option>
+          }
+        </select>
+      </div>
+      <div class="field">
         <label>Título *</label>
         <input [(ngModel)]="form.titulo" placeholder="Ej: Nuevo portal disponible" />
       </div>
-      <div class="field">
+      <div class="field field--full">
         <label>Enlace *</label>
         <input [(ngModel)]="form.enlace" placeholder="https://..." type="url" />
       </div>
       <div class="field field--full">
         <label>Resumen *</label>
-        <textarea [(ngModel)]="form.resumen" rows="3" placeholder="Descripción breve de la noticia..."></textarea>
+        <textarea [(ngModel)]="form.resumen" rows="3" placeholder="Descripción breve..."></textarea>
       </div>
       <div class="field field--full">
         <label>Imagen</label>

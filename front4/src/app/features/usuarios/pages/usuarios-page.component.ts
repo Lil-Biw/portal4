@@ -91,9 +91,9 @@ type ModalMode = 'crear' | 'editar' | 'buscar' | null;
   `],
 })
 export class UsuariosPageComponent implements OnInit {
-  protected readonly service         = inject(UsuariosService);
-  protected readonly clientesService  = inject(ClientesService);
-  protected readonly centrosService   = inject(CentrosService);
+  protected readonly service        = inject(UsuariosService);
+  protected readonly clientesService = inject(ClientesService);
+  protected readonly centrosService  = inject(CentrosService);
 
   protected modal    = signal<ModalMode>(null);
   protected busqueda = signal('');
@@ -135,7 +135,7 @@ export class UsuariosPageComponent implements OnInit {
 
   protected abrirCrear(): void {
     this.service.seleccionado.set(null);
-    this.service.permisosSeleccionados.set([]);
+    this.service.centrosSeleccionados.set([]);
     this.service.clearStatus();
     this.modal.set('crear');
   }
@@ -147,35 +147,30 @@ export class UsuariosPageComponent implements OnInit {
   }
 
   protected abrirEditar(usuario: Usuario): void {
-    this.service.seleccionar(usuario);
+    this.service.seleccionar(usuario);  // carga centros_asignados desde el usuario
     this.modal.set('editar');
   }
 
   protected cerrar(): void {
     this.modal.set(null);
     this.service.seleccionado.set(null);
-    this.service.permisosSeleccionados.set([]);
+    this.service.centrosSeleccionados.set([]);
     this.service.clearStatus();
   }
 
   protected crear(output: UsuarioFormOutput): void {
-    this.service.crear(output.dto, output.permisos);
+    this.service.crear(output.dto);
   }
 
   protected actualizar(output: UsuarioFormOutput): void {
     const id = this.service.seleccionado()?._id;
     if (!id) return;
-    const centrosDisponibles = this.centrosService.centros()
-      .filter(c => asId(c.cliente_id) === asId(output.dto.cliente_id));
-    const permisos = output.permisos.filter(p =>
-      centrosDisponibles.some(c => asId(c._id) === asId(p.centro_costo_id))
-    );
     this.service.actualizar(id, {
-      nombre: output.dto.nombre,
-      email: output.dto.email,
-      rol: output.dto.rol,
-      permiso_acceso: output.dto.permiso_acceso,
-      permisos,
+      nombre:            output.dto.nombre,
+      email:             output.dto.email,
+      rol:               output.dto.rol,
+      permiso_acceso:    output.dto.permiso_acceso,
+      centros_asignados: output.dto.centros_asignados,
     });
   }
 

@@ -2,10 +2,11 @@ import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { MantencionSchema } from './mantenciones.schema';
 import { MantencionesController } from './mantenciones.controller';
+import { MantencionesAdminController } from './mantenciones-admin.controller';
 import { MantencionesService } from './mantenciones.service';
 import { CentroCostoSchema } from '../centros-costos/centros-costos.schema';
 import { UsuarioSchema } from '../usuarios/usuarios.schema';
-import { PermisoSchema } from '../permisos/permisos.schema';
+import { ActivoSchema } from '../activos/activos.schema';
 import { MailModule } from '../mail/mail.module';
 
 @Module({
@@ -14,11 +15,11 @@ import { MailModule } from '../mail/mail.module';
       { name: 'Mantencion', schema: MantencionSchema },
       { name: 'CentroCosto', schema: CentroCostoSchema },
       { name: 'Usuario', schema: UsuarioSchema },
-      { name: 'Permiso', schema: PermisoSchema },
+      { name: 'Activo', schema: ActivoSchema },
     ]),
     MailModule,
   ],
-  controllers: [MantencionesController],
+  controllers: [MantencionesController, MantencionesAdminController],
   providers: [MantencionesService],
   exports: [MantencionesService],
 })

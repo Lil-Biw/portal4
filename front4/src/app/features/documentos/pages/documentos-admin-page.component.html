@@ -288,6 +288,11 @@
             <span style="font-size:.72rem;font-weight:600;padding:.15rem .5rem;border-radius:999px" [style.color]="estadoChipStyle(s.estado).color" [style.background]="estadoChipStyle(s.estado).bg">{{ estadoLabel(s.estado) }}</span>
           </div>
           <p *ngIf="s.descripcion" style="margin:0 0 .4rem;font-size:.82rem;color:#6b7280">{{ s.descripcion }}</p>
+          <!-- Motivo de rechazo -->
+          <div *ngIf="s.estado === 'rechazado' && s.motivo_rechazo" style="background:#fff1f2;border:1px solid #fecdd3;border-radius:6px;padding:.5rem .75rem;margin-bottom:.4rem">
+            <span style="font-size:.72rem;font-weight:700;color:#9f1239;display:block;margin-bottom:.2rem">Motivo del rechazo</span>
+            <span style="font-size:.82rem;color:#374151">{{ s.motivo_rechazo }}</span>
+          </div>
           <!-- Archivo adjunto con descarga -->
           <div *ngIf="s.archivo_nombre" style="display:flex;align-items:center;gap:.5rem;margin-bottom:.4rem">
             <span style="font-size:.8rem;color:#22c55e">✓ {{ s.archivo_nombre }}</span>
@@ -348,3 +353,26 @@
 } <!-- fin @if solicitudes -->
 
 } <!-- fin @if selectedEmpresaId -->
+
+<!-- Modal motivo de rechazo -->
+@if (rechazandoId()) {
+  <div style="position:fixed;inset:0;background:rgba(15,23,42,.45);display:flex;align-items:center;justify-content:center;z-index:200;padding:1rem"
+       (click)="cancelarRechazo()">
+    <div style="background:#fff;border-radius:16px;box-shadow:0 20px 60px rgba(15,23,42,.18);width:100%;max-width:460px;padding:1.5rem"
+         (click)="$event.stopPropagation()">
+      <h3 style="margin:0 0 .5rem;font-size:1rem;font-weight:700;color:#111827">Rechazar solicitud</h3>
+      <p style="margin:0 0 1rem;font-size:.85rem;color:#6b7280">Escribe el motivo del rechazo. Este texto será visible para el consumidor en el portal y recibirá una notificación por correo.</p>
+      <textarea
+        rows="4"
+        [(ngModel)]="motivoRechazoInput"
+        placeholder="Ej. El documento adjunto está ilegible, por favor reenvíe en formato PDF."
+        style="width:100%;box-sizing:border-box;resize:vertical;padding:.6rem .75rem;border:1px solid rgba(34,33,33,.2);border-radius:.5rem;font-family:inherit;font-size:.875rem;margin-bottom:1rem">
+      </textarea>
+      <app-status-banner [status]="solicitudesService.status()"></app-status-banner>
+      <div style="display:flex;gap:.5rem;justify-content:flex-end">
+        <button class="btn-ghost" (click)="cancelarRechazo()">Cancelar</button>
+        <button class="btn-danger" (click)="confirmarRechazo()" [disabled]="!motivoRechazoInput.trim()">Confirmar rechazo</button>
+      </div>
+    </div>
+  </div>
+}

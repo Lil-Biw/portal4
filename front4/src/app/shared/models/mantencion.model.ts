@@ -7,6 +7,13 @@ export interface TipoMantencion {
   actualizado_en?: string;
 }
 
+export interface DocMantencion {
+  nombre: string;
+  nombre_display: string;
+  tamano_bytes: number;
+  tipo_mime: string;
+}
+
 export interface Mantencion {
   _id: string;
   nombre: string;
@@ -15,6 +22,7 @@ export interface Mantencion {
   centro_costo_id: string;
   activo_ids?: string[];
   fecha: string;
+  documentos?: DocMantencion[];
   creado_en?: string;
   actualizado_en?: string;
 }

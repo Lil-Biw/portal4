@@ -4,12 +4,20 @@ export function nuevaMantencionHtml(params: {
   fecha: string;
   descripcion?: string;
   centro: string;
+  activos: string[];
   portalUrl: string;
   destinatario: string;
 }): string {
   const descripcionBloque = params.descripcion
     ? `<p style="margin:0 0 8px;font-size:14px;color:#6b7280">Descripción</p>
-       <p style="margin:0;color:#374151">${params.descripcion}</p>`
+       <p style="margin:0 0 16px;color:#374151">${params.descripcion}</p>`
+    : '';
+
+  const activosBloque = params.activos.length > 0
+    ? `<p style="margin:0 0 8px;font-size:14px;color:#6b7280">Activos incluidos</p>
+       <ul style="margin:0 0 16px;padding-left:20px;color:#374151">
+         ${params.activos.map(a => `<li style="margin-bottom:4px">${a}</li>`).join('')}
+       </ul>`
     : '';
 
   return `
@@ -26,6 +34,7 @@ export function nuevaMantencionHtml(params: {
         <p style="margin:0 0 16px;font-weight:700;color:#111827">${params.tipo}</p>
         <p style="margin:0 0 8px;font-size:14px;color:#6b7280">Fecha</p>
         <p style="margin:0 0 16px;font-weight:700;color:#111827">${params.fecha}</p>
+        ${activosBloque}
         ${descripcionBloque}
       </div>
       <a href="${params.portalUrl}/mis-mantenciones"

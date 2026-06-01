@@ -1,10 +1,11 @@
-import { Component, OnInit, inject, signal, computed, effect } from '@angular/core';
+import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MantencionesService } from '../mantenciones.service';
 import { TiposMantencionService } from '../tipos-mantencion.service';
 import { CentrosService } from '../../centros/centros.service';
 import { ClientesService } from '../../clientes/clientes.service';
 import { ActivosService } from '../../activos/activos.service';
+
 import { StatusBannerComponent } from '../../../shared/components/status-banner/status-banner.component';
 import { Mantencion, TipoMantencion } from '../../../shared/models/mantencion.model';
 import { asId, toDateKey } from '../../../shared/utils';
@@ -203,9 +204,90 @@ export class MantencionesPageComponent implements OnInit {
   protected form          = signal<MantencionForm>(emptyForm());
   protected confirmDelete = signal<string | null>(null);
 
+  // ── Documentos adjuntos ───────────────────────────────────────────────────
+  protected docsPendientes: { file: File; nombre: string }[] = [];
+  protected docNombreInput   = '';
+  protected docFileSelected: File | null = null;
+  protected subiendoDocs = false;
+
+  // Para el picker de creación
+  protected pendienteFileSelected: File | null = null;
+  protected pendienteNombreInput = '';
+  protected pendienteInputVisible = signal(true);
+
+  onPendienteFileSelected(ev: Event): void {
+    const file = (ev.target as HTMLInputElement).files?.[0] ?? null;
+    this.pendienteFileSelected = file;
+    if (file && !this.pendienteNombreInput)
+      this.pendienteNombreInput = file.name.replace(/\.[^/.]+$/, '');
+  }
+
+  agregarDocPendiente(): void {
+    if (!this.pendienteFileSelected) return;
+    this.docsPendientes.push({ file: this.pendienteFileSelected, nombre: this.pendienteNombreInput || this.pendienteFileSelected.name });
+    this.pendienteFileSelected = null;
+    this.pendienteNombreInput = '';
+    this.pendienteInputVisible.set(false);
+    setTimeout(() => this.pendienteInputVisible.set(true), 0);
+  }
+
+  quitarDocPendiente(index: number): void {
+    this.docsPendientes.splice(index, 1);
+  }
+
+  protected docInputVisible = signal(true);
+
+  onDocFileSelected(ev: Event): void {
+    const file = (ev.target as HTMLInputElement).files?.[0] ?? null;
+    this.docFileSelected = file;
+    if (file && !this.docNombreInput) this.docNombreInput = file.name.replace(/\.[^/.]+$/, '');
+  }
+
+  subirDocMantencion(): void {
+    const id = this.editingId();
+    if (!id || !this.docFileSelected) return;
+    this.service.subirDocumento(id, this.docFileSelected, this.docNombreInput || undefined);
+    this.docFileSelected = null;
+    this.docNombreInput = '';
+    // Recrea el input de archivo para limpiarlo visualmente
+    this.docInputVisible.set(false);
+    setTimeout(() => this.docInputVisible.set(true), 0);
+  }
+
+  eliminarDocMantencion(nombre: string): void {
+    const id = this.editingId();
+    if (!id) return;
+    this.service.eliminarDocumento(id, nombre);
+  }
+
+  descargarDocMantencion(nombre: string, nombreDisplay?: string): void {
+    const id = this.editingId();
+    if (!id) return;
+    this.service.descargarDocumento(id, nombre, nombreDisplay);
+  }
+
+  get mantencionEditando() {
+    const id = this.editingId();
+    return id ? this.service.mantenciones().find(m => m._id === id) ?? null : null;
+  }
+
+  private subirDocsPendientesSecuencial(mantencionId: string, index: number): void {
+    if (index >= this.docsPendientes.length) {
+      this.docsPendientes = [];
+      this.subiendoDocs = false;
+      this.cerrarModal();
+      return;
+    }
+    const { file, nombre } = this.docsPendientes[index];
+    this.service.subirDocumento(mantencionId, file, nombre, () => {
+      this.subirDocsPendientesSecuencial(mantencionId, index + 1);
+    });
+  }
+
   abrirCrear(fecha = ''): void {
     this.editingId.set(null);
     this.form.set(emptyForm(fecha));
+    this.docsPendientes = [];
     this.showModal.set(true);
     this.service.clearStatus();
   }
@@ -262,8 +344,19 @@ export class MantencionesPageComponent implements OnInit {
       fecha:           f.fecha,
     };
     const id = this.editingId();
-    if (id) this.service.actualizar(id, dto);
-    else    this.service.crear(dto);
+    if (id) {
+      this.service.actualizar(id, dto, () => this.cerrarModal());
+    } else {
+      this.service.crear(dto, (nueva) => {
+        if (this.docsPendientes.length === 0) {
+          this.cerrarModal();
+          return;
+        }
+        this.subiendoDocs = true;
+        this.editingId.set(nueva._id);
+        this.subirDocsPendientesSecuencial(nueva._id, 0);
+      });
+    }
   }
 
   eliminarMant(id: string): void {
@@ -315,14 +408,7 @@ export class MantencionesPageComponent implements OnInit {
 
   eliminarTipo(id: string): void { this.tiposService.eliminar(id); }
 
-  constructor() {
-    // Cierra el modal cuando el servidor confirma el guardado
-    effect(() => {
-      if (this.service.status()?.type === 'ok' && this.showModal()) {
-        this.cerrarModal();
-      }
-    });
-  }
+  constructor() {}
 
   ngOnInit(): void {
     this.service.cargar();

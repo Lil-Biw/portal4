@@ -11,6 +11,7 @@ export interface UsuarioAuth {
   email: string;
   rol: string;
   cliente_id: string | null;
+  debe_cambiar_password: boolean;
 }
 
 const TOKEN_KEY = 'auth_token';
@@ -55,7 +56,11 @@ export class AuthService {
           this.guardarSesion(res.access_token, res.usuario);
           this.profileService.setMode(esSuperAdmin ? 'admin' : 'consumidor');
           this.cargando.set(false);
-          this.router.navigate([esSuperAdmin ? '/empresa' : '/inicio']);
+          if (res.usuario.debe_cambiar_password) {
+            this.router.navigate(['/cambiar-password']);
+          } else {
+            this.router.navigate([esSuperAdmin ? '/empresa' : '/inicio']);
+          }
         },
         error: err => {
           const msg = err?.error?.message;
@@ -78,6 +83,16 @@ export class AuthService {
   getToken(): string | null {
     if (!isPlatformBrowser(this.platformId)) return null;
     return localStorage.getItem(TOKEN_KEY);
+  }
+
+  actualizarUsuario(cambios: Partial<UsuarioAuth>): void {
+    const actual = this.usuarioActual();
+    if (!actual) return;
+    const actualizado = { ...actual, ...cambios };
+    if (isPlatformBrowser(this.platformId)) {
+      localStorage.setItem(USER_KEY, JSON.stringify(actualizado));
+    }
+    this.usuarioActual.set(actualizado);
   }
 
   clearError(): void {

@@ -1,14 +1,19 @@
-import { Injectable, inject, signal } from '@angular/core';
+import { Injectable, inject, signal, computed } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { ApiService } from '../../core/services/api.service';
-import { Noticia, CreateNoticiaDto } from '../../shared/models/noticia.model';
+import { Noticia, CreateNoticiaDto, SeccionNoticia } from '../../shared/models/noticia.model';
 import { Status } from '../../shared/models/status.model';
 
 @Injectable({ providedIn: 'root' })
 export class NoticiasService {
-  readonly noticias = signal<Noticia[]>([]);
-  readonly status   = signal<Status | null>(null);
-  readonly loading  = signal(false);
+  readonly noticias  = signal<Noticia[]>([]);
+  readonly status    = signal<Status | null>(null);
+  readonly loading   = signal(false);
+  readonly seccionActiva = signal<SeccionNoticia>('novedades');
+
+  readonly noticiasFiltradas = computed(() =>
+    this.noticias().filter(n => n.seccion === this.seccionActiva())
+  );
 
   private readonly http = inject(HttpClient);
   private readonly api  = inject(ApiService);
@@ -34,7 +39,7 @@ export class NoticiasService {
           this.subirImagen(noticia._id, imagen, noticia);
         } else {
           this.noticias.update(list => [noticia, ...list]);
-          this.status.set({ type: 'ok', text: 'Noticia publicada correctamente' });
+          this.status.set({ type: 'ok', text: 'Noticia publicada. Se notificó a todos los usuarios.' });
         }
       },
       error: err => this.setError(err),
@@ -46,9 +51,8 @@ export class NoticiasService {
     form.append('imagen', file);
     this.http.post<Noticia>(`${this.url}/${id}/imagen`, form).subscribe({
       next: updated => {
-        const con = updated ?? { ...noticia };
-        this.noticias.update(list => [con, ...list]);
-        this.status.set({ type: 'ok', text: 'Noticia publicada correctamente' });
+        this.noticias.update(list => [updated ?? noticia, ...list]);
+        this.status.set({ type: 'ok', text: 'Noticia publicada. Se notificó a todos los usuarios.' });
       },
       error: () => {
         this.noticias.update(list => [noticia, ...list]);

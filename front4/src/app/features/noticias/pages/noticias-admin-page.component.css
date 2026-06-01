@@ -1,4 +1,26 @@
-.header { display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:1.5rem; }
+.header { display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:1.25rem; }
+
+/* Tabs */
+.tabs { display:flex; gap:.5rem; margin-bottom:1.25rem; border-bottom:2px solid #e5e7eb; padding-bottom:0; }
+.tab {
+  background:none; border:none; cursor:pointer;
+  font-size:.875rem; font-weight:600; color:#6b7280;
+  padding:.55rem 1rem;
+  border-bottom:2px solid transparent;
+  margin-bottom:-2px;
+  display:flex; align-items:center; gap:.45rem;
+  transition:color .15s, border-color .15s;
+}
+.tab:hover { color:#374151; }
+.tab--active { color:var(--tab-color, #0095d6); border-bottom-color:var(--tab-color, #0095d6); }
+.tab-count {
+  font-size:.72rem; font-weight:700;
+  background:rgba(0,0,0,.07);
+  padding:1px 6px; border-radius:20px;
+}
+.tab--active .tab-count { background:var(--tab-color, #0095d6); color:#fff; }
+
+.empty { color:#9ca3af; font-size:.875rem; padding:2rem 0; text-align:center; }
 .titulo  { margin:0 0 .25rem; font-size:1.5rem; font-weight:700; color:#1f2937; }
 .subtitulo { margin:0; font-size:.875rem; color:#6b7280; }
 
@@ -26,12 +48,15 @@
   justify-content:center;
   gap:.75rem;
   min-height:180px;
-  border:2px dashed rgba(0,149,214,.35);
-  background:rgba(0,149,214,.03);
+  border:2px dashed color-mix(in srgb, var(--accent, #0095d6) 40%, transparent);
+  background:color-mix(in srgb, var(--accent, #0095d6) 5%, transparent);
 }
-.card--add:hover { border-color:#0095d6; background:rgba(0,149,214,.07); }
-.add-icon { width:48px; height:48px; border-radius:50%; background:#0095d6; color:#fff; font-size:2rem; display:flex; align-items:center; justify-content:center; line-height:1; }
-.add-label { font-size:.875rem; font-weight:600; color:#0095d6; }
+.card--add:hover {
+  border-color:var(--accent, #0095d6);
+  background:color-mix(in srgb, var(--accent, #0095d6) 10%, transparent);
+}
+.add-icon { width:48px; height:48px; border-radius:50%; background:var(--accent, #0095d6); color:#fff; font-size:2rem; display:flex; align-items:center; justify-content:center; line-height:1; }
+.add-label { font-size:.875rem; font-weight:600; color:var(--accent, #0095d6); }
 
 .card--noticia { display:flex; flex-direction:row; }
 

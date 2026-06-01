@@ -14,10 +14,6 @@
     <span>Email *</span>
     <input [(ngModel)]="form.email" name="email" type="email" required />
   </label>
-  <label class="field" *ngIf="!isEdit">
-    <span>Contraseña *</span>
-    <input [(ngModel)]="form.password" name="password" type="password" [required]="!isEdit" />
-  </label>
   <label class="field">
     <span>Rol</span>
     <select [(ngModel)]="form.rol" name="rol">
@@ -32,15 +28,15 @@
     </select>
   </label>
 
-  <!-- Permisos por centro -->
+  <!-- Centros de costos asignados -->
   <div style="grid-column:1/-1" *ngIf="centrosFiltrados.length > 0">
-    <p style="font-size:.82rem;font-weight:600;color:#374151;margin:0 0 .6rem">Centros de costos accesibles</p>
+    <p style="font-size:.82rem;font-weight:600;color:#374151;margin:0 0 .6rem">Centros de costos asignados</p>
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:.5rem">
       <label *ngFor="let c of centrosFiltrados"
              style="display:flex;align-items:center;gap:.5rem;padding:.6rem .75rem;border:1px solid rgba(34,33,33,.15);border-radius:8px;background:#fff;cursor:pointer;font-size:.875rem">
         <input type="checkbox"
-               [checked]="permisosSeleccionados.includes(c._id)"
-               (change)="permisoToggle.emit({ centroId: c._id, checked: $any($event.target).checked })" />
+               [checked]="centrosSeleccionados.includes(c._id)"
+               (change)="centroToggle.emit({ centroId: c._id, checked: $any($event.target).checked })" />
         {{ c.nombre }} <small style="color:#9ca3af">({{ c.codigo }})</small>
       </label>
     </div>

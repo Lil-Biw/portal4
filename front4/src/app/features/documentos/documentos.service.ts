@@ -6,17 +6,19 @@ import { Status } from '../../shared/models/status.model';
 import { encodeQuery } from '../../shared/utils';
 
 export const CATEGORIAS_DOCUMENTO = [
-  'Planos/Diagramas',
-  'Informes',
-  '[ENERGIA]Boleta/Factura/BNE',
-  '[AGUA]Boleta/Factura',
-  '[GAS]Boleta/Factura',
-  '[COMBUSTIBLE]Boleta/Factura',
-  'Contratos',
+  '[AGUA] Boleta/Factura',
+  '[COMBUSTIBLE] Boleta/Factura',
+  '[BNE] Carpeta Tributaria',
+  '[BNE] Ingresos por Ventas',
+  '[ENERGIA] Boleta/Factura/BNE',
+  '[GAS] Boleta/Factura',
+  'Auditorías',
   'Certificados',
-  'Auditorias',
-  'OT',
+  'Contratos',
+  'Informes',
   'Lista de Activos',
+  'OT',
+  'Planos/Diagramas',
   'Otros',
 ] as const;
 

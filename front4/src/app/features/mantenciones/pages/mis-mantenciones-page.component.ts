@@ -5,6 +5,7 @@ import { MantencionesService } from '../mantenciones.service';
 import { TiposMantencionService } from '../tipos-mantencion.service';
 import { CentrosService } from '../../centros/centros.service';
 import { ActivosService } from '../../activos/activos.service';
+
 import { ConsumidorContextService } from '../../../profile/consumidor-context.service';
 import { Mantencion, TipoMantencion } from '../../../shared/models/mantencion.model';
 import { asId, toDateKey } from '../../../shared/utils';
@@ -27,7 +28,7 @@ export class MisMantencionesPageComponent implements OnInit {
   protected readonly service        = inject(MantencionesService);
   protected readonly tiposService   = inject(TiposMantencionService);
   protected readonly centrosService = inject(CentrosService);
-  private readonly ctx              = inject(ConsumidorContextService);
+  private   readonly ctx            = inject(ConsumidorContextService);
   protected readonly activosService = inject(ActivosService);
 
   private centroIdsPorEmpresa = computed((): Set<string> => {
@@ -138,6 +139,10 @@ export class MisMantencionesPageComponent implements OnInit {
 
   abrirDetalle(m: Mantencion): void { this.mantencionDetalle.set(m); }
   cerrarDetalle(): void { this.mantencionDetalle.set(null); }
+
+  descargarDocMantencion(mantencionId: string, nombre: string, nombreDisplay?: string): void {
+    this.service.descargarDocumento(mantencionId, nombre, nombreDisplay);
+  }
 
   mantencionesEnDia(date: Date): Mantencion[] {
     const key = toDateKey(date);
