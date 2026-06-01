@@ -1,37 +1,38 @@
-import { Controller, Get, Post, Put, Delete, Param, Body, Query } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Param, Body, UseGuards } from '@nestjs/common';
 import { ActivosService } from './activos.service';
 import { CreateActivoDto, UpdateActivoDto } from './activos.dto';
-import { Roles } from '../common/guards/guards';
+import { EmpresaAccessGuard, Roles } from '../common/guards/guards';
 
-@Controller('activos')
+@Controller('empresas/:empresaId/centros/:centroId/activos')
+@UseGuards(EmpresaAccessGuard)
 export class ActivosController {
   constructor(private readonly activosService: ActivosService) {}
 
   @Get()
-  findAll(@Query('centro_costo_id') centroCostoId?: string) {
-    return this.activosService.findAll(centroCostoId);
+  findAll(@Param('centroId') centroId: string) {
+    return this.activosService.findAll(centroId);
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.activosService.findOne(id);
+  @Get(':activoId')
+  findOne(@Param('activoId') activoId: string) {
+    return this.activosService.findOne(activoId);
   }
 
   @Post()
   @Roles('super_admin')
-  create(@Body() dto: CreateActivoDto) {
-    return this.activosService.create(dto);
+  create(@Param('centroId') centroId: string, @Body() dto: CreateActivoDto) {
+    return this.activosService.create({ ...dto, centro_costo_id: centroId });
   }
 
-  @Put(':id')
+  @Put(':activoId')
   @Roles('super_admin')
-  update(@Param('id') id: string, @Body() dto: UpdateActivoDto) {
-    return this.activosService.update(id, dto);
+  update(@Param('activoId') activoId: string, @Body() dto: UpdateActivoDto) {
+    return this.activosService.update(activoId, dto);
   }
 
-  @Delete(':id')
+  @Delete(':activoId')
   @Roles('super_admin')
-  remove(@Param('id') id: string) {
-    return this.activosService.remove(id);
+  remove(@Param('activoId') activoId: string) {
+    return this.activosService.remove(activoId);
   }
 }
