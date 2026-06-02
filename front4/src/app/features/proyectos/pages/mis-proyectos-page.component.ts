@@ -81,12 +81,14 @@ export class MisProyectosPageComponent implements OnInit {
   constructor() {
     effect(() => {
       const emp = this.consumidorContext.empresaSeleccionada();
-      if (emp) this.solicitudesService.cargar(emp._id);
+      if (emp) {
+        this.proyectosService.cargarPorEmpresa(emp._id);
+        this.solicitudesService.cargar(emp._id);
+      }
     });
   }
 
   ngOnInit(): void {
-    this.proyectosService.cargar();
     this.centrosService.cargar();
   }
 

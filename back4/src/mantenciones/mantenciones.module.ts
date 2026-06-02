@@ -3,6 +3,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { MantencionSchema } from './mantenciones.schema';
 import { MantencionesController } from './mantenciones.controller';
 import { MantencionesAdminController } from './mantenciones-admin.controller';
+import { MantencionesEmpresaController } from './mantenciones-empresa.controller';
 import { MantencionesService } from './mantenciones.service';
 import { CentroCostoSchema } from '../centros-costos/centros-costos.schema';
 import { UsuarioSchema } from '../usuarios/usuarios.schema';
@@ -19,7 +20,7 @@ import { MailModule } from '../mail/mail.module';
     ]),
     MailModule,
   ],
-  controllers: [MantencionesController, MantencionesAdminController],
+  controllers: [MantencionesController, MantencionesAdminController, MantencionesEmpresaController],
   providers: [MantencionesService],
   exports: [MantencionesService],
 })

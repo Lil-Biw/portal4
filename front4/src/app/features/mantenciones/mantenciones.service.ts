@@ -31,9 +31,21 @@ export class MantencionesService {
   cargar(centroCostoId?: string): void {
     this.loading.set(true);
     const qs = centroCostoId ? `?centro_costo_id=${centroCostoId}` : '';
-    this.http.get<Mantencion[]>(`${this.api.url('/mantenciones')}${qs}`).subscribe({
-      next:  data => { this.mantenciones.set(data); this.loading.set(false); },
+    this.http.get<Mantencion[] | { data: Mantencion[] }>(`${this.api.url('/mantenciones')}${qs}`).subscribe({
+      next:  res => {
+        this.mantenciones.set(Array.isArray(res) ? res : res.data);
+        this.loading.set(false);
+      },
       error: err  => { this.loading.set(false); this.setError(err); },
+    });
+  }
+
+  // Consumidor: carga mantenciones de todos los centros de una empresa
+  cargarPorEmpresa(empresaId: string): void {
+    this.loading.set(true);
+    this.http.get<Mantencion[]>(this.api.url(`/empresas/${empresaId}/mantenciones`)).subscribe({
+      next:  res => { this.mantenciones.set(res); this.loading.set(false); },
+      error: err => { this.loading.set(false); this.setError(err); },
     });
   }
 

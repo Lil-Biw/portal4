@@ -3,12 +3,17 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { CentroCostoDocument } from './centros-costos.schema';
 import { CreateCentroCostoDto, UpdateCentroCostoDto } from './centros-costos.dto';
+import { DocumentosHelper, ArchivoInput } from '../common/helpers/documentos.helper';
 
 @Injectable()
 export class CentrosCostosService {
+  private readonly docsHelper: DocumentosHelper;
+
   constructor(
     @InjectModel('CentroCosto') private centroCostoModel: Model<CentroCostoDocument>,
-  ) {}
+  ) {
+    this.docsHelper = new DocumentosHelper(centroCostoModel, 'Centro de costos');
+  }
 
   private toObjectId(value: string) {
     return new Types.ObjectId(value);
@@ -83,59 +88,19 @@ export class CentrosCostosService {
     return { message: 'Centro desactivado', id };
   }
 
-  async agregarDocumento(
-    id: string,
-    archivo: { originalname: string; buffer: Buffer; mimetype: string; size: number },
-    nombreDisplay?: string,
-    categoria?: string,
-    usuarioId?: string,
-  ) {
-    const timestamp = Date.now();
-    const rand = Math.random().toString(36).substring(7);
-    const nombre = `${timestamp}_${rand}_${archivo.originalname}`;
-    const nuevoDoc: Record<string, unknown> = {
-      nombre,
-      nombre_display: nombreDisplay?.trim() || archivo.originalname,
-      tipo_mime: archivo.mimetype,
-      tamano_bytes: archivo.size,
-      contenido: archivo.buffer,
-      subido_en: new Date(),
-    };
-    if (categoria) nuevoDoc['categoria'] = categoria;
-    if (usuarioId) nuevoDoc['subido_por'] = new Types.ObjectId(usuarioId);
-    const centro = await this.centroCostoModel
-      .findByIdAndUpdate(id, { $push: { documentos: nuevoDoc } }, { new: true })
-      .select('-documentos.contenido')
-      .lean();
-    if (!centro) throw new NotFoundException(`Centro de costos ${id} no encontrado`);
-    return centro.documentos[centro.documentos.length - 1];
+  agregarDocumento(id: string, archivo: ArchivoInput, nombreDisplay?: string, categoria?: string, usuarioId?: string) {
+    return this.docsHelper.agregar(id, archivo, nombreDisplay, categoria, usuarioId);
   }
 
-  async listarDocumentos(id: string) {
-    const centro = await this.centroCostoModel.findById(id).select('-documentos.contenido').lean();
-    if (!centro) throw new NotFoundException(`Centro de costos ${id} no encontrado`);
-    return centro.documentos;
+  listarDocumentos(id: string) {
+    return this.docsHelper.listar(id);
   }
 
-  async servirDocumento(centroId: string, docId: string): Promise<{ buffer: Buffer; tipo_mime: string; nombre_display: string }> {
-    const centro = await this.centroCostoModel.findById(centroId);
-    if (!centro) throw new NotFoundException(`Centro de costos ${centroId} no encontrado`);
-    const doc = centro.documentos.find(d => String((d as any)._id) === docId);
-    if (!doc) throw new NotFoundException(`Documento ${docId} no encontrado`);
-    const raw = doc.contenido as unknown;
-    const buffer = Buffer.isBuffer(raw) ? raw : Buffer.from(raw as ArrayBuffer);
-    return { buffer, tipo_mime: doc.tipo_mime, nombre_display: doc.nombre_display };
+  servirDocumento(centroId: string, docId: string) {
+    return this.docsHelper.servir(centroId, docId);
   }
 
-  async eliminarDocumento(centroId: string, docId: string) {
-    const centro = await this.centroCostoModel
-      .findByIdAndUpdate(
-        centroId,
-        { $pull: { documentos: { _id: new Types.ObjectId(docId) } } },
-        { new: true },
-      )
-      .lean();
-    if (!centro) throw new NotFoundException(`Centro de costos ${centroId} no encontrado`);
-    return { message: 'Documento eliminado', docId };
+  eliminarDocumento(centroId: string, docId: string) {
+    return this.docsHelper.eliminar(centroId, docId);
   }
 }

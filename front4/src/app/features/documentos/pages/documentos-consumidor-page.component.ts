@@ -125,12 +125,13 @@ export class DocumentosConsumidorPageComponent implements OnInit {
       this.selectedCentroIdC.set('');
       this.selectedProyectoIdC.set('');
       if (empresa) {
-        this.service.documentosEmpresa.set([]);
         this.service.documentosCentro.set([]);
         this.service.documentosProyecto.set([]);
         this.service.documentosPorCentro.set([]);
+        this.service.cargarEmpresa(empresa._id);
         this.solicitudesService.cargar(empresa._id);
       } else {
+        this.service.documentosEmpresa.set([]);
         this.solicitudesService.cargar('');
       }
     });
@@ -218,7 +219,7 @@ export class DocumentosConsumidorPageComponent implements OnInit {
     if (!file) return;
     const p = this.panels[tipo];
     p.selectedFile = file;
-    if (!p.nombreInput) p.nombreInput = file.name.replace(/\.[^/.]+$/, '');
+    if (!p.nombreInput) p.nombreInput = file.name;
   }
 
   confirmarSubida(tipo: DocTipo): void {
@@ -250,19 +251,17 @@ export class DocumentosConsumidorPageComponent implements OnInit {
   }
 
   docsFiltrados(tipo: DocTipo): DocumentoItem[] {
-    return tipo === 'empresa' ? this.service.documentosEmpresa()
+    const docs = tipo === 'empresa' ? this.service.documentosEmpresa()
       : tipo === 'centro' ? this.service.documentosCentro()
       : this.service.documentosProyecto();
+    const filtros = this.panels[tipo].filtrosCategorias;
+    if (!filtros.length) return docs;
+    return docs.filter(d => filtros.includes(d.categoria ?? ''));
   }
 
-  eliminar(docId: string, tipo: DocTipo): void {
-    const empresaId = this.consumidorContext.empresaSeleccionada()?._id ?? '';
-    this.service.eliminar(
-      docId, tipo,
-      empresaId,
-      this.selectedCentroIdC() || undefined,
-      this.selectedProyectoIdC() || undefined,
-    );
+  eliminar(docUrl: string, tipo: DocTipo): void {
+    const empresaId = asId(this.consumidorContext.empresaSeleccionada()?._id) ?? '';
+    this.service.eliminar(docUrl, tipo, empresaId, this.selectedCentroIdC() || undefined, this.selectedProyectoIdC() || undefined);
   }
 
   // ─── solicitudes (consumidor) ─────────────────────────────────────────────

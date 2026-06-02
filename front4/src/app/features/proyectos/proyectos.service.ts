@@ -31,6 +31,15 @@ export class ProyectosService {
     });
   }
 
+  // Consumidor: carga todos los proyectos de una empresa
+  cargarPorEmpresa(empresaId: string): void {
+    this.loading.set(true);
+    this.http.get<{ data: Proyecto[] } | Proyecto[]>(this.api.url(`/empresas/${empresaId}/proyectos`)).subscribe({
+      next: (res) => { this.proyectos.set(Array.isArray(res) ? res : res.data); this.loading.set(false); },
+      error: (err) => { this.setError(err); this.loading.set(false); },
+    });
+  }
+
   // Consumidor: carga un proyecto con contexto de empresa y centro
   cargarUnoConContexto(empresaId: string, centroId: string, id: string): void {
     this.loading.set(true);

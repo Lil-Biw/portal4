@@ -18,6 +18,20 @@ export class MantencionesService {
     private mailService: MailService,
   ) {}
 
+  async findAllByEmpresa(empresaId: string) {
+    const centros = await this.centroCostoModel
+      .find({ cliente_id: new Types.ObjectId(empresaId), activo: true })
+      .select('_id')
+      .lean();
+    const centroIds = centros.map(c => c._id);
+    return this.mantencionModel
+      .find({ centro_costo_id: { $in: centroIds } })
+      .select('-documentos.contenido')
+      .populate('tipo_id')
+      .sort({ fecha: 1 })
+      .lean();
+  }
+
   findAll(centroCostoId?: string, desde?: string, hasta?: string) {
     const filter: Record<string, unknown> = {};
     if (centroCostoId) filter['centro_costo_id'] = new Types.ObjectId(centroCostoId);

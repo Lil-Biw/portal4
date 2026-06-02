@@ -3,13 +3,18 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { ProyectoDocument } from './proyectos.schema';
 import { CreateProyectoDto, UpdateProyectoDto } from './proyectos.dto';
+import { DocumentosHelper, ArchivoInput } from '../common/helpers/documentos.helper';
 
 @Injectable()
 export class ProyectosService {
+  private readonly docsHelper: DocumentosHelper;
+
   constructor(
     @InjectModel('Proyecto') private proyectoModel: Model<ProyectoDocument>,
     @InjectModel('CentroCosto') private centroCostoModel: Model<any>,
-  ) {}
+  ) {
+    this.docsHelper = new DocumentosHelper(proyectoModel, 'Proyecto');
+  }
 
   private toObjectId(value: string) {
     return new Types.ObjectId(value);
@@ -44,6 +49,18 @@ export class ProyectosService {
 
   async findAll(page = 1, limit = 20) {
     const filter = { estado: { $ne: 'cerrado' } };
+    const [data, total] = await Promise.all([
+      this.proyectoModel.find(filter).select('-documentos.contenido').skip((page - 1) * limit).limit(limit).lean(),
+      this.proyectoModel.countDocuments(filter),
+    ]);
+    return { data, total, page, pages: Math.ceil(total / limit) };
+  }
+
+  async findAllByCliente(cliente_id: string, page = 1, limit = 100) {
+    const filter = {
+      cliente_id: new Types.ObjectId(cliente_id),
+      estado: { $ne: 'cerrado' },
+    };
     const [data, total] = await Promise.all([
       this.proyectoModel.find(filter).select('-documentos.contenido').skip((page - 1) * limit).limit(limit).lean(),
       this.proyectoModel.countDocuments(filter),
@@ -94,59 +111,19 @@ export class ProyectosService {
     return { message: 'Proyecto cerrado', id };
   }
 
-  async agregarDocumento(
-    id: string,
-    archivo: { originalname: string; buffer: Buffer; mimetype: string; size: number },
-    nombreDisplay?: string,
-    categoria?: string,
-    usuarioId?: string,
-  ) {
-    const timestamp = Date.now();
-    const rand = Math.random().toString(36).substring(7);
-    const nombre = `${timestamp}_${rand}_${archivo.originalname}`;
-    const nuevoDoc: Record<string, unknown> = {
-      nombre,
-      nombre_display: nombreDisplay?.trim() || archivo.originalname,
-      tipo_mime: archivo.mimetype,
-      tamano_bytes: archivo.size,
-      contenido: archivo.buffer,
-      subido_en: new Date(),
-    };
-    if (categoria) nuevoDoc['categoria'] = categoria;
-    if (usuarioId) nuevoDoc['subido_por'] = new Types.ObjectId(usuarioId);
-    const proyecto = await this.proyectoModel
-      .findByIdAndUpdate(id, { $push: { documentos: nuevoDoc } }, { new: true })
-      .select('-documentos.contenido')
-      .lean();
-    if (!proyecto) throw new NotFoundException(`Proyecto ${id} no encontrado`);
-    return proyecto.documentos[proyecto.documentos.length - 1];
+  agregarDocumento(id: string, archivo: ArchivoInput, nombreDisplay?: string, categoria?: string, usuarioId?: string) {
+    return this.docsHelper.agregar(id, archivo, nombreDisplay, categoria, usuarioId);
   }
 
-  async listarDocumentos(id: string) {
-    const proyecto = await this.proyectoModel.findById(id).select('-documentos.contenido').lean();
-    if (!proyecto) throw new NotFoundException(`Proyecto ${id} no encontrado`);
-    return proyecto.documentos;
+  listarDocumentos(id: string) {
+    return this.docsHelper.listar(id);
   }
 
-  async servirDocumento(proyectoId: string, docId: string): Promise<{ buffer: Buffer; tipo_mime: string; nombre_display: string }> {
-    const proyecto = await this.proyectoModel.findById(proyectoId);
-    if (!proyecto) throw new NotFoundException(`Proyecto ${proyectoId} no encontrado`);
-    const doc = proyecto.documentos.find(d => String((d as any)._id) === docId);
-    if (!doc) throw new NotFoundException(`Documento ${docId} no encontrado`);
-    const raw = doc.contenido as unknown;
-    const buffer = Buffer.isBuffer(raw) ? raw : Buffer.from(raw as ArrayBuffer);
-    return { buffer, tipo_mime: doc.tipo_mime, nombre_display: doc.nombre_display };
+  servirDocumento(proyectoId: string, docId: string) {
+    return this.docsHelper.servir(proyectoId, docId);
   }
 
-  async eliminarDocumento(proyectoId: string, docId: string) {
-    const proyecto = await this.proyectoModel
-      .findByIdAndUpdate(
-        proyectoId,
-        { $pull: { documentos: { _id: new Types.ObjectId(docId) } } },
-        { new: true },
-      )
-      .lean();
-    if (!proyecto) throw new NotFoundException(`Proyecto ${proyectoId} no encontrado`);
-    return { message: 'Documento eliminado', docId };
+  eliminarDocumento(proyectoId: string, docId: string) {
+    return this.docsHelper.eliminar(proyectoId, docId);
   }
 }

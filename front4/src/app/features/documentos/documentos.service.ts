@@ -159,19 +159,9 @@ export class DocumentosService {
     });
   }
 
-  eliminar(docId: string, tipo: DocTipo, empresaId?: string, centroId?: string, proyectoId?: string): void {
-    if (!empresaId) { this.setUploadStatus(tipo, { type: 'error', text: 'Contexto insuficiente' }); return; }
-    let url: string;
-    if (tipo === 'empresa') {
-      url = this.api.url(`/empresas/${empresaId}/documentos/${docId}`);
-    } else if (tipo === 'proyecto' && centroId && proyectoId) {
-      url = this.api.url(`/empresas/${empresaId}/centros/${centroId}/proyectos/${proyectoId}/documentos/${docId}`);
-    } else if (tipo === 'centro' && centroId) {
-      url = this.api.url(`/empresas/${empresaId}/centros/${centroId}/documentos/${docId}`);
-    } else {
-      this.setUploadStatus(tipo, { type: 'error', text: 'Contexto insuficiente' }); return;
-    }
-    this.http.delete(url).subscribe({
+  eliminar(docUrl: string, tipo: DocTipo, empresaId: string, centroId?: string, proyectoId?: string): void {
+    if (!docUrl) { this.setUploadStatus(tipo, { type: 'error', text: 'URL de documento no disponible' }); return; }
+    this.http.delete(docUrl).subscribe({
       next: () => {
         this.setUploadStatus(tipo, { type: 'ok', text: 'Documento eliminado' });
         if (tipo === 'empresa') this.cargarEmpresa(empresaId);
@@ -183,12 +173,16 @@ export class DocumentosService {
   }
 
   descargar(url: string, nombreDisplay?: string): void {
-    this.http.get(url, { responseType: 'blob' }).subscribe({
-      next: (blob) => {
+    this.http.get(url, { responseType: 'blob', observe: 'response' }).subscribe({
+      next: (response) => {
+        const blob = response.body!;
+        const base = nombreDisplay || 'documento';
+        const ext  = this.extFromMime(response.headers.get('content-type') ?? blob.type);
+        const nombre = base.includes('.') ? base : base + ext;
         const objectUrl = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = objectUrl;
-        a.download = nombreDisplay || 'documento';
+        a.download = nombre;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
@@ -196,6 +190,29 @@ export class DocumentosService {
       },
       error: () => {},
     });
+  }
+
+  private extFromMime(mime: string): string {
+    const m: Record<string, string> = {
+      'application/pdf': '.pdf',
+      'image/png': '.png',
+      'image/jpeg': '.jpg',
+      'image/jpg': '.jpg',
+      'image/gif': '.gif',
+      'image/webp': '.webp',
+      'image/svg+xml': '.svg',
+      'application/msword': '.doc',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document': '.docx',
+      'application/vnd.ms-excel': '.xls',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': '.xlsx',
+      'application/vnd.ms-powerpoint': '.ppt',
+      'application/vnd.openxmlformats-officedocument.presentationml.presentation': '.pptx',
+      'text/plain': '.txt',
+      'text/csv': '.csv',
+      'application/zip': '.zip',
+    };
+    const base = mime.split(';')[0].trim();
+    return m[base] ?? '';
   }
 
   private addUrl(doc: DocumentoItem, path: string): DocumentoItem {

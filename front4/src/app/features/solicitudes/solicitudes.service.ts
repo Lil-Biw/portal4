@@ -76,8 +76,9 @@ export class SolicitudesService {
     if (centroId)   params['centroId']   = centroId;
     if (proyectoId) params['proyectoId'] = proyectoId;
     const qs = Object.keys(params).length ? '?' + new URLSearchParams(params).toString() : '';
-    this.http.get<Solicitud[]>(`${this.api.url(`/empresas/${empresaId}/solicitudes`)}${qs}`).subscribe({
-      next: (data) => {
+    this.http.get<Solicitud[] | { data: Solicitud[] }>(`${this.api.url(`/empresas/${empresaId}/solicitudes`)}${qs}`).subscribe({
+      next: (res) => {
+        const data = Array.isArray(res) ? res : res.data;
         this.solicitudes.set(data.map(s => this.computarAdjuntoUrl(s)));
         this.loading.set(false);
       },

@@ -3,6 +3,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { ProyectoSchema } from './proyectos.schema';
 import { ProyectosController } from './proyectos.controller';
 import { ProyectosAdminController } from './proyectos-admin.controller';
+import { ProyectosEmpresaController } from './proyectos-empresa.controller';
 import { ProyectosService } from './proyectos.service';
 import { CentroCostoSchema } from '../centros-costos/centros-costos.schema';
 
@@ -13,7 +14,7 @@ import { CentroCostoSchema } from '../centros-costos/centros-costos.schema';
       { name: 'CentroCosto', schema: CentroCostoSchema },
     ]),
   ],
-  controllers: [ProyectosController, ProyectosAdminController],
+  controllers: [ProyectosController, ProyectosAdminController, ProyectosEmpresaController],
   providers: [ProyectosService],
   exports: [ProyectosService],
 })

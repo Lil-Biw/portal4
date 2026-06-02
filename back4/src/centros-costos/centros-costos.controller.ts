@@ -48,7 +48,7 @@ export class CentrosCostosController {
   }
 
   @Post(':centroId/documentos')
-  @Roles('super_admin')
+  @Roles('super_admin', 'admin_cliente', 'usuario')
   @UseInterceptors(FileInterceptor('archivo', { storage: memoryStorage() }))
   subirDocumento(
     @Param('centroId') centroId: string,
@@ -78,7 +78,7 @@ export class CentrosCostosController {
   }
 
   @Delete(':centroId/documentos/:docId')
-  @Roles('super_admin')
+  @Roles('super_admin', 'admin_cliente', 'usuario')
   eliminarDocumento(
     @Param('centroId') centroId: string,
     @Param('docId') docId: string,

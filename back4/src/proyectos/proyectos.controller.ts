@@ -52,7 +52,7 @@ export class ProyectosController {
   }
 
   @Post(':proyectoId/documentos')
-  @Roles('super_admin')
+  @Roles('super_admin', 'admin_cliente', 'usuario')
   @UseInterceptors(FileInterceptor('archivo', { storage: memoryStorage() }))
   subirDocumento(
     @Param('proyectoId') proyectoId: string,
@@ -82,7 +82,7 @@ export class ProyectosController {
   }
 
   @Delete(':proyectoId/documentos/:docId')
-  @Roles('super_admin')
+  @Roles('super_admin', 'admin_cliente', 'usuario')
   eliminarDocumento(
     @Param('proyectoId') proyectoId: string,
     @Param('docId') docId: string,

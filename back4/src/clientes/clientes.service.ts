@@ -3,10 +3,15 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Cliente, ClienteDocument } from './clientes.schema';
 import { CreateClienteDto, UpdateClienteDto } from './clientes.dto';
+import { DocumentosHelper, ArchivoInput } from '../common/helpers/documentos.helper';
 
 @Injectable()
 export class ClientesService {
-  constructor(@InjectModel('Cliente') private clienteModel: Model<ClienteDocument>) {}
+  private readonly docsHelper: DocumentosHelper;
+
+  constructor(@InjectModel('Cliente') private clienteModel: Model<ClienteDocument>) {
+    this.docsHelper = new DocumentosHelper(clienteModel, 'Cliente', '-logo.contenido -documentos.contenido');
+  }
 
   async create(dto: CreateClienteDto) {
     const existe = await this.clienteModel.findOne({ rut: dto.rut });
@@ -69,58 +74,19 @@ export class ClientesService {
     return { buffer, tipo_mime: cliente.logo.tipo_mime, nombre: cliente.logo.nombre };
   }
 
-  async agregarDocumento(
-    id: string,
-    archivo: { originalname: string; buffer: Buffer; mimetype: string; size: number },
-    nombreDisplay?: string,
-    categoria?: string,
-  ) {
-    const timestamp = Date.now();
-    const rand = Math.random().toString(36).substring(7);
-    const nombre = `${timestamp}_${rand}_${archivo.originalname}`;
-    const nuevoDoc: Record<string, unknown> = {
-      nombre,
-      nombre_display: nombreDisplay?.trim() || archivo.originalname,
-      tipo_mime: archivo.mimetype,
-      tamano_bytes: archivo.size,
-      contenido: archivo.buffer,
-      subido_en: new Date(),
-    };
-    if (categoria) nuevoDoc['categoria'] = categoria;
-    const cliente = await this.clienteModel
-      .findByIdAndUpdate(id, { $push: { documentos: nuevoDoc } }, { new: true })
-      .select('-logo.contenido -documentos.contenido')
-      .lean();
-    if (!cliente) throw new NotFoundException(`Cliente ${id} no encontrado`);
-    return cliente.documentos[cliente.documentos.length - 1];
+  agregarDocumento(id: string, archivo: ArchivoInput, nombreDisplay?: string, categoria?: string) {
+    return this.docsHelper.agregar(id, archivo, nombreDisplay, categoria);
   }
 
-  async listarDocumentos(id: string) {
-    const cliente = await this.clienteModel.findById(id).select('-logo.contenido -documentos.contenido').lean();
-    if (!cliente) throw new NotFoundException(`Cliente ${id} no encontrado`);
-    return cliente.documentos ?? [];
+  listarDocumentos(id: string) {
+    return this.docsHelper.listar(id);
   }
 
-  async servirDocumento(clienteId: string, docId: string): Promise<{ buffer: Buffer; tipo_mime: string; nombre_display: string }> {
-    const cliente = await this.clienteModel.findById(clienteId);
-    if (!cliente) throw new NotFoundException(`Cliente ${clienteId} no encontrado`);
-    const doc = (cliente.documentos ?? []).find(d => String((d as any)._id) === docId);
-    if (!doc) throw new NotFoundException(`Documento ${docId} no encontrado`);
-    const raw = (doc as any).contenido as unknown;
-    const buffer = Buffer.isBuffer(raw) ? raw : Buffer.from(raw as ArrayBuffer);
-    return { buffer, tipo_mime: (doc as any).tipo_mime, nombre_display: (doc as any).nombre_display };
+  servirDocumento(clienteId: string, docId: string) {
+    return this.docsHelper.servir(clienteId, docId);
   }
 
-  async eliminarDocumento(clienteId: string, docId: string) {
-    const { Types } = await import('mongoose');
-    const cliente = await this.clienteModel
-      .findByIdAndUpdate(
-        clienteId,
-        { $pull: { documentos: { _id: new Types.ObjectId(docId) } } },
-        { new: true },
-      )
-      .lean();
-    if (!cliente) throw new NotFoundException(`Cliente ${clienteId} no encontrado`);
-    return { message: 'Documento eliminado', docId };
+  eliminarDocumento(clienteId: string, docId: string) {
+    return this.docsHelper.eliminar(clienteId, docId);
   }
 }

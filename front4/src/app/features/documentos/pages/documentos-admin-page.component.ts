@@ -171,7 +171,7 @@ export class DocumentosAdminPageComponent implements OnInit {
     if (!file) return;
     const p = this.panels[tipo];
     p.selectedFile = file;
-    if (!p.nombreInput) p.nombreInput = file.name.replace(/\.[^/.]+$/, '');
+    if (!p.nombreInput) p.nombreInput = file.name;
   }
 
   confirmarSubida(tipo: DocTipo): void {
@@ -205,16 +205,13 @@ export class DocumentosAdminPageComponent implements OnInit {
     const docs = tipo === 'empresa' ? this.service.documentosEmpresa()
       : tipo === 'centro' ? this.service.documentosCentro()
       : this.service.documentosProyecto();
-    return docs;
+    const filtros = this.panels[tipo].filtrosCategorias;
+    if (!filtros.length) return docs;
+    return docs.filter(d => filtros.includes(d.categoria ?? ''));
   }
 
-  eliminar(docId: string, tipo: DocTipo): void {
-    this.service.eliminar(
-      docId, tipo,
-      this.selectedEmpresaId,
-      (this.selectedCentroId && this.selectedCentroId !== 'todos') ? this.selectedCentroId : undefined,
-      (this.selectedProyectoId && this.selectedProyectoId !== 'todos') ? this.selectedProyectoId : undefined,
-    );
+  eliminar(docUrl: string, tipo: DocTipo): void {
+    this.service.eliminar(docUrl, tipo, this.selectedEmpresaId, this.selectedCentroId || undefined, this.selectedProyectoId || undefined);
   }
 
   // ─── solicitudes (admin) ─────────────────────────────────────────────────

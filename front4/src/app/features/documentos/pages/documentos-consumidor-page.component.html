@@ -67,29 +67,11 @@
 
   @if (tabConsumidorActiva() === 'documentacion') {
 
-  <!-- SECCIÓN A: Mis documentos (empresa) -->
+  <!-- SECCIÓN A: Mis documentos (empresa) — solo lectura para usuarios; administrador gestiona esta sección -->
   <div class="card" style="margin-bottom:1rem">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem">
       <h3 style="margin:0;font-size:.95rem;font-weight:700">Documentos de Empresa</h3>
-      <div style="display:flex;gap:.5rem">
-        <button class="btn-primary" style="font-size:.8rem;padding:.45rem .9rem" (click)="toggleUpload('empresa')">+ Subir</button>
-        <button class="btn-ghost"   style="font-size:.8rem;padding:.45rem .9rem" (click)="toggleFilter('empresa')">Buscar ▾</button>
-      </div>
-    </div>
-    <div *ngIf="panels['empresa'].showUpload" style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:.5rem;padding:1rem;margin-bottom:.75rem">
-      <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:.75rem;align-items:end">
-        <label class="field" style="margin:0"><span>Archivo</span><input type="file" (change)="onFileSelected($event,'empresa')" style="padding:.3rem" /></label>
-        <label class="field" style="margin:0"><span>Nombre</span><input type="text" [(ngModel)]="panels['empresa'].nombreInput" placeholder="Nombre del documento" /></label>
-        <label class="field" style="margin:0"><span>Tipo</span>
-          <select [(ngModel)]="panels['empresa'].categoriaInput">
-            <option *ngFor="let cat of categorias" [value]="cat">{{ cat }}</option>
-          </select>
-        </label>
-      </div>
-      <div style="display:flex;gap:.5rem;margin-top:.75rem">
-        <button class="btn-primary" style="font-size:.8rem;padding:.45rem .9rem" (click)="confirmarSubida('empresa')" [disabled]="!panels['empresa'].selectedFile">Confirmar subida</button>
-        <button class="btn-ghost"   style="font-size:.8rem;padding:.45rem .9rem" (click)="toggleUpload('empresa')">Cancelar</button>
-      </div>
+      <button class="btn-ghost" style="font-size:.8rem;padding:.45rem .9rem" (click)="toggleFilter('empresa')">Buscar ▾</button>
     </div>
     <div *ngIf="panels['empresa'].showFilter" style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:.5rem;padding:.75rem;margin-bottom:.75rem">
       <p style="margin:0 0 .5rem;font-size:.8rem;font-weight:600;color:#374151">Filtrar por tipo</p>
@@ -106,10 +88,7 @@
         <span style="font-size:.7rem;font-weight:600;padding:.2rem .5rem;border-radius:999px;background:#e0e7ff;color:#3730a3">{{ d.categoria }}</span>
         <span style="font-size:.875rem">{{ d.nombre_display }}</span>
       </div>
-      <div style="display:flex;gap:.5rem">
-        <button class="btn-ghost"  style="font-size:.78rem;padding:.35rem .7rem" (click)="service.descargar(d.url, d.nombre_display)">Descargar</button>
-        <button class="btn-danger" style="font-size:.78rem;padding:.35rem .7rem" (click)="eliminar(d._id,'empresa')">Eliminar</button>
-      </div>
+      <button class="btn-ghost" style="font-size:.78rem;padding:.35rem .7rem" (click)="service.descargar(d.url, d.nombre_display)">Descargar</button>
     </div>
   </div>
 
@@ -155,7 +134,7 @@
         </div>
         <div style="display:flex;gap:.5rem">
           <button class="btn-ghost"  style="font-size:.78rem;padding:.35rem .7rem" (click)="service.descargar(d.url, d.nombre_display)">Descargar</button>
-          <button class="btn-danger" style="font-size:.78rem;padding:.35rem .7rem" (click)="eliminar(d._id,'centro')">Eliminar</button>
+          <button class="btn-danger" style="font-size:.78rem;padding:.35rem .7rem" (click)="eliminar(d.url,'centro')">Eliminar</button>
         </div>
       </div>
     </div>
@@ -229,7 +208,7 @@
         </div>
         <div style="display:flex;gap:.5rem">
           <button class="btn-ghost"  style="font-size:.78rem;padding:.35rem .7rem" (click)="service.descargar(d.url, d.nombre_display)">Descargar</button>
-          <button class="btn-danger" style="font-size:.78rem;padding:.35rem .7rem" (click)="eliminar(d._id,'proyecto')">Eliminar</button>
+          <button class="btn-danger" style="font-size:.78rem;padding:.35rem .7rem" (click)="eliminar(d.url,'proyecto')">Eliminar</button>
         </div>
       </div>
     </div>

@@ -21,7 +21,7 @@ export class NoticiasService {
 
   async create(dto: CreateNoticiaDto) {
     const noticia = await new this.noticiaModel(dto).save();
-    await this.notificarTodosLosUsuarios(noticia);
+    void this.notificarTodosLosUsuarios(noticia);
     return noticia;
   }
 
@@ -67,10 +67,18 @@ export class NoticiasService {
       .lean();
   }
 
+  async findOne(id: string) {
+    const noticia = await this.noticiaModel.findById(id).lean();
+    if (!noticia) throw new NotFoundException(`Noticia ${id} no encontrada`);
+    return noticia;
+  }
+
   async getImagen(id: string): Promise<{ data: Buffer; mimetype: string }> {
-    const noticia = await this.noticiaModel.findById(id).select('imagen_data imagen_mimetype').lean();
+    const noticia = await this.noticiaModel.findById(id).select('imagen_data imagen_mimetype').exec();
     if (!noticia || !noticia.imagen_data) throw new NotFoundException(`Imagen de noticia ${id} no encontrada`);
-    return { data: noticia.imagen_data as Buffer, mimetype: noticia.imagen_mimetype || 'image/jpeg' };
+    const raw = noticia.imagen_data as unknown;
+    const data = Buffer.isBuffer(raw) ? raw : Buffer.from((raw as { buffer: ArrayBuffer }).buffer);
+    return { data, mimetype: noticia.imagen_mimetype || 'image/jpeg' };
   }
 
   async remove(id: string) {

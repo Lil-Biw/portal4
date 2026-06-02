@@ -7,7 +7,7 @@ import { memoryStorage } from 'multer';
 import { Response } from 'express';
 import { NoticiasService } from './noticias.service';
 import { CreateNoticiaDto } from './noticias.dto';
-import { Roles } from '../common/guards/guards';
+import { Roles, Public } from '../common/guards/guards';
 
 @Controller('noticias')
 export class NoticiasController {
@@ -18,7 +18,13 @@ export class NoticiasController {
     return this.noticiasService.findAll();
   }
 
+  @Get(':id')
+  findOne(@Param('id') id: string) {
+    return this.noticiasService.findOne(id);
+  }
+
   @Get(':id/imagen')
+  @Public()
   async getImagen(@Param('id') id: string, @Res() res: Response) {
     const { data, mimetype } = await this.noticiasService.getImagen(id);
     res.setHeader('Content-Type', mimetype);

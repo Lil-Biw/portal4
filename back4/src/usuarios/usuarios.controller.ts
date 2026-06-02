@@ -7,6 +7,8 @@ import { UsuariosService } from './usuarios.service';
 import { CreateUsuarioDto, UpdateUsuarioDto, CambiarPasswordDto } from './usuarios.dto';
 import { Roles } from '../common/guards/guards';
 
+interface JwtUser { sub: string; email: string; rol: string; cliente_id?: string; }
+
 @Controller('usuarios')
 export class UsuariosController {
   constructor(private readonly usuariosService: UsuariosService) {}
@@ -18,8 +20,12 @@ export class UsuariosController {
   }
 
   @Get()
-  findAll(@Query('page') page = '1', @Query('limit') limit = '20') {
-    return this.usuariosService.findAll(+page, +limit);
+  findAll(@Query('page') page = '1', @Query('limit') limit = '20', @Req() req: Request) {
+    const user = (req as any).user as JwtUser;
+    if (user?.rol === 'super_admin') {
+      return this.usuariosService.findAll(+page, +limit);
+    }
+    return this.usuariosService.findAllByCliente(user.cliente_id!, +page, +limit);
   }
 
   @Get(':id')
