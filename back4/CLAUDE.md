@@ -202,11 +202,14 @@ Endpoints (no siguen convención REST estándar):
 
 `AuthModule` está registrado en `app.module.ts`. `JwtAuthGuard` y `RolesGuard` están activos como guards globales vía `APP_GUARD`.
 
-**Problemas de seguridad conocidos (ver PORTAL4_problemas.md):**
-- Endpoints `GET /usuarios` sin `@Roles()` — cualquier usuario autenticado puede enumerar todos los usuarios
-- Ningún endpoint valida que el recurso pertenezca al tenant del usuario (cross-tenant leak)
-- Sin rate limiting en `POST /auth/login`
-- Path traversal en módulo documentos via `empresa_nombre`/`filename`
+**Problemas de seguridad conocidos (ver `PORTAL4_problemas.md` en la raíz del repo):**
+- ✅ ~~`GET /usuarios` sin `@Roles()`~~ — **SOLUCIONADO**: ahora filtra por `cliente_id` cuando no es super_admin
+- ⚠️ **Cross-tenant leak** en documentos de centros/proyectos/mantenciones — `centroId` no se valida contra `empresaId` en el servicio (ver §1.1)
+- ⚠️ Sin rate limiting en `POST /auth/login` (ver §1.3)
+- ✅ ~~Path traversal en módulo documentos~~ — **OBSOLETO**: módulo filesystem eliminado, documentos en MongoDB
+- ✅ ~~`getImagen()` en noticias sin `@Public()`~~ — **SOLUCIONADO**: endpoint marcado como público; las imágenes ya cargan sin JWT
+- ⚠️ `notificarRechazoSolicitud` no notifica a super_admins (ver §2.2)
+- ⚠️ FK `@IsOptional` en DTOs de centros/proyectos con `!` en servicio (ver §3.1)
 
 ## Convenciones
 

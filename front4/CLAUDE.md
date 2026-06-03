@@ -187,7 +187,7 @@ Agregar `<app-status-banner>` dentro del modal para mostrar errores sin cerrarlo
 
 ## Patrón de calendario — mantenciones
 
-**Deuda técnica:** La lógica de calendario (~94 líneas) está duplicada entre `mantenciones-page.component.ts` y `mis-mantenciones-page.component.ts`. El algoritmo de relleno de celdas ya diverge sutilmente. Antes de modificar el calendario, considerar extraer un `CalendarService` o componente `<app-calendar>` compartido.
+✅ ~~**Deuda técnica:** La lógica de calendario (~94 líneas) está duplicada~~. **SOLUCIONADO**: extraída a `src/app/shared/calendar-state.ts` como función `createCalendarState()`. Ambos componentes ahora delegan en `_cal = createCalendarState()`.
 
 El calendario (vista mes y semana) está implementado en `mantenciones-page.component.ts` y `mis-mantenciones-page.component.ts`.
 
@@ -261,14 +261,16 @@ router.navigate(['/documentos'], {
 
 ## Problemas de seguridad conocidos
 
-Ver `PORTAL4_problemas.md` (raíz del repo) para el listado completo. Los más relevantes para el frontend:
+Ver `PORTAL4_problemas.md` (raíz del repo) para el listado completo. Estado actualizado:
 
-- **JWT en localStorage** — `auth.service.ts` guarda token en `localStorage`. Vulnerable a XSS.
-- **Interceptor sin 401** — `auth.interceptor.ts` no detecta token expirado ni redirige al login.
-- **`environment.prod.ts`** — apunta a `localhost:3000`. Corregir antes de cualquier deploy.
-- **Modo admin/consumidor** — `profile.service.ts` usa `localStorage`; manipulable desde DevTools. Las rutas admin siguen protegidas por `soloAdminGuard` (seguro), pero la lógica UI que depende solo de `profile.mode()` puede ser engañada.
-- **`scoreDeProyecto()`** en `mis-proyectos-page` — método ordinario llamado en el template; recalcula en cada change detection. Convertir a `computed` antes de agregar más lógica.
-- **`effect()` sin cleanup** en `documentos-consumidor-page.component.ts` — inyectar `DestroyRef` al agregar nuevos efectos.
+- ⚠️ **JWT en localStorage** — `auth.service.ts` guarda token en `localStorage`. Vulnerable a XSS (ver §1.4).
+- ✅ ~~**Interceptor sin 401**~~ — **SOLUCIONADO**: `auth.interceptor.ts` ya maneja 401 con logout automático y flag anti-bucle.
+- ✅ ~~**`environment.prod.ts`** apunta a `localhost:3000`~~ — **SOLUCIONADO**: `scripts/set-env.js` ahora falla en producción si `API_URL` no está definida.
+- ⚠️ **Modo admin/consumidor** — `profile.service.ts` usa `localStorage`; manipulable desde DevTools (ver §1.5).
+- ⚠️ **`scoreDeProyecto()`** en `mis-proyectos-page` — método ordinario en template; recalcula en cada change detection (ver §2.5).
+- ⚠️ **`effect()` sin cleanup** en `documentos-consumidor-page.component.ts` — falta `DestroyRef` (ver §2.6).
+- ✅ ~~**Filtro de categorías sin efecto**~~ — **SOLUCIONADO**: `docsFiltrados()` ahora aplica `filtrosCategorias` en admin y consumidor.
+- ✅ ~~**`eliminar()` parseaba IDs del URL con regex**~~ — **SOLUCIONADO**: ahora recibe `empresaId/centroId/proyectoId` como parámetros explícitos.
 
 ## Guía para el agente IA
 

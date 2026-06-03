@@ -116,6 +116,7 @@ export class CambiarPasswordPageComponent {
       password_nueva:  this.passwordNueva,
     }).subscribe({
       next: () => {
+        this.cargando.set(false);
         this.auth.actualizarUsuario({ debe_cambiar_password: false });
         this.ok.set('Contraseña actualizada correctamente. Redirigiendo...');
         const esSuperAdmin = this.auth.usuarioActual()?.rol === 'super_admin';

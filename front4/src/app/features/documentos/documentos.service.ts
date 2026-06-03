@@ -1,6 +1,7 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { forkJoin } from 'rxjs';
+import { forkJoin, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 import { ApiService } from '../../core/services/api.service';
 import { Status } from '../../shared/models/status.model';
 
@@ -88,7 +89,9 @@ export class DocumentosService {
     this.documentosPorCentro.set([]);
     if (!centros.length) return;
     const calls = centros.map(c =>
-      this.http.get<DocumentoItem[]>(this.api.url(`/empresas/${empresaId}/centros/${c._id}/documentos`))
+      this.http.get<DocumentoItem[]>(this.api.url(`/empresas/${empresaId}/centros/${c._id}/documentos`)).pipe(
+        catchError(() => of([] as DocumentoItem[]))
+      )
     );
     forkJoin(calls).subscribe({
       next: results => this.documentosPorCentro.set(
@@ -97,7 +100,6 @@ export class DocumentosService {
           docs: results[i].map(d => this.addUrl(d, `/empresas/${empresaId}/centros/${c._id}/documentos/${d._id}`)),
         })).filter(x => x.docs.length > 0)
       ),
-      error: () => this.documentosPorCentro.set([]),
     });
   }
 

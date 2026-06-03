@@ -103,7 +103,7 @@ export class MantencionesService {
     });
   }
 
-  subirDocumento(id: string, archivo: File, nombreDisplay?: string, onSuccess?: () => void): void {
+  subirDocumento(id: string, archivo: File, nombreDisplay?: string, onSuccess?: () => void, onError?: () => void): void {
     const centroId = this.mantenciones().find(m => m._id === id)?.centro_costo_id;
     const empresaId = centroId ? this.getEmpresaId(centroId) : undefined;
     if (!empresaId || !centroId) { this.setError({ error: { message: 'Centro no encontrado' } }); return; }
@@ -119,7 +119,7 @@ export class MantencionesService {
         this.status.set({ type: 'ok', text: 'Documento adjuntado correctamente' });
         onSuccess?.();
       },
-      error: err => this.setError(err),
+      error: err => { this.setError(err); onError?.(); },
     });
   }
 

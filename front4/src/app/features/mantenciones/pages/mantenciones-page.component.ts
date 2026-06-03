@@ -200,9 +200,10 @@ export class MantencionesPageComponent implements OnInit {
       return;
     }
     const { file, nombre } = this.docsPendientes[index];
-    this.service.subirDocumento(mantencionId, file, nombre, () => {
-      this.subirDocsPendientesSecuencial(mantencionId, index + 1);
-    });
+    this.service.subirDocumento(mantencionId, file, nombre,
+      () => { this.subirDocsPendientesSecuencial(mantencionId, index + 1); },
+      () => { this.subiendoDocs = false; },
+    );
   }
 
   abrirCrear(fecha = ''): void {
