@@ -137,7 +137,6 @@ export class MiProyectoDetallePageComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     const id  = this.route.snapshot.paramMap.get('id')!;
     const emp = this.empresa();
-    this.centrosService.cargar();
     if (!this.consumidorContext.proyectoSeleccionado()) {
       this.proyectosService.cargarUno(id);
     }

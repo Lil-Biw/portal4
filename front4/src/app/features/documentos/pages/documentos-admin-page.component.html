@@ -55,7 +55,7 @@
 @if (tabAdminActiva() === 'documentacion') {
 
   <!-- SECCIÓN A admin: Documentos empresa -->
-  <div class="card" style="margin-bottom:1rem">
+  <div class="card" style="margin-bottom:1rem;border-left:4px solid #0095d6;background:#f0f9ff">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem">
       <h3 style="margin:0;font-size:.95rem;font-weight:700">Documentos de empresa</h3>
       <div style="display:flex;gap:.5rem">
@@ -102,7 +102,7 @@
 
   <!-- SECCIÓN A2 admin: Documentos centro -->
   @if (selectedCentroId && selectedCentroId !== 'todos') {
-    <div class="card" style="margin-bottom:1rem">
+    <div class="card" style="margin-bottom:1rem;border-left:4px solid #10b981;background:#f0fdf4">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem">
         <h3 style="margin:0;font-size:.95rem;font-weight:700">Documentos de centro: {{ centroNombre }}</h3>
         <div style="display:flex;gap:.5rem">
@@ -150,7 +150,7 @@
 
   <!-- SECCIÓN A3 admin: Documentos proyecto -->
   @if (selectedProyectoId && selectedProyectoId !== 'todos') {
-    <div class="card" style="margin-bottom:1rem">
+    <div class="card" style="margin-bottom:1rem;border-left:4px solid #f59e0b;background:#fffbeb">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem">
         <h3 style="margin:0;font-size:.95rem;font-weight:700">Documentos de proyecto: {{ proyectoNombre }}</h3>
         <div style="display:flex;gap:.5rem">

@@ -15,8 +15,16 @@ export class NoticiasService {
     private mailService: MailService,
   ) {}
 
-  findAll() {
-    return this.noticiaModel.find({ activo: true }).sort({ creado_en: -1 }).lean();
+  async findAll(): Promise<object[]> {
+    const noticias = await this.noticiaModel
+      .find({ activo: true })
+      .sort({ creado_en: -1 })
+      .select('-imagen_data')
+      .lean();
+    return noticias.map(n => ({
+      ...n,
+      imagen_url: n.imagen_mimetype ? `/api/v1/noticias/${n._id}/imagen` : '',
+    }));
   }
 
   async create(dto: CreateNoticiaDto) {
@@ -74,10 +82,18 @@ export class NoticiasService {
   }
 
   async getImagen(id: string): Promise<{ data: Buffer; mimetype: string }> {
-    const noticia = await this.noticiaModel.findById(id).select('imagen_data imagen_mimetype').exec();
+    const noticia = await this.noticiaModel.findById(id).select('imagen_data imagen_mimetype').lean();
     if (!noticia || !noticia.imagen_data) throw new NotFoundException(`Imagen de noticia ${id} no encontrada`);
     const raw = noticia.imagen_data as unknown;
-    const data = Buffer.isBuffer(raw) ? raw : Buffer.from((raw as { buffer: ArrayBuffer }).buffer);
+    let data: Buffer;
+    if (Buffer.isBuffer(raw)) {
+      data = raw;
+    } else if (raw && typeof raw === 'object' && 'buffer' in (raw as object)) {
+      const buf = (raw as { buffer: Buffer | ArrayBuffer }).buffer;
+      data = Buffer.isBuffer(buf) ? buf : Buffer.from(buf);
+    } else {
+      data = Buffer.from(raw as ArrayBuffer);
+    }
     return { data, mimetype: noticia.imagen_mimetype || 'image/jpeg' };
   }
 

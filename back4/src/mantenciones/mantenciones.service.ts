@@ -28,6 +28,7 @@ export class MantencionesService {
       .find({ centro_costo_id: { $in: centroIds } })
       .select('-documentos.contenido')
       .populate('tipo_id')
+      .populate('activo_ids')
       .sort({ fecha: 1 })
       .lean();
   }
@@ -44,6 +45,7 @@ export class MantencionesService {
       .find(filter)
       .select('-documentos.contenido')
       .populate('tipo_id')
+      .populate('activo_ids')
       .sort({ fecha: 1 })
       .lean();
   }

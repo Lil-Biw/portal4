@@ -209,6 +209,17 @@ export class TopbarComponent implements OnInit {
       const empresa = clientes.find(c => c._id === usuario.cliente_id) ?? null;
       if (empresa) untracked(() => this.consumidorContext.seleccionar(empresa));
     });
+
+    // Para consumidores (no super_admin): carga centros y mantenciones de su empresa al seleccionarla
+    effect(() => {
+      const empresa = this.consumidorContext.empresaSeleccionada();
+      if (empresa && !this.esSuperAdmin) {
+        untracked(() => {
+          this.centrosService.cargarPorEmpresa(empresa._id);
+          this.mantencionesService.cargarPorEmpresa(empresa._id);
+        });
+      }
+    });
   }
 
   get modeLabel() { return this.mode === 'admin' ? 'Administrador' : 'Consumidor'; }
@@ -276,7 +287,9 @@ export class TopbarComponent implements OnInit {
 
   ngOnInit(): void {
     this.clientesService.cargar();
-    this.centrosService.cargar();
+    if (this.esSuperAdmin) {
+      this.centrosService.cargar();
+    }
   }
 
   irADocumentos(): void {

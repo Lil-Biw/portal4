@@ -224,7 +224,7 @@ export class MantencionesPageComponent implements OnInit {
       tipo_id:         asId(typeof m.tipo_id === 'object' ? (m.tipo_id as TipoMantencion)._id : m.tipo_id),
       empresa_id:      centro ? asId(centro.cliente_id) : '',
       centro_costo_id: centroId,
-      activo_ids:      m.activo_ids ?? [],
+      activo_ids:      (m.activo_ids ?? []).map(a => asId(typeof a === 'object' ? (a as { _id: string })._id : a)),
       fecha:           m.fecha.slice(0, 10),
     });
     this.showModal.set(true);

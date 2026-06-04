@@ -1,5 +1,7 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { forkJoin, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 import { ApiService } from '../../core/services/api.service';
 import { Activo, CreateActivoDto, UpdateActivoDto } from '../../shared/models/activo.model';
 import { Status } from '../../shared/models/status.model';
@@ -25,6 +27,29 @@ export class ActivosService {
     this.http.get<Activo[]>(url).subscribe({
       next: (res) => { this.activos.set(res); this.loading.set(false); },
       error: (err) => { this.setError(err); this.loading.set(false); },
+    });
+  }
+
+  // Consumidor: carga activos de un único centro
+  cargarParaConsumidor(empresaId: string, centroId: string): void {
+    this.loading.set(true);
+    this.http.get<Activo[]>(this.api.url(`/empresas/${empresaId}/centros/${centroId}/activos`)).subscribe({
+      next: (res) => { this.activos.set(res); this.loading.set(false); },
+      error: (err) => { this.setError(err); this.loading.set(false); },
+    });
+  }
+
+  // Consumidor: carga activos de todos los centros de una empresa en paralelo
+  cargarPorCentros(empresaId: string, centroIds: string[]): void {
+    if (!centroIds.length) { this.activos.set([]); return; }
+    this.loading.set(true);
+    const reqs = centroIds.map(id =>
+      this.http.get<Activo[]>(this.api.url(`/empresas/${empresaId}/centros/${id}/activos`))
+        .pipe(catchError(() => of([] as Activo[])))
+    );
+    forkJoin(reqs).subscribe(resultados => {
+      this.activos.set(resultados.flat());
+      this.loading.set(false);
     });
   }
 

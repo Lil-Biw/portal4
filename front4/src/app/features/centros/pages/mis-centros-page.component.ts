@@ -161,8 +161,6 @@ export class MisCentrosPageComponent implements OnInit, OnDestroy {
     if (emp) {
       this.service.cargarPorEmpresa(emp._id);
       this.solicitudesService.cargar(emp._id);
-    } else {
-      this.service.cargar();
     }
   }
 
@@ -174,8 +172,10 @@ export class MisCentrosPageComponent implements OnInit, OnDestroy {
   seleccionarCentro(centro: CentroCosto): void {
     this.consumidorContext.seleccionarCentro(centro);
     const emp = this.empresa;
-    if (emp) this.documentosService.cargar('centro', emp._id, asId(centro._id));
-    this.activosService.cargar(asId(centro._id));
+    if (emp) {
+      this.documentosService.cargar('centro', emp._id, asId(centro._id));
+      this.activosService.cargarParaConsumidor(emp._id, asId(centro._id));
+    }
   }
 
   irADocumentos(tab: 'documentacion' | 'solicitudes'): void {

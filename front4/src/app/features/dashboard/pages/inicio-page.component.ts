@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, computed, effect } from '@angular/core';
+import { Component, OnInit, inject, computed, effect, untracked } from '@angular/core';
 import { StatChipComponent, ChipVariant } from '../../../shared/components/stat-chip/stat-chip.component';
 import { ConsumidorContextService } from '../../../profile/consumidor-context.service';
 import { CentrosService } from '../../centros/centros.service';
@@ -101,15 +101,20 @@ export class InicioPageComponent implements OnInit {
   constructor() {
     effect(() => {
       const empresa = this.consumidorContext.empresaSeleccionada();
-      if (empresa) this.solicitudesService.cargar(empresa._id);
-      else this.solicitudesService.cargar('');
+      if (empresa) {
+        untracked(() => {
+          this.centrosService.cargarPorEmpresa(empresa._id);
+          this.proyectosService.cargarPorEmpresa(empresa._id);
+          this.mantencionesService.cargarPorEmpresa(empresa._id);
+          this.solicitudesService.cargar(empresa._id);
+        });
+      } else {
+        untracked(() => this.solicitudesService.cargar(''));
+      }
     });
   }
 
   ngOnInit(): void {
-    this.centrosService.cargar();
-    this.proyectosService.cargar();
-    this.mantencionesService.cargar();
     this.noticiasService.cargar();
   }
 

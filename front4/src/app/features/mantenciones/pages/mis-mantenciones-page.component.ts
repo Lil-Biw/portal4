@@ -29,9 +29,19 @@ export class MisMantencionesPageComponent implements OnInit {
     effect(() => {
       const empresa = this.ctx.empresaSeleccionada();
       if (empresa) {
-        this.service.cargarPorEmpresa(empresa._id as string);
+        const id = empresa._id as string;
+        this.centrosService.cargarPorEmpresa(id);
+        this.service.cargarPorEmpresa(id);
       } else {
         this.service.mantenciones.set([]);
+      }
+    });
+
+    effect(() => {
+      const empresa = this.ctx.empresaSeleccionada();
+      const centroIds = [...this.centroIdsPorEmpresa()];
+      if (empresa && centroIds.length > 0) {
+        this.activosService.cargarPorCentros(asId(empresa._id), centroIds);
       }
     });
   }
@@ -53,7 +63,11 @@ export class MisMantencionesPageComponent implements OnInit {
   protected activosDetalle = computed(() => {
     const m = this.mantencionDetalle();
     if (!m || !m.activo_ids?.length) return [];
-    return this.activosService.activos().filter(a => m.activo_ids!.includes(asId(a._id)));
+    const todos = this.activosService.activos();
+    return m.activo_ids.map(a => {
+      if (typeof a === 'object' && a !== null) return a as import('../../../shared/models/activo.model').Activo;
+      return todos.find(x => asId(x._id) === asId(a as string)) ?? null;
+    }).filter((a): a is import('../../../shared/models/activo.model').Activo => a !== null);
   });
 
   protected historialDetalle = computed(() => {
@@ -131,8 +145,6 @@ export class MisMantencionesPageComponent implements OnInit {
 
   ngOnInit(): void {
     this.tiposService.cargar();
-    this.centrosService.cargar();
-    this.activosService.cargar();
   }
 }
 

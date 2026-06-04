@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, computed } from '@angular/core';
+import { Component, inject, computed, effect, untracked } from '@angular/core';
 import { Router } from '@angular/router';
 import { ConsumidorContextService } from '../../../profile/consumidor-context.service';
 import { SolicitudesService } from '../../solicitudes/solicitudes.service';
@@ -17,10 +17,22 @@ import { asId } from '../../../shared/utils';
   imports: [StatChipComponent, SpiderChartComponent],
   templateUrl: './mi-ficha-page.component.html',
 })
-export class MiFichaPageComponent implements OnInit {
+export class MiFichaPageComponent {
   private readonly consumidorContext   = inject(ConsumidorContextService);
   private readonly solicitudesService  = inject(SolicitudesService);
   private readonly centrosService      = inject(CentrosService);
+
+  constructor() {
+    effect(() => {
+      const emp = this.consumidorContext.empresaSeleccionada();
+      if (emp) {
+        untracked(() => {
+          this.proyectosService.cargarPorEmpresa(emp._id);
+          this.solicitudesService.cargar(emp._id);
+        });
+      }
+    });
+  }
   private readonly proyectosService    = inject(ProyectosService);
   private readonly mantencionesService = inject(MantencionesService);
   private readonly router              = inject(Router);
@@ -113,13 +125,6 @@ export class MiFichaPageComponent implements OnInit {
     { nombre: 'Certificado OHSAS 18001',   vencimiento: '15 ago 2026' },
   ];
 
-  ngOnInit(): void {
-    this.centrosService.cargar();
-    this.proyectosService.cargar();
-    this.mantencionesService.cargar();
-    const emp = this.empresa();
-    if (emp) this.solicitudesService.cargar(emp._id);
-  }
 
   protected esPasada(fecha: string): boolean {
     return new Date(fecha) < new Date();

@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, computed, signal, effect } from '@angular/core';
+import { Component, inject, computed, signal, effect } from '@angular/core';
 import { Router } from '@angular/router';
 import { ProyectosService } from '../proyectos.service';
 import { CentrosService } from '../../centros/centros.service';
@@ -24,7 +24,7 @@ import { asId } from '../../../shared/utils';
     }
   `],
 })
-export class MisProyectosPageComponent implements OnInit {
+export class MisProyectosPageComponent {
   private  readonly consumidorContext   = inject(ConsumidorContextService);
   private  readonly router              = inject(Router);
   protected readonly proyectosService   = inject(ProyectosService);
@@ -88,9 +88,6 @@ export class MisProyectosPageComponent implements OnInit {
     });
   }
 
-  ngOnInit(): void {
-    this.centrosService.cargar();
-  }
 
   scoreDeProyecto(proyectoId: string) {
     const sols = this.solicitudesService.solicitudes()

@@ -206,8 +206,15 @@ export class SidebarComponent implements OnChanges {
   private readonly sanitizer = inject(DomSanitizer);
   private readonly api = inject(ApiService);
 
+  // Pre-compilados para evitar que bypassSecurityTrustHtml() en cada change-detection
+  // recree el <img> del ícono Eclarity y cancele su request en loop.
+  private readonly safeIcons: Map<string, SafeHtml>;
+
   constructor() {
     this.buildingIcon = this.sanitizer.bypassSecurityTrustHtml(BUILDING_ICON);
+    this.safeIcons = new Map(
+      Object.entries(ICONS).map(([k, v]) => [k, this.sanitizer.bypassSecurityTrustHtml(v)])
+    );
   }
 
   get empresa()             { return this.consumidorContext.empresaSeleccionada(); }
@@ -223,7 +230,7 @@ export class SidebarComponent implements OnChanges {
 
   get logoUrl(): string | null {
     const empresa = this.empresa;
-    if (!empresa?._id || !empresa?.logo) return null;
+    if (!empresa?._id || !empresa?.logo?.tipo_mime) return null;
     return this.api.url(`/empresas/${empresa._id}/logo`);
   }
 
@@ -258,6 +265,6 @@ export class SidebarComponent implements OnChanges {
   }
 
   getIcon(name: string): SafeHtml {
-    return this.sanitizer.bypassSecurityTrustHtml(ICONS[name] ?? '');
+    return this.safeIcons.get(name) ?? this.sanitizer.bypassSecurityTrustHtml('');
   }
 }

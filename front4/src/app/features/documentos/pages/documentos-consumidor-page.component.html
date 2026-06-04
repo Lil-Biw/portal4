@@ -31,7 +31,7 @@
       </label>
       @if (tabConsumidorActiva() === 'solicitudes') {
         <label class="field">
-          <span>Estado solicitudes</span>
+          <span>Estado</span>
           <select [ngModel]="filtroEstado()" (ngModelChange)="filtroEstado.set($event)">
             <option value="">Todos</option>
             <option value="pendiente">Pendiente</option>
@@ -67,18 +67,44 @@
 
   @if (tabConsumidorActiva() === 'documentacion') {
 
-  <!-- SECCIÓN A: Mis documentos (empresa) — solo lectura para usuarios; administrador gestiona esta sección -->
-  <div class="card" style="margin-bottom:1rem">
+  <!-- SECCIÓN A: Mis documentos (empresa) -->
+  <div class="card" style="margin-bottom:1rem;border-left:4px solid #0095d6;background:#f0f9ff">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem">
       <h3 style="margin:0;font-size:.95rem;font-weight:700">Documentos de Empresa</h3>
-      <button class="btn-ghost" style="font-size:.8rem;padding:.45rem .9rem" (click)="toggleFilter('empresa')">Buscar ▾</button>
+      <div style="display:flex;gap:.5rem">
+        <button class="btn-primary" style="font-size:.8rem;padding:.45rem .9rem" (click)="toggleUpload('empresa')">+ Subir</button>
+        <button class="btn-ghost"   style="font-size:.8rem;padding:.45rem .9rem" (click)="toggleFilter('empresa')">Buscar ▾</button>
+      </div>
+    </div>
+    <div *ngIf="panels['empresa'].showUpload" style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:.5rem;padding:1rem;margin-bottom:.75rem">
+      <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:.75rem;align-items:end">
+        <label class="field" style="margin:0"><span>Archivo</span><input type="file" (change)="onFileSelected($event,'empresa')" style="padding:.3rem" /></label>
+        <label class="field" style="margin:0"><span>Nombre</span><input type="text" [(ngModel)]="panels['empresa'].nombreInput" placeholder="Nombre del documento" /></label>
+        <label class="field" style="margin:0"><span>Tipo</span>
+          <select [(ngModel)]="panels['empresa'].categoriaInput">
+            <option *ngFor="let cat of categorias" [value]="cat">{{ cat }}</option>
+          </select>
+        </label>
+      </div>
+      <div style="display:flex;gap:.5rem;margin-top:.75rem">
+        <button class="btn-primary" style="font-size:.8rem;padding:.45rem .9rem" (click)="confirmarSubida('empresa')" [disabled]="!panels['empresa'].selectedFile">Confirmar subida</button>
+        <button class="btn-ghost"   style="font-size:.8rem;padding:.45rem .9rem" (click)="toggleUpload('empresa')">Cancelar</button>
+      </div>
     </div>
     <div *ngIf="panels['empresa'].showFilter" style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:.5rem;padding:.75rem;margin-bottom:.75rem">
-      <p style="margin:0 0 .5rem;font-size:.8rem;font-weight:600;color:#374151">Filtrar por tipo</p>
-      <div style="display:flex;flex-wrap:wrap;gap:.5rem">
-        <label *ngFor="let cat of categorias" style="display:flex;align-items:center;gap:.3rem;font-size:.85rem;cursor:pointer;padding:.3rem .6rem;border:1px solid #d1d5db;border-radius:.375rem" [style.background]="isFiltroSelected('empresa',cat) ? '#e0e7ff' : '#fff'" [style.borderColor]="isFiltroSelected('empresa',cat) ? '#6366f1' : '#d1d5db'">
-          <input type="checkbox" [checked]="isFiltroSelected('empresa',cat)" (change)="toggleFiltroCategoria('empresa',cat)" style="display:none" />{{ cat }}
+      <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:.75rem;align-items:flex-end">
+        <label class="field" style="margin:0">
+          <span style="font-size:.8rem;font-weight:600;color:#374151">Buscar por nombre</span>
+          <input type="text" [(ngModel)]="panels['empresa'].busqueda" placeholder="Nombre del documento…" />
         </label>
+        <label class="field" style="margin:0">
+          <span style="font-size:.8rem;font-weight:600;color:#374151">Tipo de documento</span>
+          <select [(ngModel)]="panels['empresa'].categoriaFiltro">
+            <option value="">Todos</option>
+            <option *ngFor="let cat of categorias" [value]="cat">{{ cat }}</option>
+          </select>
+        </label>
+        <button class="btn-ghost" style="font-size:.8rem;padding:.45rem .9rem;align-self:flex-end" (click)="panels['empresa'].busqueda = ''; panels['empresa'].categoriaFiltro = ''; toggleFilter('empresa')">Limpiar</button>
       </div>
     </div>
     <app-status-banner [status]="service.uploadStatus().empresa"></app-status-banner>
@@ -88,13 +114,16 @@
         <span style="font-size:.7rem;font-weight:600;padding:.2rem .5rem;border-radius:999px;background:#e0e7ff;color:#3730a3">{{ d.categoria }}</span>
         <span style="font-size:.875rem">{{ d.nombre_display }}</span>
       </div>
-      <button class="btn-ghost" style="font-size:.78rem;padding:.35rem .7rem" (click)="service.descargar(d.url, d.nombre_display)">Descargar</button>
+      <div style="display:flex;gap:.5rem">
+        <button class="btn-ghost"  style="font-size:.78rem;padding:.35rem .7rem" (click)="service.descargar(d.url, d.nombre_display)">Descargar</button>
+        <button class="btn-danger" style="font-size:.78rem;padding:.35rem .7rem" (click)="eliminar(d.url,'empresa')">Eliminar</button>
+      </div>
     </div>
   </div>
 
   <!-- SECCIÓN A2: Documentos de centro (consumidor) — solo cuando hay centro específico -->
   @if (selectedCentroIdC() && selectedCentroIdC() !== 'todos') {
-    <div class="card" style="margin-bottom:1rem">
+    <div class="card" style="margin-bottom:1rem;border-left:4px solid #10b981;background:#f0fdf4">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem">
         <h3 style="margin:0;font-size:.95rem;font-weight:700">Documentos de centro: {{ centroNombreC }}</h3>
         <div style="display:flex;gap:.5rem">
@@ -118,11 +147,19 @@
         </div>
       </div>
       <div *ngIf="panels['centro'].showFilter" style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:.5rem;padding:.75rem;margin-bottom:.75rem">
-        <p style="margin:0 0 .5rem;font-size:.8rem;font-weight:600;color:#374151">Filtrar por tipo</p>
-        <div style="display:flex;flex-wrap:wrap;gap:.5rem">
-          <label *ngFor="let cat of categorias" style="display:flex;align-items:center;gap:.3rem;font-size:.85rem;cursor:pointer;padding:.3rem .6rem;border:1px solid #d1d5db;border-radius:.375rem" [style.background]="isFiltroSelected('centro',cat) ? '#e0e7ff' : '#fff'" [style.borderColor]="isFiltroSelected('centro',cat) ? '#6366f1' : '#d1d5db'">
-            <input type="checkbox" [checked]="isFiltroSelected('centro',cat)" (change)="toggleFiltroCategoria('centro',cat)" style="display:none" />{{ cat }}
+        <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:.75rem;align-items:flex-end">
+          <label class="field" style="margin:0">
+            <span style="font-size:.8rem;font-weight:600;color:#374151">Buscar por nombre</span>
+            <input type="text" [(ngModel)]="panels['centro'].busqueda" placeholder="Nombre del documento…" />
           </label>
+          <label class="field" style="margin:0">
+            <span style="font-size:.8rem;font-weight:600;color:#374151">Tipo de documento</span>
+            <select [(ngModel)]="panels['centro'].categoriaFiltro">
+              <option value="">Todos</option>
+              <option *ngFor="let cat of categorias" [value]="cat">{{ cat }}</option>
+            </select>
+          </label>
+          <button class="btn-ghost" style="font-size:.8rem;padding:.45rem .9rem;align-self:flex-end" (click)="panels['centro'].busqueda = ''; panels['centro'].categoriaFiltro = ''; toggleFilter('centro')">Limpiar</button>
         </div>
       </div>
       <app-status-banner [status]="service.uploadStatus().centro"></app-status-banner>
@@ -168,7 +205,7 @@
 
   <!-- SECCIÓN A3: Documentos de proyecto (consumidor) -->
   @if (selectedProyectoIdC() && selectedProyectoIdC() !== 'todos') {
-    <div class="card" style="margin-bottom:1rem">
+    <div class="card" style="margin-bottom:1rem;border-left:4px solid #f59e0b;background:#fffbeb">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem">
         <h3 style="margin:0;font-size:.95rem;font-weight:700">Documentos de proyecto: {{ proyectoNombreC }}</h3>
         <div style="display:flex;gap:.5rem">
@@ -192,11 +229,19 @@
         </div>
       </div>
       <div *ngIf="panels['proyecto'].showFilter" style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:.5rem;padding:.75rem;margin-bottom:.75rem">
-        <p style="margin:0 0 .5rem;font-size:.8rem;font-weight:600;color:#374151">Filtrar por tipo</p>
-        <div style="display:flex;flex-wrap:wrap;gap:.5rem">
-          <label *ngFor="let cat of categorias" style="display:flex;align-items:center;gap:.3rem;font-size:.85rem;cursor:pointer;padding:.3rem .6rem;border:1px solid #d1d5db;border-radius:.375rem" [style.background]="isFiltroSelected('proyecto',cat) ? '#e0e7ff' : '#fff'" [style.borderColor]="isFiltroSelected('proyecto',cat) ? '#6366f1' : '#d1d5db'">
-            <input type="checkbox" [checked]="isFiltroSelected('proyecto',cat)" (change)="toggleFiltroCategoria('proyecto',cat)" style="display:none" />{{ cat }}
+        <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:.75rem;align-items:flex-end">
+          <label class="field" style="margin:0">
+            <span style="font-size:.8rem;font-weight:600;color:#374151">Buscar por nombre</span>
+            <input type="text" [(ngModel)]="panels['proyecto'].busqueda" placeholder="Nombre del documento…" />
           </label>
+          <label class="field" style="margin:0">
+            <span style="font-size:.8rem;font-weight:600;color:#374151">Tipo de documento</span>
+            <select [(ngModel)]="panels['proyecto'].categoriaFiltro">
+              <option value="">Todos</option>
+              <option *ngFor="let cat of categorias" [value]="cat">{{ cat }}</option>
+            </select>
+          </label>
+          <button class="btn-ghost" style="font-size:.8rem;padding:.45rem .9rem;align-self:flex-end" (click)="panels['proyecto'].busqueda = ''; panels['proyecto'].categoriaFiltro = ''; toggleFilter('proyecto')">Limpiar</button>
         </div>
       </div>
       <app-status-banner [status]="service.uploadStatus().proyecto"></app-status-banner>
@@ -222,10 +267,29 @@
   <app-status-banner [status]="solicitudesService.status()"></app-status-banner>
 
   <!-- B1: Solicitudes de empresa -->
-  <div class="card" style="margin-bottom:1rem">
-    <h3 style="margin:0 0 .75rem;font-size:.95rem;font-weight:700">
-      Solicitudes de empresa
-    </h3>
+  <div class="card" style="margin-bottom:1rem;border-left:4px solid #0095d6;background:#f0f9ff">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem">
+      <h3 style="margin:0;font-size:.95rem;font-weight:700">Solicitudes de empresa</h3>
+      <button class="btn-ghost" style="font-size:.8rem;padding:.45rem .9rem" (click)="mostrarBuscadorEmpresa.set(!mostrarBuscadorEmpresa())">Buscar ▾</button>
+    </div>
+    @if (mostrarBuscadorEmpresa()) {
+      <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:.5rem;padding:.75rem;margin-bottom:.75rem">
+        <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:.75rem;align-items:flex-end">
+          <label class="field" style="margin:0">
+            <span style="font-size:.8rem;font-weight:600;color:#374151">Buscar por nombre</span>
+            <input type="text" [ngModel]="busquedaEmpresa()" (ngModelChange)="busquedaEmpresa.set($event)" placeholder="Nombre de la solicitud…" />
+          </label>
+          <label class="field" style="margin:0">
+            <span style="font-size:.8rem;font-weight:600;color:#374151">Tipo de documento</span>
+            <select [ngModel]="filtroTipoSolicitud()" (ngModelChange)="filtroTipoSolicitud.set($event)">
+              <option value="">Todos</option>
+              <option *ngFor="let cat of categorias" [value]="cat">{{ cat }}</option>
+            </select>
+          </label>
+          <button class="btn-ghost" style="font-size:.8rem;padding:.45rem .9rem;align-self:flex-end" (click)="busquedaEmpresa.set(''); filtroTipoSolicitud.set(''); mostrarBuscadorEmpresa.set(false)">Limpiar</button>
+        </div>
+      </div>
+    }
     <p *ngIf="solicitudesDeEmpresa().length === 0" class="empty">Sin solicitudes para esta empresa.</p>
     <ng-container *ngFor="let s of solicitudesDeEmpresa()">
       <ng-container *ngTemplateOutlet="solicitudConsumidorCard; context: { s: s }"></ng-container>
@@ -234,11 +298,32 @@
 
   <!-- B2: Solicitudes de centro/centros -->
   @if (selectedCentroIdC()) {
-    <div class="card" style="margin-bottom:1rem">
-      <h3 style="margin:0 0 .75rem;font-size:.95rem;font-weight:700">
-        @if (selectedCentroIdC() === 'todos') { Solicitudes de centros de costos }
-        @else { Solicitudes de centro: <span style="color:#0095d6">{{ centroNombreC }}</span> }
-      </h3>
+    <div class="card" style="margin-bottom:1rem;border-left:4px solid #10b981;background:#f0fdf4">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem">
+        <h3 style="margin:0;font-size:.95rem;font-weight:700">
+          @if (selectedCentroIdC() === 'todos') { Solicitudes de centros de costos }
+          @else { Solicitudes de centro: <span style="color:#0095d6">{{ centroNombreC }}</span> }
+        </h3>
+        <button class="btn-ghost" style="font-size:.8rem;padding:.45rem .9rem" (click)="mostrarBuscadorCentro.set(!mostrarBuscadorCentro())">Buscar ▾</button>
+      </div>
+      @if (mostrarBuscadorCentro()) {
+        <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:.5rem;padding:.75rem;margin-bottom:.75rem">
+          <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:.75rem;align-items:flex-end">
+            <label class="field" style="margin:0">
+              <span style="font-size:.8rem;font-weight:600;color:#374151">Buscar por nombre</span>
+              <input type="text" [ngModel]="busquedaCentro()" (ngModelChange)="busquedaCentro.set($event)" placeholder="Nombre de la solicitud…" />
+            </label>
+            <label class="field" style="margin:0">
+              <span style="font-size:.8rem;font-weight:600;color:#374151">Tipo de documento</span>
+              <select [ngModel]="filtroTipoSolicitud()" (ngModelChange)="filtroTipoSolicitud.set($event)">
+                <option value="">Todos</option>
+                <option *ngFor="let cat of categorias" [value]="cat">{{ cat }}</option>
+              </select>
+            </label>
+            <button class="btn-ghost" style="font-size:.8rem;padding:.45rem .9rem;align-self:flex-end" (click)="busquedaCentro.set(''); filtroTipoSolicitud.set(''); mostrarBuscadorCentro.set(false)">Limpiar</button>
+          </div>
+        </div>
+      }
       <p *ngIf="solicitudesDeCentro().length === 0" class="empty">Sin solicitudes.</p>
       <ng-container *ngFor="let s of solicitudesDeCentro()">
         <ng-container *ngTemplateOutlet="solicitudConsumidorCard; context: { s: s }"></ng-container>
@@ -248,11 +333,32 @@
 
   <!-- B3: Solicitudes de proyecto/proyectos -->
   @if (selectedCentroIdC() && selectedProyectoIdC()) {
-    <div class="card" style="margin-bottom:1rem">
-      <h3 style="margin:0 0 .75rem;font-size:.95rem;font-weight:700">
-        @if (selectedProyectoIdC() === 'todos') { Solicitudes de proyectos }
-        @else { Solicitudes de proyecto: <span style="color:#0095d6">{{ proyectoNombreC }}</span> }
-      </h3>
+    <div class="card" style="margin-bottom:1rem;border-left:4px solid #f59e0b;background:#fffbeb">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem">
+        <h3 style="margin:0;font-size:.95rem;font-weight:700">
+          @if (selectedProyectoIdC() === 'todos') { Solicitudes de proyectos }
+          @else { Solicitudes de proyecto: <span style="color:#0095d6">{{ proyectoNombreC }}</span> }
+        </h3>
+        <button class="btn-ghost" style="font-size:.8rem;padding:.45rem .9rem" (click)="mostrarBuscadorProyecto.set(!mostrarBuscadorProyecto())">Buscar ▾</button>
+      </div>
+      @if (mostrarBuscadorProyecto()) {
+        <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:.5rem;padding:.75rem;margin-bottom:.75rem">
+          <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:.75rem;align-items:flex-end">
+            <label class="field" style="margin:0">
+              <span style="font-size:.8rem;font-weight:600;color:#374151">Buscar por nombre</span>
+              <input type="text" [ngModel]="busquedaProyecto()" (ngModelChange)="busquedaProyecto.set($event)" placeholder="Nombre de la solicitud…" />
+            </label>
+            <label class="field" style="margin:0">
+              <span style="font-size:.8rem;font-weight:600;color:#374151">Tipo de documento</span>
+              <select [ngModel]="filtroTipoSolicitud()" (ngModelChange)="filtroTipoSolicitud.set($event)">
+                <option value="">Todos</option>
+                <option *ngFor="let cat of categorias" [value]="cat">{{ cat }}</option>
+              </select>
+            </label>
+            <button class="btn-ghost" style="font-size:.8rem;padding:.45rem .9rem;align-self:flex-end" (click)="busquedaProyecto.set(''); filtroTipoSolicitud.set(''); mostrarBuscadorProyecto.set(false)">Limpiar</button>
+          </div>
+        </div>
+      }
       <p *ngIf="solicitudesDeProyecto().length === 0" class="empty">Sin solicitudes.</p>
       <ng-container *ngFor="let s of solicitudesDeProyecto()">
         <ng-container *ngTemplateOutlet="solicitudConsumidorCard; context: { s: s }"></ng-container>

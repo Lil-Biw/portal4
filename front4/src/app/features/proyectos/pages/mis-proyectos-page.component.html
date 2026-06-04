@@ -64,20 +64,14 @@
                 </p>
               }
               @if (sc.total > 0) {
-                <div style="display:flex;align-items:center;gap:.5rem;padding:.45rem .55rem;border-radius:8px;background:#f9fafb;border:1px solid rgba(34,33,33,.06)">
-                  <div style="text-align:center;min-width:40px">
-                    <span style="font-size:1.3rem;font-weight:700;color:#0095d6;line-height:1">{{ sc.pct }}</span>
-                    <span style="font-size:.66rem;color:#9ca3af">/100</span>
+                <div style="padding:.45rem .55rem;border-radius:8px;background:#f9fafb;border:1px solid rgba(34,33,33,.06)">
+                  <div style="background:#e5e7eb;border-radius:999px;height:4px;overflow:hidden;margin-bottom:.35rem">
+                    <div [style.width]="sc.pct + '%'" style="height:100%;background:linear-gradient(90deg,#0095d6,#22c55e);border-radius:999px"></div>
                   </div>
-                  <div style="flex:1">
-                    <div style="background:#e5e7eb;border-radius:999px;height:4px;overflow:hidden;margin-bottom:.35rem">
-                      <div [style.width]="sc.pct + '%'" style="height:100%;background:linear-gradient(90deg,#0095d6,#22c55e);border-radius:999px"></div>
-                    </div>
-                    <div style="display:flex;gap:.25rem">
-                      <span style="font-size:.65rem;font-weight:700;padding:.08rem .28rem;border-radius:4px;background:#dcfce7;color:#15803d">{{ sc.aprobados }}</span>
-                      <span style="font-size:.65rem;font-weight:700;padding:.08rem .28rem;border-radius:4px;background:#fef3c7;color:#b45309">{{ sc.revision }}</span>
-                      <span style="font-size:.65rem;font-weight:700;padding:.08rem .28rem;border-radius:4px;background:#fee2e2;color:#dc2626">{{ sc.vencido }}</span>
-                    </div>
+                  <div style="display:flex;gap:.25rem">
+                    <span style="font-size:.65rem;font-weight:700;padding:.08rem .28rem;border-radius:4px;background:#dcfce7;color:#15803d">{{ sc.aprobados }}</span>
+                    <span style="font-size:.65rem;font-weight:700;padding:.08rem .28rem;border-radius:4px;background:#fef3c7;color:#b45309">{{ sc.revision }}</span>
+                    <span style="font-size:.65rem;font-weight:700;padding:.08rem .28rem;border-radius:4px;background:#fee2e2;color:#dc2626">{{ sc.vencido }}</span>
                   </div>
                 </div>
               }

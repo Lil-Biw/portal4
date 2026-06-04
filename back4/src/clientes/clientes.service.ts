@@ -66,11 +66,19 @@ export class ClientesService {
   }
 
   async servirLogo(id: string): Promise<{ buffer: Buffer; tipo_mime: string; nombre: string }> {
-    const cliente = await this.clienteModel.findById(id);
+    const cliente = await this.clienteModel.findById(id).select('logo').lean();
     if (!cliente) throw new NotFoundException(`Cliente ${id} no encontrado`);
     if (!cliente.logo?.contenido) throw new NotFoundException('Este cliente no tiene logo');
     const raw = cliente.logo.contenido as unknown;
-    const buffer = Buffer.isBuffer(raw) ? raw : Buffer.from(raw as ArrayBuffer);
+    let buffer: Buffer;
+    if (Buffer.isBuffer(raw)) {
+      buffer = raw;
+    } else if (raw && typeof raw === 'object' && 'buffer' in (raw as object)) {
+      const buf = (raw as { buffer: Buffer | ArrayBuffer }).buffer;
+      buffer = Buffer.isBuffer(buf) ? buf : Buffer.from(buf);
+    } else {
+      buffer = Buffer.from(raw as ArrayBuffer);
+    }
     return { buffer, tipo_mime: cliente.logo.tipo_mime, nombre: cliente.logo.nombre };
   }
 

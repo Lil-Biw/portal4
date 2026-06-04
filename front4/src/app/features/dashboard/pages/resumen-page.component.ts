@@ -104,7 +104,7 @@ export class ResumenPageComponent implements OnInit {
     if (this.loadingDocs()) return;
     this.loadingDocs.set(true);
     const reqs = clienteIds.map(id =>
-      this.http.get<Solicitud[]>(`${this.api.base}/solicitudes?empresa_id=${id}`)
+      this.http.get<Solicitud[]>(this.api.url(`/empresas/${id}/solicitudes`))
         .pipe(catchError(() => of([] as Solicitud[])))
     );
     forkJoin(reqs).subscribe(resultados => {

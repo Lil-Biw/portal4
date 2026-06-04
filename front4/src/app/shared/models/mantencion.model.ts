@@ -14,13 +14,15 @@ export interface DocMantencion {
   tipo_mime: string;
 }
 
+import type { Activo } from './activo.model';
+
 export interface Mantencion {
   _id: string;
   nombre: string;
   descripcion?: string;
   tipo_id: TipoMantencion | string;
   centro_costo_id: string;
-  activo_ids?: string[];
+  activo_ids?: (Activo | string)[];
   fecha: string;
   documentos?: DocMantencion[];
   creado_en?: string;

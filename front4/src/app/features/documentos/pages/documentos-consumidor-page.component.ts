@@ -15,7 +15,8 @@ interface PanelState {
   showFilter: boolean;
   nombreInput: string;
   categoriaInput: string;
-  filtrosCategorias: string[];
+  busqueda: string;
+  categoriaFiltro: string;
   selectedFile: File | null;
 }
 
@@ -40,8 +41,15 @@ export class DocumentosConsumidorPageComponent implements OnInit {
 
   protected selectedCentroIdC   = signal('');
   protected selectedProyectoIdC = signal('');
-  protected filtroEstado        = signal<EstadoSolicitud | ''>('');
-  protected tabConsumidorActiva = signal<'documentacion' | 'solicitudes'>('documentacion');
+  protected filtroEstado              = signal<EstadoSolicitud | ''>('');
+  protected filtroTipoSolicitud       = signal('');
+  protected busquedaEmpresa           = signal('');
+  protected busquedaCentro            = signal('');
+  protected busquedaProyecto          = signal('');
+  protected mostrarBuscadorEmpresa    = signal(false);
+  protected mostrarBuscadorCentro     = signal(false);
+  protected mostrarBuscadorProyecto   = signal(false);
+  protected tabConsumidorActiva       = signal<'documentacion' | 'solicitudes'>('documentacion');
 
   protected solicitudAdjuntando = signal<string | null>(null);
   protected adjuntoFile: File | null = null;
@@ -77,29 +85,36 @@ export class DocumentosConsumidorPageComponent implements OnInit {
   get centroNombreC()   { return this.centrosService.centros().find(c => c._id === this.selectedCentroIdC())?.nombre; }
   get proyectoNombreC() { return this.proyectosService.proyectos().find(p => p._id === this.selectedProyectoIdC())?.nombre; }
 
-  protected solicitudesDeEmpresa = computed(() => {
+  private filtrarSolicitudes(sols: Solicitud[], busqueda: string): Solicitud[] {
     const estado = this.filtroEstado();
+    const tipo   = this.filtroTipoSolicitud();
+    const term   = busqueda.trim().toLowerCase();
+    if (estado) sols = sols.filter(s => s.estado === estado);
+    if (tipo)   sols = sols.filter(s => s.tipo   === tipo);
+    if (term)   sols = sols.filter(s => s.nombre.toLowerCase().includes(term));
+    return sols;
+  }
+
+  protected solicitudesDeEmpresa = computed(() => {
     const sols = this.solicitudesService.solicitudes()
       .filter(s => !s.centro_costo_id && !s.proyecto_id);
-    return estado ? sols.filter(s => s.estado === estado) : sols;
+    return this.filtrarSolicitudes(sols, this.busquedaEmpresa());
   });
 
   protected solicitudesDeCentro = computed(() => {
     const centroId = this.selectedCentroIdC();
     if (!centroId) return [];
-    const estado = this.filtroEstado();
     const all = this.solicitudesService.solicitudes();
     const sols = centroId === 'todos'
       ? all.filter(s => s.centro_costo_id && !s.proyecto_id)
       : all.filter(s => s.centro_costo_id === centroId && !s.proyecto_id);
-    return estado ? sols.filter(s => s.estado === estado) : sols;
+    return this.filtrarSolicitudes(sols, this.busquedaCentro());
   });
 
   protected solicitudesDeProyecto = computed(() => {
-    const centroId  = this.selectedCentroIdC();
+    const centroId   = this.selectedCentroIdC();
     const proyectoId = this.selectedProyectoIdC();
     if (!centroId || !proyectoId) return [];
-    const estado = this.filtroEstado();
     const all = this.solicitudesService.solicitudes();
     let sols: Solicitud[];
     if (proyectoId === 'todos') {
@@ -114,7 +129,7 @@ export class DocumentosConsumidorPageComponent implements OnInit {
     } else {
       sols = all.filter(s => s.proyecto_id === proyectoId);
     }
-    return estado ? sols.filter(s => s.estado === estado) : sols;
+    return this.filtrarSolicitudes(sols, this.busquedaProyecto());
   });
 
   // ─── lifecycle ────────────────────────────────────────────────────────────
@@ -130,6 +145,7 @@ export class DocumentosConsumidorPageComponent implements OnInit {
         this.service.documentosPorCentro.set([]);
         this.service.cargarEmpresa(empresa._id);
         this.solicitudesService.cargar(empresa._id);
+        untracked(() => this.proyectosService.cargarPorEmpresa(empresa._id));
       } else {
         this.service.documentosEmpresa.set([]);
         this.solicitudesService.cargar('');
@@ -151,9 +167,6 @@ export class DocumentosConsumidorPageComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.centrosService.cargar();
-    this.proyectosService.cargar();
-
     const params = this.route.snapshot.queryParamMap;
     const tab        = params.get('tab') as 'documentacion' | 'solicitudes' | null;
     const centroId   = params.get('centroId');
@@ -239,24 +252,15 @@ export class DocumentosConsumidorPageComponent implements OnInit {
     p.showUpload = false;
   }
 
-  toggleFiltroCategoria(tipo: DocTipo, cat: string): void {
-    const filtros = this.panels[tipo].filtrosCategorias;
-    const idx = filtros.indexOf(cat);
-    if (idx === -1) filtros.push(cat);
-    else filtros.splice(idx, 1);
-  }
-
-  isFiltroSelected(tipo: DocTipo, cat: string): boolean {
-    return this.panels[tipo].filtrosCategorias.includes(cat);
-  }
-
   docsFiltrados(tipo: DocTipo): DocumentoItem[] {
     const docs = tipo === 'empresa' ? this.service.documentosEmpresa()
       : tipo === 'centro' ? this.service.documentosCentro()
       : this.service.documentosProyecto();
-    const filtros = this.panels[tipo].filtrosCategorias;
-    if (!filtros.length) return docs;
-    return docs.filter(d => filtros.includes(d.categoria ?? ''));
+    const { busqueda, categoriaFiltro } = this.panels[tipo];
+    const term = busqueda.trim().toLowerCase();
+    return docs
+      .filter(d => !categoriaFiltro || d.categoria === categoriaFiltro)
+      .filter(d => !term || d.nombre_display.toLowerCase().includes(term));
   }
 
   eliminar(docUrl: string, tipo: DocTipo): void {
@@ -311,6 +315,6 @@ export class DocumentosConsumidorPageComponent implements OnInit {
   // ─── private helpers ─────────────────────────────────────────────────────
 
   private emptyPanel(): PanelState {
-    return { showUpload: false, showFilter: false, nombreInput: '', categoriaInput: 'Contratos', filtrosCategorias: [], selectedFile: null };
+    return { showUpload: false, showFilter: false, nombreInput: '', categoriaInput: 'Contratos', busqueda: '', categoriaFiltro: '', selectedFile: null };
   }
 }
