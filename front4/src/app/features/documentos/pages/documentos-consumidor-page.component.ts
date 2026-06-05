@@ -50,6 +50,7 @@ export class DocumentosConsumidorPageComponent implements OnInit {
   protected mostrarBuscadorCentro     = signal(false);
   protected mostrarBuscadorProyecto   = signal(false);
   protected tabConsumidorActiva       = signal<'documentacion' | 'solicitudes'>('documentacion');
+  protected tabJerarquia              = signal<'empresa' | 'centro' | 'proyecto'>('empresa');
 
   protected solicitudAdjuntando = signal<string | null>(null);
   protected adjuntoFile: File | null = null;
@@ -172,8 +173,14 @@ export class DocumentosConsumidorPageComponent implements OnInit {
     const centroId   = params.get('centroId');
     const proyectoId = params.get('proyectoId');
     if (tab) this.tabConsumidorActiva.set(tab);
-    if (centroId)   this._pendingCentroId   = centroId;
-    if (proyectoId) this._pendingProyectoId = proyectoId;
+    if (centroId) {
+      this._pendingCentroId = centroId;
+      this.tabJerarquia.set('centro');
+    }
+    if (proyectoId) {
+      this._pendingProyectoId = proyectoId;
+      this.tabJerarquia.set('proyecto');
+    }
   }
 
   // ─── consumidor handlers ──────────────────────────────────────────────────
@@ -183,6 +190,7 @@ export class DocumentosConsumidorPageComponent implements OnInit {
     this.selectedProyectoIdC.set('');
     const empresa = this.consumidorContext.empresaSeleccionada();
     const empresaId = empresa?._id ?? '';
+    this.service.documentosPorProyecto.set([]);
     if (id === 'todos') {
       this.service.documentosCentro.set([]);
       this.service.cargarTodosCentros(empresaId, this.centrosFiltradosC);
@@ -201,13 +209,26 @@ export class DocumentosConsumidorPageComponent implements OnInit {
     const empresa = this.consumidorContext.empresaSeleccionada();
     const empresaId = empresa?._id ?? '';
     const centroId = this.selectedCentroIdC();
-    if (id && id !== 'todos' && centroId && centroId !== 'todos') {
+
+    this.service.documentosProyecto.set([]);
+    this.service.documentosPorProyecto.set([]);
+
+    if (id === 'todos' && centroId === 'todos') {
+      const todosProyectos = this.proyectosService.proyectos().filter(
+        p => asId(p.cliente_id) === asId(empresa?._id)
+      );
+      this.service.cargarTodosProyectos(empresaId, todosProyectos, this.centrosFiltradosC);
+    } else if (id === 'todos' && centroId && centroId !== 'todos') {
+      const proyectosDeCentro = this.proyectosService.proyectos().filter(
+        p => asId(p.cliente_id) === asId(empresa?._id) && asId(p.centro_costo_id) === centroId
+      );
+      this.service.cargarTodosProyectos(empresaId, proyectosDeCentro, this.centrosFiltradosC);
+    } else if (id && id !== 'todos' && centroId && centroId !== 'todos') {
       this.service.cargar('proyecto', empresaId, centroId, id);
     } else if (centroId && centroId !== 'todos') {
       this.service.cargar('centro', empresaId, centroId);
     } else {
       this.service.documentosCentro.set([]);
-      this.service.documentosProyecto.set([]);
     }
     if (empresa) this.solicitudesService.cargar(empresa._id);
   }
