@@ -212,6 +212,7 @@ export class DocumentosConsumidorPageComponent implements OnInit {
 
     this.service.documentosProyecto.set([]);
     this.service.documentosPorProyecto.set([]);
+    this.service.documentosPorCentro.set([]);
 
     if (id === 'todos' && centroId === 'todos') {
       const todosProyectos = this.proyectosService.proyectos().filter(
