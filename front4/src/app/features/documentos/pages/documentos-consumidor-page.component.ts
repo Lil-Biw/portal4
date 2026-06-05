@@ -86,6 +86,27 @@ export class DocumentosConsumidorPageComponent implements OnInit {
   get centroNombreC()   { return this.centrosService.centros().find(c => c._id === this.selectedCentroIdC())?.nombre; }
   get proyectoNombreC() { return this.proyectosService.proyectos().find(p => p._id === this.selectedProyectoIdC())?.nombre; }
 
+  get empresaSeleccionadaObj() { return this.consumidorContext.empresaSeleccionada(); }
+
+  get centroSeleccionado() {
+    const id = this.selectedCentroIdC();
+    if (!id || id === 'todos') return null;
+    return this.centrosService.centros().find(c => c._id === id) ?? null;
+  }
+
+  get proyectoSeleccionado() {
+    const id = this.selectedProyectoIdC();
+    if (!id || id === 'todos') return null;
+    return this.proyectosService.proyectos().find(p => p._id === id) ?? null;
+  }
+
+  formatFecha(fecha?: string): string {
+    if (!fecha) return '—';
+    const d = new Date(fecha);
+    const meses = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+    return `${meses[d.getUTCMonth()]} ${d.getUTCFullYear()}`;
+  }
+
   private filtrarSolicitudes(sols: Solicitud[], busqueda: string): Solicitud[] {
     const estado = this.filtroEstado();
     const tipo   = this.filtroTipoSolicitud();
