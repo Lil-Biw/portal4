@@ -60,7 +60,7 @@
       [style.background]="tabJerarquia() === 'empresa' ? 'rgba(0,149,214,.08)' : 'transparent'"
       [style.color]="tabJerarquia() === 'empresa' ? '#0095d6' : '#6b7280'"
       [style.borderColor]="tabJerarquia() === 'empresa' ? 'rgba(0,149,214,.18)' : 'transparent'"
-      (click)="tabJerarquia.set('empresa'); tabConsumidorActiva.set('documentacion')">
+      (click)="tabJerarquia.set('empresa'); tabConsumidorActiva.set('documentacion'); filtroTipoSolicitud.set(''); filtroEstado.set('')">
       Empresa
     </button>
     <button
@@ -68,7 +68,7 @@
       [style.background]="tabJerarquia() === 'centro' ? 'rgba(16,185,129,.08)' : 'transparent'"
       [style.color]="tabJerarquia() === 'centro' ? '#059669' : '#6b7280'"
       [style.borderColor]="tabJerarquia() === 'centro' ? 'rgba(16,185,129,.18)' : 'transparent'"
-      (click)="tabJerarquia.set('centro'); tabConsumidorActiva.set('documentacion')">
+      (click)="tabJerarquia.set('centro'); tabConsumidorActiva.set('documentacion'); filtroTipoSolicitud.set(''); filtroEstado.set('')">
       Centro de costo
     </button>
     <button
@@ -78,7 +78,7 @@
       [style.borderColor]="tabJerarquia() === 'proyecto' ? 'rgba(245,158,11,.18)' : 'transparent'"
       [disabled]="!selectedCentroIdC()"
       [style.opacity]="!selectedCentroIdC() ? '0.45' : '1'"
-      (click)="tabJerarquia.set('proyecto'); tabConsumidorActiva.set('documentacion')">
+      (click)="tabJerarquia.set('proyecto'); tabConsumidorActiva.set('documentacion'); filtroTipoSolicitud.set(''); filtroEstado.set('')">
       Proyecto
     </button>
   </div>
@@ -307,7 +307,7 @@
             <div class="card" style="margin-bottom:1rem">
               <h3 style="margin:0 0 .75rem;font-size:.95rem;font-weight:700">{{ item.nombre }}</h3>
               @if (item.docs.length === 0) { <p class="empty">Sin documentos.</p> }
-              @for (d of item.docs; track d.nombre) {
+              @for (d of item.docs; track d._id) {
                 <div style="display:flex;align-items:center;justify-content:space-between;padding:.6rem 0;border-bottom:1px solid rgba(34,33,33,.07)">
                   <div style="display:flex;align-items:center;gap:.5rem">
                     <span style="font-size:.7rem;font-weight:600;padding:.2rem .5rem;border-radius:999px;background:#e0e7ff;color:#3730a3">{{ d.categoria }}</span>
@@ -468,7 +468,7 @@
                 <p style="margin:0 0 .75rem;font-size:.78rem;color:#6b7280">Centro: {{ item.centroNombre }}</p>
               }
               @if (item.docs.length === 0) { <p class="empty">Sin documentos.</p> }
-              @for (d of item.docs; track d.nombre) {
+              @for (d of item.docs; track d._id) {
                 <div style="display:flex;align-items:center;justify-content:space-between;padding:.6rem 0;border-bottom:1px solid rgba(34,33,33,.07)">
                   <div style="display:flex;align-items:center;gap:.5rem">
                     <span style="font-size:.7rem;font-weight:600;padding:.2rem .5rem;border-radius:999px;background:#e0e7ff;color:#3730a3">{{ d.categoria }}</span>
