@@ -88,6 +88,18 @@ export class DocumentosConsumidorPageComponent implements OnInit {
 
   get empresaSeleccionadaObj() { return this.consumidorContext.empresaSeleccionada(); }
 
+  get docTipoActual(): DocTipo {
+    return this.tabJerarquia() === 'empresa' ? 'empresa'
+      : this.tabJerarquia() === 'centro' ? 'centro'
+      : 'proyecto';
+  }
+
+  get puedeGestionarDocumento(): boolean {
+    return this.tabJerarquia() === 'empresa' ||
+      (this.tabJerarquia() === 'centro'   && !!this.selectedCentroIdC()   && this.selectedCentroIdC()   !== 'todos') ||
+      (this.tabJerarquia() === 'proyecto' && !!this.selectedProyectoIdC() && this.selectedProyectoIdC() !== 'todos');
+  }
+
   get centroSeleccionado() {
     const id = this.selectedCentroIdC();
     if (!id || id === 'todos') return null;

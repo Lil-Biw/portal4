@@ -232,8 +232,8 @@
   ) {
     <div class="card" style="padding:0;overflow:hidden">
 
-      <!-- Sub-tab strip -->
-      <div style="padding:.5rem;border-bottom:1px solid #f0f0f0">
+      <!-- Sub-tab strip + botones de acción centrados -->
+      <div style="border-bottom:1px solid #f0f0f0">
         <div style="display:flex;gap:.25rem;background:#f3f4f6;border-radius:10px;padding:.25rem">
           <button
             style="flex:1;padding:.55rem 1rem;border-style:solid;border-width:1px;border-radius:8px;font-size:.875rem;font-weight:600;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;justify-content:center;gap:.4rem"
@@ -264,6 +264,17 @@
         </div>
       </div>
 
+      <!-- Botones de acción centrados bajo el tab activo -->
+      <div style="padding:.5rem .75rem;display:flex;justify-content:center;gap:.5rem">
+        @if (tabConsumidorActiva() === 'documentacion' && puedeGestionarDocumento) {
+          <button class="btn-primary" style="font-size:.8rem;padding:.4rem .9rem" (click)="toggleUpload(docTipoActual)">+ Subir</button>
+          <button class="btn-ghost"   style="font-size:.8rem;padding:.4rem .9rem" (click)="toggleFilter(docTipoActual)">Buscar ▾</button>
+        }
+        @if (tabConsumidorActiva() === 'solicitudes') {
+          <button class="btn-ghost" style="font-size:.8rem;padding:.4rem .9rem" (click)="toggleBuscadorSolicitudes()">Buscar ▾</button>
+        }
+      </div>
+
       <!-- Contenido -->
       <div style="padding:1rem">
 
@@ -276,16 +287,8 @@
           @if (tabJerarquia() === 'proyecto'){ <app-status-banner [status]="service.uploadStatus().proyecto"></app-status-banner> }
 
           <!-- Acciones: subir + buscar (solo en vistas específicas, no en "todos") -->
-          @if (tabJerarquia() === 'empresa' ||
-               (tabJerarquia() === 'centro'  && selectedCentroIdC()  !== 'todos') ||
-               (tabJerarquia() === 'proyecto' && selectedProyectoIdC() !== 'todos')) {
-
-            @let docTipo = tabJerarquia() === 'empresa' ? 'empresa' : tabJerarquia() === 'centro' ? 'centro' : 'proyecto';
-
-            <div style="display:flex;gap:.5rem;margin-bottom:.75rem">
-              <button class="btn-primary" style="font-size:.8rem;padding:.45rem .9rem" (click)="toggleUpload(docTipo)">+ Subir</button>
-              <button class="btn-ghost"   style="font-size:.8rem;padding:.45rem .9rem" (click)="toggleFilter(docTipo)">Buscar ▾</button>
-            </div>
+          @if (puedeGestionarDocumento) {
+            @let docTipo = docTipoActual;
 
             <!-- Panel buscar -->
             @if (panels[docTipo].showFilter) {
@@ -404,11 +407,6 @@
 
           @let solMostrar  = tabJerarquia() === 'empresa' ? mostrarBuscadorEmpresa() : tabJerarquia() === 'centro' ? mostrarBuscadorCentro() : mostrarBuscadorProyecto();
           @let solicitudes = tabJerarquia() === 'empresa' ? solicitudesDeEmpresa() : tabJerarquia() === 'centro' ? solicitudesDeCentro() : solicitudesDeProyecto();
-
-          <div style="display:flex;justify-content:flex-end;margin-bottom:.75rem">
-            <button class="btn-ghost" style="font-size:.8rem;padding:.45rem .9rem"
-              (click)="toggleBuscadorSolicitudes()">Buscar ▾</button>
-          </div>
 
           @if (solMostrar) {
             <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:.5rem;padding:.75rem;margin-bottom:.75rem">
