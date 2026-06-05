@@ -310,15 +310,12 @@
         @if (tabConsumidorActiva() === 'solicitudes') {
           <app-status-banner [status]="solicitudesService.status()"></app-status-banner>
 
-          @let solBusqueda = tabJerarquia() === 'empresa' ? busquedaEmpresa() : tabJerarquia() === 'centro' ? busquedaCentro() : busquedaProyecto();
           @let solMostrar  = tabJerarquia() === 'empresa' ? mostrarBuscadorEmpresa() : tabJerarquia() === 'centro' ? mostrarBuscadorCentro() : mostrarBuscadorProyecto();
           @let solicitudes = tabJerarquia() === 'empresa' ? solicitudesDeEmpresa() : tabJerarquia() === 'centro' ? solicitudesDeCentro() : solicitudesDeProyecto();
 
           <div style="display:flex;justify-content:flex-end;margin-bottom:.75rem">
             <button class="btn-ghost" style="font-size:.8rem;padding:.45rem .9rem"
-              (click)="tabJerarquia() === 'empresa' ? mostrarBuscadorEmpresa.set(!mostrarBuscadorEmpresa()) :
-                       tabJerarquia() === 'centro'  ? mostrarBuscadorCentro.set(!mostrarBuscadorCentro())   :
-                                                      mostrarBuscadorProyecto.set(!mostrarBuscadorProyecto())">Buscar ▾</button>
+              (click)="toggleBuscadorSolicitudes()">Buscar ▾</button>
           </div>
 
           @if (solMostrar) {
@@ -342,10 +339,7 @@
                   </select>
                 </label>
                 <button class="btn-ghost" style="font-size:.8rem;padding:.45rem .9rem;align-self:flex-end"
-                  (click)="tabJerarquia() === 'empresa' ? (busquedaEmpresa.set(''), mostrarBuscadorEmpresa.set(false)) :
-                           tabJerarquia() === 'centro'  ? (busquedaCentro.set(''),  mostrarBuscadorCentro.set(false))  :
-                                                          (busquedaProyecto.set(''), mostrarBuscadorProyecto.set(false));
-                           filtroTipoSolicitud.set('')">Limpiar</button>
+                  (click)="limpiarBuscadorSolicitudes()">Limpiar</button>
               </div>
             </div>
           }

@@ -290,6 +290,32 @@ export class DocumentosConsumidorPageComponent implements OnInit {
     this.service.eliminar(docUrl, tipo, empresaId, this.selectedCentroIdC() || undefined, this.selectedProyectoIdC() || undefined);
   }
 
+  // ─── helpers unificados para búsqueda de solicitudes ────────────────────
+
+  toggleBuscadorSolicitudes(): void {
+    if (this.tabJerarquia() === 'empresa') {
+      this.mostrarBuscadorEmpresa.set(!this.mostrarBuscadorEmpresa());
+    } else if (this.tabJerarquia() === 'centro') {
+      this.mostrarBuscadorCentro.set(!this.mostrarBuscadorCentro());
+    } else {
+      this.mostrarBuscadorProyecto.set(!this.mostrarBuscadorProyecto());
+    }
+  }
+
+  limpiarBuscadorSolicitudes(): void {
+    if (this.tabJerarquia() === 'empresa') {
+      this.busquedaEmpresa.set('');
+      this.mostrarBuscadorEmpresa.set(false);
+    } else if (this.tabJerarquia() === 'centro') {
+      this.busquedaCentro.set('');
+      this.mostrarBuscadorCentro.set(false);
+    } else {
+      this.busquedaProyecto.set('');
+      this.mostrarBuscadorProyecto.set(false);
+    }
+    this.filtroTipoSolicitud.set('');
+  }
+
   // ─── solicitudes (consumidor) ─────────────────────────────────────────────
 
   abrirAdjuntar(id: string): void {
