@@ -273,9 +273,17 @@
           @if (puedeGestionarDocumento) {
             @let docTipo = docTipoActual;
 
-            <!-- Panel filtro (checkboxes) -->
+            <!-- Panel filtro (texto + checkboxes) -->
             @if (panels[docTipo].showFilter) {
               <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:.5rem;padding:.75rem;margin-bottom:.75rem">
+                <div style="display:grid;grid-template-columns:1fr auto;gap:.75rem;align-items:flex-end;margin-bottom:.75rem">
+                  <label class="field" style="margin:0">
+                    <span style="font-size:.8rem;font-weight:600;color:#374151">Buscar por nombre</span>
+                    <input type="text" [(ngModel)]="panels[docTipo].busqueda" placeholder="Nombre del documento…" />
+                  </label>
+                  <button class="btn-ghost" style="font-size:.8rem;padding:.45rem .9rem;align-self:flex-end"
+                    (click)="panels[docTipo].busqueda = ''; panels[docTipo].filtrosCategorias = []; toggleFilter(docTipo)">Limpiar</button>
+                </div>
                 <p style="margin:0 0 .5rem;font-size:.8rem;font-weight:600;color:#374151">Filtrar por tipo</p>
                 <div style="display:flex;flex-wrap:wrap;gap:.5rem">
                   @for (cat of categorias; track cat) {

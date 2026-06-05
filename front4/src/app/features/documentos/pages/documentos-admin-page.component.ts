@@ -13,6 +13,7 @@ interface PanelState {
   showFilter: boolean;
   nombreInput: string;
   categoriaInput: string;
+  busqueda: string;
   filtrosCategorias: string[];
   selectedFile: File | null;
 }
@@ -280,9 +281,11 @@ export class DocumentosAdminPageComponent implements OnInit {
     const docs = tipo === 'empresa' ? this.service.documentosEmpresa()
       : tipo === 'centro' ? this.service.documentosCentro()
       : this.service.documentosProyecto();
-    const filtros = this.panels[tipo].filtrosCategorias;
-    if (!filtros.length) return docs;
-    return docs.filter(d => filtros.includes(d.categoria ?? ''));
+    const { filtrosCategorias, busqueda } = this.panels[tipo];
+    const term = busqueda.trim().toLowerCase();
+    return docs
+      .filter(d => !filtrosCategorias.length || filtrosCategorias.includes(d.categoria ?? ''))
+      .filter(d => !term || d.nombre_display.toLowerCase().includes(term));
   }
 
   eliminar(docUrl: string, tipo: DocTipo): void {
@@ -422,7 +425,7 @@ export class DocumentosAdminPageComponent implements OnInit {
   // ─── private helpers ─────────────────────────────────────────────────────
 
   private emptyPanel(): PanelState {
-    return { showUpload: false, showFilter: false, nombreInput: '', categoriaInput: 'Contratos', filtrosCategorias: [], selectedFile: null };
+    return { showUpload: false, showFilter: false, nombreInput: '', categoriaInput: 'Contratos', busqueda: '', filtrosCategorias: [], selectedFile: null };
   }
 
   private emptySolicitudForm(): CreateSolicitudDto {
