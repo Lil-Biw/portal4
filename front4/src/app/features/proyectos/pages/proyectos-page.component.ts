@@ -136,7 +136,11 @@ export class ProyectosPageComponent implements OnInit {
     if (id) this.service.actualizar(id, dto);
   }
 
-  protected eliminar(id: string): void { this.service.eliminar(id); }
+  protected eliminar(id: string): void {
+    const proyecto = this.service.proyectos().find(p => p._id === id);
+    if (proyecto) this.service.seleccionar(proyecto);
+    this.service.eliminar(id);
+  }
 
   protected editarDesdeBuscar(proyecto: Proyecto): void {
     this.service.seleccionar(proyecto);

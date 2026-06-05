@@ -160,7 +160,11 @@ export class CentrosPageComponent implements OnInit {
     if (id) this.service.actualizar(id, dto);
   }
 
-  protected eliminar(id: string): void { this.service.eliminar(id); }
+  protected eliminar(id: string): void {
+    const centro = this.service.centros().find(c => c._id === id);
+    if (centro) this.service.seleccionar(centro);
+    this.service.eliminar(id);
+  }
 
   protected irACentro(centro: CentroCosto): void {
     const empresa = this.clientesService.clientes()

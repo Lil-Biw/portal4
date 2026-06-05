@@ -134,7 +134,11 @@ export class ActivosPageComponent implements OnInit {
     if (id) this.service.actualizar(id, dto);
   }
 
-  protected eliminar(id: string): void { this.service.eliminar(id); }
+  protected eliminar(id: string): void {
+    const activo = this.service.activos().find(a => a._id === id);
+    if (activo) this.service.seleccionar(activo);
+    this.service.eliminar(id);
+  }
 
   protected editarDesdeBuscar(activo: Activo): void {
     this.service.seleccionar(activo);
