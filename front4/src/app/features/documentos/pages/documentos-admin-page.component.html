@@ -249,9 +249,11 @@
 
         <!-- Botones de acción centrados -->
         <div style="padding:.5rem .75rem;display:flex;justify-content:center;gap:.5rem">
-          @if (tabAdminActiva() === 'documentacion' && puedeGestionarDocumento) {
-            <button class="btn-primary" style="font-size:.8rem;padding:.4rem .9rem" (click)="toggleUpload(docTipoActual)">+ Subir</button>
-            <button class="btn-ghost"   style="font-size:.8rem;padding:.4rem .9rem" (click)="toggleFilter(docTipoActual)">Buscar ▾</button>
+          @if (tabAdminActiva() === 'documentacion') {
+            @if (puedeGestionarDocumento) {
+              <button class="btn-primary" style="font-size:.8rem;padding:.4rem .9rem" (click)="toggleUpload(docTipoActual)">+ Subir</button>
+            }
+            <button class="btn-ghost" style="font-size:.8rem;padding:.4rem .9rem" (click)="toggleFilter(docTipoActual)">Buscar ▾</button>
           }
           @if (tabAdminActiva() === 'solicitudes') {
             <button class="btn-primary" style="font-size:.8rem;padding:.4rem .9rem" (click)="abrirSolicitudForm()">+ Nueva solicitud</button>
@@ -269,12 +271,9 @@
           @if (tabJerarquia() === 'centro')  { <app-status-banner [status]="service.uploadStatus().centro"></app-status-banner> }
           @if (tabJerarquia() === 'proyecto'){ <app-status-banner [status]="service.uploadStatus().proyecto"></app-status-banner> }
 
-          <!-- Vista específica (empresa / centro / proyecto) -->
-          @if (puedeGestionarDocumento) {
-            @let docTipo = docTipoActual;
-
-            <!-- Panel filtro (texto + checkboxes) -->
-            @if (panels[docTipo].showFilter) {
+          <!-- Panel filtro (texto + checkboxes) — visible en todos los modos -->
+          @let docTipo = docTipoActual;
+          @if (panels[docTipo].showFilter) {
               <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:.5rem;padding:.75rem;margin-bottom:.75rem">
                 <div style="display:grid;grid-template-columns:1fr auto;gap:.75rem;align-items:flex-end;margin-bottom:.75rem">
                   <label class="field" style="margin:0">
@@ -295,8 +294,10 @@
                   }
                 </div>
               </div>
-            }
+          }
 
+          <!-- Vista específica (empresa / centro / proyecto) -->
+          @if (puedeGestionarDocumento) {
             <!-- Panel subir -->
             @if (panels[docTipo].showUpload) {
               <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:.5rem;padding:1rem;margin-bottom:.75rem">
@@ -331,15 +332,14 @@
             }
           }
 
-          <!-- Vista "todos centros" -->
+          <!-- Vista "todos centros": filtrada -->
           @if (tabJerarquia() === 'centro' && selectedCentroId === 'todos') {
-            @if (service.documentosPorCentro().length === 0) {
+            @if (filteredDocsPorCentro().length === 0) {
               <p class="empty">Sin documentos en centros de costos.</p>
             }
-            @for (item of service.documentosPorCentro(); track item.nombre) {
+            @for (item of filteredDocsPorCentro(); track item.nombre) {
               <div style="margin-bottom:1rem">
                 <p style="margin:0 0 .5rem;font-size:.875rem;font-weight:700;color:#374151">{{ item.nombre }}</p>
-                @if (item.docs.length === 0) { <p class="empty">Sin documentos.</p> }
                 @for (d of item.docs; track d._id) {
                   <div style="display:flex;align-items:center;justify-content:space-between;padding:.6rem 0;border-bottom:1px solid rgba(34,33,33,.07)">
                     <div style="display:flex;align-items:center;gap:.5rem">
@@ -353,18 +353,17 @@
             }
           }
 
-          <!-- Vista "todos proyectos" -->
+          <!-- Vista "todos proyectos": filtrada -->
           @if (tabJerarquia() === 'proyecto' && selectedProyectoId === 'todos') {
-            @if (service.documentosPorProyecto().length === 0) {
+            @if (filteredDocsPorProyecto().length === 0) {
               <p class="empty">Sin documentos en proyectos.</p>
             }
-            @for (item of service.documentosPorProyecto(); track item.nombre) {
+            @for (item of filteredDocsPorProyecto(); track item.nombre) {
               <div style="margin-bottom:1rem">
                 <p style="margin:0 0 .15rem;font-size:.875rem;font-weight:700;color:#374151">{{ item.nombre }}</p>
                 @if (item.centroNombre) {
                   <p style="margin:0 0 .5rem;font-size:.75rem;color:#9ca3af">Centro: {{ item.centroNombre }}</p>
                 }
-                @if (item.docs.length === 0) { <p class="empty">Sin documentos.</p> }
                 @for (d of item.docs; track d._id) {
                   <div style="display:flex;align-items:center;justify-content:space-between;padding:.6rem 0;border-bottom:1px solid rgba(34,33,33,.07)">
                     <div style="display:flex;align-items:center;gap:.5rem">

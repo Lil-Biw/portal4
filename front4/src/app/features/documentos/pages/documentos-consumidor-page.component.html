@@ -266,9 +266,11 @@
 
       <!-- Botones de acción centrados bajo el tab activo -->
       <div style="padding:.5rem .75rem;display:flex;justify-content:center;gap:.5rem">
-        @if (tabConsumidorActiva() === 'documentacion' && puedeGestionarDocumento) {
-          <button class="btn-primary" style="font-size:.8rem;padding:.4rem .9rem" (click)="toggleUpload(docTipoActual)">+ Subir</button>
-          <button class="btn-ghost"   style="font-size:.8rem;padding:.4rem .9rem" (click)="toggleFilter(docTipoActual)">Buscar ▾</button>
+        @if (tabConsumidorActiva() === 'documentacion') {
+          @if (puedeGestionarDocumento) {
+            <button class="btn-primary" style="font-size:.8rem;padding:.4rem .9rem" (click)="toggleUpload(docTipoActual)">+ Subir</button>
+          }
+          <button class="btn-ghost" style="font-size:.8rem;padding:.4rem .9rem" (click)="toggleFilter(docTipoActual)">Buscar ▾</button>
         }
         @if (tabConsumidorActiva() === 'solicitudes') {
           <button class="btn-ghost" style="font-size:.8rem;padding:.4rem .9rem" (click)="toggleBuscadorSolicitudes()">Buscar ▾</button>
@@ -286,31 +288,29 @@
           @if (tabJerarquia() === 'centro')  { <app-status-banner [status]="service.uploadStatus().centro"></app-status-banner> }
           @if (tabJerarquia() === 'proyecto'){ <app-status-banner [status]="service.uploadStatus().proyecto"></app-status-banner> }
 
-          <!-- Acciones: subir + buscar (solo en vistas específicas, no en "todos") -->
-          @if (puedeGestionarDocumento) {
-            @let docTipo = docTipoActual;
-
-            <!-- Panel buscar -->
-            @if (panels[docTipo].showFilter) {
-              <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:.5rem;padding:.75rem;margin-bottom:.75rem">
-                <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:.75rem;align-items:flex-end">
-                  <label class="field" style="margin:0">
-                    <span style="font-size:.8rem;font-weight:600;color:#374151">Buscar por nombre</span>
-                    <input type="text" [(ngModel)]="panels[docTipo].busqueda" placeholder="Nombre del documento…" />
-                  </label>
-                  <label class="field" style="margin:0">
-                    <span style="font-size:.8rem;font-weight:600;color:#374151">Tipo de documento</span>
-                    <select [(ngModel)]="panels[docTipo].categoriaFiltro">
-                      <option value="">Todos</option>
-                      @for (cat of categorias; track cat) { <option [value]="cat">{{ cat }}</option> }
-                    </select>
-                  </label>
-                  <button class="btn-ghost" style="font-size:.8rem;padding:.45rem .9rem;align-self:flex-end"
-                    (click)="panels[docTipo].busqueda = ''; panels[docTipo].categoriaFiltro = ''; toggleFilter(docTipo)">Limpiar</button>
-                </div>
+          <!-- Panel buscar (visible en todos los modos de documentación) -->
+          @let docTipo = docTipoActual;
+          @if (panels[docTipo].showFilter) {
+            <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:.5rem;padding:.75rem;margin-bottom:.75rem">
+              <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:.75rem;align-items:flex-end">
+                <label class="field" style="margin:0">
+                  <span style="font-size:.8rem;font-weight:600;color:#374151">Buscar por nombre</span>
+                  <input type="text" [(ngModel)]="panels[docTipo].busqueda" placeholder="Nombre del documento…" />
+                </label>
+                <label class="field" style="margin:0">
+                  <span style="font-size:.8rem;font-weight:600;color:#374151">Tipo de documento</span>
+                  <select [(ngModel)]="panels[docTipo].categoriaFiltro">
+                    <option value="">Todos</option>
+                    @for (cat of categorias; track cat) { <option [value]="cat">{{ cat }}</option> }
+                  </select>
+                </label>
+                <button class="btn-ghost" style="font-size:.8rem;padding:.45rem .9rem;align-self:flex-end"
+                  (click)="panels[docTipo].busqueda = ''; panels[docTipo].categoriaFiltro = ''; toggleFilter(docTipo)">Limpiar</button>
               </div>
-            }
+            </div>
+          }
 
+          @if (puedeGestionarDocumento) {
             <!-- Panel subir -->
             @if (panels[docTipo].showUpload) {
               <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:.5rem;padding:1rem;margin-bottom:.75rem">
@@ -352,15 +352,14 @@
             }
           }
 
-          <!-- Vista "todos centros": agrupado, solo descargar -->
+          <!-- Vista "todos centros": agrupado, filtrado, solo descargar -->
           @if (tabJerarquia() === 'centro' && selectedCentroIdC() === 'todos') {
-            @if (service.documentosPorCentro().length === 0) {
+            @if (filteredDocsPorCentro().length === 0) {
               <p class="empty">Sin documentos en centros de costos.</p>
             }
-            @for (item of service.documentosPorCentro(); track item.nombre) {
+            @for (item of filteredDocsPorCentro(); track item.nombre) {
               <div style="margin-bottom:1rem">
                 <p style="margin:0 0 .5rem;font-size:.875rem;font-weight:700;color:#374151">{{ item.nombre }}</p>
-                @if (item.docs.length === 0) { <p class="empty">Sin documentos.</p> }
                 @for (d of item.docs; track d._id) {
                   <div style="display:flex;align-items:center;justify-content:space-between;padding:.6rem 0;border-bottom:1px solid rgba(34,33,33,.07)">
                     <div style="display:flex;align-items:center;gap:.5rem">
@@ -374,18 +373,17 @@
             }
           }
 
-          <!-- Vista "todos proyectos": agrupado, solo descargar -->
+          <!-- Vista "todos proyectos": agrupado, filtrado, solo descargar -->
           @if (tabJerarquia() === 'proyecto' && selectedProyectoIdC() === 'todos') {
-            @if (service.documentosPorProyecto().length === 0) {
+            @if (filteredDocsPorProyecto().length === 0) {
               <p class="empty">Sin documentos en proyectos.</p>
             }
-            @for (item of service.documentosPorProyecto(); track item.nombre) {
+            @for (item of filteredDocsPorProyecto(); track item.nombre) {
               <div style="margin-bottom:1rem">
                 <p style="margin:0 0 .15rem;font-size:.875rem;font-weight:700;color:#374151">{{ item.nombre }}</p>
                 @if (item.centroNombre) {
                   <p style="margin:0 0 .5rem;font-size:.75rem;color:#9ca3af">Centro: {{ item.centroNombre }}</p>
                 }
-                @if (item.docs.length === 0) { <p class="empty">Sin documentos.</p> }
                 @for (d of item.docs; track d._id) {
                   <div style="display:flex;align-items:center;justify-content:space-between;padding:.6rem 0;border-bottom:1px solid rgba(34,33,33,.07)">
                     <div style="display:flex;align-items:center;gap:.5rem">

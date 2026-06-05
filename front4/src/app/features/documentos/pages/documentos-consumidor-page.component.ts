@@ -307,6 +307,32 @@ export class DocumentosConsumidorPageComponent implements OnInit {
     p.showUpload = false;
   }
 
+  filteredDocsPorCentro() {
+    const { busqueda, categoriaFiltro } = this.panels['centro'];
+    const term = busqueda.trim().toLowerCase();
+    return this.service.documentosPorCentro()
+      .map(item => ({
+        ...item,
+        docs: item.docs
+          .filter(d => !categoriaFiltro || d.categoria === categoriaFiltro)
+          .filter(d => !term || d.nombre_display.toLowerCase().includes(term)),
+      }))
+      .filter(item => item.docs.length > 0);
+  }
+
+  filteredDocsPorProyecto() {
+    const { busqueda, categoriaFiltro } = this.panels['proyecto'];
+    const term = busqueda.trim().toLowerCase();
+    return this.service.documentosPorProyecto()
+      .map(item => ({
+        ...item,
+        docs: item.docs
+          .filter(d => !categoriaFiltro || d.categoria === categoriaFiltro)
+          .filter(d => !term || d.nombre_display.toLowerCase().includes(term)),
+      }))
+      .filter(item => item.docs.length > 0);
+  }
+
   docsFiltrados(tipo: DocTipo): DocumentoItem[] {
     const docs = tipo === 'empresa' ? this.service.documentosEmpresa()
       : tipo === 'centro' ? this.service.documentosCentro()

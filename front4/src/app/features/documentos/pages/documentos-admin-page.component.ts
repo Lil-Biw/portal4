@@ -277,6 +277,32 @@ export class DocumentosAdminPageComponent implements OnInit {
     return this.panels[tipo].filtrosCategorias.includes(cat);
   }
 
+  filteredDocsPorCentro() {
+    const { busqueda, filtrosCategorias } = this.panels['centro'];
+    const term = busqueda.trim().toLowerCase();
+    return this.service.documentosPorCentro()
+      .map(item => ({
+        ...item,
+        docs: item.docs
+          .filter(d => !filtrosCategorias.length || filtrosCategorias.includes(d.categoria ?? ''))
+          .filter(d => !term || d.nombre_display.toLowerCase().includes(term)),
+      }))
+      .filter(item => item.docs.length > 0);
+  }
+
+  filteredDocsPorProyecto() {
+    const { busqueda, filtrosCategorias } = this.panels['proyecto'];
+    const term = busqueda.trim().toLowerCase();
+    return this.service.documentosPorProyecto()
+      .map(item => ({
+        ...item,
+        docs: item.docs
+          .filter(d => !filtrosCategorias.length || filtrosCategorias.includes(d.categoria ?? ''))
+          .filter(d => !term || d.nombre_display.toLowerCase().includes(term)),
+      }))
+      .filter(item => item.docs.length > 0);
+  }
+
   docsFiltrados(tipo: DocTipo): DocumentoItem[] {
     const docs = tipo === 'empresa' ? this.service.documentosEmpresa()
       : tipo === 'centro' ? this.service.documentosCentro()
