@@ -1,5 +1,5 @@
 import { Component, OnInit, inject, signal, computed, effect, untracked } from '@angular/core';
-import { NgFor, NgIf, NgTemplateOutlet } from '@angular/common';
+import { NgTemplateOutlet } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { DocumentosService, DocTipo, CATEGORIAS_DOCUMENTO, DocumentoItem } from '../documentos.service';
@@ -23,7 +23,7 @@ interface PanelState {
 @Component({
   selector: 'app-documentos-consumidor-page',
   standalone: true,
-  imports: [NgFor, NgIf, NgTemplateOutlet, FormsModule, StatusBannerComponent],
+  imports: [NgTemplateOutlet, FormsModule, StatusBannerComponent],
   templateUrl: './documentos-consumidor-page.component.html',
 })
 export class DocumentosConsumidorPageComponent implements OnInit {
