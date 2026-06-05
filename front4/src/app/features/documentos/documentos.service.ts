@@ -4,6 +4,7 @@ import { forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { ApiService } from '../../core/services/api.service';
 import { Status } from '../../shared/models/status.model';
+import { asId } from '../../shared/utils';
 
 export const CATEGORIAS_DOCUMENTO = [
   '[AGUA] Boleta/Factura',
@@ -46,6 +47,7 @@ export class DocumentosService {
   readonly documentosCentro      = signal<DocumentoItem[]>([]);
   readonly documentosProyecto    = signal<DocumentoItem[]>([]);
   readonly documentosPorCentro   = signal<{ nombre: string; docs: DocumentoItem[] }[]>([]);
+  readonly documentosPorProyecto = signal<{ nombre: string; centroNombre: string; docs: DocumentoItem[] }[]>([]);
   readonly uploadStatus = signal<Record<DocTipo, Status | null>>({
     empresa: null, centro: null, proyecto: null,
   });
@@ -100,6 +102,37 @@ export class DocumentosService {
           docs: results[i].map(d => this.addUrl(d, `/empresas/${empresaId}/centros/${c._id}/documentos/${d._id}`)),
         })).filter(x => x.docs.length > 0)
       ),
+    });
+  }
+
+  // Carga docs de todos los proyectos de una empresa (para vista "todos")
+  cargarTodosProyectos(
+    empresaId: string,
+    proyectos: { _id: string; nombre: string; centro_costo_id: string }[],
+    centros: { _id: string; nombre: string }[]
+  ): void {
+    this.documentosPorProyecto.set([]);
+    if (!proyectos.length) return;
+    const calls = proyectos.map(p =>
+      this.http.get<DocumentoItem[]>(
+        this.api.url(`/empresas/${empresaId}/centros/${asId(p.centro_costo_id)}/proyectos/${asId(p._id)}/documentos`)
+      ).pipe(catchError(() => of([] as DocumentoItem[])))
+    );
+    forkJoin(calls).subscribe({
+      next: results => {
+        const centroMap = new Map(centros.map(c => [asId(c._id), c.nombre]));
+        this.documentosPorProyecto.set(
+          proyectos
+            .map((p, i) => ({
+              nombre: p.nombre,
+              centroNombre: centroMap.get(asId(p.centro_costo_id)) ?? '',
+              docs: results[i].map(d =>
+                this.addUrl(d, `/empresas/${empresaId}/centros/${asId(p.centro_costo_id)}/proyectos/${asId(p._id)}/documentos/${d._id}`)
+              ),
+            }))
+            .filter(x => x.docs.length > 0)
+        );
+      },
     });
   }
 
