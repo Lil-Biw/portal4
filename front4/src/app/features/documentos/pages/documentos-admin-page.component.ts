@@ -1,5 +1,4 @@
 import { Component, OnInit, inject, signal, computed } from '@angular/core';
-import { NgFor, NgIf } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DocumentosService, DocTipo, CATEGORIAS_DOCUMENTO, DocumentoItem } from '../documentos.service';
 import { ClientesService } from '../../clientes/clientes.service';
@@ -28,7 +27,7 @@ export interface EstadoDestino {
 @Component({
   selector: 'app-documentos-admin-page',
   standalone: true,
-  imports: [NgFor, NgIf, FormsModule, StatusBannerComponent],
+  imports: [FormsModule, StatusBannerComponent],
   templateUrl: './documentos-admin-page.component.html',
 })
 export class DocumentosAdminPageComponent implements OnInit {
@@ -44,16 +43,17 @@ export class DocumentosAdminPageComponent implements OnInit {
   protected selectedCentroId   = '';
   protected selectedProyectoId = '';
 
-  protected tabAdminActiva = signal<'documentacion' | 'solicitudes'>('documentacion');
+  protected tabJerarquia    = signal<'empresa' | 'centro' | 'proyecto'>('empresa');
+  protected tabAdminActiva  = signal<'documentacion' | 'solicitudes'>('documentacion');
 
   protected showSolicitudForm   = signal(false);
   protected solicitudForm: CreateSolicitudDto = this.emptySolicitudForm();
 
-  protected solicitudEstadoEdit    = signal<string | null>(null);
-  protected rechazandoId           = signal<string | null>(null);
-  protected motivoRechazoInput     = '';
+  protected solicitudEstadoEdit = signal<string | null>(null);
+  protected rechazandoId        = signal<string | null>(null);
+  protected motivoRechazoInput  = '';
 
-  protected solicitudEditando   = signal<string | null>(null);
+  protected solicitudEditando  = signal<string | null>(null);
   protected solicitudEditForm: UpdateSolicitudDto = {};
 
   protected panels: Record<DocTipo, PanelState> = {
@@ -65,22 +65,15 @@ export class DocumentosAdminPageComponent implements OnInit {
   // ─── computed ─────────────────────────────────────────────────────────────
 
   protected solicitudesAdmin = computed(() => {
-    const sols = this.solicitudesService.solicitudes();
+    const sols   = this.solicitudesService.solicitudes();
     const centro   = this.selectedCentroId;
     const proyecto = this.selectedProyectoId;
-
-    if (!centro) {
-      return sols.filter(s => !s.centro_costo_id && !s.proyecto_id);
-    }
+    if (!centro) return sols.filter(s => !s.centro_costo_id && !s.proyecto_id);
     if (centro === 'todos') {
-      if (!proyecto) {
-        return sols.filter(s => s.centro_costo_id && !s.proyecto_id);
-      }
+      if (!proyecto) return sols.filter(s => s.centro_costo_id && !s.proyecto_id);
       return sols;
     }
-    if (!proyecto) {
-      return sols.filter(s => s.centro_costo_id === centro && !s.proyecto_id);
-    }
+    if (!proyecto) return sols.filter(s => s.centro_costo_id === centro && !s.proyecto_id);
     return sols.filter(s => s.centro_costo_id === centro);
   });
 
@@ -102,6 +95,70 @@ export class DocumentosAdminPageComponent implements OnInit {
   get centroNombre()   { return this.centrosService.centros().find(c => c._id === this.selectedCentroId)?.nombre; }
   get proyectoNombre() { return this.proyectosService.proyectos().find(p => p._id === this.selectedProyectoId)?.nombre; }
 
+  get empresaSeleccionadaObj() { return this.clientesService.clientes().find(c => c._id === this.selectedEmpresaId) ?? null; }
+
+  get centroSeleccionado() {
+    const id = this.selectedCentroId;
+    if (!id || id === 'todos') return null;
+    return this.centrosService.centros().find(c => c._id === id) ?? null;
+  }
+
+  get proyectoSeleccionado() {
+    const id = this.selectedProyectoId;
+    if (!id || id === 'todos') return null;
+    return this.proyectosService.proyectos().find(p => p._id === id) ?? null;
+  }
+
+  get docTipoActual(): DocTipo {
+    return this.tabJerarquia() === 'empresa' ? 'empresa'
+      : this.tabJerarquia() === 'centro' ? 'centro'
+      : 'proyecto';
+  }
+
+  get puedeGestionarDocumento(): boolean {
+    return this.tabJerarquia() === 'empresa' ||
+      (this.tabJerarquia() === 'centro'   && !!this.selectedCentroId   && this.selectedCentroId   !== 'todos') ||
+      (this.tabJerarquia() === 'proyecto' && !!this.selectedProyectoId && this.selectedProyectoId !== 'todos');
+  }
+
+  get tieneContenido(): boolean {
+    return !!this.selectedEmpresaId && (
+      this.tabJerarquia() === 'empresa' ||
+      (this.tabJerarquia() === 'centro'   && !!this.selectedCentroId) ||
+      (this.tabJerarquia() === 'proyecto' && !!this.selectedCentroId && !!this.selectedProyectoId)
+    );
+  }
+
+  formatFecha(fecha?: string): string {
+    if (!fecha) return '—';
+    const d = new Date(fecha);
+    const meses = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+    return `${meses[d.getUTCMonth()]} ${d.getUTCFullYear()}`;
+  }
+
+  solicitudesTabActual(): Solicitud[] {
+    const tab = this.tabJerarquia();
+    const all = this.solicitudesService.solicitudes();
+    if (tab === 'empresa') return all.filter(s => !s.centro_costo_id && !s.proyecto_id);
+    if (tab === 'centro') {
+      const c = this.selectedCentroId;
+      if (!c) return [];
+      if (c === 'todos') return all.filter(s => s.centro_costo_id && !s.proyecto_id);
+      return all.filter(s => s.centro_costo_id === c && !s.proyecto_id);
+    }
+    const c = this.selectedCentroId;
+    const p = this.selectedProyectoId;
+    if (!c || !p) return [];
+    if (p === 'todos') {
+      if (c === 'todos') return all.filter(s => !!s.proyecto_id);
+      const ids = this.proyectosService.proyectos()
+        .filter(x => asId(x.centro_costo_id) === c)
+        .map(x => asId(x._id));
+      return all.filter(s => s.proyecto_id && ids.includes(s.proyecto_id));
+    }
+    return all.filter(s => s.proyecto_id === p);
+  }
+
   // ─── lifecycle ────────────────────────────────────────────────────────────
 
   ngOnInit(): void {
@@ -116,9 +173,12 @@ export class DocumentosAdminPageComponent implements OnInit {
   onEmpresaChange(): void {
     this.selectedCentroId = '';
     this.selectedProyectoId = '';
+    this.tabJerarquia.set('empresa');
+    this.tabAdminActiva.set('documentacion');
     this.service.documentosCentro.set([]);
     this.service.documentosProyecto.set([]);
     this.service.documentosPorCentro.set([]);
+    this.service.documentosPorProyecto.set([]);
     if (this.selectedEmpresaId) this.service.cargarEmpresa(this.selectedEmpresaId);
     else this.service.documentosEmpresa.set([]);
     this.solicitudesService.cargar(this.selectedEmpresaId);
@@ -126,6 +186,8 @@ export class DocumentosAdminPageComponent implements OnInit {
 
   onCentroChange(): void {
     this.selectedProyectoId = '';
+    this.service.documentosPorProyecto.set([]);
+    if (this.selectedCentroId) this.tabJerarquia.set('centro');
     const centroId = (this.selectedCentroId && this.selectedCentroId !== 'todos') ? this.selectedCentroId : undefined;
     if (this.selectedCentroId === 'todos') {
       this.service.documentosCentro.set([]);
@@ -141,9 +203,22 @@ export class DocumentosAdminPageComponent implements OnInit {
   }
 
   onProyectoChange(): void {
+    if (this.selectedProyectoId) this.tabJerarquia.set('proyecto');
     const centroId   = (this.selectedCentroId   && this.selectedCentroId   !== 'todos') ? this.selectedCentroId   : undefined;
     const proyectoId = (this.selectedProyectoId && this.selectedProyectoId !== 'todos') ? this.selectedProyectoId : undefined;
-    if (proyectoId && centroId) {
+
+    this.service.documentosProyecto.set([]);
+    this.service.documentosPorProyecto.set([]);
+
+    if (this.selectedProyectoId === 'todos' && this.selectedCentroId === 'todos') {
+      const todos = this.proyectosService.proyectos().filter(p => asId(p.cliente_id) === this.selectedEmpresaId);
+      this.service.cargarTodosProyectos(this.selectedEmpresaId, todos, this.centrosFiltrados);
+    } else if (this.selectedProyectoId === 'todos' && centroId) {
+      const delCentro = this.proyectosService.proyectos().filter(
+        p => asId(p.cliente_id) === this.selectedEmpresaId && asId(p.centro_costo_id) === centroId
+      );
+      this.service.cargarTodosProyectos(this.selectedEmpresaId, delCentro, this.centrosFiltrados);
+    } else if (proyectoId && centroId) {
       this.service.cargar('proyecto', this.selectedEmpresaId, centroId, proyectoId);
     } else if (centroId) {
       this.service.cargar('centro', this.selectedEmpresaId, centroId);
@@ -180,7 +255,7 @@ export class DocumentosAdminPageComponent implements OnInit {
     this.service.subir(
       p.selectedFile, tipo,
       this.selectedEmpresaId,
-      (this.selectedCentroId && this.selectedCentroId !== 'todos') ? this.selectedCentroId : undefined,
+      (this.selectedCentroId   && this.selectedCentroId   !== 'todos') ? this.selectedCentroId   : undefined,
       (this.selectedProyectoId && this.selectedProyectoId !== 'todos') ? this.selectedProyectoId : undefined,
       p.nombreInput || undefined,
       p.categoriaInput || undefined,
@@ -222,21 +297,19 @@ export class DocumentosAdminPageComponent implements OnInit {
     this.showSolicitudForm.set(true);
   }
 
-  cerrarSolicitudForm(): void {
-    this.showSolicitudForm.set(false);
-  }
+  cerrarSolicitudForm(): void { this.showSolicitudForm.set(false); }
 
   crearSolicitud(): void {
     if (!this.solicitudForm.nombre || !this.selectedEmpresaId) return;
-    this.solicitudesService.crear(
-      {
-        ...this.solicitudForm,
-        empresa_id:      this.selectedEmpresaId,
-        centro_costo_id: (this.selectedCentroId   && this.selectedCentroId   !== 'todos') ? this.selectedCentroId   : undefined,
-        proyecto_id:     (this.selectedProyectoId && this.selectedProyectoId !== 'todos') ? this.selectedProyectoId : undefined,
-      },
-      () => this.showSolicitudForm.set(false),
-    );
+    const tab = this.tabJerarquia();
+    const centroId   = tab !== 'empresa' && this.selectedCentroId   !== 'todos' ? this.selectedCentroId   : undefined;
+    const proyectoId = tab === 'proyecto' && this.selectedProyectoId !== 'todos' ? this.selectedProyectoId : undefined;
+    this.solicitudesService.crear({
+      ...this.solicitudForm,
+      empresa_id: this.selectedEmpresaId,
+      centro_costo_id: centroId,
+      proyecto_id: proyectoId,
+    }, () => this.showSolicitudForm.set(false));
   }
 
   iniciarCambioEstado(id: string, estado: EstadoSolicitud): void {
@@ -258,14 +331,9 @@ export class DocumentosAdminPageComponent implements OnInit {
     this.motivoRechazoInput = '';
   }
 
-  cancelarRechazo(): void {
-    this.rechazandoId.set(null);
-    this.motivoRechazoInput = '';
-  }
+  cancelarRechazo(): void { this.rechazandoId.set(null); this.motivoRechazoInput = ''; }
 
-  cambiarEstadoSolicitud(id: string, estado: EstadoSolicitud): void {
-    this.iniciarCambioEstado(id, estado);
-  }
+  cambiarEstadoSolicitud(id: string, estado: EstadoSolicitud): void { this.iniciarCambioEstado(id, estado); }
 
   abrirEditarSolicitud(s: Solicitud): void {
     this.solicitudEditando.set(s._id);
@@ -286,9 +354,7 @@ export class DocumentosAdminPageComponent implements OnInit {
     this.solicitudEditando.set(null);
   }
 
-  eliminarSolicitud(id: string): void {
-    this.solicitudesService.eliminarSolicitud(id);
-  }
+  eliminarSolicitud(id: string): void { this.solicitudesService.eliminarSolicitud(id); }
 
   estadosDestino(actual: EstadoSolicitud): EstadoDestino[] {
     const map: Record<EstadoSolicitud, EstadoDestino[]> = {
@@ -346,11 +412,9 @@ export class DocumentosAdminPageComponent implements OnInit {
 
   estadoLabel(estado: EstadoSolicitud): string {
     const map: Record<EstadoSolicitud, string> = {
-      pendiente: 'Pendiente',
-      revision:  'En revisión',
-      aprobado:  'Aprobado',
-      rechazado: 'Rechazado',
-      vencido:   'Vencido',
+      pendiente: 'Pendiente', revision: 'En revisión',
+      aprobado: 'Aprobado',   rechazado: 'Rechazado',
+      vencido: 'Vencido',
     };
     return map[estado];
   }
