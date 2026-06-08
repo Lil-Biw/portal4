@@ -5,6 +5,7 @@ import { SolicitudDocument } from './solicitudes.schema';
 import { CentroCostoDocument } from '../centros-costos/centros-costos.schema';
 import { CreateSolicitudDto, UpdateSolicitudDto, CambiarEstadoDto } from './solicitudes.dto';
 import { MailService } from '../mail/mail.service';
+import { NotificacionOpcionesDto } from '../common/dto/notificacion-opciones.dto';
 
 @Injectable()
 export class SolicitudesService {
@@ -25,24 +26,60 @@ export class SolicitudesService {
     if (dto.centro_costo_id) doc['centro_costo_id'] = new Types.ObjectId(dto.centro_costo_id);
     if (dto.proyecto_id)     doc['proyecto_id']     = new Types.ObjectId(dto.proyecto_id);
     const saved = await new this.solicitudModel(doc).save();
-    if (dto.centro_costo_id) await this.notificarUsuariosCentro(dto.centro_costo_id, dto);
+    if (dto.centro_costo_id) await this.notificarUsuariosCentro(dto.centro_costo_id, dto, dto.notificacion);
     return saved;
   }
 
-  private async notificarUsuariosCentro(centroCostoId: string, dto: CreateSolicitudDto) {
+  private async notificarUsuariosCentro(
+    centroCostoId: string,
+    dto: CreateSolicitudDto,
+    notificacion?: NotificacionOpcionesDto,
+  ) {
+    const opciones = notificacion ?? { notificar: true, audiencia: 'todos' };
+    if (!opciones.notificar) return;
+
     try {
       const centro = await this.centroCostoModel.findById(centroCostoId).lean();
-      if (!centro) return;
+      if (!centro) {
+        this.logger.warn(`notificarUsuariosCentro: centro ${centroCostoId} no encontrado, se omite notificación`);
+        return;
+      }
+
       const centroObjId = new Types.ObjectId(centroCostoId);
-      const usuariosCentro = await this.usuarioModel
-        .find({
-          cliente_id: new Types.ObjectId(String(centro.cliente_id)),
-          activo: true,
-          $or: [{ rol: 'admin_cliente' }, { centros_asignados: centroObjId }],
-        })
-        .select('nombre email').lean();
+      const empresaId = new Types.ObjectId(String(centro.cliente_id));
+
+      let usuariosCentro: { nombre: string; email: string }[] = [];
+
+      if (opciones.audiencia === 'especificos') {
+        const especificos = await this.usuarioModel
+          .find({
+            _id: { $in: (opciones.destinatarios_ids ?? []).map(id => new Types.ObjectId(id)) },
+            activo: true,
+          })
+          .select('nombre email')
+          .lean();
+        const admins = await this.usuarioModel
+          .find({ cliente_id: empresaId, rol: 'admin_cliente', activo: true })
+          .select('nombre email')
+          .lean();
+        usuariosCentro = [...especificos, ...admins];
+      } else {
+        // audiencia 'todos' o undefined → todos los usuarios del centro + admin_cliente
+        usuariosCentro = await this.usuarioModel
+          .find({
+            cliente_id: empresaId,
+            activo: true,
+            $or: [{ rol: 'admin_cliente' }, { centros_asignados: centroObjId }],
+          })
+          .select('nombre email')
+          .lean();
+      }
+
       const superAdmins = await this.usuarioModel
-        .find({ rol: 'super_admin', activo: true }).select('nombre email').lean();
+        .find({ rol: 'super_admin', activo: true })
+        .select('nombre email')
+        .lean();
+
       const emailsVistos = new Set<string>();
       const destinatarios: { nombre: string; email: string }[] = [];
       for (const u of [...usuariosCentro, ...superAdmins]) {
@@ -51,11 +88,19 @@ export class SolicitudesService {
           destinatarios.push({ nombre: u.nombre, email: u.email });
         }
       }
+
       if (destinatarios.length === 0) return;
+
       this.logger.log(`Notificación solicitud: centro=${centroCostoId} destinatarios=${destinatarios.length}`);
+
       await this.mailService.notificarNuevaSolicitud({
         destinatarios,
-        solicitud: { nombre: dto.nombre, tipo: dto.tipo, descripcion: dto.descripcion, centro: String(centro.nombre) },
+        solicitud: {
+          nombre:      dto.nombre,
+          tipo:        dto.tipo,
+          descripcion: dto.descripcion,
+          centro:      String(centro.nombre),
+        },
       });
     } catch (err: unknown) {
       this.logger.error('Error al notificar solicitud:', err);
@@ -98,43 +143,77 @@ export class SolicitudesService {
       .lean();
     if (!solicitud) throw new NotFoundException(`Solicitud ${id} no encontrada`);
     if (dto.estado === 'rechazado' && solicitud.empresa_id) {
-      await this.notificarRechazoSolicitud(solicitud);
+      await this.notificarRechazoSolicitud(solicitud, dto.notificacion);
     }
     return solicitud;
   }
 
-  private async notificarRechazoSolicitud(solicitud: Record<string, unknown>) {
+  private async notificarRechazoSolicitud(
+    solicitud: Record<string, unknown>,
+    notificacion?: NotificacionOpcionesDto,
+  ) {
+    const opciones = notificacion ?? { notificar: true, audiencia: 'todos' };
+    if (!opciones.notificar) return;
+
     try {
       const empresaId = String(solicitud['empresa_id']);
       const centro = solicitud['centro_costo_id']
         ? await this.centroCostoModel.findById(String(solicitud['centro_costo_id'])).lean()
         : null;
       const centroObjId = centro ? new Types.ObjectId(String(solicitud['centro_costo_id'])) : null;
-      const usuariosEmpresa = await this.usuarioModel
-        .find({
-          cliente_id: new Types.ObjectId(empresaId),
-          activo: true,
-          $or: centroObjId
-            ? [{ rol: 'admin_cliente' }, { centros_asignados: centroObjId }]
-            : [{ rol: 'admin_cliente' }],
-        })
-        .select('nombre email').lean();
-      if (usuariosEmpresa.length === 0) return;
+
+      let usuariosEmpresa: { nombre: string; email: string }[] = [];
+
+      if (opciones.audiencia === 'especificos') {
+        const especificos = await this.usuarioModel
+          .find({
+            _id: { $in: (opciones.destinatarios_ids ?? []).map(id => new Types.ObjectId(id)) },
+            activo: true,
+          })
+          .select('nombre email')
+          .lean();
+        const admins = await this.usuarioModel
+          .find({ cliente_id: new Types.ObjectId(empresaId), rol: 'admin_cliente', activo: true })
+          .select('nombre email')
+          .lean();
+        usuariosEmpresa = [...especificos, ...admins];
+      } else {
+        // audiencia 'todos' o undefined → usuarios del centro + admin_cliente
+        usuariosEmpresa = await this.usuarioModel
+          .find({
+            cliente_id: new Types.ObjectId(empresaId),
+            activo: true,
+            $or: centroObjId
+              ? [{ rol: 'admin_cliente' }, { centros_asignados: centroObjId }]
+              : [{ rol: 'admin_cliente' }],
+          })
+          .select('nombre email')
+          .lean();
+      }
+
+      const superAdmins = await this.usuarioModel
+        .find({ rol: 'super_admin', activo: true })
+        .select('nombre email')
+        .lean();
+
       const emailsVistos = new Set<string>();
       const destinatarios: { nombre: string; email: string }[] = [];
-      for (const u of usuariosEmpresa) {
+      for (const u of [...usuariosEmpresa, ...superAdmins]) {
         if (u.email && !emailsVistos.has(u.email)) {
           emailsVistos.add(u.email);
           destinatarios.push({ nombre: u.nombre, email: u.email });
         }
       }
+
+      if (destinatarios.length === 0) return;
+
       await this.mailService.notificarRechazoSolicitud({
         destinatarios,
         solicitud: {
-          nombre: String(solicitud['nombre']),
-          tipo: String(solicitud['tipo']),
+          nombre:         String(solicitud['nombre']),
+          tipo:           String(solicitud['tipo']),
           motivo_rechazo: String(solicitud['motivo_rechazo'] ?? ''),
-          centro: centro ? String(centro.nombre) : 'Empresa',
+          centro:         centro ? String(centro.nombre) : 'Empresa',
         },
       });
     } catch (err: unknown) {
