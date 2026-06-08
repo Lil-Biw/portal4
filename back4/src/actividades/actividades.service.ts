@@ -78,12 +78,15 @@ export class ActividadesService {
     a: Record<string, unknown>,
     notificacion?: NotificacionOpcionesDto,
   ) {
-    const opciones = notificacion ?? { notificar: true, audiencia: 'todos' as const };
+    const opciones = notificacion ?? { notificar: true, audiencia: 'todos' };
     if (!opciones.notificar) return;
 
     try {
       const centro = await this.centroCostoModel.findById(centroCostoId).lean();
-      if (!centro) return;
+      if (!centro) {
+        this.logger.warn(`notificarUsuariosCentro: centro ${centroCostoId} no encontrado, se omite notificación`);
+        return;
+      }
 
       const centroObjId = new Types.ObjectId(String(centroCostoId));
       const empresaId = new Types.ObjectId(String(centro.cliente_id));
@@ -104,6 +107,7 @@ export class ActividadesService {
           .lean();
         usuariosCentro = [...especificos, ...admins];
       } else {
+        // audiencia 'todos' o undefined → todos los usuarios del centro + admin_cliente
         usuariosCentro = await this.usuarioModel
           .find({
             cliente_id: empresaId,
