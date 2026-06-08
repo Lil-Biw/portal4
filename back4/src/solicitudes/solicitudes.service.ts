@@ -19,14 +19,15 @@ export class SolicitudesService {
   ) {}
 
   async create(dto: CreateSolicitudDto) {
+    const { notificacion, ...solicitudData } = dto;
     const doc: Record<string, unknown> = {
-      ...dto,
-      empresa_id: new Types.ObjectId(dto.empresa_id!),
+      ...solicitudData,
+      empresa_id: new Types.ObjectId(solicitudData.empresa_id!),
     };
-    if (dto.centro_costo_id) doc['centro_costo_id'] = new Types.ObjectId(dto.centro_costo_id);
-    if (dto.proyecto_id)     doc['proyecto_id']     = new Types.ObjectId(dto.proyecto_id);
+    if (solicitudData.centro_costo_id) doc['centro_costo_id'] = new Types.ObjectId(solicitudData.centro_costo_id);
+    if (solicitudData.proyecto_id)     doc['proyecto_id']     = new Types.ObjectId(solicitudData.proyecto_id);
     const saved = await new this.solicitudModel(doc).save();
-    if (dto.centro_costo_id) await this.notificarUsuariosCentro(dto.centro_costo_id, dto, dto.notificacion);
+    if (solicitudData.centro_costo_id) await this.notificarUsuariosCentro(solicitudData.centro_costo_id, dto, notificacion);
     return saved;
   }
 
