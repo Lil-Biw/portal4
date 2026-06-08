@@ -19,14 +19,29 @@ export class ActividadesService {
     private mailService: MailService,
   ) {}
 
-  async findAllByEmpresa(empresaId: string) {
+  async findAllByEmpresa(empresaId: string, centroCostoId?: string, desde?: string, hasta?: string) {
     const centros = await this.centroCostoModel
       .find({ cliente_id: new Types.ObjectId(empresaId), activo: true })
       .select('_id')
       .lean();
     const centroIds = centros.map(c => c._id);
+    const filter: Record<string, unknown> = { centro_costo_id: { $in: centroIds } };
+    if (centroCostoId) {
+      filter['centro_costo_id'] = {
+        $in: [
+          ...centroIds,
+          new Types.ObjectId(centroCostoId),
+          centroCostoId,
+        ],
+      };
+    }
+    if (desde || hasta) {
+      filter['fecha'] = {};
+      if (desde) (filter['fecha'] as Record<string, Date>)['$gte'] = new Date(desde);
+      if (hasta) (filter['fecha'] as Record<string, Date>)['$lte'] = new Date(hasta);
+    }
     return this.actividadModel
-      .find({ centro_costo_id: { $in: centroIds } })
+      .find(filter)
       .select('-documentos.contenido')
       .populate('tipo_id')
       .populate('activo_ids')
@@ -58,17 +73,20 @@ export class ActividadesService {
   }
 
   async create(dto: CreateActividadDto) {
+    const { notificacion, ...actividadData } = dto;
     const a = await new this.actividadModel({
-      ...dto,
-      tipo_id: new Types.ObjectId(dto.tipo_id),
-      centro_costo_id: new Types.ObjectId(dto.centro_costo_id),
-      activo_ids: (dto.activo_ids ?? []).map(id => new Types.ObjectId(id)),
-      fecha: new Date(dto.fecha),
+      ...actividadData,
+      tipo_id: new Types.ObjectId(actividadData.tipo_id),
+      centro_costo_id: new Types.ObjectId(actividadData.centro_costo_id),
+      activo_ids: (actividadData.activo_ids ?? []).map(id => new Types.ObjectId(id)),
+      fecha: new Date(actividadData.fecha),
     }).save();
 
     const result = await this.actividadModel.findById(a._id).populate('tipo_id').lean();
 
-    await this.notificarUsuariosCentro(dto.centro_costo_id, result!, dto.notificacion);
+    if (actividadData.centro_costo_id) {
+      await this.notificarUsuariosCentro(actividadData.centro_costo_id, result!, notificacion);
+    }
 
     return result;
   }
@@ -163,7 +181,8 @@ export class ActividadesService {
   }
 
   async update(id: string, dto: UpdateActividadDto) {
-    const payload: Record<string, unknown> = { ...dto };
+    const { notificacion: _n, ...updateData } = dto;
+    const payload: Record<string, unknown> = { ...updateData };
     if (dto.tipo_id) payload['tipo_id'] = new Types.ObjectId(dto.tipo_id);
     if (dto.centro_costo_id) payload['centro_costo_id'] = new Types.ObjectId(dto.centro_costo_id);
     if (dto.fecha) payload['fecha'] = new Date(dto.fecha);
