@@ -97,6 +97,7 @@ export class ActividadesService {
         const especificos = await this.usuarioModel
           .find({
             _id: { $in: (opciones.destinatarios_ids ?? []).map(id => new Types.ObjectId(id)) },
+            cliente_id: empresaId,
             activo: true,
           })
           .select('nombre email')
