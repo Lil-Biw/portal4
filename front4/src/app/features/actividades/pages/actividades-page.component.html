@@ -1,0 +1,384 @@
+<!-- Header -->
+<div class="mant-header">
+  <div>
+    <h2 class="mant-title">Actividades</h2>
+    <p class="mant-subtitle">Calendario de actividades por centro de costos</p>
+  </div>
+  <button class="btn-primary" (click)="abrirCrear()">+ Actividad</button>
+</div>
+
+<app-status-banner [status]="service.status()"></app-status-banner>
+
+<!-- Barra de control del calendario -->
+<div class="cal-toolbar">
+  <div class="cal-nav">
+    <button class="cal-nav-btn" (click)="navAnterior()">‹</button>
+    <span class="cal-label">
+      @if (view() === 'month') { {{ monthLabel() }} }
+      @else { {{ weekLabel() }} }
+    </span>
+    <button class="cal-nav-btn" (click)="navSiguiente()">›</button>
+    <button class="cal-today-btn" (click)="irAHoy()">Hoy</button>
+  </div>
+  <div style="display:flex;align-items:center;gap:.75rem;flex-wrap:wrap">
+    <select
+      class="cal-empresa-filter"
+      [ngModel]="filtroEmpresaId()"
+      (ngModelChange)="filtroEmpresaId.set($event)">
+      <option value="">Todas las empresas</option>
+      @for (e of clientesService.clientes(); track e._id) {
+        <option [value]="e._id">{{ e.razon_social }}</option>
+      }
+    </select>
+    <select
+      class="cal-empresa-filter"
+      [ngModel]="filtroTipoId()"
+      (ngModelChange)="filtroTipoId.set($event)">
+      <option value="">Todos los tipos</option>
+      @for (t of tiposService.tipos(); track t._id) {
+        <option [value]="t._id">{{ t.nombre }}</option>
+      }
+    </select>
+    <div class="cal-view-toggle">
+      <button [class.active]="view() === 'month'" (click)="setView('month')">Mes</button>
+      <button [class.active]="view() === 'week'"  (click)="setView('week')">Semana</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ VISTA MES ══════════════════════════════════════════════════════════ -->
+@if (view() === 'month') {
+  <div class="card cal-card">
+    <div class="cal-grid-header">
+      @for (d of days; track d) {
+        <div class="cal-day-header">{{ d }}</div>
+      }
+    </div>
+    <div class="cal-grid-month">
+      @for (cell of calendarDays(); track cell.date.toISOString()) {
+        <div
+          class="cal-cell"
+          [class.other-month]="!cell.currentMonth"
+          [class.today]="isToday(cell.date)"
+          (click)="abrirCrear(cell.date.toISOString().slice(0,10))">
+          <span class="cal-day-num">{{ cell.date.getDate() }}</span>
+          <div class="cal-events">
+            @for (a of actividadesEnDia(cell.date); track a._id) {
+              <div
+                class="cal-event-chip"
+                [style.background]="colorDeActividad(a)"
+                (click)="$event.stopPropagation(); abrirEditar(a)"
+                [title]="a.nombre">
+                {{ a.nombre }}
+              </div>
+            }
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+}
+
+<!-- ══ VISTA SEMANA ═══════════════════════════════════════════════════════ -->
+@if (view() === 'week') {
+  <div class="card cal-card">
+    <div class="cal-grid-week">
+      @for (day of weekDays(); track day.toISOString()) {
+        <div class="cal-week-col" [class.today]="isToday(day)">
+          <div class="cal-week-header">
+            <span class="cal-week-dow">{{ days[(day.getDay() + 6) % 7] }}</span>
+            <span class="cal-week-num" [class.today-num]="isToday(day)">{{ day.getDate() }}</span>
+          </div>
+          <div class="cal-week-events" (click)="abrirCrear(day.toISOString().slice(0,10))">
+            @for (a of actividadesEnDia(day); track a._id) {
+              <div
+                class="cal-event-chip"
+                [style.background]="colorDeActividad(a)"
+                (click)="$event.stopPropagation(); abrirEditar(a)"
+                [title]="a.nombre">
+                {{ a.nombre }}
+              </div>
+            }
+            @if (actividadesEnDia(day).length === 0) {
+              <div class="cal-week-empty"></div>
+            }
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+}
+
+<!-- Mensaje cuando no hay actividades -->
+@if (!service.loading() && service.actividades().length === 0) {
+  <div class="card" style="text-align:center;padding:1.5rem;color:#9ca3af;font-size:.85rem;margin-bottom:1rem">
+    No hay actividades registradas. Haz clic en <strong>+ Actividad</strong> para agregar la primera, o en cualquier día del calendario.
+  </div>
+}
+
+<!-- ══ TIPOS DE ACTIVIDAD ════════════════════════════════════════════════ -->
+<div class="tipos-section">
+  <div class="tipos-header" (click)="toggleTipos()">
+    <h3 class="tipos-title">Tipos de actividad ({{ tiposService.tipos().length }})</h3>
+    <div style="display:flex;align-items:center;gap:.5rem">
+      @if (puedeGestionarTipos()) {
+        <button class="btn-ghost btn-sm" (click)="$event.stopPropagation(); abrirNuevoTipo()">+ Nuevo tipo</button>
+      }
+      <span class="tipos-chevron">{{ showTipos() ? '▲' : '▼' }}</span>
+    </div>
+  </div>
+
+  @if (showTipos()) {
+    <app-status-banner [status]="tiposService.status()"></app-status-banner>
+
+    @if (showTipoForm() && puedeGestionarTipos()) {
+      <div class="tipo-form-inline">
+        <input
+          class="tipo-input"
+          type="text"
+          placeholder="Nombre del tipo"
+          [ngModel]="tipoForm().nombre"
+          (ngModelChange)="patchTipoForm('nombre', $event)" />
+        <div style="display:flex;align-items:center;gap:.5rem">
+          <input
+            type="color"
+            [ngModel]="tipoForm().color"
+            (ngModelChange)="patchTipoForm('color', $event)"
+            style="width:36px;height:36px;border:none;padding:0;cursor:pointer;border-radius:6px" />
+          <span style="font-size:.78rem;color:#6b7280">{{ tipoForm().color }}</span>
+        </div>
+        <input
+          class="tipo-input"
+          type="text"
+          placeholder="Descripción (opcional)"
+          [ngModel]="tipoForm().descripcion"
+          (ngModelChange)="patchTipoForm('descripcion', $event)" />
+        <div style="display:flex;gap:.5rem">
+          <button class="btn-primary btn-sm" (click)="guardarTipo()">Guardar</button>
+          <button class="btn-ghost btn-sm" (click)="cerrarTipoForm()">Cancelar</button>
+        </div>
+      </div>
+    }
+
+    @if (tiposService.tipos().length === 0) {
+      <p class="tipos-empty">No hay tipos definidos. Crea uno para comenzar.</p>
+    } @else {
+      <div class="tipos-list">
+        @for (t of tiposService.tipos(); track t._id) {
+          <div class="tipo-item">
+            <span class="tipo-dot" [style.background]="t.color"></span>
+            <span class="tipo-nombre">{{ t.nombre }}</span>
+            @if (t.descripcion) {
+              <span class="tipo-desc">{{ t.descripcion }}</span>
+            }
+            @if (puedeGestionarTipos()) {
+              <div class="tipo-actions">
+                <button class="btn-ghost btn-sm" (click)="abrirEditarTipo(t)">Editar</button>
+                <button class="btn-danger btn-sm" (click)="eliminarTipo(t._id)">Eliminar</button>
+              </div>
+            }
+          </div>
+        }
+      </div>
+    }
+  }
+</div>
+
+<!-- ══ MODAL ACTIVIDAD ═══════════════════════════════════════════════════ -->
+@if (showModal()) {
+  <div class="modal-overlay" (click)="cerrarModal()">
+    <div class="modal-box" style="max-width:820px" (click)="$event.stopPropagation()">
+      <h3 class="modal-title">{{ editingId() ? 'Editar actividad' : 'Nueva actividad' }}</h3>
+
+      <app-status-banner [status]="service.status()"></app-status-banner>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;align-items:start">
+
+        <!-- Columna izquierda: parámetros -->
+        <div class="modal-fields" style="margin:0">
+          <div class="field">
+            <label>Nombre *</label>
+            <input type="text" [ngModel]="form().nombre" (ngModelChange)="patchForm('nombre', $event)" placeholder="Nombre de la actividad" />
+          </div>
+          <div class="field">
+            <label>Tipo *</label>
+            <select [ngModel]="form().tipo_id" (ngModelChange)="patchForm('tipo_id', $event)">
+              <option value="">Selecciona un tipo</option>
+              @for (t of tiposService.tipos(); track t._id) {
+                <option [value]="t._id">{{ t.nombre }}</option>
+              }
+            </select>
+          </div>
+          <div class="field">
+            <label>Fecha *</label>
+            <input type="date" [ngModel]="form().fecha" (ngModelChange)="patchForm('fecha', $event)" />
+          </div>
+          <div class="field">
+            <label>Descripción</label>
+            <textarea rows="2" [ngModel]="form().descripcion" (ngModelChange)="patchForm('descripcion', $event)" placeholder="Descripción opcional..."></textarea>
+          </div>
+          <div class="field">
+            <label>Empresa</label>
+            <select [ngModel]="form().empresa_id" (ngModelChange)="patchForm('empresa_id', $event); patchForm('centro_costo_id', '')">
+              <option value="">Selecciona una empresa</option>
+              @for (e of clientesService.clientes(); track e._id) {
+                <option [value]="e._id">{{ e.razon_social }}</option>
+              }
+            </select>
+          </div>
+          <div class="field">
+            <label>Centro de costos *</label>
+            <select [ngModel]="form().centro_costo_id" (ngModelChange)="patchForm('centro_costo_id', $event)">
+              <option value="">Selecciona un centro</option>
+              @for (c of centrosParaEmpresa(); track c._id) {
+                <option [value]="c._id">{{ c.nombre }}</option>
+              }
+            </select>
+          </div>
+          @if (form().centro_costo_id && activosParaCentro().length > 0) {
+            <div class="field">
+              <label>Activos (opcional)</label>
+              <div style="display:flex;flex-direction:column;gap:.35rem;max-height:120px;overflow-y:auto;border:1px solid rgba(34,33,33,.2);border-radius:8px;padding:.5rem .75rem">
+                @for (a of activosParaCentro(); track a._id) {
+                  <label style="display:flex;align-items:center;gap:.5rem;cursor:pointer;font-size:.875rem;color:#374151">
+                    <input type="checkbox" [checked]="form().activo_ids.includes(a._id)" (change)="toggleActivo(a._id)" style="accent-color:#0095d6;width:15px;height:15px" />
+                    <span>{{ a.nombre }}</span>
+                    <span style="font-size:.75rem;color:#9ca3af">{{ a.tipo_activo }}</span>
+                  </label>
+                }
+              </div>
+            </div>
+          }
+
+          <!-- Opciones de notificación por correo -->
+          <div class="field">
+            <label style="display:flex;align-items:center;gap:.5rem;cursor:pointer;font-weight:600">
+              <input type="checkbox" [checked]="notifNotificar()" (change)="toggleNotifNotificar()" style="accent-color:#0095d6;width:15px;height:15px" />
+              <span>Notificar por correo</span>
+            </label>
+            @if (notifNotificar()) {
+              <div style="display:flex;gap:0;margin-top:.6rem;border-bottom:2px solid #e5e7eb">
+                <button type="button"
+                  [style.border-bottom]="notifTab() === 'usuarios' ? '2px solid #0095d6' : '2px solid transparent'"
+                  [style.color]="notifTab() === 'usuarios' ? '#0095d6' : '#6b7280'"
+                  style="background:none;border:none;padding:.3rem .7rem;font-size:.8rem;font-weight:600;cursor:pointer"
+                  (click)="notifTab.set('usuarios')">
+                  Usuarios ({{ notifUsuariosIds().length }}/{{ usuariosParaCentro().length }})
+                </button>
+                <button type="button"
+                  [style.border-bottom]="notifTab() === 'admins' ? '2px solid #0095d6' : '2px solid transparent'"
+                  [style.color]="notifTab() === 'admins' ? '#0095d6' : '#6b7280'"
+                  style="background:none;border:none;padding:.3rem .7rem;font-size:.8rem;font-weight:600;cursor:pointer"
+                  (click)="notifTab.set('admins')">
+                  Admins ({{ notifAdminsIds().length }}/{{ adminsParaEmpresa().length }})
+                </button>
+              </div>
+              @if (notifTab() === 'usuarios') {
+                @if (usuariosParaCentro().length > 0) {
+                  <div style="display:flex;flex-direction:column;gap:.35rem;max-height:120px;overflow-y:auto;border:1px solid rgba(34,33,33,.2);border-top:none;border-radius:0 0 8px 8px;padding:.5rem .75rem">
+                    @for (u of usuariosParaCentro(); track u._id) {
+                      <label style="display:flex;align-items:center;gap:.5rem;cursor:pointer;font-size:.875rem;color:#374151">
+                        <input type="checkbox" [checked]="notifUsuariosIds().includes(u._id)" (change)="toggleNotifUsuario(u._id)" style="accent-color:#0095d6;width:15px;height:15px" />
+                        <span>{{ u.nombre }}</span>
+                      </label>
+                    }
+                  </div>
+                } @else {
+                  <p style="margin:.3rem 0 0;font-size:.8rem;color:#9ca3af">No hay usuarios asignados a este centro.</p>
+                }
+              }
+              @if (notifTab() === 'admins') {
+                @if (adminsParaEmpresa().length > 0) {
+                  <div style="display:flex;flex-direction:column;gap:.35rem;max-height:120px;overflow-y:auto;border:1px solid rgba(34,33,33,.2);border-top:none;border-radius:0 0 8px 8px;padding:.5rem .75rem">
+                    @for (u of adminsParaEmpresa(); track u._id) {
+                      <label style="display:flex;align-items:center;gap:.5rem;cursor:pointer;font-size:.875rem;color:#374151">
+                        <input type="checkbox" [checked]="notifAdminsIds().includes(u._id)" (change)="toggleNotifAdmin(u._id)" style="accent-color:#0095d6;width:15px;height:15px" />
+                        <span>{{ u.nombre }}</span>
+                      </label>
+                    }
+                  </div>
+                } @else {
+                  <p style="margin:.3rem 0 0;font-size:.8rem;color:#9ca3af">No hay administradores para esta empresa.</p>
+                }
+              }
+            }
+          </div>
+        </div>
+
+        <!-- Columna derecha: documentos -->
+        <div style="border-left:1px solid #f3f4f6;padding-left:1.5rem">
+          <p style="margin:0 0 .6rem;font-size:.82rem;font-weight:700;color:#374151">Documentos adjuntos</p>
+
+          @if (!editingId()) {
+            <!-- MODO CREACIÓN -->
+            <div style="max-height:220px;overflow-y:auto;margin-bottom:.5rem">
+              @for (doc of docsPendientes; track $index) {
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:.5rem;padding:.4rem 0;border-bottom:1px solid #f3f4f6">
+                  <div style="min-width:0;flex:1">
+                    <p style="margin:0;font-size:.83rem;font-weight:600;color:#1f2937;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ doc.nombre }}</p>
+                    <p style="margin:0;font-size:.74rem;color:#9ca3af;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ doc.file.name }}</p>
+                  </div>
+                  <button class="btn-danger btn-sm" style="flex-shrink:0" (click)="quitarDocPendiente($index)">Quitar</button>
+                </div>
+              }
+            </div>
+            <div style="display:flex;flex-direction:column;gap:.4rem">
+              @if (pendienteInputVisible()) {
+                <input type="file" (change)="onPendienteFileSelected($event)"
+                  style="font-size:.82rem;padding:.3rem;border:1px solid rgba(34,33,33,.2);border-radius:.375rem;width:100%;box-sizing:border-box" />
+              }
+              <input type="text"
+                [ngModel]="pendienteNombreInput" (ngModelChange)="pendienteNombreInput=$event"
+                placeholder="Nombre del documento (opcional)"
+                style="font-size:.85rem;padding:.4rem .6rem;border:1px solid rgba(34,33,33,.2);border-radius:.375rem;width:100%;box-sizing:border-box" />
+              <button class="btn-ghost btn-sm" (click)="agregarDocPendiente()" [disabled]="!pendienteFileSelected">+ Agregar a la lista</button>
+            </div>
+
+          } @else {
+            <!-- MODO EDICIÓN -->
+            <div style="max-height:220px;overflow-y:auto;margin-bottom:.5rem">
+              @if (actividadEditando?.documentos?.length) {
+                @for (doc of actividadEditando!.documentos!; track doc.nombre) {
+                  <div style="display:flex;align-items:center;justify-content:space-between;gap:.5rem;padding:.45rem 0;border-bottom:1px solid #f3f4f6">
+                    <span style="font-size:.83rem;color:#1f2937;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;flex:1">{{ doc.nombre_display }}</span>
+                    <div style="display:flex;gap:.4rem;flex-shrink:0">
+                      <button class="btn-ghost btn-sm" (click)="descargarDocActividad(doc.nombre, doc.nombre_display)">Descargar</button>
+                      <button class="btn-danger btn-sm" (click)="eliminarDocActividad(doc.nombre)">Eliminar</button>
+                    </div>
+                  </div>
+                }
+              } @else {
+                <p style="font-size:.82rem;color:#9ca3af;margin:0 0 .5rem">Sin documentos adjuntos.</p>
+              }
+            </div>
+            <div style="display:flex;flex-direction:column;gap:.4rem">
+              @if (docInputVisible()) {
+                <input type="file" (change)="onDocFileSelected($event)"
+                  style="font-size:.82rem;padding:.3rem;border:1px solid rgba(34,33,33,.2);border-radius:.375rem;width:100%;box-sizing:border-box" />
+              }
+              <input type="text"
+                [ngModel]="docNombreInput" (ngModelChange)="docNombreInput=$event"
+                placeholder="Nombre del documento (opcional)"
+                style="font-size:.85rem;padding:.4rem .6rem;border:1px solid rgba(34,33,33,.2);border-radius:.375rem;width:100%;box-sizing:border-box" />
+              <button class="btn-primary btn-sm" (click)="subirDocActividad()" [disabled]="!docFileSelected">Adjuntar</button>
+            </div>
+          }
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        @if (editingId()) {
+          <button class="btn-danger btn-sm" (click)="eliminarActividad(editingId()!)">Eliminar</button>
+        }
+        <div style="display:flex;gap:.5rem;margin-left:auto">
+          <button class="btn-ghost" (click)="cerrarModal()" [disabled]="service.saving() || subiendoDocs">Cancelar</button>
+          <button class="btn-primary" (click)="guardar()" [disabled]="service.saving() || subiendoDocs">
+            @if (subiendoDocs) { Subiendo documentos... }
+            @else if (service.saving()) { Guardando... }
+            @else { Guardar }
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+}
