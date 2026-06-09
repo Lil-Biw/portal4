@@ -26,6 +26,7 @@ export class CentroCosto {
   @Prop({ trim: true }) ubicacion_pais?: string;
   @Prop({ default: true }) activo: boolean;
   @Prop({ type: [Documento], default: [] }) documentos: Documento[];
+  @Prop({ type: [Number], default: [5, 5, 5, 5, 5] }) score_smartclarity: number[];
 }
 
 export const CentroCostoSchema = SchemaFactory.createForClass(CentroCosto);
