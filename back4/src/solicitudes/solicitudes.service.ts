@@ -27,12 +27,18 @@ export class SolicitudesService {
     if (solicitudData.centro_costo_id) doc['centro_costo_id'] = new Types.ObjectId(solicitudData.centro_costo_id);
     if (solicitudData.proyecto_id)     doc['proyecto_id']     = new Types.ObjectId(solicitudData.proyecto_id);
     const saved = await new this.solicitudModel(doc).save();
-    if (solicitudData.centro_costo_id) await this.notificarUsuariosCentro(solicitudData.centro_costo_id, dto, notificacion);
+    await this.notificarNuevaSolicitud(
+      solicitudData.empresa_id!,
+      solicitudData.centro_costo_id,
+      dto,
+      notificacion,
+    );
     return saved;
   }
 
-  private async notificarUsuariosCentro(
-    centroCostoId: string,
+  private async notificarNuevaSolicitud(
+    empresaIdStr: string,
+    centroCostoId: string | undefined,
     dto: CreateSolicitudDto,
     notificacion?: NotificacionOpcionesDto,
   ) {
@@ -40,19 +46,25 @@ export class SolicitudesService {
     if (!opciones.notificar) return;
 
     try {
-      const centro = await this.centroCostoModel.findById(centroCostoId).lean();
-      if (!centro) {
-        this.logger.warn(`notificarUsuariosCentro: centro ${centroCostoId} no encontrado, se omite notificación`);
-        return;
+      const empresaId = new Types.ObjectId(empresaIdStr);
+
+      let centroNombre = 'Empresa';
+      let centroObjId: Types.ObjectId | null = null;
+
+      if (centroCostoId) {
+        const centro = await this.centroCostoModel.findById(centroCostoId).lean();
+        if (!centro) {
+          this.logger.warn(`notificarNuevaSolicitud: centro ${centroCostoId} no encontrado`);
+        } else {
+          centroNombre = String(centro.nombre);
+          centroObjId = new Types.ObjectId(centroCostoId);
+        }
       }
 
-      const centroObjId = new Types.ObjectId(centroCostoId);
-      const empresaId = new Types.ObjectId(String(centro.cliente_id));
-
-      let usuariosCentro: { nombre: string; email: string }[] = [];
+      let usuariosDestino: { nombre: string; email: string }[] = [];
 
       if (opciones.audiencia === 'especificos') {
-        const especificos = await this.usuarioModel
+        usuariosDestino = await this.usuarioModel
           .find({
             _id: { $in: (opciones.destinatarios_ids ?? []).map(id => new Types.ObjectId(id)) },
             cliente_id: empresaId,
@@ -60,19 +72,12 @@ export class SolicitudesService {
           })
           .select('nombre email')
           .lean();
-        const admins = await this.usuarioModel
-          .find({ cliente_id: empresaId, rol: 'admin_cliente', activo: true })
-          .select('nombre email')
-          .lean();
-        usuariosCentro = [...especificos, ...admins];
       } else {
-        // audiencia 'todos' o undefined → todos los usuarios del centro + admin_cliente
-        usuariosCentro = await this.usuarioModel
-          .find({
-            cliente_id: empresaId,
-            activo: true,
-            $or: [{ rol: 'admin_cliente' }, { centros_asignados: centroObjId }],
-          })
+        // audiencia 'todos' → admin_smartclarity de la empresa + usuarios del centro (si hay centro)
+        const orConditions: object[] = [{ rol: 'admin_smartclarity' }];
+        if (centroObjId) orConditions.push({ centros_asignados: centroObjId });
+        usuariosDestino = await this.usuarioModel
+          .find({ cliente_id: empresaId, activo: true, $or: orConditions })
           .select('nombre email')
           .lean();
       }
@@ -84,7 +89,7 @@ export class SolicitudesService {
 
       const emailsVistos = new Set<string>();
       const destinatarios: { nombre: string; email: string }[] = [];
-      for (const u of [...usuariosCentro, ...superAdmins]) {
+      for (const u of [...usuariosDestino, ...superAdmins]) {
         if (u.email && !emailsVistos.has(u.email)) {
           emailsVistos.add(u.email);
           destinatarios.push({ nombre: u.nombre, email: u.email });
@@ -93,7 +98,7 @@ export class SolicitudesService {
 
       if (destinatarios.length === 0) return;
 
-      this.logger.log(`Notificación solicitud: centro=${centroCostoId} destinatarios=${destinatarios.length}`);
+      this.logger.log(`Notificación solicitud: empresa=${empresaIdStr} centro=${centroCostoId ?? 'ninguno'} destinatarios=${destinatarios.length}`);
 
       await this.mailService.notificarNuevaSolicitud({
         destinatarios,
@@ -101,7 +106,7 @@ export class SolicitudesService {
           nombre:      dto.nombre,
           tipo:        dto.tipo,
           descripcion: dto.descripcion,
-          centro:      String(centro.nombre),
+          centro:      centroNombre,
         },
       });
     } catch (err: unknown) {
@@ -167,7 +172,7 @@ export class SolicitudesService {
       let usuariosEmpresa: { nombre: string; email: string }[] = [];
 
       if (opciones.audiencia === 'especificos') {
-        const especificos = await this.usuarioModel
+        usuariosEmpresa = await this.usuarioModel
           .find({
             _id: { $in: (opciones.destinatarios_ids ?? []).map(id => new Types.ObjectId(id)) },
             cliente_id: new Types.ObjectId(empresaId),
@@ -175,20 +180,15 @@ export class SolicitudesService {
           })
           .select('nombre email')
           .lean();
-        const admins = await this.usuarioModel
-          .find({ cliente_id: new Types.ObjectId(empresaId), rol: 'admin_cliente', activo: true })
-          .select('nombre email')
-          .lean();
-        usuariosEmpresa = [...especificos, ...admins];
       } else {
-        // audiencia 'todos' o undefined → usuarios del centro + admin_cliente
+        // audiencia 'todos' o undefined → usuarios del centro + admin_smartclarity
         usuariosEmpresa = await this.usuarioModel
           .find({
             cliente_id: new Types.ObjectId(empresaId),
             activo: true,
             $or: centroObjId
-              ? [{ rol: 'admin_cliente' }, { centros_asignados: centroObjId }]
-              : [{ rol: 'admin_cliente' }],
+              ? [{ rol: 'admin_smartclarity' }, { centros_asignados: centroObjId }]
+              : [{ rol: 'admin_smartclarity' }],
           })
           .select('nombre email')
           .lean();
