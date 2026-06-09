@@ -1,6 +1,7 @@
 import {
   IsString, IsEmail, IsOptional, IsBoolean,
   MinLength, ValidateNested, IsObject,
+  IsArray, ArrayMinSize, ArrayMaxSize, IsInt, Min, Max,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { PartialType } from '@nestjs/mapped-types';
@@ -24,4 +25,14 @@ export class CreateClienteDto {
 export class UpdateClienteDto extends PartialType(CreateClienteDto) {
   @IsBoolean() @IsOptional() activo?: boolean;
   @IsString() @IsOptional() logo_url?: string;
+}
+
+export class UpdateScoreSmartclarityDto {
+  @IsArray()
+  @ArrayMinSize(5)
+  @ArrayMaxSize(5)
+  @IsInt({ each: true })
+  @Min(1, { each: true })
+  @Max(10, { each: true })
+  valores: number[];
 }
