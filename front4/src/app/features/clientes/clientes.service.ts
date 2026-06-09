@@ -77,6 +77,20 @@ export class ClientesService {
     });
   }
 
+  updateScoreSmartclarity(id: string, valores: number[], onComplete?: (ok: boolean) => void): void {
+    this.http.put<Cliente>(
+      this.api.url(`/empresas/${id}/score-smartclarity`),
+      { valores }
+    ).subscribe({
+      next: (empresa) => {
+        this.clientes.update(list => list.map(c => c._id === id ? { ...c, score_smartclarity: empresa.score_smartclarity } : c));
+        this.status.set({ type: 'ok', text: 'Score actualizado' });
+        if (onComplete) onComplete(true);
+      },
+      error: (err) => { this.setError(err); if (onComplete) onComplete(false); },
+    });
+  }
+
   buscarPorId(id: string): void {
     this.http.get<Cliente>(this.api.url(`/empresas/${id}`)).subscribe({
       next: (res) => {

@@ -3,18 +3,20 @@ import { HttpClient } from '@angular/common/http';
 import { ApiService } from '../../core/services/api.service';
 import { CentroCosto, CreateCentroDto, UpdateCentroDto } from '../../shared/models/centro.model';
 import { Status } from '../../shared/models/status.model';
+import { AuthService } from '../auth/auth.service';
 
 @Injectable({ providedIn: 'root' })
 export class CentrosService {
   private readonly http = inject(HttpClient);
   private readonly api = inject(ApiService);
+  private readonly auth = inject(AuthService);
 
   readonly centros = signal<CentroCosto[]>([]);
   readonly seleccionado = signal<CentroCosto | null>(null);
   readonly status = signal<Status | null>(null);
   readonly loading = signal(false);
 
-  // Admin: carga todos los centros (requiere super_admin)
+  // Admin: carga todos los centros
   cargar(): void {
     this.loading.set(true);
     this.http.get<{ data: CentroCosto[] } | CentroCosto[]>(this.api.url('/centros-costos')).subscribe({
@@ -76,6 +78,19 @@ export class CentrosService {
         this.cargar();
       },
       error: (err) => this.setError(err),
+    });
+  }
+
+  updateScoreSmartclarity(empresaId: string, centroId: string, valores: number[], onComplete?: (ok: boolean) => void): void {
+    this.http.put<CentroCosto>(
+      this.api.url(`/empresas/${empresaId}/centros/${centroId}/score-smartclarity`),
+      { valores }
+    ).subscribe({
+      next: (centro) => {
+        this.centros.update(list => list.map(c => c._id === centroId ? { ...c, score_smartclarity: centro.score_smartclarity } : c));
+        if (onComplete) onComplete(true);
+      },
+      error: (err) => { this.setError(err); if (onComplete) onComplete(false); },
     });
   }
 

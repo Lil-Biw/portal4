@@ -9,6 +9,7 @@ export interface CentroCosto {
   ubicacion_region?: string;
   ubicacion_pais?: string;
   activo: boolean;
+  score_smartclarity?: number[];
   documentos?: DocumentoRef[];
   creado_en?: string;
   actualizado_en?: string;
