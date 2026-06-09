@@ -411,9 +411,64 @@
                   placeholder="Explica para qué se necesita este documento..."
                   style="resize:vertical;padding:.5rem;border:1px solid rgba(34,33,33,.2);border-radius:.375rem;font-family:inherit;font-size:.875rem;width:100%;box-sizing:border-box"></textarea>
               </label>
+
+              <!-- Opciones de notificación -->
+              <div style="margin-bottom:.75rem">
+                <label style="display:flex;align-items:center;gap:.5rem;cursor:pointer;font-size:.875rem;font-weight:600;color:#374151">
+                  <input type="checkbox" [checked]="notifSolicitudNotificar()" (change)="toggleNotifSolicitudNotificar()" style="accent-color:#0095d6;width:15px;height:15px" />
+                  Notificar por correo
+                </label>
+                @if (notifSolicitudNotificar()) {
+                  <div style="display:flex;gap:0;margin-top:.5rem;border-bottom:2px solid #e5e7eb">
+                    <button type="button"
+                      [style.border-bottom]="notifSolicitudTab() === 'usuarios' ? '2px solid #0095d6' : '2px solid transparent'"
+                      [style.color]="notifSolicitudTab() === 'usuarios' ? '#0095d6' : '#6b7280'"
+                      style="background:none;border:none;padding:.3rem .7rem;font-size:.78rem;font-weight:600;cursor:pointer"
+                      (click)="notifSolicitudTab.set('usuarios')">
+                      Usuarios ({{ notifSolicitudUsuariosIds().length }}/{{ usuariosParaSolicitud().length }})
+                    </button>
+                    <button type="button"
+                      [style.border-bottom]="notifSolicitudTab() === 'admins' ? '2px solid #0095d6' : '2px solid transparent'"
+                      [style.color]="notifSolicitudTab() === 'admins' ? '#0095d6' : '#6b7280'"
+                      style="background:none;border:none;padding:.3rem .7rem;font-size:.78rem;font-weight:600;cursor:pointer"
+                      (click)="notifSolicitudTab.set('admins')">
+                      Admins ({{ notifSolicitudAdminsIds().length }}/{{ adminsParaSolicitud().length }})
+                    </button>
+                  </div>
+                  @if (notifSolicitudTab() === 'usuarios') {
+                    @if (usuariosParaSolicitud().length > 0) {
+                      <div style="display:flex;flex-direction:column;gap:.3rem;max-height:100px;overflow-y:auto;border:1px solid rgba(34,33,33,.2);border-top:none;border-radius:0 0 8px 8px;padding:.4rem .6rem">
+                        @for (u of usuariosParaSolicitud(); track u._id) {
+                          <label style="display:flex;align-items:center;gap:.5rem;cursor:pointer;font-size:.82rem;color:#374151">
+                            <input type="checkbox" [checked]="notifSolicitudUsuariosIds().includes(u._id)" (change)="toggleNotifSolicitudUsuario(u._id)" style="accent-color:#0095d6;width:14px;height:14px" />
+                            {{ u.nombre }}
+                          </label>
+                        }
+                      </div>
+                    } @else {
+                      <p style="margin:.3rem 0 0;font-size:.78rem;color:#9ca3af">Sin usuarios asignados al centro.</p>
+                    }
+                  }
+                  @if (notifSolicitudTab() === 'admins') {
+                    @if (adminsParaSolicitud().length > 0) {
+                      <div style="display:flex;flex-direction:column;gap:.3rem;max-height:100px;overflow-y:auto;border:1px solid rgba(34,33,33,.2);border-top:none;border-radius:0 0 8px 8px;padding:.4rem .6rem">
+                        @for (u of adminsParaSolicitud(); track u._id) {
+                          <label style="display:flex;align-items:center;gap:.5rem;cursor:pointer;font-size:.82rem;color:#374151">
+                            <input type="checkbox" [checked]="notifSolicitudAdminsIds().includes(u._id)" (change)="toggleNotifSolicitudAdmin(u._id)" style="accent-color:#0095d6;width:14px;height:14px" />
+                            {{ u.nombre }}
+                          </label>
+                        }
+                      </div>
+                    } @else {
+                      <p style="margin:.3rem 0 0;font-size:.78rem;color:#9ca3af">No hay administradores para esta empresa.</p>
+                    }
+                  }
+                }
+              </div>
+
               <app-status-banner [status]="solicitudesService.status()"></app-status-banner>
               <div style="display:flex;gap:.5rem;margin-top:.5rem">
-                <button class="btn-primary" style="font-size:.8rem;padding:.45rem .9rem" (click)="crearSolicitud()" [disabled]="!solicitudForm.nombre">Crear solicitud</button>
+                <button class="btn-primary" style="font-size:.8rem;padding:.45rem .9rem" (click)="crearSolicitud()" [disabled]="!solicitudForm.nombre || creandoSolicitud()">{{ creandoSolicitud() ? 'Creando...' : 'Crear solicitud' }}</button>
                 <button class="btn-ghost"   style="font-size:.8rem;padding:.45rem .9rem" (click)="cerrarSolicitudForm()">Cancelar</button>
               </div>
             </div>
@@ -526,8 +581,63 @@
       <p style="margin:0 0 1rem;font-size:.85rem;color:#6b7280">Escribe el motivo del rechazo. Este texto será visible para el consumidor en el portal y recibirá una notificación por correo.</p>
       <textarea rows="4" [(ngModel)]="motivoRechazoInput"
         placeholder="Ej. El documento adjunto está ilegible, por favor reenvíe en formato PDF."
-        style="width:100%;box-sizing:border-box;resize:vertical;padding:.6rem .75rem;border:1px solid rgba(34,33,33,.2);border-radius:.5rem;font-family:inherit;font-size:.875rem;margin-bottom:1rem">
+        style="width:100%;box-sizing:border-box;resize:vertical;padding:.6rem .75rem;border:1px solid rgba(34,33,33,.2);border-radius:.5rem;font-family:inherit;font-size:.875rem;margin-bottom:.75rem">
       </textarea>
+
+      <!-- Opciones de notificación rechazo -->
+      <div style="margin-bottom:1rem">
+        <label style="display:flex;align-items:center;gap:.5rem;cursor:pointer;font-size:.875rem;font-weight:600;color:#374151">
+          <input type="checkbox" [checked]="notifRechazoNotificar()" (change)="toggleNotifRechazoNotificar()" style="accent-color:#0095d6;width:15px;height:15px" />
+          Notificar por correo
+        </label>
+        @if (notifRechazoNotificar()) {
+          <div style="display:flex;gap:0;margin-top:.5rem;border-bottom:2px solid #e5e7eb">
+            <button type="button"
+              [style.border-bottom]="notifRechazoTab() === 'usuarios' ? '2px solid #0095d6' : '2px solid transparent'"
+              [style.color]="notifRechazoTab() === 'usuarios' ? '#0095d6' : '#6b7280'"
+              style="background:none;border:none;padding:.3rem .7rem;font-size:.78rem;font-weight:600;cursor:pointer"
+              (click)="notifRechazoTab.set('usuarios')">
+              Usuarios ({{ notifRechazoUsuariosIds().length }}/{{ usuariosParaRechazo().length }})
+            </button>
+            <button type="button"
+              [style.border-bottom]="notifRechazoTab() === 'admins' ? '2px solid #0095d6' : '2px solid transparent'"
+              [style.color]="notifRechazoTab() === 'admins' ? '#0095d6' : '#6b7280'"
+              style="background:none;border:none;padding:.3rem .7rem;font-size:.78rem;font-weight:600;cursor:pointer"
+              (click)="notifRechazoTab.set('admins')">
+              Admins ({{ notifRechazoAdminsIds().length }}/{{ adminsParaRechazo().length }})
+            </button>
+          </div>
+          @if (notifRechazoTab() === 'usuarios') {
+            @if (usuariosParaRechazo().length > 0) {
+              <div style="display:flex;flex-direction:column;gap:.3rem;max-height:100px;overflow-y:auto;border:1px solid rgba(34,33,33,.2);border-top:none;border-radius:0 0 8px 8px;padding:.4rem .6rem">
+                @for (u of usuariosParaRechazo(); track u._id) {
+                  <label style="display:flex;align-items:center;gap:.5rem;cursor:pointer;font-size:.82rem;color:#374151">
+                    <input type="checkbox" [checked]="notifRechazoUsuariosIds().includes(u._id)" (change)="toggleNotifRechazoUsuario(u._id)" style="accent-color:#0095d6;width:14px;height:14px" />
+                    {{ u.nombre }}
+                  </label>
+                }
+              </div>
+            } @else {
+              <p style="margin:.3rem 0 0;font-size:.78rem;color:#9ca3af">Sin usuarios asignados al centro.</p>
+            }
+          }
+          @if (notifRechazoTab() === 'admins') {
+            @if (adminsParaRechazo().length > 0) {
+              <div style="display:flex;flex-direction:column;gap:.3rem;max-height:100px;overflow-y:auto;border:1px solid rgba(34,33,33,.2);border-top:none;border-radius:0 0 8px 8px;padding:.4rem .6rem">
+                @for (u of adminsParaRechazo(); track u._id) {
+                  <label style="display:flex;align-items:center;gap:.5rem;cursor:pointer;font-size:.82rem;color:#374151">
+                    <input type="checkbox" [checked]="notifRechazoAdminsIds().includes(u._id)" (change)="toggleNotifRechazoAdmin(u._id)" style="accent-color:#0095d6;width:14px;height:14px" />
+                    {{ u.nombre }}
+                  </label>
+                }
+              </div>
+            } @else {
+              <p style="margin:.3rem 0 0;font-size:.78rem;color:#9ca3af">No hay administradores para esta empresa.</p>
+            }
+          }
+        }
+      </div>
+
       <app-status-banner [status]="solicitudesService.status()"></app-status-banner>
       <div style="display:flex;gap:.5rem;justify-content:flex-end">
         <button class="btn-ghost"  (click)="cancelarRechazo()">Cancelar</button>
