@@ -7,7 +7,7 @@ import { Response } from 'express';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
 import { CentrosCostosService } from './centros-costos.service';
-import { CreateCentroCostoDto, UpdateCentroCostoDto } from './centros-costos.dto';
+import { CreateCentroCostoDto, UpdateCentroCostoDto, UpdateScoreSmartclarityDto } from './centros-costos.dto';
 import { EmpresaAccessGuard, Roles } from '../common/guards/guards';
 
 @Controller('empresas/:empresaId/centros')
@@ -16,7 +16,7 @@ export class CentrosCostosController {
   constructor(private readonly centrosCostosService: CentrosCostosService) {}
 
   @Post()
-  @Roles('super_admin')
+  @Roles('super_admin', 'admin_smartclarity')
   create(@Param('empresaId') empresaId: string, @Body() dto: CreateCentroCostoDto) {
     return this.centrosCostosService.create({ ...dto, cliente_id: empresaId });
   }
@@ -36,19 +36,28 @@ export class CentrosCostosController {
   }
 
   @Put(':centroId')
-  @Roles('super_admin')
+  @Roles('super_admin', 'admin_smartclarity')
   update(@Param('centroId') centroId: string, @Body() dto: UpdateCentroCostoDto) {
     return this.centrosCostosService.update(centroId, dto);
   }
 
+  @Put(':centroId/score-smartclarity')
+  @Roles('super_admin', 'admin_smartclarity')
+  updateScore(
+    @Param('centroId') centroId: string,
+    @Body() dto: UpdateScoreSmartclarityDto,
+  ) {
+    return this.centrosCostosService.updateScoreSmartclarity(centroId, dto.valores);
+  }
+
   @Delete(':centroId')
-  @Roles('super_admin')
+  @Roles('super_admin', 'admin_smartclarity')
   remove(@Param('centroId') centroId: string) {
     return this.centrosCostosService.remove(centroId);
   }
 
   @Post(':centroId/documentos')
-  @Roles('super_admin', 'admin_cliente', 'usuario')
+  @Roles('super_admin', 'admin_smartclarity', 'usuario')
   @UseInterceptors(FileInterceptor('archivo', { storage: memoryStorage() }))
   subirDocumento(
     @Param('centroId') centroId: string,
@@ -78,7 +87,7 @@ export class CentrosCostosController {
   }
 
   @Delete(':centroId/documentos/:docId')
-  @Roles('super_admin', 'admin_cliente', 'usuario')
+  @Roles('super_admin', 'admin_smartclarity', 'usuario')
   eliminarDocumento(
     @Param('centroId') centroId: string,
     @Param('docId') docId: string,

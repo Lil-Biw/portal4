@@ -88,6 +88,15 @@ export class CentrosCostosService {
     return { message: 'Centro desactivado', id };
   }
 
+  async updateScoreSmartclarity(centroId: string, valores: number[]) {
+    const centro = await this.centroCostoModel
+      .findByIdAndUpdate(centroId, { score_smartclarity: valores }, { new: true, runValidators: true })
+      .select('-documentos.contenido')
+      .lean();
+    if (!centro) throw new NotFoundException(`Centro ${centroId} no encontrado`);
+    return centro;
+  }
+
   agregarDocumento(id: string, archivo: ArchivoInput, nombreDisplay?: string, categoria?: string, usuarioId?: string) {
     return this.docsHelper.agregar(id, archivo, nombreDisplay, categoria, usuarioId);
   }

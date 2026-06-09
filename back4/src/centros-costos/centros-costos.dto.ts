@@ -1,6 +1,7 @@
 import {
   IsString, IsOptional, IsBoolean,
   IsMongoId, MinLength,
+  IsArray, ArrayMinSize, ArrayMaxSize, IsInt, Min, Max,
 } from 'class-validator';
 import { PartialType } from '@nestjs/mapped-types';
 
@@ -17,4 +18,14 @@ export class CreateCentroCostoDto {
 
 export class UpdateCentroCostoDto extends PartialType(CreateCentroCostoDto) {
   @IsBoolean() @IsOptional() activo?: boolean;
+}
+
+export class UpdateScoreSmartclarityDto {
+  @IsArray()
+  @ArrayMinSize(5)
+  @ArrayMaxSize(5)
+  @IsInt({ each: true })
+  @Min(1, { each: true })
+  @Max(10, { each: true })
+  valores: number[];
 }
