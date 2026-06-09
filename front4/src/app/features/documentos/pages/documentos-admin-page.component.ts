@@ -1,10 +1,11 @@
-import { Component, OnInit, inject, signal, computed } from '@angular/core';
+import { Component, OnInit, inject, signal, computed, effect } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { DocumentosService, DocTipo, CATEGORIAS_DOCUMENTO, DocumentoItem } from '../documentos.service';
 import { ClientesService } from '../../clientes/clientes.service';
 import { CentrosService } from '../../centros/centros.service';
 import { ProyectosService } from '../../proyectos/proyectos.service';
 import { SolicitudesService, CreateSolicitudDto, UpdateSolicitudDto, EstadoSolicitud, Solicitud } from '../../solicitudes/solicitudes.service';
+import { UsuariosService } from '../../usuarios/usuarios.service';
 import { StatusBannerComponent } from '../../../shared/components/status-banner/status-banner.component';
 import { asId } from '../../../shared/utils';
 
@@ -37,6 +38,7 @@ export class DocumentosAdminPageComponent implements OnInit {
   protected readonly centrosService     = inject(CentrosService);
   protected readonly proyectosService   = inject(ProyectosService);
   protected readonly solicitudesService = inject(SolicitudesService);
+  protected readonly usuariosService    = inject(UsuariosService);
 
   protected readonly categorias = CATEGORIAS_DOCUMENTO;
 
@@ -48,6 +50,7 @@ export class DocumentosAdminPageComponent implements OnInit {
   protected tabAdminActiva  = signal<'documentacion' | 'solicitudes'>('documentacion');
 
   protected showSolicitudForm   = signal(false);
+  protected creandoSolicitud    = signal(false);
   protected solicitudForm: CreateSolicitudDto = this.emptySolicitudForm();
 
   protected solicitudEstadoEdit = signal<string | null>(null);
@@ -57,11 +60,31 @@ export class DocumentosAdminPageComponent implements OnInit {
   protected solicitudEditando  = signal<string | null>(null);
   protected solicitudEditForm: UpdateSolicitudDto = {};
 
+  // notificación — crear solicitud
+  protected notifSolicitudNotificar   = signal(true);
+  protected notifSolicitudTab         = signal<'usuarios' | 'admins'>('usuarios');
+  protected notifSolicitudUsuariosIds = signal<string[]>([]);
+  protected notifSolicitudAdminsIds   = signal<string[]>([]);
+
+  // notificación — rechazo
+  protected notifRechazoNotificar   = signal(true);
+  protected notifRechazoTab         = signal<'usuarios' | 'admins'>('usuarios');
+  protected notifRechazoUsuariosIds = signal<string[]>([]);
+  protected notifRechazoAdminsIds   = signal<string[]>([]);
+
   protected panels: Record<DocTipo, PanelState> = {
     empresa:  this.emptyPanel(),
     centro:   this.emptyPanel(),
     proyecto: this.emptyPanel(),
   };
+
+  constructor() {
+    effect(() => {
+      if (this.solicitudesService.status()?.type === 'error') {
+        this.creandoSolicitud.set(false);
+      }
+    });
+  }
 
   // ─── computed ─────────────────────────────────────────────────────────────
 
@@ -76,6 +99,45 @@ export class DocumentosAdminPageComponent implements OnInit {
     }
     if (!proyecto) return sols.filter(s => s.centro_costo_id === centro && !s.proyecto_id);
     return sols.filter(s => s.centro_costo_id === centro);
+  });
+
+  protected usuariosParaSolicitud = computed(() => {
+    const centroId = this.selectedCentroId;
+    if (!centroId || centroId === 'todos') return [];
+    return this.usuariosService.usuarios().filter(u =>
+      u.rol === 'usuario' && u.centros_asignados.some(c => asId(c) === centroId)
+    );
+  });
+
+  protected rechazandoCentroId = computed(() => {
+    const id = this.rechazandoId();
+    if (!id) return '';
+    return this.solicitudesService.solicitudes().find(s => s._id === id)?.centro_costo_id ?? '';
+  });
+
+  protected usuariosParaRechazo = computed(() => {
+    const centroId = this.rechazandoCentroId();
+    if (!centroId) return [];
+    return this.usuariosService.usuarios().filter(u =>
+      u.rol === 'usuario' && u.centros_asignados.some(c => asId(c) === centroId)
+    );
+  });
+
+  protected adminsParaSolicitud = computed(() => {
+    if (!this.selectedEmpresaId) return [];
+    return this.usuariosService.usuarios().filter(u =>
+      u.rol === 'admin_smartclarity' && asId(u.cliente_id) === this.selectedEmpresaId
+    );
+  });
+
+  protected adminsParaRechazo = computed(() => {
+    const centroId = this.rechazandoCentroId();
+    if (!centroId) return [];
+    const centro = this.centrosService.centros().find(c => asId(c._id) === centroId);
+    if (!centro) return [];
+    return this.usuariosService.usuarios().filter(u =>
+      u.rol === 'admin_smartclarity' && asId(u.cliente_id) === asId(centro.cliente_id)
+    );
   });
 
   // ─── getters ──────────────────────────────────────────────────────────────
@@ -167,6 +229,7 @@ export class DocumentosAdminPageComponent implements OnInit {
     this.centrosService.cargar();
     this.proyectosService.cargar();
     this.solicitudesService.cargar(this.selectedEmpresaId);
+    this.usuariosService.cargar();
   }
 
   // ─── admin handlers ───────────────────────────────────────────────────────
@@ -320,8 +383,36 @@ export class DocumentosAdminPageComponent implements OnInit {
 
   // ─── solicitudes (admin) ─────────────────────────────────────────────────
 
+  toggleNotifSolicitudNotificar(): void { this.notifSolicitudNotificar.update(v => !v); }
+  toggleNotifSolicitudUsuario(id: string): void {
+    this.notifSolicitudUsuariosIds.update(ids =>
+      ids.includes(id) ? ids.filter(x => x !== id) : [...ids, id]
+    );
+  }
+  toggleNotifSolicitudAdmin(id: string): void {
+    this.notifSolicitudAdminsIds.update(ids =>
+      ids.includes(id) ? ids.filter(x => x !== id) : [...ids, id]
+    );
+  }
+
+  toggleNotifRechazoNotificar(): void { this.notifRechazoNotificar.update(v => !v); }
+  toggleNotifRechazoUsuario(id: string): void {
+    this.notifRechazoUsuariosIds.update(ids =>
+      ids.includes(id) ? ids.filter(x => x !== id) : [...ids, id]
+    );
+  }
+  toggleNotifRechazoAdmin(id: string): void {
+    this.notifRechazoAdminsIds.update(ids =>
+      ids.includes(id) ? ids.filter(x => x !== id) : [...ids, id]
+    );
+  }
+
   abrirSolicitudForm(): void {
     this.solicitudForm = this.emptySolicitudForm();
+    this.notifSolicitudNotificar.set(true);
+    this.notifSolicitudTab.set('usuarios');
+    this.notifSolicitudUsuariosIds.set(this.usuariosParaSolicitud().map(u => u._id));
+    this.notifSolicitudAdminsIds.set(this.adminsParaSolicitud().map(u => u._id));
     this.solicitudesService.clearStatus();
     this.showSolicitudForm.set(true);
   }
@@ -333,18 +424,35 @@ export class DocumentosAdminPageComponent implements OnInit {
     const tab = this.tabJerarquia();
     const centroId   = tab !== 'empresa' && this.selectedCentroId   !== 'todos' ? this.selectedCentroId   : undefined;
     const proyectoId = tab === 'proyecto' && this.selectedProyectoId !== 'todos' ? this.selectedProyectoId : undefined;
+    const notif      = this.notifSolicitudNotificar();
+    const todosU     = this.usuariosParaSolicitud().map(u => u._id);
+    const todosA     = this.adminsParaSolicitud().map(u => u._id);
+    const selU       = this.notifSolicitudUsuariosIds();
+    const selA       = this.notifSolicitudAdminsIds();
+    const esCompleto = todosU.every(id => selU.includes(id)) && todosA.every(id => selA.includes(id));
+    const notificacion = notif
+      ? esCompleto
+        ? { notificar: true, audiencia: 'todos' as const }
+        : { notificar: true, audiencia: 'especificos' as const, destinatarios_ids: [...selU, ...selA] }
+      : { notificar: false };
+    this.creandoSolicitud.set(true);
     this.solicitudesService.crear({
       ...this.solicitudForm,
       empresa_id: this.selectedEmpresaId,
       centro_costo_id: centroId,
       proyecto_id: proyectoId,
-    }, () => this.showSolicitudForm.set(false));
+      notificacion,
+    }, () => { this.creandoSolicitud.set(false); this.showSolicitudForm.set(false); });
   }
 
   iniciarCambioEstado(id: string, estado: EstadoSolicitud): void {
     if (estado === 'rechazado') {
       this.rechazandoId.set(id);
       this.motivoRechazoInput = '';
+      this.notifRechazoNotificar.set(true);
+      this.notifRechazoTab.set('usuarios');
+      this.notifRechazoUsuariosIds.set(this.usuariosParaRechazo().map(u => u._id));
+      this.notifRechazoAdminsIds.set(this.adminsParaRechazo().map(u => u._id));
       this.solicitudEstadoEdit.set(null);
     } else {
       this.solicitudesService.cambiarEstado(id, estado);
@@ -355,7 +463,18 @@ export class DocumentosAdminPageComponent implements OnInit {
   confirmarRechazo(): void {
     const id = this.rechazandoId();
     if (!id) return;
-    this.solicitudesService.cambiarEstado(id, 'rechazado', this.motivoRechazoInput);
+    const notif      = this.notifRechazoNotificar();
+    const todosU     = this.usuariosParaRechazo().map(u => u._id);
+    const todosA     = this.adminsParaRechazo().map(u => u._id);
+    const selU       = this.notifRechazoUsuariosIds();
+    const selA       = this.notifRechazoAdminsIds();
+    const esCompleto = todosU.every(id => selU.includes(id)) && todosA.every(id => selA.includes(id));
+    const notificacion = notif
+      ? esCompleto
+        ? { notificar: true, audiencia: 'todos' as const }
+        : { notificar: true, audiencia: 'especificos' as const, destinatarios_ids: [...selU, ...selA] }
+      : { notificar: false };
+    this.solicitudesService.cambiarEstado(id, 'rechazado', this.motivoRechazoInput, notificacion);
     this.rechazandoId.set(null);
     this.motivoRechazoInput = '';
   }
