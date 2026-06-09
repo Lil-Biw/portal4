@@ -43,6 +43,7 @@ export class Cliente {
   })
   logo?: { contenido: Buffer; tipo_mime: string; nombre: string };
   @Prop({ type: [DocumentoEmpresa], default: [] }) documentos: DocumentoEmpresa[];
+  @Prop({ type: [Number], default: [5, 5, 5, 5, 5] }) score_smartclarity: number[];
 }
 
 export const ClienteSchema = SchemaFactory.createForClass(Cliente);
