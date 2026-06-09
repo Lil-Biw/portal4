@@ -112,7 +112,7 @@ export class ActividadesService {
       let usuariosCentro: { nombre: string; email: string }[] = [];
 
       if (opciones.audiencia === 'especificos') {
-        const especificos = await this.usuarioModel
+        usuariosCentro = await this.usuarioModel
           .find({
             _id: { $in: (opciones.destinatarios_ids ?? []).map(id => new Types.ObjectId(id)) },
             cliente_id: empresaId,
@@ -120,18 +120,13 @@ export class ActividadesService {
           })
           .select('nombre email')
           .lean();
-        const admins = await this.usuarioModel
-          .find({ cliente_id: empresaId, rol: 'admin_cliente', activo: true })
-          .select('nombre email')
-          .lean();
-        usuariosCentro = [...especificos, ...admins];
       } else {
-        // audiencia 'todos' o undefined → todos los usuarios del centro + admin_cliente
+        // audiencia 'todos' o undefined → todos los usuarios del centro + admin_smartclarity
         usuariosCentro = await this.usuarioModel
           .find({
             cliente_id: empresaId,
             activo: true,
-            $or: [{ rol: 'admin_cliente' }, { centros_asignados: centroObjId }],
+            $or: [{ rol: 'admin_smartclarity' }, { centros_asignados: centroObjId }],
           })
           .select('nombre email')
           .lean();
