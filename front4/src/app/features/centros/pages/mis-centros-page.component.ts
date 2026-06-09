@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { CentrosService } from '../centros.service';
+import { AuthService } from '../../auth/auth.service';
 import { ConsumidorContextService } from '../../../profile/consumidor-context.service';
 import { SolicitudesService } from '../../solicitudes/solicitudes.service';
 import { DocumentosService } from '../../documentos/documentos.service';
@@ -33,6 +34,7 @@ import { asId } from '../../../shared/utils';
 export class MisCentrosPageComponent implements OnInit, OnDestroy {
   private  readonly consumidorContext  = inject(ConsumidorContextService);
   private  readonly router             = inject(Router);
+  private  readonly authService        = inject(AuthService);
   protected readonly service           = inject(CentrosService);
   protected readonly solicitudesService = inject(SolicitudesService);
   protected readonly documentosService  = inject(DocumentosService);
@@ -67,7 +69,7 @@ export class MisCentrosPageComponent implements OnInit, OnDestroy {
     if (!this.mostrarBuscar()) this.busqueda.set('');
   }
 
-  // ── Spider chart data (mock por ahora) ──────────────────────────────────
+  // ── Spider chart ────────────────────────────────────────────────────────
   readonly spiderLabels = [
     'RRHH y\ndocumentación',
     'Normativa',
@@ -75,7 +77,48 @@ export class MisCentrosPageComponent implements OnInit, OnDestroy {
     'Seguridad\nOperacional',
     'Continuidad\nOperacional',
   ];
-  readonly spiderValues = [72, 58, 84, 67, 75];
+
+  protected puedeEditar = computed(() => {
+    const rol = this.authService.usuarioActual()?.rol;
+    return rol === 'super_admin' || rol === 'admin_smartclarity';
+  });
+
+  protected spiderValues = computed<number[]>(() => {
+    const centroId = asId(this.consumidorContext.centroSeleccionado()?._id);
+    if (!centroId) return [50, 50, 50, 50, 50];
+    const centro = this.service.centros().find(c => asId(c._id) === centroId) ?? this.consumidorContext.centroSeleccionado();
+    const raw = centro?.score_smartclarity;
+    if (raw && raw.length === 5) return raw.map(v => v * 10);
+    return [50, 50, 50, 50, 50];
+  });
+
+  protected editandoScore = signal(false);
+  protected guardandoScore = signal(false);
+  protected valoresEdit = signal<number[]>([5, 5, 5, 5, 5]);
+
+  protected iniciarEdicion(): void {
+    const centroId = asId(this.consumidorContext.centroSeleccionado()?._id);
+    const centro = centroId ? (this.service.centros().find(c => asId(c._id) === centroId) ?? this.consumidorContext.centroSeleccionado()) : null;
+    const raw = centro?.score_smartclarity;
+    this.valoresEdit.set(raw && raw.length === 5 ? [...raw] : [5, 5, 5, 5, 5]);
+    this.editandoScore.set(true);
+  }
+
+  protected cancelarEdicion(): void {
+    this.editandoScore.set(false);
+  }
+
+  protected guardarScore(): void {
+    const centro = this.consumidorContext.centroSeleccionado();
+    if (!centro) return;
+    const vals = this.valoresEdit();
+    if (vals.some(v => v < 1 || v > 10)) return;
+    this.guardandoScore.set(true);
+    this.service.updateScoreSmartclarity(String(centro.cliente_id), centro._id, vals, () => {
+      this.guardandoScore.set(false);
+      this.editandoScore.set(false);
+    });
+  }
 
   // ── Score documental del centro ─────────────────────────────────────────
   protected scoreDelCentro = computed(() => {
