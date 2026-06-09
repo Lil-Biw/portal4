@@ -1,12 +1,15 @@
-import { Component, inject, computed, effect, untracked } from '@angular/core';
+import { Component, inject, computed, effect, untracked, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { ConsumidorContextService } from '../../../profile/consumidor-context.service';
 import { SolicitudesService } from '../../solicitudes/solicitudes.service';
 import { CentrosService } from '../../centros/centros.service';
 import { ProyectosService } from '../../proyectos/proyectos.service';
-import { MantencionesService } from '../../mantenciones/mantenciones.service';
+import { ActividadesService } from '../../actividades/actividades.service';
+import { FormsModule } from '@angular/forms';
 import { StatChipComponent, ChipVariant } from '../../../shared/components/stat-chip/stat-chip.component';
 import { SpiderChartComponent } from '../../../shared/components/spider-chart/spider-chart.component';
+import { AuthService } from '../../auth/auth.service';
+import { ClientesService } from '../../clientes/clientes.service';
 import { CentroCosto } from '../../../shared/models/centro.model';
 import { Proyecto } from '../../../shared/models/proyecto.model';
 import { asId } from '../../../shared/utils';
@@ -14,7 +17,7 @@ import { asId } from '../../../shared/utils';
 @Component({
   selector: 'app-mi-ficha-page',
   standalone: true,
-  imports: [StatChipComponent, SpiderChartComponent],
+  imports: [StatChipComponent, SpiderChartComponent, FormsModule],
   templateUrl: './mi-ficha-page.component.html',
 })
 export class MiFichaPageComponent {
@@ -34,8 +37,10 @@ export class MiFichaPageComponent {
     });
   }
   private readonly proyectosService    = inject(ProyectosService);
-  private readonly mantencionesService = inject(MantencionesService);
+  private readonly actividadesService  = inject(ActividadesService);
   private readonly router              = inject(Router);
+  private readonly authService         = inject(AuthService);
+  private readonly clientesService     = inject(ClientesService);
 
   protected empresa = computed(() => this.consumidorContext.empresaSeleccionada());
 
@@ -55,14 +60,14 @@ export class MiFichaPageComponent {
     );
   });
 
-  protected mantencionesDeEmpresa = computed(() => {
+  protected actividadesDeEmpresa = computed(() => {
     const ids = this.centroIdsPorEmpresa();
     if (ids.size === 0) return [];
     const hace30 = new Date();
     hace30.setDate(hace30.getDate() - 30);
     hace30.setHours(0, 0, 0, 0);
-    return this.mantencionesService.mantenciones()
-      .filter(m => ids.has(asId(m.centro_costo_id)) && new Date(m.fecha) >= hace30)
+    return this.actividadesService.actividades()
+      .filter(a => ids.has(asId(a.centro_costo_id)) && new Date(a.fecha) >= hace30)
       .sort((a, b) => b.fecha.localeCompare(a.fecha))
       .slice(0, 3);
   });
@@ -118,7 +123,48 @@ export class MiFichaPageComponent {
     'Seguridad\nOperacional',
     'Continuidad\nOperacional',
   ];
-  readonly spiderValues = [72, 58, 84, 67, 75];
+
+  protected puedeEditar = computed(() => {
+    const rol = this.authService.usuarioActual()?.rol;
+    return rol === 'super_admin' || rol === 'admin_smartclarity';
+  });
+
+  protected spiderValues = computed<number[]>(() => {
+    const empId = this.empresa()?._id;
+    if (!empId) return [50, 50, 50, 50, 50];
+    const emp = this.clientesService.clientes().find(c => c._id === empId) ?? this.empresa();
+    const raw = emp?.score_smartclarity;
+    if (raw && raw.length === 5) return raw.map(v => v * 10);
+    return [50, 50, 50, 50, 50];
+  });
+
+  protected editandoScore = signal(false);
+  protected guardandoScore = signal(false);
+  protected valoresEdit = signal<number[]>([5, 5, 5, 5, 5]);
+
+  protected iniciarEdicion(): void {
+    const empId = this.empresa()?._id;
+    const emp = empId ? (this.clientesService.clientes().find(c => c._id === empId) ?? this.empresa()) : null;
+    const raw = emp?.score_smartclarity;
+    this.valoresEdit.set(raw && raw.length === 5 ? [...raw] : [5, 5, 5, 5, 5]);
+    this.editandoScore.set(true);
+  }
+
+  protected cancelarEdicion(): void {
+    this.editandoScore.set(false);
+  }
+
+  protected guardarScore(): void {
+    const emp = this.empresa();
+    if (!emp) return;
+    const vals = this.valoresEdit();
+    if (vals.some(v => v < 1 || v > 10)) return;
+    this.guardandoScore.set(true);
+    this.clientesService.updateScoreSmartclarity(emp._id, vals, () => {
+      this.guardandoScore.set(false);
+      this.editandoScore.set(false);
+    });
+  }
 
   readonly certificados = [
     { nombre: 'Certificado ISO 9001',      vencimiento: '30 nov 2026' },
