@@ -98,7 +98,7 @@ export class ClientesService {
           this.clientes.update(list => list.map(c => c._id === id ? { ...c, mostrar_grafico_promedio: empresa.mostrar_grafico_promedio } : c));
           onDone?.();
         },
-        error: err => this.setError(err),
+        error: err => { this.setError(err); onDone?.(); },
       });
   }
 
