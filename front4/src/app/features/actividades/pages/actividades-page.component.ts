@@ -53,7 +53,7 @@ export class ActividadesPageComponent implements OnInit {
   private readonly authService        = inject(AuthService);
 
   protected puedeGestionarTipos = computed(() =>
-    this.authService.usuarioActual()?.rol !== 'usuario'
+    this.authService.usuarioActual()?.rol === 'super_admin'
   );
 
   protected centrosParaEmpresa = computed(() => {
