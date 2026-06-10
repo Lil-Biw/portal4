@@ -129,6 +129,20 @@ export class MiFichaPageComponent {
     return rol === 'super_admin' || rol === 'admin_smartclarity';
   });
 
+  protected mostrarPromedio = computed(() => {
+    const empId = this.empresa()?._id;
+    const emp = empId ? (this.clientesService.clientes().find(c => c._id === empId) ?? this.empresa()) : null;
+    return emp?.mostrar_grafico_promedio ?? false;
+  });
+
+  protected spiderValuesPromedio = computed<number[]>(() => {
+    const centros = this.centrosDeEmpresa();
+    if (centros.length === 0) return [];
+    return Array.from({ length: 5 }, (_, i) =>
+      Math.round(centros.reduce((s, c) => s + (c.score_smartclarity?.[i] ?? 5), 0) / centros.length) * 10
+    );
+  });
+
   protected spiderValues = computed<number[]>(() => {
     const empId = this.empresa()?._id;
     if (!empId) return [50, 50, 50, 50, 50];
@@ -140,6 +154,7 @@ export class MiFichaPageComponent {
 
   protected editandoScore = signal(false);
   protected guardandoScore = signal(false);
+  protected guardandoConfigGrafico = signal(false);
   protected valoresEdit = signal<number[]>([5, 5, 5, 5, 5]);
 
   protected iniciarEdicion(): void {
@@ -150,8 +165,21 @@ export class MiFichaPageComponent {
     this.editandoScore.set(true);
   }
 
+  protected setValorEdit(index: number, value: number): void {
+    this.valoresEdit.update(v => { const c = [...v]; c[index] = value; return c; });
+  }
+
   protected cancelarEdicion(): void {
     this.editandoScore.set(false);
+  }
+
+  protected toggleMostrarPromedio(): void {
+    const emp = this.empresa();
+    if (!emp) return;
+    this.guardandoConfigGrafico.set(true);
+    this.clientesService.updateConfigGrafico(emp._id, !this.mostrarPromedio(), () => {
+      this.guardandoConfigGrafico.set(false);
+    });
   }
 
   protected guardarScore(): void {
