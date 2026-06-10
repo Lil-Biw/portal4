@@ -1,26 +1,26 @@
 import { Component, OnInit, inject, signal, computed, effect } from '@angular/core';
 import { SlicePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { MantencionesService } from '../mantenciones.service';
-import { TiposMantencionService } from '../tipos-mantencion.service';
+import { ActividadesService } from '../actividades.service';
+import { TiposActividadService } from '../tipos-actividad.service';
 import { CentrosService } from '../../centros/centros.service';
 import { ActivosService } from '../../activos/activos.service';
 
 import { ConsumidorContextService } from '../../../profile/consumidor-context.service';
-import { Mantencion, TipoMantencion } from '../../../shared/models/mantencion.model';
+import { Actividad, TipoActividad } from '../../../shared/models/actividad.model';
 import { asId, toDateKey } from '../../../shared/utils';
 import { createCalendarState, CalendarView, CALENDAR_DAYS, CALENDAR_MONTHS } from '../../../shared/calendar-state';
 
 @Component({
-  selector: 'app-mis-mantenciones-page',
+  selector: 'app-mis-actividades-page',
   standalone: true,
   imports: [FormsModule, SlicePipe],
-  templateUrl: './mis-mantenciones-page.component.html',
-  styleUrl: './mantenciones-page.component.css',
+  templateUrl: './mis-actividades-page.component.html',
+  styleUrl: './actividades-page.component.css',
 })
-export class MisMantencionesPageComponent implements OnInit {
-  protected readonly service        = inject(MantencionesService);
-  protected readonly tiposService   = inject(TiposMantencionService);
+export class MisActividadesPageComponent implements OnInit {
+  protected readonly service        = inject(ActividadesService);
+  protected readonly tiposService   = inject(TiposActividadService);
   protected readonly centrosService = inject(CentrosService);
   private   readonly ctx            = inject(ConsumidorContextService);
   protected readonly activosService = inject(ActivosService);
@@ -33,7 +33,7 @@ export class MisMantencionesPageComponent implements OnInit {
         this.centrosService.cargarPorEmpresa(id);
         this.service.cargarPorEmpresa(id);
       } else {
-        this.service.mantenciones.set([]);
+        this.service.actividades.set([]);
       }
     });
 
@@ -58,43 +58,43 @@ export class MisMantencionesPageComponent implements OnInit {
 
   protected filtroTipoId = signal<string>('');
 
-  protected mantencionDetalle = signal<Mantencion | null>(null);
+  protected actividadDetalle = signal<Actividad | null>(null);
 
   protected activosDetalle = computed(() => {
-    const m = this.mantencionDetalle();
-    if (!m || !m.activo_ids?.length) return [];
+    const a = this.actividadDetalle();
+    if (!a || !a.activo_ids?.length) return [];
     const todos = this.activosService.activos();
-    return m.activo_ids.map(a => {
-      if (typeof a === 'object' && a !== null) return a as import('../../../shared/models/activo.model').Activo;
-      return todos.find(x => asId(x._id) === asId(a as string)) ?? null;
-    }).filter((a): a is import('../../../shared/models/activo.model').Activo => a !== null);
+    return a.activo_ids.map(x => {
+      if (typeof x === 'object' && x !== null) return x as import('../../../shared/models/activo.model').Activo;
+      return todos.find(y => asId(y._id) === asId(x as string)) ?? null;
+    }).filter((x): x is import('../../../shared/models/activo.model').Activo => x !== null);
   });
 
   protected historialDetalle = computed(() => {
-    const m = this.mantencionDetalle();
-    if (!m) return [];
-    const tipoId   = asId(typeof m.tipo_id === 'object' ? (m.tipo_id as TipoMantencion)._id : m.tipo_id as string);
-    const centroId = asId(m.centro_costo_id);
-    return this.service.mantenciones()
+    const a = this.actividadDetalle();
+    if (!a) return [];
+    const tipoId   = asId(typeof a.tipo_id === 'object' ? (a.tipo_id as TipoActividad)._id : a.tipo_id as string);
+    const centroId = asId(a.centro_costo_id);
+    return this.service.actividades()
       .filter(x =>
-        x._id !== m._id &&
-        asId(typeof x.tipo_id === 'object' ? (x.tipo_id as TipoMantencion)._id : x.tipo_id as string) === tipoId &&
+        x._id !== a._id &&
+        asId(typeof x.tipo_id === 'object' ? (x.tipo_id as TipoActividad)._id : x.tipo_id as string) === tipoId &&
         asId(x.centro_costo_id) === centroId
       )
-      .sort((a, b) => b.fecha.localeCompare(a.fecha))
+      .sort((x, y) => y.fecha.localeCompare(x.fecha))
       .slice(0, 5);
   });
 
-  protected mantencionesFiltradas = computed(() => {
+  protected actividadesFiltradas = computed(() => {
     const empresa = this.ctx.empresaSeleccionada();
     const tipoId  = this.filtroTipoId();
-    let list = this.service.mantenciones();
+    let list = this.service.actividades();
     if (empresa) {
       const ids = this.centroIdsPorEmpresa();
-      list = list.filter(m => ids.has(asId(m.centro_costo_id)));
+      list = list.filter(a => ids.has(asId(a.centro_costo_id)));
     }
     if (tipoId) {
-      list = list.filter(m => asId(typeof m.tipo_id === 'object' ? (m.tipo_id as TipoMantencion)._id : m.tipo_id as string) === tipoId);
+      list = list.filter(a => asId(typeof a.tipo_id === 'object' ? (a.tipo_id as TipoActividad)._id : a.tipo_id as string) === tipoId);
     }
     return list;
   });
@@ -102,7 +102,6 @@ export class MisMantencionesPageComponent implements OnInit {
   readonly days   = CALENDAR_DAYS;
   readonly months = CALENDAR_MONTHS;
 
-  // ── Calendario (lógica compartida) ──────────────────────────────────────
   private readonly _cal        = createCalendarState();
   protected readonly view       = this._cal.view;
   protected readonly reference  = this._cal.reference;
@@ -117,34 +116,33 @@ export class MisMantencionesPageComponent implements OnInit {
   setView(v: CalendarView): void { this._cal.setView(v); }
   isToday(date: Date): boolean   { return this._cal.isToday(date); }
 
-  protected centroNombre(m: Mantencion): string {
-    return this.centrosService.centros().find(c => asId(c._id) === asId(m.centro_costo_id))?.nombre ?? '';
+  protected centroNombre(a: Actividad): string {
+    return this.centrosService.centros().find(c => asId(c._id) === asId(a.centro_costo_id))?.nombre ?? '';
   }
 
-  protected tipoDeMantencion(m: Mantencion): TipoMantencion | null {
-    if (typeof m.tipo_id === 'object') return m.tipo_id as TipoMantencion;
-    return this.tiposService.tipos().find(t => t._id === asId(m.tipo_id as string)) ?? null;
+  protected tipoDeActividad(a: Actividad): TipoActividad | null {
+    if (typeof a.tipo_id === 'object') return a.tipo_id as TipoActividad;
+    return this.tiposService.tipos().find(t => t._id === asId(a.tipo_id as string)) ?? null;
   }
 
-  abrirDetalle(m: Mantencion): void { this.mantencionDetalle.set(m); }
-  cerrarDetalle(): void { this.mantencionDetalle.set(null); }
+  abrirDetalle(a: Actividad): void { this.actividadDetalle.set(a); }
+  cerrarDetalle(): void { this.actividadDetalle.set(null); }
 
-  descargarDocMantencion(mantencionId: string, nombre: string, nombreDisplay?: string): void {
-    this.service.descargarDocumento(mantencionId, nombre, nombreDisplay);
+  descargarDocActividad(actividadId: string, nombre: string, nombreDisplay?: string): void {
+    this.service.descargarDocumento(actividadId, nombre, nombreDisplay);
   }
 
-  mantencionesEnDia(date: Date): Mantencion[] {
+  actividadesEnDia(date: Date): Actividad[] {
     const key = toDateKey(date);
-    return this.mantencionesFiltradas().filter(m => m.fecha.slice(0, 10) === key);
+    return this.actividadesFiltradas().filter(a => a.fecha.slice(0, 10) === key);
   }
 
-  colorDeMantencion(m: Mantencion): string {
-    if (typeof m.tipo_id === 'object') return (m.tipo_id as TipoMantencion).color ?? '#9ca3af';
-    return this.tiposService.tipos().find(t => t._id === asId(m.tipo_id as string))?.color ?? '#9ca3af';
+  colorDeActividad(a: Actividad): string {
+    if (typeof a.tipo_id === 'object') return (a.tipo_id as TipoActividad).color ?? '#9ca3af';
+    return this.tiposService.tipos().find(t => t._id === asId(a.tipo_id as string))?.color ?? '#9ca3af';
   }
 
   ngOnInit(): void {
     this.tiposService.cargar();
   }
 }
-

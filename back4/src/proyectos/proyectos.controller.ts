@@ -16,7 +16,7 @@ export class ProyectosController {
   constructor(private readonly proyectosService: ProyectosService) {}
 
   @Post()
-  @Roles('super_admin')
+  @Roles('super_admin', 'admin_smartclarity')
   create(
     @Param('empresaId') empresaId: string,
     @Param('centroId') centroId: string,
@@ -40,19 +40,19 @@ export class ProyectosController {
   }
 
   @Put(':proyectoId')
-  @Roles('super_admin')
+  @Roles('super_admin', 'admin_smartclarity')
   update(@Param('proyectoId') proyectoId: string, @Body() dto: UpdateProyectoDto) {
     return this.proyectosService.update(proyectoId, dto);
   }
 
   @Delete(':proyectoId')
-  @Roles('super_admin')
+  @Roles('super_admin', 'admin_smartclarity')
   remove(@Param('proyectoId') proyectoId: string) {
     return this.proyectosService.remove(proyectoId);
   }
 
   @Post(':proyectoId/documentos')
-  @Roles('super_admin', 'admin_cliente', 'usuario')
+  @Roles('super_admin', 'admin_smartclarity', 'usuario')
   @UseInterceptors(FileInterceptor('archivo', { storage: memoryStorage() }))
   subirDocumento(
     @Param('proyectoId') proyectoId: string,
@@ -82,7 +82,7 @@ export class ProyectosController {
   }
 
   @Delete(':proyectoId/documentos/:docId')
-  @Roles('super_admin', 'admin_cliente', 'usuario')
+  @Roles('super_admin', 'admin_smartclarity', 'usuario')
   eliminarDocumento(
     @Param('proyectoId') proyectoId: string,
     @Param('docId') docId: string,

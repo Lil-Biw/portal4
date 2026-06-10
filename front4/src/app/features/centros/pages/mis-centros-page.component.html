@@ -235,7 +235,7 @@
               <input
                 type="number" min="1" max="10"
                 [value]="valoresEdit()[$index]"
-                (input)="valoresEdit.update(v => { const c = [...v]; c[$index] = +$any($event.target).value; return c; })"
+                (input)="setValorEdit($index, +$any($event.target).value)"
                 style="width:60px;padding:.3rem .4rem;border:1px solid #d1d5db;border-radius:6px;font-size:.85rem;text-align:center">
               <span style="font-size:.75rem;color:#6b7280">→ {{ valoresEdit()[$index] * 10 }}%</span>
             </div>

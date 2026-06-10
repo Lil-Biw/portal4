@@ -6,12 +6,14 @@ import { ApiService } from '../../core/services/api.service';
 import { Activo, CreateActivoDto, UpdateActivoDto } from '../../shared/models/activo.model';
 import { Status } from '../../shared/models/status.model';
 import { CentrosService } from '../centros/centros.service';
+import { AuthService } from '../auth/auth.service';
 
 @Injectable({ providedIn: 'root' })
 export class ActivosService {
   private readonly http = inject(HttpClient);
   private readonly api  = inject(ApiService);
   private readonly centrosService = inject(CentrosService);
+  private readonly auth = inject(AuthService);
 
   readonly activos      = signal<Activo[]>([]);
   readonly seleccionado = signal<Activo | null>(null);
@@ -41,7 +43,7 @@ export class ActivosService {
 
   // Consumidor: carga activos de todos los centros de una empresa en paralelo
   cargarPorCentros(empresaId: string, centroIds: string[]): void {
-    if (!centroIds.length) { this.activos.set([]); return; }
+    if (!centroIds.length) { this.activos.set([]); this.loading.set(false); return; }
     this.loading.set(true);
     const reqs = centroIds.map(id =>
       this.http.get<Activo[]>(this.api.url(`/empresas/${empresaId}/centros/${id}/activos`))

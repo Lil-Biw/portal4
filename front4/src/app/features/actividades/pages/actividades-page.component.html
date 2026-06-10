@@ -228,8 +228,8 @@
           </div>
           <div class="field">
             <label>Centro de costos *</label>
-            <select [ngModel]="form().centro_costo_id" (ngModelChange)="patchForm('centro_costo_id', $event)">
-              <option value="">Selecciona un centro</option>
+            <select [ngModel]="form().centro_costo_id" (ngModelChange)="patchForm('centro_costo_id', $event)" [disabled]="!form().empresa_id">
+              <option value="">{{ form().empresa_id ? 'Selecciona un centro' : 'Primero selecciona una empresa' }}</option>
               @for (c of centrosParaEmpresa(); track c._id) {
                 <option [value]="c._id">{{ c.nombre }}</option>
               }
@@ -262,15 +262,17 @@
                 <button type="button"
                   [style.border-bottom]="notifTab() === 'usuarios' ? '2px solid #0095d6' : '2px solid transparent'"
                   [style.color]="notifTab() === 'usuarios' ? '#0095d6' : '#6b7280'"
-                  style="background:none;border:none;padding:.3rem .7rem;font-size:.8rem;font-weight:600;cursor:pointer"
+                  style="background:none;border:none;padding:.3rem .7rem;font-size:.8rem;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:.35rem"
                   (click)="notifTab.set('usuarios')">
+                  <input type="checkbox" [checked]="notifTodosUsuariosSeleccionados()" (change)="toggleSeleccionarTodosUsuarios()" (click)="$event.stopPropagation()" style="accent-color:#0095d6;width:12px;height:12px;cursor:pointer;flex-shrink:0" />
                   Usuarios ({{ notifUsuariosIds().length }}/{{ usuariosParaCentro().length }})
                 </button>
                 <button type="button"
                   [style.border-bottom]="notifTab() === 'admins' ? '2px solid #0095d6' : '2px solid transparent'"
                   [style.color]="notifTab() === 'admins' ? '#0095d6' : '#6b7280'"
-                  style="background:none;border:none;padding:.3rem .7rem;font-size:.8rem;font-weight:600;cursor:pointer"
+                  style="background:none;border:none;padding:.3rem .7rem;font-size:.8rem;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:.35rem"
                   (click)="notifTab.set('admins')">
+                  <input type="checkbox" [checked]="notifTodosAdminsSeleccionados()" (change)="toggleSeleccionarTodosAdmins()" (click)="$event.stopPropagation()" style="accent-color:#0095d6;width:12px;height:12px;cursor:pointer;flex-shrink:0" />
                   Admins ({{ notifAdminsIds().length }}/{{ adminsParaEmpresa().length }})
                 </button>
                 <button type="button"
@@ -315,13 +317,6 @@
                     <input type="checkbox" [checked]="notifSuperAdmins()" (change)="notifSuperAdmins.update(v => !v)" style="accent-color:#0095d6;width:15px;height:15px" />
                     <span>Notificar a todos los Super Admins</span>
                   </label>
-                  @if (superAdminsLista().length > 0) {
-                    <div style="display:flex;flex-direction:column;gap:.2rem;padding-left:.25rem;border-top:1px solid rgba(34,33,33,.06);padding-top:.4rem;margin-top:.1rem">
-                      @for (u of superAdminsLista(); track u._id) {
-                        <span style="font-size:.78rem;color:#6b7280">• {{ u.nombre }}</span>
-                      }
-                    </div>
-                  }
                 </div>
               }
             }

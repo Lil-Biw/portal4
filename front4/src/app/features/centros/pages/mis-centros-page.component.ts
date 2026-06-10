@@ -104,6 +104,10 @@ export class MisCentrosPageComponent implements OnInit, OnDestroy {
     this.editandoScore.set(true);
   }
 
+  protected setValorEdit(index: number, value: number): void {
+    this.valoresEdit.update(v => { const c = [...v]; c[index] = value; return c; });
+  }
+
   protected cancelarEdicion(): void {
     this.editandoScore.set(false);
   }

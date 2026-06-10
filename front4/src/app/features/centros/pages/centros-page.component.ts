@@ -13,6 +13,7 @@ import { CreateActivoDto } from '../../../shared/models/activo.model';
 import { asId } from '../../../shared/utils';
 import { ConsumidorContextService } from '../../../profile/consumidor-context.service';
 import { ProfileService } from '../../../profile/profile.service';
+import { AuthService } from '../../auth/auth.service';
 
 type ModalMode = 'crear' | 'editar' | 'buscar' | 'activo' | null;
 
@@ -88,6 +89,7 @@ export class CentrosPageComponent implements OnInit {
   private   readonly profileService    = inject(ProfileService);
   private   readonly router           = inject(Router);
   protected readonly activosService   = inject(ActivosService);
+  private   readonly authService      = inject(AuthService);
 
   protected modal           = signal<ModalMode>(null);
   protected busqueda        = signal('');

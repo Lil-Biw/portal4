@@ -3,11 +3,13 @@ import { HttpClient } from '@angular/common/http';
 import { ApiService } from '../../core/services/api.service';
 import { Proyecto, CreateProyectoDto, UpdateProyectoDto } from '../../shared/models/proyecto.model';
 import { Status } from '../../shared/models/status.model';
+import { AuthService } from '../auth/auth.service';
 
 @Injectable({ providedIn: 'root' })
 export class ProyectosService {
   private readonly http = inject(HttpClient);
   private readonly api = inject(ApiService);
+  private readonly auth = inject(AuthService);
 
   readonly proyectos = signal<Proyecto[]>([]);
   readonly seleccionado = signal<Proyecto | null>(null);

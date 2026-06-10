@@ -86,7 +86,7 @@ export class EmpresaAccessGuard implements CanActivate {
     const req = context.switchToHttp().getRequest();
     const user = req.user;
     if (!user) return false;
-    if (user.rol === 'super_admin') return true;
+    if (user.rol === 'super_admin' || user.rol === 'admin_smartclarity') return true;
     const empresaId = req.params['empresaId'];
     if (!empresaId) return true;
     return String(user.cliente_id) === String(empresaId);

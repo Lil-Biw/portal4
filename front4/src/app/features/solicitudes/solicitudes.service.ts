@@ -23,6 +23,13 @@ export interface Solicitud {
   creado_en: string;
 }
 
+export interface NotificacionOpciones {
+  notificar: boolean;
+  audiencia?: 'todos' | 'especificos';
+  destinatarios_ids?: string[];
+  notificar_super_admins?: boolean;
+}
+
 export interface CreateSolicitudDto {
   nombre: string;
   tipo: CategoriaDocumento;
@@ -30,6 +37,7 @@ export interface CreateSolicitudDto {
   empresa_id: string;
   centro_costo_id?: string;
   proyecto_id?: string;
+  notificacion?: NotificacionOpciones;
 }
 
 export interface UpdateSolicitudDto {
@@ -149,11 +157,12 @@ export class SolicitudesService {
     });
   }
 
-  cambiarEstado(id: string, estado: EstadoSolicitud, motivoRechazo?: string): void {
+  cambiarEstado(id: string, estado: EstadoSolicitud, motivoRechazo?: string, notificacion?: NotificacionOpciones): void {
     const empresaId = this.getEmpresaId(id);
     if (!empresaId) return;
-    const body: Record<string, string> = { estado };
+    const body: Record<string, unknown> = { estado };
     if (estado === 'rechazado' && motivoRechazo) body['motivo_rechazo'] = motivoRechazo;
+    if (notificacion) body['notificacion'] = notificacion;
     this.http.put<Solicitud>(this.api.url(`/empresas/${empresaId}/solicitudes/${id}/estado`), body).subscribe({
       next: (actualizada) => {
         this.solicitudes.update(prev => prev.map(s => s._id === id ? this.computarAdjuntoUrl(actualizada) : s));

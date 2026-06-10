@@ -168,11 +168,11 @@
   </div>
 
   <div class="card">
-    <h3 style="margin:0 0 .9rem;font-size:1rem;font-weight:700">Mantenciones</h3>
-    @if (proxMantenciones().length === 0) {
-      <p style="font-size:.83rem;color:#9ca3af;padding:.25rem 0">Sin mantenciones registradas para esta empresa.</p>
+    <h3 style="margin:0 0 .9rem;font-size:1rem;font-weight:700">Actividades</h3>
+    @if (proxActividades().length === 0) {
+      <p style="font-size:.83rem;color:#9ca3af;padding:.25rem 0">Sin actividades registradas para esta empresa.</p>
     } @else {
-      @for (m of proxMantenciones(); track m._id; let last = $last) {
+      @for (m of proxActividades(); track m._id; let last = $last) {
         <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:.75rem;padding:.7rem 0" [style.border-bottom]="last ? 'none' : '1px solid rgba(34,33,33,.07)'">
           <div>
             <p style="margin:0 0 .15rem;font-size:.875rem;font-weight:600;color:#1f2937">{{ m.nombre }}</p>

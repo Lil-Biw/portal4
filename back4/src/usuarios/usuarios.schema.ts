@@ -9,7 +9,7 @@ export class Usuario {
   @Prop({ required: true, trim: true }) nombre: string;
   @Prop({ required: true, unique: true, lowercase: true, trim: true }) email: string;
   @Prop({ required: true, select: false }) password_hash: string;
-  @Prop({ enum: ['super_admin', 'admin_cliente', 'usuario'], default: 'usuario' }) rol: string;
+  @Prop({ enum: ['super_admin', 'admin_smartclarity', 'usuario'], default: 'usuario' }) rol: string;
   @Prop({ enum: ['ver', 'editar'], default: 'ver' }) permiso_acceso: string;
   @Prop({ type: [{ type: Types.ObjectId, ref: 'CentroCosto' }], default: [] }) centros_asignados: Types.ObjectId[];
   @Prop({ default: true }) debe_cambiar_password: boolean;

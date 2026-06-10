@@ -1,0 +1,82 @@
+import {
+  Controller, Get, Post, Put, Delete,
+  Param, Body, Query, Res, UseGuards,
+  UseInterceptors, UploadedFile, BadRequestException,
+} from '@nestjs/common';
+import { Response } from 'express';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { memoryStorage } from 'multer';
+import { ActividadesService } from './actividades.service';
+import { CreateActividadDto, UpdateActividadDto } from './actividades.dto';
+import { EmpresaAccessGuard, Roles } from '../common/guards/guards';
+
+@Controller('empresas/:empresaId/centros/:centroId/actividades')
+@UseGuards(EmpresaAccessGuard)
+export class ActividadesController {
+  constructor(private readonly service: ActividadesService) {}
+
+  @Get()
+  findAll(
+    @Param('centroId') centroId: string,
+    @Query('desde') desde?: string,
+    @Query('hasta') hasta?: string,
+  ) {
+    return this.service.findAll(centroId, desde, hasta);
+  }
+
+  @Get(':actividadId')
+  findOne(@Param('actividadId') actividadId: string) {
+    return this.service.findOne(actividadId);
+  }
+
+  @Post()
+  @Roles('super_admin', 'admin_smartclarity')
+  create(@Param('centroId') centroId: string, @Body() dto: CreateActividadDto) {
+    return this.service.create({ ...dto, centro_costo_id: centroId });
+  }
+
+  @Put(':actividadId')
+  @Roles('super_admin', 'admin_smartclarity')
+  update(@Param('actividadId') actividadId: string, @Body() dto: UpdateActividadDto) {
+    return this.service.update(actividadId, dto);
+  }
+
+  @Delete(':actividadId')
+  @Roles('super_admin', 'admin_smartclarity')
+  remove(@Param('actividadId') actividadId: string) {
+    return this.service.remove(actividadId);
+  }
+
+  @Post(':actividadId/documentos')
+  @Roles('super_admin', 'admin_smartclarity')
+  @UseInterceptors(FileInterceptor('archivo', { storage: memoryStorage() }))
+  subirDocumento(
+    @Param('actividadId') actividadId: string,
+    @UploadedFile() archivo: Express.Multer.File & { buffer: Buffer },
+    @Body('nombre_display') nombreDisplay?: string,
+  ) {
+    if (!archivo) throw new BadRequestException('No se proporcionó archivo');
+    return this.service.subirDocumento(actividadId, archivo, nombreDisplay);
+  }
+
+  @Delete(':actividadId/documentos/:nombre')
+  @Roles('super_admin', 'admin_smartclarity')
+  eliminarDocumento(
+    @Param('actividadId') actividadId: string,
+    @Param('nombre') nombre: string,
+  ) {
+    return this.service.eliminarDocumento(actividadId, nombre);
+  }
+
+  @Get(':actividadId/documentos/:nombre')
+  async descargarDocumento(
+    @Param('actividadId') actividadId: string,
+    @Param('nombre') nombre: string,
+    @Res() res: Response,
+  ) {
+    const { buffer, tipo_mime, nombre_display } = await this.service.servirDocumento(actividadId, nombre);
+    res.setHeader('Content-Type', tipo_mime);
+    res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(nombre_display)}"`);
+    res.send(buffer);
+  }
+}

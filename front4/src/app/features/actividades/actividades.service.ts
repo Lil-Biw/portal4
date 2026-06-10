@@ -1,20 +1,22 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { ApiService } from '../../core/services/api.service';
-import { Mantencion, CreateMantencionDto, UpdateMantencionDto } from '../../shared/models/mantencion.model';
+import { Actividad, CreateActividadDto, UpdateActividadDto } from '../../shared/models/actividad.model';
 import { Status } from '../../shared/models/status.model';
 import { CentrosService } from '../centros/centros.service';
+import { AuthService } from '../auth/auth.service';
 
 @Injectable({ providedIn: 'root' })
-export class MantencionesService {
+export class ActividadesService {
   private readonly http = inject(HttpClient);
   private readonly api  = inject(ApiService);
   private readonly centrosService = inject(CentrosService);
+  private readonly auth = inject(AuthService);
 
-  readonly mantenciones = signal<Mantencion[]>([]);
-  readonly loading      = signal(false);
-  readonly saving       = signal(false);
-  readonly status       = signal<Status | null>(null);
+  readonly actividades = signal<Actividad[]>([]);
+  readonly loading     = signal(false);
+  readonly saving      = signal(false);
+  readonly status      = signal<Status | null>(null);
 
   clearStatus(): void { this.status.set(null); }
 
@@ -27,63 +29,61 @@ export class MantencionesService {
     return this.centrosService.centros().find(c => c._id === centroCostoId)?.cliente_id;
   }
 
-  // Admin: carga todas las mantenciones, opcionalmente filtradas por centro
   cargar(centroCostoId?: string): void {
     this.loading.set(true);
     const qs = centroCostoId ? `?centro_costo_id=${centroCostoId}` : '';
-    this.http.get<Mantencion[] | { data: Mantencion[] }>(`${this.api.url('/mantenciones')}${qs}`).subscribe({
+    this.http.get<Actividad[] | { data: Actividad[] }>(`${this.api.url('/actividades')}${qs}`).subscribe({
       next:  res => {
-        this.mantenciones.set(Array.isArray(res) ? res : res.data);
+        this.actividades.set(Array.isArray(res) ? res : res.data);
         this.loading.set(false);
       },
       error: err  => { this.loading.set(false); this.setError(err); },
     });
   }
 
-  // Consumidor: carga mantenciones de todos los centros de una empresa
   cargarPorEmpresa(empresaId: string): void {
     this.loading.set(true);
-    this.http.get<Mantencion[]>(this.api.url(`/empresas/${empresaId}/mantenciones`)).subscribe({
-      next:  res => { this.mantenciones.set(res); this.loading.set(false); },
+    this.http.get<Actividad[]>(this.api.url(`/empresas/${empresaId}/actividades`)).subscribe({
+      next:  res => { this.actividades.set(res); this.loading.set(false); },
       error: err => { this.loading.set(false); this.setError(err); },
     });
   }
 
-  crear(dto: CreateMantencionDto, onCreated?: (m: Mantencion) => void): void {
+  crear(dto: CreateActividadDto, onCreated?: (a: Actividad) => void): void {
     if (this.saving()) return;
     this.saving.set(true);
     const empresaId = this.getEmpresaId(dto.centro_costo_id);
     if (!empresaId) { this.setError({ error: { message: 'Centro no encontrado' } }); return; }
-    this.http.post<Mantencion>(
-      this.api.url(`/empresas/${empresaId}/centros/${dto.centro_costo_id}/mantenciones`),
+    this.http.post<Actividad>(
+      this.api.url(`/empresas/${empresaId}/centros/${dto.centro_costo_id}/actividades`),
       dto
     ).subscribe({
-      next: m => {
+      next: a => {
         this.saving.set(false);
-        this.mantenciones.update(list => [...list, m].sort((a, b) => a.fecha.localeCompare(b.fecha)));
-        this.status.set({ type: 'ok', text: 'Mantención creada correctamente' });
-        onCreated?.(m);
+        this.actividades.update(list => [...list, a].sort((x, y) => x.fecha.localeCompare(y.fecha)));
+        this.status.set({ type: 'ok', text: 'Actividad creada correctamente' });
+        onCreated?.(a);
       },
       error: err => this.setError(err),
     });
   }
 
-  actualizar(id: string, dto: UpdateMantencionDto, onSuccess?: () => void): void {
+  actualizar(id: string, dto: UpdateActividadDto, onSuccess?: () => void): void {
     if (this.saving()) return;
     this.saving.set(true);
-    const centroId = dto.centro_costo_id ?? this.mantenciones().find(m => m._id === id)?.centro_costo_id;
+    const centroId = dto.centro_costo_id ?? this.actividades().find(a => a._id === id)?.centro_costo_id;
     const empresaId = centroId ? this.getEmpresaId(centroId) : undefined;
     if (!empresaId || !centroId) { this.setError({ error: { message: 'Centro no encontrado' } }); return; }
-    this.http.put<Mantencion>(
-      this.api.url(`/empresas/${empresaId}/centros/${centroId}/mantenciones/${id}`),
+    this.http.put<Actividad>(
+      this.api.url(`/empresas/${empresaId}/centros/${centroId}/actividades/${id}`),
       dto
     ).subscribe({
       next: updated => {
         this.saving.set(false);
-        this.mantenciones.update(list =>
-          list.map(m => m._id === id ? updated : m).sort((a, b) => a.fecha.localeCompare(b.fecha))
+        this.actividades.update(list =>
+          list.map(a => a._id === id ? updated : a).sort((x, y) => x.fecha.localeCompare(y.fecha))
         );
-        this.status.set({ type: 'ok', text: 'Mantención actualizada correctamente' });
+        this.status.set({ type: 'ok', text: 'Actividad actualizada correctamente' });
         onSuccess?.();
       },
       error: err => this.setError(err),
@@ -91,31 +91,31 @@ export class MantencionesService {
   }
 
   eliminar(id: string): void {
-    const centroId = this.mantenciones().find(m => m._id === id)?.centro_costo_id;
+    const centroId = this.actividades().find(a => a._id === id)?.centro_costo_id;
     const empresaId = centroId ? this.getEmpresaId(centroId) : undefined;
     if (!empresaId || !centroId) { this.setError({ error: { message: 'Centro no encontrado' } }); return; }
-    this.http.delete(this.api.url(`/empresas/${empresaId}/centros/${centroId}/mantenciones/${id}`)).subscribe({
+    this.http.delete(this.api.url(`/empresas/${empresaId}/centros/${centroId}/actividades/${id}`)).subscribe({
       next: () => {
-        this.mantenciones.update(list => list.filter(m => m._id !== id));
-        this.status.set({ type: 'ok', text: 'Mantención eliminada' });
+        this.actividades.update(list => list.filter(a => a._id !== id));
+        this.status.set({ type: 'ok', text: 'Actividad eliminada' });
       },
       error: err => this.setError(err),
     });
   }
 
   subirDocumento(id: string, archivo: File, nombreDisplay?: string, onSuccess?: () => void, onError?: () => void): void {
-    const centroId = this.mantenciones().find(m => m._id === id)?.centro_costo_id;
+    const centroId = this.actividades().find(a => a._id === id)?.centro_costo_id;
     const empresaId = centroId ? this.getEmpresaId(centroId) : undefined;
     if (!empresaId || !centroId) { this.setError({ error: { message: 'Centro no encontrado' } }); return; }
     const form = new FormData();
     form.append('archivo', archivo);
     if (nombreDisplay) form.append('nombre_display', nombreDisplay);
-    this.http.post<Mantencion>(
-      this.api.url(`/empresas/${empresaId}/centros/${centroId}/mantenciones/${id}/documentos`),
+    this.http.post<Actividad>(
+      this.api.url(`/empresas/${empresaId}/centros/${centroId}/actividades/${id}/documentos`),
       form
     ).subscribe({
       next: updated => {
-        this.mantenciones.update(list => list.map(m => m._id === id ? updated : m));
+        this.actividades.update(list => list.map(a => a._id === id ? updated : a));
         this.status.set({ type: 'ok', text: 'Documento adjuntado correctamente' });
         onSuccess?.();
       },
@@ -123,28 +123,28 @@ export class MantencionesService {
     });
   }
 
-  eliminarDocumento(mantencionId: string, nombreArchivo: string): void {
-    const centroId = this.mantenciones().find(m => m._id === mantencionId)?.centro_costo_id;
+  eliminarDocumento(actividadId: string, nombreArchivo: string): void {
+    const centroId = this.actividades().find(a => a._id === actividadId)?.centro_costo_id;
     const empresaId = centroId ? this.getEmpresaId(centroId) : undefined;
     if (!empresaId || !centroId) { this.setError({ error: { message: 'Centro no encontrado' } }); return; }
     const encoded = encodeURIComponent(nombreArchivo);
-    this.http.delete<Mantencion>(
-      this.api.url(`/empresas/${empresaId}/centros/${centroId}/mantenciones/${mantencionId}/documentos/${encoded}`)
+    this.http.delete<Actividad>(
+      this.api.url(`/empresas/${empresaId}/centros/${centroId}/actividades/${actividadId}/documentos/${encoded}`)
     ).subscribe({
       next: updated => {
-        this.mantenciones.update(list => list.map(m => m._id === mantencionId ? updated : m));
+        this.actividades.update(list => list.map(a => a._id === actividadId ? updated : a));
         this.status.set({ type: 'ok', text: 'Documento eliminado' });
       },
       error: err => this.setError(err),
     });
   }
 
-  descargarDocumento(mantencionId: string, nombreArchivo: string, nombreDisplay?: string): void {
-    const centroId = this.mantenciones().find(m => m._id === mantencionId)?.centro_costo_id;
+  descargarDocumento(actividadId: string, nombreArchivo: string, nombreDisplay?: string): void {
+    const centroId = this.actividades().find(a => a._id === actividadId)?.centro_costo_id;
     const empresaId = centroId ? this.getEmpresaId(centroId) : undefined;
     if (!empresaId || !centroId) { this.status.set({ type: 'error', text: 'Centro no encontrado' }); return; }
     const url = this.api.url(
-      `/empresas/${empresaId}/centros/${centroId}/mantenciones/${mantencionId}/documentos/${encodeURIComponent(nombreArchivo)}`
+      `/empresas/${empresaId}/centros/${centroId}/actividades/${actividadId}/documentos/${encodeURIComponent(nombreArchivo)}`
     );
     this.http.get(url, { responseType: 'blob' }).subscribe({
       next: (blob) => {

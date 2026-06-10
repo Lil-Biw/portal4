@@ -7,6 +7,7 @@ import { StatusBannerComponent } from '../../../shared/components/status-banner/
 import { ActivosFormComponent } from '../components/activos-form/activos-form.component';
 import { ActivosListComponent } from '../components/activos-list/activos-list.component';
 import { Activo, CreateActivoDto } from '../../../shared/models/activo.model';
+import { AuthService } from '../../auth/auth.service';
 
 type ModalMode = 'crear' | 'editar' | 'buscar' | null;
 
@@ -78,6 +79,7 @@ export class ActivosPageComponent implements OnInit {
   protected readonly service         = inject(ActivosService);
   protected readonly centrosService  = inject(CentrosService);
   protected readonly clientesService = inject(ClientesService);
+  private readonly authService       = inject(AuthService);
 
   protected modal    = signal<ModalMode>(null);
   protected busqueda = signal('');
@@ -96,11 +98,12 @@ export class ActivosPageComponent implements OnInit {
         this.cerrar();
       }
     });
+
   }
 
   ngOnInit(): void {
-    this.service.cargar();
     this.centrosService.cargar();
+    this.service.cargar();
     this.clientesService.cargar();
   }
 

@@ -65,19 +65,19 @@
     </div>
   </div>
 
-  <!-- 4. Mantenciones -->
+  <!-- 4. Actividades -->
   <div class="card" style="display:flex;flex-direction:column">
     <h3 style="margin:0 0 .75rem;font-size:1rem;font-weight:700;display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
-      Mantenciones
-      <span style="background:rgba(0,149,214,.1);color:#0095d6;padding:.2rem .6rem;border-radius:999px;font-size:.78rem;font-weight:700">{{ mantencionesService.mantenciones().length }}</span>
+      Actividades
+      <span style="background:rgba(0,149,214,.1);color:#0095d6;padding:.2rem .6rem;border-radius:999px;font-size:.78rem;font-weight:700">{{ actividadesService.actividades().length }}</span>
     </h3>
     <div class="scroll-area">
-      @if (mantencionesService.loading()) {
+      @if (actividadesService.loading()) {
         <p class="empty">Cargando...</p>
-      } @else if (mantencionesService.mantenciones().length === 0) {
-        <p class="empty">Sin mantenciones registradas.</p>
+      } @else if (actividadesService.actividades().length === 0) {
+        <p class="empty">Sin actividades registradas.</p>
       } @else {
-        @for (m of mantencionesService.mantenciones(); track m._id) {
+        @for (m of actividadesService.actividades(); track m._id) {
           <div style="padding:.55rem 0;border-bottom:1px solid rgba(34,33,33,.07);display:flex;align-items:flex-start;justify-content:space-between;gap:.5rem">
             <strong style="font-size:.875rem;display:block">{{ m.nombre }}</strong>
             <span style="font-size:.78rem;color:#6b7280;flex-shrink:0">{{ m.fecha.slice(0,10) }}</span>

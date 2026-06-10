@@ -1,7 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
 
-export interface DocMantencion {
+export interface DocActividad {
   nombre: string;
   nombre_display: string;
   tamano_bytes: number;
@@ -9,13 +9,13 @@ export interface DocMantencion {
   contenido?: Buffer;
 }
 
-export type MantencionDocument = Mantencion & Document;
+export type ActividadDocument = Actividad & Document;
 
-@Schema({ collection: 'mantenciones', timestamps: { createdAt: 'creado_en', updatedAt: 'actualizado_en' } })
-export class Mantencion {
+@Schema({ collection: 'actividades', timestamps: { createdAt: 'creado_en', updatedAt: 'actualizado_en' } })
+export class Actividad {
   @Prop({ required: true, trim: true }) nombre: string;
   @Prop({ trim: true }) descripcion?: string;
-  @Prop({ type: Types.ObjectId, ref: 'TipoMantencion', required: true }) tipo_id: Types.ObjectId;
+  @Prop({ type: Types.ObjectId, ref: 'TipoActividad', required: true }) tipo_id: Types.ObjectId;
   @Prop({ type: Types.ObjectId, ref: 'CentroCosto', required: true }) centro_costo_id: Types.ObjectId;
   @Prop({ type: [{ type: Types.ObjectId, ref: 'Activo' }], default: [] }) activo_ids: Types.ObjectId[];
   @Prop({ required: true }) fecha: Date;
@@ -29,8 +29,8 @@ export class Mantencion {
     }],
     default: [],
   })
-  documentos: DocMantencion[];
+  documentos: DocActividad[];
 }
 
-export const MantencionSchema = SchemaFactory.createForClass(Mantencion);
-MantencionSchema.index({ centro_costo_id: 1, fecha: 1 });
+export const ActividadSchema = SchemaFactory.createForClass(Actividad);
+ActividadSchema.index({ centro_costo_id: 1, fecha: 1 });

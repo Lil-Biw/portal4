@@ -7,7 +7,7 @@ import { ClientesService } from '../../clientes/clientes.service';
 import { CentrosService } from '../../centros/centros.service';
 import { ProyectosService } from '../../proyectos/proyectos.service';
 import { UsuariosService } from '../../usuarios/usuarios.service';
-import { MantencionesService } from '../../mantenciones/mantenciones.service';
+import { ActividadesService } from '../../actividades/actividades.service';
 import { NoticiasService } from '../../noticias/noticias.service';
 import { ApiService } from '../../../core/services/api.service';
 import { Solicitud } from '../../solicitudes/solicitudes.service';
@@ -38,7 +38,7 @@ export class ResumenPageComponent implements OnInit {
   protected readonly centrosService      = inject(CentrosService);
   protected readonly proyectosService    = inject(ProyectosService);
   protected readonly usuariosService     = inject(UsuariosService);
-  protected readonly mantencionesService = inject(MantencionesService);
+  protected readonly actividadesService  = inject(ActividadesService);
   protected readonly noticiasService     = inject(NoticiasService);
   private  readonly http                 = inject(HttpClient);
   private  readonly api                  = inject(ApiService);
@@ -96,7 +96,7 @@ export class ResumenPageComponent implements OnInit {
     this.centrosService.cargar();
     this.proyectosService.cargar();
     this.usuariosService.cargar();
-    this.mantencionesService.cargar();
+    this.actividadesService.cargar();
     this.noticiasService.cargar();
   }
 

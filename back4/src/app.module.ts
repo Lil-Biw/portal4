@@ -10,8 +10,8 @@ import { CentrosCostosModule } from './centros-costos/centros-costos.module';
 import { ProyectosModule } from './proyectos/proyectos.module';
 import { PermisosModule } from './permisos/permisos.module';
 import { SolicitudesModule } from './solicitudes/solicitudes.module';
-import { TiposMantencionModule } from './tipos-mantencion/tipos-mantencion.module';
-import { MantencionesModule } from './mantenciones/mantenciones.module';
+import { TiposActividadModule } from './tipos-actividad/tipos-actividad.module';
+import { ActividadesModule } from './actividades/actividades.module';
 import { ActivosModule } from './activos/activos.module';
 import { NoticiasModule } from './noticias/noticias.module';
 
@@ -26,8 +26,8 @@ import { NoticiasModule } from './noticias/noticias.module';
     ProyectosModule,
     PermisosModule,
     SolicitudesModule,
-    TiposMantencionModule,
-    MantencionesModule,
+    TiposActividadModule,
+    ActividadesModule,
     ActivosModule,
     NoticiasModule,
   ],

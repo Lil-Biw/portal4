@@ -15,54 +15,60 @@ export interface UsuarioAuth {
 }
 
 const TOKEN_KEY = 'auth_token';
-const USER_KEY  = 'auth_user';
+const USER_KEY = 'auth_user';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
-  private readonly http          = inject(HttpClient);
-  private readonly api           = inject(ApiService);
-  private readonly router        = inject(Router);
-  private readonly platformId    = inject(PLATFORM_ID);
+  private readonly http = inject(HttpClient);
+  private readonly api = inject(ApiService);
+  private readonly router = inject(Router);
+  private readonly platformId = inject(PLATFORM_ID);
   private readonly profileService = inject(ProfileService);
 
-  readonly usuarioActual   = signal<UsuarioAuth | null>(this.cargarUsuario());
+  readonly usuarioActual = signal<UsuarioAuth | null>(this.cargarUsuario());
   readonly estaAutenticado = computed(() => this.usuarioActual() !== null);
-  readonly cargando        = signal(false);
-  readonly error           = signal('');
+  readonly cargando = signal(false);
+  readonly error = signal('');
 
   login(email: string, password: string, perfil: 'admin' | 'consumidor'): void {
     this.cargando.set(true);
     this.error.set('');
     this.http
-      .post<{ access_token: string; usuario: UsuarioAuth }>(
-        this.api.url('/auth/login'),
-        { email, password },
-      )
+      .post<{
+        access_token: string;
+        usuario: UsuarioAuth;
+      }>(this.api.url('/auth/login'), { email, password })
       .subscribe({
-        next: res => {
-          const esSuperAdmin = res.usuario.rol === 'super_admin';
+        next: (res) => {
+          const esAdmin = res.usuario.rol === 'super_admin' || res.usuario.rol === 'admin_smartclarity';
 
-          if (perfil === 'admin' && !esSuperAdmin) {
+          if (perfil === 'admin' && !esAdmin) {
             this.error.set('Solo los administradores pueden acceder a este portal.');
             this.cargando.set(false);
             return;
           }
-          if (perfil === 'consumidor' && esSuperAdmin) {
+          if (perfil === 'consumidor' && esAdmin) {
             this.error.set('Los administradores deben ingresar por el portal de administración.');
             this.cargando.set(false);
             return;
           }
 
           this.guardarSesion(res.access_token, res.usuario);
-          this.profileService.setMode(esSuperAdmin ? 'admin' : 'consumidor');
+          this.profileService.setMode(esAdmin ? 'admin' : 'consumidor');
           this.cargando.set(false);
           if (res.usuario.debe_cambiar_password) {
             this.router.navigate(['/cambiar-password']);
           } else {
-            this.router.navigate([esSuperAdmin ? '/empresa' : '/inicio']);
+            const destino =
+              res.usuario.rol === 'super_admin'
+                ? '/empresa'
+                : res.usuario.rol === 'admin_smartclarity'
+                  ? '/usuarios'
+                  : '/inicio';
+            this.router.navigate([destino]);
           }
         },
-        error: err => {
+        error: (err) => {
           const msg = err?.error?.message;
           this.error.set(Array.isArray(msg) ? msg.join('. ') : (msg ?? 'Credenciales inválidas'));
           this.cargando.set(false);
@@ -71,7 +77,7 @@ export class AuthService {
   }
 
   logout(): void {
-    const eraAdmin = this.usuarioActual()?.rol === 'super_admin';
+    const eraAdmin = ['super_admin', 'admin_smartclarity'].includes(this.usuarioActual()?.rol ?? '');
     if (isPlatformBrowser(this.platformId)) {
       localStorage.removeItem(TOKEN_KEY);
       localStorage.removeItem(USER_KEY);

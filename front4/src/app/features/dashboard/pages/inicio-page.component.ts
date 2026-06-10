@@ -4,7 +4,7 @@ import { ConsumidorContextService } from '../../../profile/consumidor-context.se
 import { CentrosService } from '../../centros/centros.service';
 import { ProyectosService } from '../../proyectos/proyectos.service';
 import { SolicitudesService } from '../../solicitudes/solicitudes.service';
-import { MantencionesService } from '../../mantenciones/mantenciones.service';
+import { ActividadesService } from '../../actividades/actividades.service';
 import { NoticiasService } from '../../noticias/noticias.service';
 import { asId } from '../../../shared/utils';
 
@@ -29,7 +29,7 @@ export class InicioPageComponent implements OnInit {
   protected readonly centrosService      = inject(CentrosService);
   protected readonly proyectosService    = inject(ProyectosService);
   protected readonly solicitudesService  = inject(SolicitudesService);
-  protected readonly mantencionesService = inject(MantencionesService);
+  protected readonly actividadesService  = inject(ActividadesService);
   protected readonly noticiasService     = inject(NoticiasService);
 
   readonly fecha = new Date().toLocaleDateString('es-CL', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
@@ -57,14 +57,14 @@ export class InicioPageComponent implements OnInit {
       .filter(s => s.estado === 'pendiente' || s.estado === 'rechazado' || s.estado === 'vencido')
   );
 
-  protected proxMantenciones = computed(() => {
+  protected proxActividades = computed(() => {
     const ids = this.centroIdsPorEmpresa();
     if (ids.size === 0) return [];
     const hace30 = new Date();
     hace30.setDate(hace30.getDate() - 30);
     hace30.setHours(0, 0, 0, 0);
-    return this.mantencionesService.mantenciones()
-      .filter(m => ids.has(asId(m.centro_costo_id)) && new Date(m.fecha) >= hace30)
+    return this.actividadesService.actividades()
+      .filter(a => ids.has(asId(a.centro_costo_id)) && new Date(a.fecha) >= hace30)
       .sort((a, b) => b.fecha.localeCompare(a.fecha))
       .slice(0, 5);
   });
@@ -105,7 +105,7 @@ export class InicioPageComponent implements OnInit {
         untracked(() => {
           this.centrosService.cargarPorEmpresa(empresa._id);
           this.proyectosService.cargarPorEmpresa(empresa._id);
-          this.mantencionesService.cargarPorEmpresa(empresa._id);
+          this.actividadesService.cargarPorEmpresa(empresa._id);
           this.solicitudesService.cargar(empresa._id);
         });
       } else {

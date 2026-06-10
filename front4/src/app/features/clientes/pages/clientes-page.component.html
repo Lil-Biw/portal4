@@ -3,7 +3,9 @@
   <h2>Empresas</h2>
   <div class="header-actions">
     <button class="btn-ghost" (click)="abrirBuscar()">Buscar</button>
-    <button class="btn-primary" (click)="abrirCrear()">+ Crear</button>
+    @if (!esAdminCliente()) {
+      <button class="btn-primary" (click)="abrirCrear()">+ Crear</button>
+    }
   </div>
 </div>
 
@@ -11,7 +13,8 @@
 
 <!-- Lista principal -->
 <app-clientes-list
-  [clientes]="service.clientes()"
+  [clientes]="clientesFiltrados()"
+  [mostrarVerFicha]="!esAdminCliente()"
   (editado)="abrirEditar($event)"
   (eliminado)="eliminar($event)"
   (verFicha)="irAFicha($event)">

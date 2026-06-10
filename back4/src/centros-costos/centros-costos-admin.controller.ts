@@ -3,7 +3,7 @@ import { CentrosCostosService } from './centros-costos.service';
 import { Roles } from '../common/guards/guards';
 
 @Controller('centros-costos')
-@Roles('super_admin')
+@Roles('super_admin', 'admin_smartclarity')
 export class CentrosCostosAdminController {
   constructor(private readonly svc: CentrosCostosService) {}
 

@@ -9,6 +9,7 @@ import { ProyectoFormComponent } from '../components/proyecto-form/proyecto-form
 import { ProyectosListComponent } from '../components/proyectos-list/proyectos-list.component';
 import { Proyecto, CreateProyectoDto } from '../../../shared/models/proyecto.model';
 import { asId } from '../../../shared/utils';
+import { AuthService } from '../../auth/auth.service';
 
 type ModalMode = 'crear' | 'editar' | 'buscar' | null;
 
@@ -81,6 +82,7 @@ export class ProyectosPageComponent implements OnInit {
   protected readonly service         = inject(ProyectosService);
   protected readonly clientesService  = inject(ClientesService);
   protected readonly centrosService   = inject(CentrosService);
+  private readonly authService        = inject(AuthService);
 
   protected modal    = signal<ModalMode>(null);
   protected busqueda = signal('');
@@ -102,8 +104,8 @@ export class ProyectosPageComponent implements OnInit {
 
   ngOnInit(): void {
     this.service.cargar();
-    this.clientesService.cargar();
     this.centrosService.cargar();
+    this.clientesService.cargar();
   }
 
   protected abrirCrear(): void {

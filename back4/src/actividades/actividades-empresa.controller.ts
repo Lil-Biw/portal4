@@ -1,11 +1,11 @@
 import { Controller, Get, Param, UseGuards } from '@nestjs/common';
-import { MantencionesService } from './mantenciones.service';
+import { ActividadesService } from './actividades.service';
 import { EmpresaAccessGuard } from '../common/guards/guards';
 
-@Controller('empresas/:empresaId/mantenciones')
+@Controller('empresas/:empresaId/actividades')
 @UseGuards(EmpresaAccessGuard)
-export class MantencionesEmpresaController {
-  constructor(private readonly svc: MantencionesService) {}
+export class ActividadesEmpresaController {
+  constructor(private readonly svc: ActividadesService) {}
 
   @Get()
   findAll(@Param('empresaId') empresaId: string) {

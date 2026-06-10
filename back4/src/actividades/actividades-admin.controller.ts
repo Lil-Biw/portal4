@@ -1,23 +1,25 @@
 import { Controller, Get, Param, Query, Req } from '@nestjs/common';
 import { Request } from 'express';
-import { ActivosService } from './activos.service';
+import { ActividadesService } from './actividades.service';
 import { Roles } from '../common/guards/guards';
 
-@Controller('activos')
+@Controller('actividades')
 @Roles('super_admin', 'admin_smartclarity')
-export class ActivosAdminController {
-  constructor(private readonly svc: ActivosService) {}
+export class ActividadesAdminController {
+  constructor(private readonly svc: ActividadesService) {}
 
   @Get()
   findAll(
     @Query('centro_costo_id') centroCostoId?: string,
+    @Query('desde') desde?: string,
+    @Query('hasta') hasta?: string,
     @Req() req?: Request,
   ) {
     const user = (req as any)?.user;
     if (user?.rol === 'admin_smartclarity' && user?.cliente_id) {
-      return this.svc.findAllByEmpresa(user.cliente_id, centroCostoId);
+      return this.svc.findAllByEmpresa(user.cliente_id, centroCostoId, desde, hasta);
     }
-    return this.svc.findAll(centroCostoId);
+    return this.svc.findAll(centroCostoId, desde, hasta);
   }
 
   @Get(':id')

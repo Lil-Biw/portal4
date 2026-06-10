@@ -4,11 +4,13 @@
   <div
     *ngFor="let u of usuarios"
     class="card"
-    [class.selected]="u._id === seleccionadoId">
+    [class.selected]="u._id === seleccionadoId"
+    [class.rol-super-admin]="u.rol === 'super_admin'"
+    [class.rol-admin]="u.rol === 'admin_smartclarity'">
     <div class="card-main">
       <strong>{{ u.nombre }}</strong>
       <span class="rut">{{ u.email }}</span>
-      <span class="email">{{ u.rol === 'admin_cliente' ? 'Admin cliente' : 'Usuario' }} · {{ u.permiso_acceso }}</span>
+      <span class="email">{{ u.rol === 'super_admin' ? 'Super Admin' : u.rol === 'admin_smartclarity' ? 'Admin SmartClarity' : 'Usuario' }} · {{ u.permiso_acceso }}</span>
     </div>
     <div class="card-actions">
       <button class="btn-ghost btn-sm" (click)="editado.emit(u)">Editar</button>

@@ -4,9 +4,13 @@ import { ActivoSchema } from './activos.schema';
 import { ActivosController } from './activos.controller';
 import { ActivosAdminController } from './activos-admin.controller';
 import { ActivosService } from './activos.service';
+import { CentroCostoSchema } from '../centros-costos/centros-costos.schema';
 
 @Module({
-  imports: [MongooseModule.forFeature([{ name: 'Activo', schema: ActivoSchema }])],
+  imports: [MongooseModule.forFeature([
+    { name: 'Activo', schema: ActivoSchema },
+    { name: 'CentroCosto', schema: CentroCostoSchema },
+  ])],
   controllers: [ActivosController, ActivosAdminController],
   providers: [ActivosService],
   exports: [ActivosService],

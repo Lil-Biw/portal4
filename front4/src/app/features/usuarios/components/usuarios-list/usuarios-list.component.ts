@@ -7,6 +7,10 @@ import { Usuario } from '../../../../shared/models/usuario.model';
   standalone: true,
   imports: [NgFor, NgIf],
   templateUrl: './usuarios-list.component.html',
+  styles: [`
+    .rol-super-admin { border-left: 3px solid #f59e0b !important; background: rgba(245,158,11,.06) !important; }
+    .rol-admin        { border-left: 3px solid #0095d6 !important; background: rgba(0,149,214,.06) !important; }
+  `],
 })
 export class UsuariosListComponent {
   @Input() usuarios: Usuario[] = [];

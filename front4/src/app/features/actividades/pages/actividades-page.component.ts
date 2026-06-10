@@ -58,7 +58,7 @@ export class ActividadesPageComponent implements OnInit {
 
   protected centrosParaEmpresa = computed(() => {
     const empId = this.form().empresa_id;
-    if (!empId) return this.centrosService.centros();
+    if (!empId) return [];
     return this.centrosService.centros().filter(c => asId(c.cliente_id) === empId);
   });
 
@@ -79,6 +79,16 @@ export class ActividadesPageComponent implements OnInit {
   protected notifUsuariosIds = signal<string[]>([]);
   protected notifAdminsIds   = signal<string[]>([]);
   protected notifSuperAdmins = signal(false);
+
+  protected notifTodosUsuariosSeleccionados = computed(() => {
+    const u = this.usuariosParaCentro();
+    return u.length > 0 && u.every(x => this.notifUsuariosIds().includes(x._id));
+  });
+
+  protected notifTodosAdminsSeleccionados = computed(() => {
+    const a = this.adminsParaEmpresa();
+    return a.length > 0 && a.every(x => this.notifAdminsIds().includes(x._id));
+  });
 
   protected adminsParaEmpresa = computed(() => {
     const empId = this.form().empresa_id;
@@ -234,6 +244,20 @@ export class ActividadesPageComponent implements OnInit {
   }
 
   toggleNotifNotificar(): void { this.notifNotificar.update(v => !v); }
+  toggleSeleccionarTodosUsuarios(): void {
+    if (this.notifTodosUsuariosSeleccionados()) {
+      this.notifUsuariosIds.set([]);
+    } else {
+      this.notifUsuariosIds.set(this.usuariosParaCentro().map(u => u._id));
+    }
+  }
+  toggleSeleccionarTodosAdmins(): void {
+    if (this.notifTodosAdminsSeleccionados()) {
+      this.notifAdminsIds.set([]);
+    } else {
+      this.notifAdminsIds.set(this.adminsParaEmpresa().map(u => u._id));
+    }
+  }
   toggleNotifUsuario(id: string): void {
     this.notifUsuariosIds.update(ids =>
       ids.includes(id) ? ids.filter(x => x !== id) : [...ids, id]
@@ -317,11 +341,14 @@ export class ActividadesPageComponent implements OnInit {
     const selA       = this.notifAdminsIds();
     const esCompleto = todosU.every(id => selU.includes(id)) && todosA.every(id => selA.includes(id));
     const superAdmins = this.notifSuperAdmins();
-    const notificacion = notif
-      ? esCompleto
+    const destinatariosAct = [...selU, ...selA];
+    const notificacion = !notif
+      ? { notificar: false }
+      : esCompleto
         ? { notificar: true, audiencia: 'todos' as const, notificar_super_admins: superAdmins }
-        : { notificar: true, audiencia: 'especificos' as const, destinatarios_ids: [...selU, ...selA], notificar_super_admins: superAdmins }
-      : { notificar: false };
+        : destinatariosAct.length > 0
+          ? { notificar: true, audiencia: 'especificos' as const, destinatarios_ids: destinatariosAct, notificar_super_admins: superAdmins }
+          : { notificar: false };
     const dto = {
       nombre:          f.nombre.trim(),
       descripcion:     f.descripcion.trim() || undefined,

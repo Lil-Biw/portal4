@@ -423,16 +423,25 @@
                     <button type="button"
                       [style.border-bottom]="notifSolicitudTab() === 'usuarios' ? '2px solid #0095d6' : '2px solid transparent'"
                       [style.color]="notifSolicitudTab() === 'usuarios' ? '#0095d6' : '#6b7280'"
-                      style="background:none;border:none;padding:.3rem .7rem;font-size:.78rem;font-weight:600;cursor:pointer"
+                      style="background:none;border:none;padding:.3rem .7rem;font-size:.78rem;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:.35rem"
                       (click)="notifSolicitudTab.set('usuarios')">
+                      <input type="checkbox" [checked]="notifSolicitudTodosUsuariosSeleccionados()" (change)="toggleSeleccionarTodosUsuariosSolicitud()" (click)="$event.stopPropagation()" style="accent-color:#0095d6;width:12px;height:12px;cursor:pointer;flex-shrink:0" />
                       Usuarios ({{ notifSolicitudUsuariosIds().length }}/{{ usuariosParaSolicitud().length }})
                     </button>
                     <button type="button"
                       [style.border-bottom]="notifSolicitudTab() === 'admins' ? '2px solid #0095d6' : '2px solid transparent'"
                       [style.color]="notifSolicitudTab() === 'admins' ? '#0095d6' : '#6b7280'"
-                      style="background:none;border:none;padding:.3rem .7rem;font-size:.78rem;font-weight:600;cursor:pointer"
+                      style="background:none;border:none;padding:.3rem .7rem;font-size:.78rem;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:.35rem"
                       (click)="notifSolicitudTab.set('admins')">
+                      <input type="checkbox" [checked]="notifSolicitudTodosAdminsSeleccionados()" (change)="toggleSeleccionarTodosAdminsSolicitud()" (click)="$event.stopPropagation()" style="accent-color:#0095d6;width:12px;height:12px;cursor:pointer;flex-shrink:0" />
                       Admins ({{ notifSolicitudAdminsIds().length }}/{{ adminsParaSolicitud().length }})
+                    </button>
+                    <button type="button"
+                      [style.border-bottom]="notifSolicitudTab() === 'super-admins' ? '2px solid #0095d6' : '2px solid transparent'"
+                      [style.color]="notifSolicitudTab() === 'super-admins' ? '#0095d6' : '#6b7280'"
+                      style="background:none;border:none;padding:.3rem .7rem;font-size:.78rem;font-weight:600;cursor:pointer"
+                      (click)="notifSolicitudTab.set('super-admins')">
+                      Super Admins ({{ notifSolicitudSuperAdmins() ? superAdminsParaSolicitud().length : 0 }}/{{ superAdminsParaSolicitud().length }})
                     </button>
                   </div>
                   @if (notifSolicitudTab() === 'usuarios') {
@@ -446,7 +455,9 @@
                         }
                       </div>
                     } @else {
-                      <p style="margin:.3rem 0 0;font-size:.78rem;color:#9ca3af">Sin usuarios asignados al centro.</p>
+                      <p style="margin:.3rem 0 0;font-size:.78rem;color:#9ca3af">
+                        {{ selectedCentroId ? 'Sin usuarios asignados al centro.' : 'No hay usuarios para esta empresa.' }}
+                      </p>
                     }
                   }
                   @if (notifSolicitudTab() === 'admins') {
@@ -460,15 +471,17 @@
                         }
                       </div>
                     } @else {
-                      <p style="margin:.3rem 0 0;font-size:.78rem;color:#9ca3af">No hay administradores para esta empresa.</p>
+                      <p style="margin:.3rem 0 0;font-size:.78rem;color:#9ca3af">No hay administradores disponibles.</p>
                     }
                   }
-                  <div style="margin-top:.5rem;padding-top:.4rem;border-top:1px solid #e5e7eb">
-                    <label style="display:flex;align-items:center;gap:.5rem;cursor:pointer;font-size:.8rem;color:#374151">
-                      <input type="checkbox" [checked]="notifSolicitudSuperAdmins()" (change)="notifSolicitudSuperAdmins.update(v => !v)" style="accent-color:#0095d6;width:14px;height:14px" />
-                      Notificar Super Admins
-                    </label>
-                  </div>
+                  @if (notifSolicitudTab() === 'super-admins') {
+                    <div style="display:flex;flex-direction:column;gap:.5rem;border:1px solid rgba(34,33,33,.2);border-top:none;border-radius:0 0 8px 8px;padding:.5rem .75rem">
+                      <label style="display:flex;align-items:center;gap:.5rem;cursor:pointer;font-size:.82rem;color:#374151;font-weight:600">
+                        <input type="checkbox" [checked]="notifSolicitudSuperAdmins()" (change)="notifSolicitudSuperAdmins.update(v => !v)" style="accent-color:#0095d6;width:15px;height:15px" />
+                        <span>Notificar a todos los Super Admins</span>
+                      </label>
+                    </div>
+                  }
                 }
               </div>
 
@@ -601,16 +614,25 @@
             <button type="button"
               [style.border-bottom]="notifRechazoTab() === 'usuarios' ? '2px solid #0095d6' : '2px solid transparent'"
               [style.color]="notifRechazoTab() === 'usuarios' ? '#0095d6' : '#6b7280'"
-              style="background:none;border:none;padding:.3rem .7rem;font-size:.78rem;font-weight:600;cursor:pointer"
+              style="background:none;border:none;padding:.3rem .7rem;font-size:.78rem;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:.35rem"
               (click)="notifRechazoTab.set('usuarios')">
+              <input type="checkbox" [checked]="notifRechazoTodosUsuariosSeleccionados()" (change)="toggleSeleccionarTodosUsuariosRechazo()" (click)="$event.stopPropagation()" style="accent-color:#0095d6;width:12px;height:12px;cursor:pointer;flex-shrink:0" />
               Usuarios ({{ notifRechazoUsuariosIds().length }}/{{ usuariosParaRechazo().length }})
             </button>
             <button type="button"
               [style.border-bottom]="notifRechazoTab() === 'admins' ? '2px solid #0095d6' : '2px solid transparent'"
               [style.color]="notifRechazoTab() === 'admins' ? '#0095d6' : '#6b7280'"
-              style="background:none;border:none;padding:.3rem .7rem;font-size:.78rem;font-weight:600;cursor:pointer"
+              style="background:none;border:none;padding:.3rem .7rem;font-size:.78rem;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:.35rem"
               (click)="notifRechazoTab.set('admins')">
+              <input type="checkbox" [checked]="notifRechazoTodosAdminsSeleccionados()" (change)="toggleSeleccionarTodosAdminsRechazo()" (click)="$event.stopPropagation()" style="accent-color:#0095d6;width:12px;height:12px;cursor:pointer;flex-shrink:0" />
               Admins ({{ notifRechazoAdminsIds().length }}/{{ adminsParaRechazo().length }})
+            </button>
+            <button type="button"
+              [style.border-bottom]="notifRechazoTab() === 'super-admins' ? '2px solid #0095d6' : '2px solid transparent'"
+              [style.color]="notifRechazoTab() === 'super-admins' ? '#0095d6' : '#6b7280'"
+              style="background:none;border:none;padding:.3rem .7rem;font-size:.78rem;font-weight:600;cursor:pointer"
+              (click)="notifRechazoTab.set('super-admins')">
+              Super Admins ({{ notifRechazoSuperAdmins() ? superAdminsParaRechazo().length : 0 }}/{{ superAdminsParaRechazo().length }})
             </button>
           </div>
           @if (notifRechazoTab() === 'usuarios') {
@@ -624,7 +646,9 @@
                 }
               </div>
             } @else {
-              <p style="margin:.3rem 0 0;font-size:.78rem;color:#9ca3af">Sin usuarios asignados al centro.</p>
+              <p style="margin:.3rem 0 0;font-size:.78rem;color:#9ca3af">
+                {{ rechazandoCentroId() ? 'Sin usuarios asignados al centro.' : 'No hay usuarios para esta empresa.' }}
+              </p>
             }
           }
           @if (notifRechazoTab() === 'admins') {
@@ -638,15 +662,23 @@
                 }
               </div>
             } @else {
-              <p style="margin:.3rem 0 0;font-size:.78rem;color:#9ca3af">No hay administradores para esta empresa.</p>
+              <p style="margin:.3rem 0 0;font-size:.78rem;color:#9ca3af">No hay administradores disponibles.</p>
             }
           }
-          <div style="margin-top:.5rem;padding-top:.4rem;border-top:1px solid #e5e7eb">
-            <label style="display:flex;align-items:center;gap:.5rem;cursor:pointer;font-size:.8rem;color:#374151">
-              <input type="checkbox" [checked]="notifRechazoSuperAdmins()" (change)="notifRechazoSuperAdmins.update(v => !v)" style="accent-color:#0095d6;width:14px;height:14px" />
-              Notificar Super Admins
-            </label>
-          </div>
+          @if (notifRechazoTab() === 'super-admins') {
+            <div style="display:flex;flex-direction:column;gap:.5rem;border:1px solid rgba(34,33,33,.2);border-top:none;border-radius:0 0 8px 8px;padding:.5rem .75rem">
+              <label style="display:flex;align-items:center;gap:.5rem;cursor:pointer;font-size:.82rem;color:#374151;font-weight:600">
+                <input type="checkbox" [checked]="notifRechazoSuperAdmins()" (change)="notifRechazoSuperAdmins.update(v => !v)" style="accent-color:#0095d6;width:15px;height:15px" />
+                <span>Notificar a todos los Super Admins</span>
+              </label>
+              @if (superAdminsParaRechazo().length > 0) {
+                <div style="display:flex;flex-direction:column;gap:.2rem;padding-left:.25rem;border-top:1px solid rgba(34,33,33,.06);padding-top:.4rem;margin-top:.1rem">
+                  @for (u of superAdminsParaRechazo(); track u._id) {
+                  }
+                </div>
+              }
+            </div>
+          }
         }
       </div>
 
