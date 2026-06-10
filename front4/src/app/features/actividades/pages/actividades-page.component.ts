@@ -84,7 +84,7 @@ export class ActividadesPageComponent implements OnInit {
     const empId = this.form().empresa_id;
     if (!empId) return [];
     return this.usuariosService.usuarios().filter(u =>
-      u.rol === 'admin_smartclarity' && asId(u.cliente_id) === empId
+      u.rol === 'admin_smartclarity'
     );
   });
 
