@@ -15,4 +15,8 @@ export class NotificacionOpcionesDto {
   @ValidateIf(o => o.notificar === true && o.audiencia === 'especificos')
   @IsOptional()
   destinatarios_ids?: string[];
+
+  @IsBoolean()
+  @IsOptional()
+  notificar_super_admins?: boolean;
 }
