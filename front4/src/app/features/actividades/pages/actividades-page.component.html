@@ -250,7 +250,8 @@
             </div>
           }
 
-          <!-- Opciones de notificación por correo -->
+          <!-- Opciones de notificación por correo (solo si hay centro seleccionado) -->
+          @if (form().centro_costo_id) {
           <div class="field">
             <label style="display:flex;align-items:center;gap:.5rem;cursor:pointer;font-weight:600">
               <input type="checkbox" [checked]="notifNotificar()" (change)="toggleNotifNotificar()" style="accent-color:#0095d6;width:15px;height:15px" />
@@ -325,6 +326,8 @@
               }
             }
           </div>
+          }
+
         </div>
 
         <!-- Columna derecha: documentos -->
