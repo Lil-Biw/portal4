@@ -463,6 +463,12 @@
                       <p style="margin:.3rem 0 0;font-size:.78rem;color:#9ca3af">No hay administradores para esta empresa.</p>
                     }
                   }
+                  <div style="margin-top:.5rem;padding-top:.4rem;border-top:1px solid #e5e7eb">
+                    <label style="display:flex;align-items:center;gap:.5rem;cursor:pointer;font-size:.8rem;color:#374151">
+                      <input type="checkbox" [checked]="notifSolicitudSuperAdmins()" (change)="notifSolicitudSuperAdmins.update(v => !v)" style="accent-color:#0095d6;width:14px;height:14px" />
+                      Notificar Super Admins
+                    </label>
+                  </div>
                 }
               </div>
 
@@ -635,6 +641,12 @@
               <p style="margin:.3rem 0 0;font-size:.78rem;color:#9ca3af">No hay administradores para esta empresa.</p>
             }
           }
+          <div style="margin-top:.5rem;padding-top:.4rem;border-top:1px solid #e5e7eb">
+            <label style="display:flex;align-items:center;gap:.5rem;cursor:pointer;font-size:.8rem;color:#374151">
+              <input type="checkbox" [checked]="notifRechazoSuperAdmins()" (change)="notifRechazoSuperAdmins.update(v => !v)" style="accent-color:#0095d6;width:14px;height:14px" />
+              Notificar Super Admins
+            </label>
+          </div>
         }
       </div>
 
