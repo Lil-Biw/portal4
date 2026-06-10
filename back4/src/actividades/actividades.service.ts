@@ -112,21 +112,24 @@ export class ActividadesService {
       let usuariosCentro: { nombre: string; email: string }[] = [];
 
       if (opciones.audiencia === 'especificos') {
+        // Los admin_smartclarity son globales (sin cliente_id), no filtrar por empresa
         usuariosCentro = await this.usuarioModel
           .find({
             _id: { $in: (opciones.destinatarios_ids ?? []).map(id => new Types.ObjectId(id)) },
-            cliente_id: empresaId,
             activo: true,
+            $or: [{ cliente_id: empresaId }, { rol: 'admin_smartclarity' }],
           })
           .select('nombre email')
           .lean();
       } else {
-        // audiencia 'todos' o undefined → todos los usuarios del centro + admin_smartclarity
+        // audiencia 'todos' o undefined → usuarios del centro + admin_smartclarity (globales)
         usuariosCentro = await this.usuarioModel
           .find({
-            cliente_id: empresaId,
             activo: true,
-            $or: [{ rol: 'admin_smartclarity' }, { centros_asignados: centroObjId }],
+            $or: [
+              { rol: 'admin_smartclarity' },
+              { cliente_id: empresaId, centros_asignados: centroObjId },
+            ],
           })
           .select('nombre email')
           .lean();

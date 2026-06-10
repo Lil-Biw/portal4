@@ -64,20 +64,21 @@ export class SolicitudesService {
       let usuariosDestino: { nombre: string; email: string }[] = [];
 
       if (opciones.audiencia === 'especificos') {
+        // Los admin_smartclarity son globales (sin cliente_id), no filtrar por empresa
         usuariosDestino = await this.usuarioModel
           .find({
             _id: { $in: (opciones.destinatarios_ids ?? []).map(id => new Types.ObjectId(id)) },
-            cliente_id: empresaId,
             activo: true,
+            $or: [{ cliente_id: empresaId }, { rol: 'admin_smartclarity' }],
           })
           .select('nombre email')
           .lean();
       } else {
-        // audiencia 'todos' → admin_smartclarity de la empresa + usuarios del centro (si hay centro)
+        // audiencia 'todos' → admin_smartclarity (globales) + usuarios del centro (si hay centro)
         const orConditions: object[] = [{ rol: 'admin_smartclarity' }];
-        if (centroObjId) orConditions.push({ centros_asignados: centroObjId });
+        if (centroObjId) orConditions.push({ cliente_id: empresaId, centros_asignados: centroObjId });
         usuariosDestino = await this.usuarioModel
-          .find({ cliente_id: empresaId, activo: true, $or: orConditions })
+          .find({ activo: true, $or: orConditions })
           .select('nombre email')
           .lean();
       }
@@ -174,22 +175,22 @@ export class SolicitudesService {
       let usuariosEmpresa: { nombre: string; email: string }[] = [];
 
       if (opciones.audiencia === 'especificos') {
+        // Los admin_smartclarity son globales (sin cliente_id), no filtrar por empresa
         usuariosEmpresa = await this.usuarioModel
           .find({
             _id: { $in: (opciones.destinatarios_ids ?? []).map(id => new Types.ObjectId(id)) },
-            cliente_id: new Types.ObjectId(empresaId),
             activo: true,
+            $or: [{ cliente_id: new Types.ObjectId(empresaId) }, { rol: 'admin_smartclarity' }],
           })
           .select('nombre email')
           .lean();
       } else {
-        // audiencia 'todos' o undefined → usuarios del centro + admin_smartclarity
+        // audiencia 'todos' o undefined → usuarios del centro + admin_smartclarity (globales)
         usuariosEmpresa = await this.usuarioModel
           .find({
-            cliente_id: new Types.ObjectId(empresaId),
             activo: true,
             $or: centroObjId
-              ? [{ rol: 'admin_smartclarity' }, { centros_asignados: centroObjId }]
+              ? [{ rol: 'admin_smartclarity' }, { cliente_id: new Types.ObjectId(empresaId), centros_asignados: centroObjId }]
               : [{ rol: 'admin_smartclarity' }],
           })
           .select('nombre email')
