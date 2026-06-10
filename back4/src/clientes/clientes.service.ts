@@ -61,6 +61,15 @@ export class ClientesService {
     return cliente;
   }
 
+  async updateConfigGrafico(id: string, mostrarPromedio: boolean) {
+    const cliente = await this.clienteModel
+      .findByIdAndUpdate(id, { mostrar_grafico_promedio: mostrarPromedio }, { new: true, runValidators: true })
+      .select('-logo.contenido -documentos.contenido')
+      .lean();
+    if (!cliente) throw new NotFoundException(`Cliente ${id} no encontrado`);
+    return cliente;
+  }
+
   async subirLogo(id: string, archivo: { originalname: string; buffer: Buffer; mimetype: string }) {
     const cliente = await this.clienteModel.findById(id).lean();
     if (!cliente) throw new NotFoundException(`Cliente ${id} no encontrado`);

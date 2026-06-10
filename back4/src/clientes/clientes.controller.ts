@@ -3,6 +3,7 @@ import {
   Get,
   Post,
   Put,
+  Patch,
   Delete,
   Param,
   Body,
@@ -18,7 +19,7 @@ import { Request, Response } from 'express';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
 import { ClientesService } from './clientes.service';
-import { CreateClienteDto, UpdateClienteDto, UpdateScoreSmartclarityDto } from './clientes.dto';
+import { CreateClienteDto, UpdateClienteDto, UpdateScoreSmartclarityDto, UpdateConfigGraficoDto } from './clientes.dto';
 import { Roles, Public } from '../common/guards/guards';
 
 interface JwtUser {
@@ -80,6 +81,15 @@ export class ClientesController {
     @Body() dto: UpdateScoreSmartclarityDto,
   ) {
     return this.clientesService.updateScoreSmartclarity(id, dto.valores);
+  }
+
+  @Patch(':id/config-grafico')
+  @Roles('super_admin', 'admin_smartclarity')
+  updateConfigGrafico(
+    @Param('id') id: string,
+    @Body() dto: UpdateConfigGraficoDto,
+  ) {
+    return this.clientesService.updateConfigGrafico(id, dto.mostrar_grafico_promedio);
   }
 
   @Delete(':id')
