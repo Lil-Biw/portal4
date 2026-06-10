@@ -8,65 +8,63 @@ interface Point { x: number; y: number; }
   imports: [],
   template: `
     <div style="display:inline-block">
-      <svg [attr.viewBox]="'0 0 ' + size + ' ' + size" [attr.width]="size" [attr.height]="size" style="display:block;margin:auto;overflow:visible">
-        <!-- Grid circles -->
-        @for (level of gridLevels; track $index) {
-          <g>
+      @if (isDefault) {
+        <div style="width:{{size}}px;height:{{size}}px;display:flex;flex-direction:column;align-items:center;justify-content:center;border:2px dashed #e5e7eb;border-radius:12px;gap:.5rem">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#d1d5db" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
+          </svg>
+          <span style="font-size:.78rem;font-weight:600;color:#9ca3af;text-align:center;padding:0 1rem">Gráfico pendiente,<br>no configurado</span>
+        </div>
+      } @else {
+        <svg [attr.viewBox]="'0 0 ' + size + ' ' + size" [attr.width]="size" [attr.height]="size" style="display:block;margin:auto;overflow:visible">
+          <!-- Grid -->
+          @for (level of gridLevels; track $index) {
             <polygon
               [attr.points]="polygonPoints(level)"
               fill="none"
               stroke="rgba(34,33,33,.1)"
               stroke-width="1" />
-          </g>
-        }
+          }
 
-        <!-- Axes -->
-        @for (ax of axes; track $index) {
-          <g>
+          <!-- Axes -->
+          @for (ax of axes; track $index) {
             <line
               [attr.x1]="cx" [attr.y1]="cy"
               [attr.x2]="ax.tip.x" [attr.y2]="ax.tip.y"
               stroke="rgba(34,33,33,.12)"
               stroke-width="1" />
-          </g>
-        }
+          }
 
-        <!-- Data polygon -->
-        <polygon
-          [attr.points]="dataPoints"
-          fill="rgba(0,149,214,.18)"
-          stroke="#0095d6"
-          stroke-width="2"
-          stroke-linejoin="round" />
-
-        <!-- Data dots -->
-        @for (pt of dataCoords; track $index) {
-          <g>
-            <circle [attr.cx]="pt.x" [attr.cy]="pt.y" r="4" fill="#0095d6" />
-          </g>
-        }
-
-        <!-- Promedio polygon -->
-        @if (dataPromPoints) {
+          <!-- Data polygon -->
           <polygon
-            [attr.points]="dataPromPoints"
-            fill="rgba(34,197,94,.15)"
-            stroke="#22c55e"
+            [attr.points]="dataPoints"
+            fill="rgba(0,149,214,.18)"
+            stroke="#0095d6"
             stroke-width="2"
-            stroke-dasharray="4,3"
             stroke-linejoin="round" />
 
-          <!-- Promedio dots -->
-          @for (pt of dataPromCoords; track $index) {
-            <g>
-              <circle [attr.cx]="pt.x" [attr.cy]="pt.y" r="3.5" fill="#22c55e" />
-            </g>
+          <!-- Data dots -->
+          @for (pt of dataCoords; track $index) {
+            <circle [attr.cx]="pt.x" [attr.cy]="pt.y" r="4" fill="#0095d6" />
           }
-        }
 
-        <!-- Labels -->
-        @for (ax of axes; track $index; let i = $index) {
-          <g>
+          <!-- Promedio polygon (solo si no está en estado pendiente) -->
+          @if (dataPromPoints) {
+            <polygon
+              [attr.points]="dataPromPoints"
+              fill="rgba(34,197,94,.15)"
+              stroke="#22c55e"
+              stroke-width="2"
+              stroke-dasharray="4,3"
+              stroke-linejoin="round" />
+
+            @for (pt of dataPromCoords; track $index) {
+              <circle [attr.cx]="pt.x" [attr.cy]="pt.y" r="3.5" fill="#22c55e" />
+            }
+          }
+
+          <!-- Labels: muestra escala 1–10 -->
+          @for (ax of axes; track $index; let i = $index) {
             <text
               [attr.x]="labelPos(ax.tip, i).x"
               [attr.y]="labelPos(ax.tip, i).y"
@@ -78,7 +76,6 @@ interface Point { x: number; y: number; }
               font-weight="500">
               {{ ax.label }}
             </text>
-            <!-- Percentage -->
             <text
               [attr.x]="labelPos(ax.tip, i).x"
               [attr.y]="labelPos(ax.tip, i).y + 12"
@@ -88,23 +85,29 @@ interface Point { x: number; y: number; }
               font-family="inherit"
               fill="#0095d6"
               font-weight="700">
-              {{ values[i] }}%
+              {{ scaleDisplay(values[i]) }}
             </text>
-          </g>
-        }
-      </svg>
+          }
+        </svg>
 
-      @if (valuesPromedio?.length) {
-        <div style="display:flex;gap:14px;justify-content:center;margin-top:8px">
-          <div style="display:flex;align-items:center;gap:5px">
-            <svg width="18" height="4"><line x1="0" y1="2" x2="18" y2="2" stroke="#0095d6" stroke-width="2"/></svg>
-            <span style="font-size:9px;color:#374151;font-family:inherit">Configurado</span>
+        @if (valuesPromedio?.length) {
+          <div style="display:flex;gap:14px;justify-content:center;margin-top:8px">
+            <div style="display:flex;align-items:center;gap:5px">
+              <svg width="18" height="6"><line x1="0" y1="3" x2="18" y2="3" stroke="#0095d6" stroke-width="2"/></svg>
+              <span style="font-size:9px;color:#374151;font-family:inherit">Configurado</span>
+            </div>
+            @if (isPromedioDefault) {
+              <div style="display:flex;align-items:center;gap:5px">
+                <span style="font-size:9px;color:#9ca3af;font-family:inherit;font-style:italic">Promedio centros: pendiente</span>
+              </div>
+            } @else {
+              <div style="display:flex;align-items:center;gap:5px">
+                <svg width="18" height="6"><line x1="0" y1="3" x2="18" y2="3" stroke="#22c55e" stroke-width="2" stroke-dasharray="4,2"/></svg>
+                <span style="font-size:9px;color:#374151;font-family:inherit">Promedio centros</span>
+              </div>
+            }
           </div>
-          <div style="display:flex;align-items:center;gap:5px">
-            <svg width="18" height="4"><line x1="0" y1="2" x2="18" y2="2" stroke="#22c55e" stroke-width="2" stroke-dasharray="4,2"/></svg>
-            <span style="font-size:9px;color:#374151;font-family:inherit">Promedio centros</span>
-          </div>
-        </div>
+        }
       }
     </div>
   `,
@@ -125,6 +128,18 @@ export class SpiderChartComponent implements OnChanges {
   dataPoints = '';
   dataPromCoords: Point[] = [];
   dataPromPoints = '';
+
+  get isDefault(): boolean {
+    return this.values.length > 0 && this.values.every(v => v === 50);
+  }
+
+  get isPromedioDefault(): boolean {
+    return !!(this.valuesPromedio?.length && this.valuesPromedio.every(v => v === 50));
+  }
+
+  scaleDisplay(v: number): number {
+    return Math.round(v / 10);
+  }
 
   ngOnChanges(): void {
     const n = this.labels.length;
@@ -150,7 +165,7 @@ export class SpiderChartComponent implements OnChanges {
 
     this.dataPoints = this.dataCoords.map(p => `${p.x},${p.y}`).join(' ');
 
-    if (this.valuesPromedio && this.valuesPromedio.length === this.labels.length) {
+    if (this.valuesPromedio && this.valuesPromedio.length === this.labels.length && !this.isPromedioDefault) {
       this.dataPromCoords = this.axes.map((ax, i) => {
         const r = (this.valuesPromedio![i] ?? 0) / 100;
         return {
