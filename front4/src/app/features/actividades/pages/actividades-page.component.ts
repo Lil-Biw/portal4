@@ -78,6 +78,7 @@ export class ActividadesPageComponent implements OnInit {
   protected notifTab         = signal<'usuarios' | 'admins'>('usuarios');
   protected notifUsuariosIds = signal<string[]>([]);
   protected notifAdminsIds   = signal<string[]>([]);
+  protected notifSuperAdmins = signal(false);
 
   protected adminsParaEmpresa = computed(() => {
     const empId = this.form().empresa_id;
@@ -245,6 +246,7 @@ export class ActividadesPageComponent implements OnInit {
     this.notifTab.set('usuarios');
     this.notifUsuariosIds.set(this.usuariosParaCentro().map(u => u._id));
     this.notifAdminsIds.set(this.adminsParaEmpresa().map(u => u._id));
+    this.notifSuperAdmins.set(false);
   }
 
   abrirCrear(fecha = ''): void {
@@ -310,10 +312,11 @@ export class ActividadesPageComponent implements OnInit {
     const selU       = this.notifUsuariosIds();
     const selA       = this.notifAdminsIds();
     const esCompleto = todosU.every(id => selU.includes(id)) && todosA.every(id => selA.includes(id));
+    const superAdmins = this.notifSuperAdmins();
     const notificacion = notif
       ? esCompleto
-        ? { notificar: true, audiencia: 'todos' as const }
-        : { notificar: true, audiencia: 'especificos' as const, destinatarios_ids: [...selU, ...selA] }
+        ? { notificar: true, audiencia: 'todos' as const, notificar_super_admins: superAdmins }
+        : { notificar: true, audiencia: 'especificos' as const, destinatarios_ids: [...selU, ...selA], notificar_super_admins: superAdmins }
       : { notificar: false };
     const dto = {
       nombre:          f.nombre.trim(),
