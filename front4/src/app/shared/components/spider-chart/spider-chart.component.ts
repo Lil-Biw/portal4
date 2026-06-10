@@ -1,32 +1,35 @@
 import { Component, Input, OnChanges } from '@angular/core';
-import { NgFor } from '@angular/common';
 
 interface Point { x: number; y: number; }
 
 @Component({
   selector: 'app-spider-chart',
   standalone: true,
-  imports: [NgFor],
+  imports: [],
   template: `
     <div style="display:inline-block">
       <svg [attr.viewBox]="'0 0 ' + size + ' ' + size" [attr.width]="size" [attr.height]="size" style="display:block;margin:auto;overflow:visible">
         <!-- Grid circles -->
-        <g *ngFor="let level of gridLevels">
-          <polygon
-            [attr.points]="polygonPoints(level)"
-            fill="none"
-            stroke="rgba(34,33,33,.1)"
-            stroke-width="1" />
-        </g>
+        @for (level of gridLevels; track $index) {
+          <g>
+            <polygon
+              [attr.points]="polygonPoints(level)"
+              fill="none"
+              stroke="rgba(34,33,33,.1)"
+              stroke-width="1" />
+          </g>
+        }
 
         <!-- Axes -->
-        <g *ngFor="let ax of axes">
-          <line
-            [attr.x1]="cx" [attr.y1]="cy"
-            [attr.x2]="ax.tip.x" [attr.y2]="ax.tip.y"
-            stroke="rgba(34,33,33,.12)"
-            stroke-width="1" />
-        </g>
+        @for (ax of axes; track $index) {
+          <g>
+            <line
+              [attr.x1]="cx" [attr.y1]="cy"
+              [attr.x2]="ax.tip.x" [attr.y2]="ax.tip.y"
+              stroke="rgba(34,33,33,.12)"
+              stroke-width="1" />
+          </g>
+        }
 
         <!-- Data polygon -->
         <polygon
@@ -37,9 +40,11 @@ interface Point { x: number; y: number; }
           stroke-linejoin="round" />
 
         <!-- Data dots -->
-        <g *ngFor="let pt of dataCoords">
-          <circle [attr.cx]="pt.x" [attr.cy]="pt.y" r="4" fill="#0095d6" />
-        </g>
+        @for (pt of dataCoords; track $index) {
+          <g>
+            <circle [attr.cx]="pt.x" [attr.cy]="pt.y" r="4" fill="#0095d6" />
+          </g>
+        }
 
         <!-- Promedio polygon -->
         @if (dataPromPoints) {
@@ -52,37 +57,41 @@ interface Point { x: number; y: number; }
             stroke-linejoin="round" />
 
           <!-- Promedio dots -->
-          <g *ngFor="let pt of dataPromCoords">
-            <circle [attr.cx]="pt.x" [attr.cy]="pt.y" r="3.5" fill="#22c55e" />
-          </g>
+          @for (pt of dataPromCoords; track $index) {
+            <g>
+              <circle [attr.cx]="pt.x" [attr.cy]="pt.y" r="3.5" fill="#22c55e" />
+            </g>
+          }
         }
 
         <!-- Labels -->
-        <g *ngFor="let ax of axes; let i = index">
-          <text
-            [attr.x]="labelPos(ax.tip, i).x"
-            [attr.y]="labelPos(ax.tip, i).y"
-            [attr.text-anchor]="textAnchor(i)"
-            dominant-baseline="middle"
-            font-size="10"
-            font-family="inherit"
-            fill="#374151"
-            font-weight="500">
-            {{ ax.label }}
-          </text>
-          <!-- Percentage -->
-          <text
-            [attr.x]="labelPos(ax.tip, i).x"
-            [attr.y]="labelPos(ax.tip, i).y + 12"
-            [attr.text-anchor]="textAnchor(i)"
-            dominant-baseline="middle"
-            font-size="9"
-            font-family="inherit"
-            fill="#0095d6"
-            font-weight="700">
-            {{ values[i] }}%
-          </text>
-        </g>
+        @for (ax of axes; track $index; let i = $index) {
+          <g>
+            <text
+              [attr.x]="labelPos(ax.tip, i).x"
+              [attr.y]="labelPos(ax.tip, i).y"
+              [attr.text-anchor]="textAnchor(i)"
+              dominant-baseline="middle"
+              font-size="10"
+              font-family="inherit"
+              fill="#374151"
+              font-weight="500">
+              {{ ax.label }}
+            </text>
+            <!-- Percentage -->
+            <text
+              [attr.x]="labelPos(ax.tip, i).x"
+              [attr.y]="labelPos(ax.tip, i).y + 12"
+              [attr.text-anchor]="textAnchor(i)"
+              dominant-baseline="middle"
+              font-size="9"
+              font-family="inherit"
+              fill="#0095d6"
+              font-weight="700">
+              {{ values[i] }}%
+            </text>
+          </g>
+        }
       </svg>
 
       @if (valuesPromedio?.length) {
