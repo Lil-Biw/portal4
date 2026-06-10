@@ -272,6 +272,13 @@
                   (click)="notifTab.set('admins')">
                   Admins ({{ notifAdminsIds().length }}/{{ adminsParaEmpresa().length }})
                 </button>
+                <button type="button"
+                  [style.border-bottom]="notifTab() === 'super-admins' ? '2px solid #0095d6' : '2px solid transparent'"
+                  [style.color]="notifTab() === 'super-admins' ? '#0095d6' : '#6b7280'"
+                  style="background:none;border:none;padding:.3rem .7rem;font-size:.8rem;font-weight:600;cursor:pointer"
+                  (click)="notifTab.set('super-admins')">
+                  Super Admins
+                </button>
               </div>
               @if (notifTab() === 'usuarios') {
                 @if (usuariosParaCentro().length > 0) {
@@ -301,12 +308,21 @@
                   <p style="margin:.3rem 0 0;font-size:.8rem;color:#9ca3af">No hay administradores para esta empresa.</p>
                 }
               }
-              <div style="margin-top:.6rem;padding-top:.5rem;border-top:1px solid #e5e7eb">
-                <label style="display:flex;align-items:center;gap:.5rem;cursor:pointer;font-size:.82rem;color:#374151">
-                  <input type="checkbox" [checked]="notifSuperAdmins()" (change)="notifSuperAdmins.update(v => !v)" style="accent-color:#0095d6;width:15px;height:15px" />
-                  <span>Notificar Super Admins</span>
-                </label>
-              </div>
+              @if (notifTab() === 'super-admins') {
+                <div style="display:flex;flex-direction:column;gap:.5rem;border:1px solid rgba(34,33,33,.2);border-top:none;border-radius:0 0 8px 8px;padding:.5rem .75rem">
+                  <label style="display:flex;align-items:center;gap:.5rem;cursor:pointer;font-size:.82rem;color:#374151;font-weight:600">
+                    <input type="checkbox" [checked]="notifSuperAdmins()" (change)="notifSuperAdmins.update(v => !v)" style="accent-color:#0095d6;width:15px;height:15px" />
+                    <span>Notificar a todos los Super Admins</span>
+                  </label>
+                  @if (superAdminsLista().length > 0) {
+                    <div style="display:flex;flex-direction:column;gap:.2rem;padding-left:.25rem;border-top:1px solid rgba(34,33,33,.06);padding-top:.4rem;margin-top:.1rem">
+                      @for (u of superAdminsLista(); track u._id) {
+                        <span style="font-size:.78rem;color:#6b7280">• {{ u.nombre }}</span>
+                      }
+                    </div>
+                  }
+                </div>
+              }
             }
           </div>
         </div>

@@ -75,7 +75,7 @@ export class ActividadesPageComponent implements OnInit {
   });
 
   protected notifNotificar   = signal(true);
-  protected notifTab         = signal<'usuarios' | 'admins'>('usuarios');
+  protected notifTab         = signal<'usuarios' | 'admins' | 'super-admins'>('usuarios');
   protected notifUsuariosIds = signal<string[]>([]);
   protected notifAdminsIds   = signal<string[]>([]);
   protected notifSuperAdmins = signal(false);
@@ -87,6 +87,10 @@ export class ActividadesPageComponent implements OnInit {
       u.rol === 'admin_smartclarity'
     );
   });
+
+  protected superAdminsLista = computed(() =>
+    this.usuariosService.usuarios().filter(u => u.rol === 'super_admin')
+  );
 
   protected filtroEmpresaId = signal<string>('');
   protected filtroTipoId    = signal<string>('');
