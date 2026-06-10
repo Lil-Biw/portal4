@@ -1,4 +1,4 @@
-export type RolUsuario = 'admin_cliente' | 'usuario';
+export type RolUsuario = 'super_admin' | 'admin_smartclarity' | 'usuario';
 export type PermisoAcceso = 'ver' | 'editar';
 
 export interface Usuario {
@@ -16,7 +16,7 @@ export interface Usuario {
 }
 
 export interface CreateUsuarioDto {
-  cliente_id: string;
+  cliente_id?: string;
   nombre: string;
   email: string;
   rol?: RolUsuario;

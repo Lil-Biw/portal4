@@ -3,7 +3,10 @@
   <h2>Usuarios</h2>
   <div class="header-actions">
     <button class="btn-ghost" (click)="abrirBuscar()">Buscar</button>
-    <button class="btn-primary" (click)="abrirCrear()">+ Crear</button>
+    @if (esSuperAdmin()) {
+      <button class="btn-ghost" (click)="abrirCrearAdmin()">+ Admin</button>
+    }
+    <button class="btn-primary" (click)="abrirCrearUsuario()">+ Usuario</button>
   </div>
 </div>
 
@@ -16,20 +19,42 @@
     <app-usuarios-list
       [usuarios]="grupo.usuarios"
       (editado)="abrirEditar($event)"
-      (eliminado)="eliminar($event)">
+      (eliminado)="eliminar($event)"
+    >
     </app-usuarios-list>
   </div>
 }
-@if (service.usuarios().length === 0) {
+@if (usuariosVisibles().length === 0) {
   <p class="empty">Sin usuarios registrados.</p>
 }
 
 <!-- ── Modal ──────────────────────────────────────────── -->
 <div class="modal-backdrop" *ngIf="modal() !== null" (click)="cerrar()">
   <div class="modal" (click)="$event.stopPropagation()">
+    <!-- Crear Administrador -->
+    <ng-container *ngIf="modal() === 'crear-admin'">
+      <div class="modal-header">
+        <h3>Nuevo administrador</h3>
+        <button class="modal-close" (click)="cerrar()">&#x2715;</button>
+      </div>
+      <app-status-banner [status]="service.status()"></app-status-banner>
+      <form (ngSubmit)="crearAdmin()" class="form-grid">
+        <label class="field">
+          <span>Nombre *</span>
+          <input [(ngModel)]="adminForm.nombre" name="nombre" required />
+        </label>
+        <label class="field">
+          <span>Email *</span>
+          <input [(ngModel)]="adminForm.email" name="email" type="email" required />
+        </label>
+        <div class="form-footer">
+          <button type="submit" class="btn-primary">Crear administrador</button>
+        </div>
+      </form>
+    </ng-container>
 
-    <!-- Crear -->
-    <ng-container *ngIf="modal() === 'crear'">
+    <!-- Crear Usuario -->
+    <ng-container *ngIf="modal() === 'crear-usuario'">
       <div class="modal-header">
         <h3>Nuevo usuario</h3>
         <button class="modal-close" (click)="cerrar()">&#x2715;</button>
@@ -37,11 +62,13 @@
       <app-status-banner [status]="service.status()"></app-status-banner>
       <app-usuario-form
         submitLabel="Crear usuario"
-        [clientes]="clientesService.clientes()"
-        [centros]="centrosService.centros()"
+        [clientes]="clientesVisibles()"
+        [centros]="centrosVisibles()"
         [centrosSeleccionados]="service.centrosSeleccionados()"
+        [esAdminCliente]="esAdminSmartclarity()"
         (centroToggle)="service.toggleCentro($event.centroId, $event.checked)"
-        (submitted)="crear($event)">
+        (submitted)="crear($event)"
+      >
       </app-usuario-form>
     </ng-container>
 
@@ -54,13 +81,15 @@
       <app-status-banner [status]="service.status()"></app-status-banner>
       <app-usuario-form
         [initial]="service.seleccionado()"
-        [clientes]="clientesService.clientes()"
-        [centros]="centrosService.centros()"
+        [clientes]="clientesVisibles()"
+        [centros]="centrosVisibles()"
         [centrosSeleccionados]="service.centrosSeleccionados()"
         [isEdit]="true"
+        [esAdminCliente]="esAdminSmartclarity()"
         submitLabel="Guardar cambios"
         (centroToggle)="service.toggleCentro($event.centroId, $event.checked)"
-        (submitted)="actualizar($event)">
+        (submitted)="actualizar($event)"
+      >
       </app-usuario-form>
     </ng-container>
 
@@ -76,13 +105,14 @@
         placeholder="Nombre o email..."
         [ngModel]="busqueda()"
         (ngModelChange)="busqueda.set($event)"
-        autofocus />
+        autofocus
+      />
       <app-usuarios-list
         [usuarios]="usuariosFiltrados()"
         (editado)="editarDesdeBuscar($event)"
-        (eliminado)="eliminar($event)">
+        (eliminado)="eliminar($event)"
+      >
       </app-usuarios-list>
     </ng-container>
-
   </div>
 </div>
