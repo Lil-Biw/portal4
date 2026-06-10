@@ -127,19 +127,13 @@ export class DocumentosAdminPageComponent implements OnInit {
 
   protected adminsParaSolicitud = computed(() => {
     if (!this.selectedEmpresaId) return [];
-    return this.usuariosService.usuarios().filter(u =>
-      u.rol === 'admin_smartclarity' && asId(u.cliente_id) === this.selectedEmpresaId
-    );
+    return this.usuariosService.usuarios().filter(u => u.rol === 'admin_smartclarity');
   });
 
   protected adminsParaRechazo = computed(() => {
     const centroId = this.rechazandoCentroId();
     if (!centroId) return [];
-    const centro = this.centrosService.centros().find(c => asId(c._id) === centroId);
-    if (!centro) return [];
-    return this.usuariosService.usuarios().filter(u =>
-      u.rol === 'admin_smartclarity' && asId(u.cliente_id) === asId(centro.cliente_id)
-    );
+    return this.usuariosService.usuarios().filter(u => u.rol === 'admin_smartclarity');
   });
 
   // ─── getters ──────────────────────────────────────────────────────────────
