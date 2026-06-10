@@ -7,16 +7,16 @@ import { ProfileService } from '../../profile/profile.service';
 import { ConsumidorContextService } from '../../profile/consumidor-context.service';
 import { ClientesService } from '../../features/clientes/clientes.service';
 import { CentrosService } from '../../features/centros/centros.service';
-import { MantencionesService } from '../../features/mantenciones/mantenciones.service';
-import { TiposMantencionService } from '../../features/mantenciones/tipos-mantencion.service';
+import { ActividadesService } from '../../features/actividades/actividades.service';
+import { TiposActividadService } from '../../features/actividades/tipos-actividad.service';
 import { SolicitudesService } from '../../features/solicitudes/solicitudes.service';
-import { Mantencion, TipoMantencion } from '../../shared/models/mantencion.model';
+import { Actividad, TipoActividad } from '../../shared/models/actividad.model';
 import { asId } from '../../shared/utils';
 
 const BELL_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>`;
 
 interface Notificacion {
-  tipo: 'mantencion' | 'solicitud';
+  tipo: 'actividad' | 'solicitud';
   titulo: string;
   detalle: string;
   color: string;
@@ -178,8 +178,8 @@ export class TopbarComponent implements OnInit {
   protected readonly profileService      = inject(ProfileService);
   protected readonly clientesService     = inject(ClientesService);
   protected readonly centrosService      = inject(CentrosService);
-  protected readonly mantencionesService = inject(MantencionesService);
-  protected readonly tiposService        = inject(TiposMantencionService);
+  protected readonly actividadesService  = inject(ActividadesService);
+  protected readonly tiposService        = inject(TiposActividadService);
   protected readonly solicitudesService  = inject(SolicitudesService);
   readonly consumidorContext             = inject(ConsumidorContextService);
   private readonly router                = inject(Router);
@@ -187,6 +187,11 @@ export class TopbarComponent implements OnInit {
 
   protected get esSuperAdmin() {
     return this.authService.usuarioActual()?.rol === 'super_admin';
+  }
+
+  protected get esAdmin() {
+    const rol = this.authService.usuarioActual()?.rol;
+    return rol === 'super_admin' || rol === 'admin_smartclarity';
   }
 
   protected showNotifications = signal(false);
@@ -210,13 +215,13 @@ export class TopbarComponent implements OnInit {
       if (empresa) untracked(() => this.consumidorContext.seleccionar(empresa));
     });
 
-    // Para consumidores (no super_admin): carga centros y mantenciones de su empresa al seleccionarla
+    // Para consumidores (no super_admin): carga centros y actividades de su empresa al seleccionarla
     effect(() => {
       const empresa = this.consumidorContext.empresaSeleccionada();
       if (empresa && !this.esSuperAdmin) {
         untracked(() => {
           this.centrosService.cargarPorEmpresa(empresa._id);
-          this.mantencionesService.cargarPorEmpresa(empresa._id);
+          this.actividadesService.cargarPorEmpresa(empresa._id);
         });
       }
     });
@@ -234,31 +239,31 @@ export class TopbarComponent implements OnInit {
     );
   });
 
-  // Notificaciones: próximas mantenciones (7 días) + solicitudes urgentes
+  // Notificaciones: próximas actividades (7 días) + solicitudes urgentes
   protected notificaciones = computed((): Notificacion[] => {
     const result: Notificacion[] = [];
     const hoy    = new Date();
     const limite = new Date(); limite.setDate(limite.getDate() + 7);
     const centroIds = this.centroIdsPorEmpresa();
 
-    // Mantenciones próximas — solo de la empresa seleccionada
-    this.mantencionesService.mantenciones()
-      .filter(m => {
-        if (centroIds.size > 0 && !centroIds.has(asId(m.centro_costo_id))) return false;
-        const f = new Date(m.fecha);
+    // Actividades próximas — solo de la empresa seleccionada
+    this.actividadesService.actividades()
+      .filter(a => {
+        if (centroIds.size > 0 && !centroIds.has(asId(a.centro_costo_id))) return false;
+        const f = new Date(a.fecha);
         return f >= hoy && f <= limite;
       })
 
-      .forEach(m => {
-        const tipo = typeof m.tipo_id === 'object'
-          ? (m.tipo_id as TipoMantencion)
-          : this.tiposService.tipos().find(t => t._id === asId(m.tipo_id as string));
-        const fecha = new Date(m.fecha);
+      .forEach(a => {
+        const tipo = typeof a.tipo_id === 'object'
+          ? (a.tipo_id as TipoActividad)
+          : this.tiposService.tipos().find(t => t._id === asId(a.tipo_id as string));
+        const fecha = new Date(a.fecha);
         const diff  = Math.ceil((fecha.getTime() - hoy.getTime()) / 86400000);
         result.push({
-          tipo:    'mantencion',
-          titulo:  m.nombre,
-          detalle: `${tipo?.nombre ?? 'Mantención'} · en ${diff} día${diff !== 1 ? 's' : ''}`,
+          tipo:    'actividad',
+          titulo:  a.nombre,
+          detalle: `${tipo?.nombre ?? 'Actividad'} · en ${diff} día${diff !== 1 ? 's' : ''}`,
           color:   tipo?.color ?? '#0095d6',
           urgente: diff <= 2,
         });

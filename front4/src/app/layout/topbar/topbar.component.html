@@ -57,8 +57,8 @@
     }
   </div>
 
-  <!-- Vista consumidor: dropdown de empresa (super_admin en modo consumidor) -->
-  @if (esSuperAdmin && mode === 'consumidor') {
+  <!-- Vista consumidor: dropdown de empresa (admin en modo consumidor) -->
+  @if (esAdmin && mode === 'consumidor') {
     <div class="context-slot">
       <select
         class="empresa-select"
@@ -76,12 +76,12 @@
   <div class="actions">
     <span class="mode-chip">{{ modeLabel }}</span>
 
-    @if (esSuperAdmin && mode === 'admin') {
+    @if (esAdmin && mode === 'admin') {
       <button class="toggle-btn" (click)="activarVistaConsumidor()" title="Previsualizar como consumidor">
         Vista consumidor
       </button>
     }
-    @if (esSuperAdmin && mode === 'consumidor') {
+    @if (esAdmin && mode === 'consumidor') {
       <button class="toggle-btn" style="color:#000;border-color:#000" (click)="volverAAdmin()">
         ← Volver a admin
       </button>
