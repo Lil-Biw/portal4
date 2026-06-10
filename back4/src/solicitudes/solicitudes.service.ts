@@ -82,10 +82,12 @@ export class SolicitudesService {
           .lean();
       }
 
-      const superAdmins = await this.usuarioModel
-        .find({ rol: 'super_admin', activo: true })
-        .select('nombre email')
-        .lean();
+      const superAdmins = opciones.notificar_super_admins
+        ? await this.usuarioModel
+            .find({ rol: 'super_admin', activo: true })
+            .select('nombre email')
+            .lean()
+        : [];
 
       const emailsVistos = new Set<string>();
       const destinatarios: { nombre: string; email: string }[] = [];
@@ -194,10 +196,12 @@ export class SolicitudesService {
           .lean();
       }
 
-      const superAdmins = await this.usuarioModel
-        .find({ rol: 'super_admin', activo: true })
-        .select('nombre email')
-        .lean();
+      const superAdmins = opciones.notificar_super_admins
+        ? await this.usuarioModel
+            .find({ rol: 'super_admin', activo: true })
+            .select('nombre email')
+            .lean()
+        : [];
 
       const emailsVistos = new Set<string>();
       const destinatarios: { nombre: string; email: string }[] = [];
