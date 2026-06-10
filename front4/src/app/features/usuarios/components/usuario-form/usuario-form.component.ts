@@ -23,24 +23,31 @@ export class UsuarioFormComponent implements OnChanges {
   @Input() centrosSeleccionados: string[] = [];
   @Input() submitLabel = 'Guardar';
   @Input() isEdit = false;
+  @Input() esAdminCliente = false;
   @Output() submitted = new EventEmitter<UsuarioFormOutput>();
   @Output() clienteChange = new EventEmitter<string>();
   @Output() centroToggle = new EventEmitter<{ centroId: string; checked: boolean }>();
 
   form: CreateUsuarioDto = this.empty();
 
-  readonly roles: { value: RolUsuario; label: string }[] = [
-    { value: 'usuario',       label: 'Usuario'       },
-    { value: 'admin_cliente', label: 'Admin cliente' },
+  private readonly todosLosRoles: { value: RolUsuario; label: string }[] = [
+    { value: 'usuario', label: 'Usuario' },
+    { value: 'admin_smartclarity', label: 'Admin SmartClarity' },
   ];
+
+  get roles() {
+    return this.esAdminCliente
+      ? [{ value: 'usuario' as RolUsuario, label: 'Usuario' }]
+      : this.todosLosRoles;
+  }
 
   ngOnChanges(): void {
     if (this.initial) {
       this.form = {
-        cliente_id:     asId(this.initial.cliente_id),
-        nombre:         this.initial.nombre,
-        email:          this.initial.email,
-        rol:            this.initial.rol,
+        cliente_id: asId(this.initial.cliente_id),
+        nombre: this.initial.nombre,
+        email: this.initial.email,
+        rol: this.initial.rol,
         permiso_acceso: this.initial.permiso_acceso,
       };
     }
@@ -48,10 +55,12 @@ export class UsuarioFormComponent implements OnChanges {
 
   get centrosFiltrados(): CentroCosto[] {
     if (!this.form.cliente_id) return [];
-    return this.centros.filter(c => asId(c.cliente_id) === this.form.cliente_id);
+    return this.centros.filter((c) => asId(c.cliente_id) === this.form.cliente_id);
   }
 
-  onClienteChange(id: string): void { this.clienteChange.emit(id); }
+  onClienteChange(id: string): void {
+    this.clienteChange.emit(id);
+  }
 
   submit(): void {
     this.submitted.emit({
