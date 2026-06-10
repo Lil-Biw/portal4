@@ -301,6 +301,12 @@
                   <p style="margin:.3rem 0 0;font-size:.8rem;color:#9ca3af">No hay administradores para esta empresa.</p>
                 }
               }
+              <div style="margin-top:.6rem;padding-top:.5rem;border-top:1px solid #e5e7eb">
+                <label style="display:flex;align-items:center;gap:.5rem;cursor:pointer;font-size:.82rem;color:#374151">
+                  <input type="checkbox" [checked]="notifSuperAdmins()" (change)="notifSuperAdmins.update(v => !v)" style="accent-color:#0095d6;width:15px;height:15px" />
+                  <span>Notificar Super Admins</span>
+                </label>
+              </div>
             }
           </div>
         </div>
