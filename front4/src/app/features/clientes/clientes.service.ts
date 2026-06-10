@@ -91,6 +91,17 @@ export class ClientesService {
     });
   }
 
+  updateConfigGrafico(id: string, mostrarPromedio: boolean, onDone?: () => void): void {
+    this.http.patch<Cliente>(this.api.url(`/empresas/${id}/config-grafico`), { mostrar_grafico_promedio: mostrarPromedio })
+      .subscribe({
+        next: empresa => {
+          this.clientes.update(list => list.map(c => c._id === id ? { ...c, mostrar_grafico_promedio: empresa.mostrar_grafico_promedio } : c));
+          onDone?.();
+        },
+        error: err => this.setError(err),
+      });
+  }
+
   buscarPorId(id: string): void {
     this.http.get<Cliente>(this.api.url(`/empresas/${id}`)).subscribe({
       next: (res) => {

@@ -16,6 +16,7 @@ export interface Cliente {
   logo?: { tipo_mime: string; nombre: string };
   logo_url?: string;
   score_smartclarity?: number[];
+  mostrar_grafico_promedio?: boolean;
   creado_en?: string;
   actualizado_en?: string;
 }
