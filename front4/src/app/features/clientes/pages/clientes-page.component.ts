@@ -3,6 +3,7 @@ import { NgIf } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ClientesService } from '../clientes.service';
+import { AuthService } from '../../auth/auth.service';
 import { StatusBannerComponent } from '../../../shared/components/status-banner/status-banner.component';
 import { ClienteFormComponent } from '../components/cliente-form/cliente-form.component';
 import { ClientesListComponent } from '../components/clientes-list/clientes-list.component';
@@ -91,15 +92,19 @@ export class ClientesPageComponent implements OnInit {
   private  readonly profileService        = inject(ProfileService);
   private  readonly consumidorContext     = inject(ConsumidorContextService);
   private  readonly router                = inject(Router);
+  private  readonly authService           = inject(AuthService);
 
   protected modal = signal<ModalMode>(null);
   protected busqueda = signal('');
   protected pendingLogo = signal<File | null>(null);
 
+  protected esAdminCliente = computed(() => this.authService.usuarioActual()?.rol === 'admin_smartclarity');
+
   protected clientesFiltrados = computed(() => {
+    const base = this.service.clientes();
     const q = this.busqueda().toLowerCase().trim();
-    if (!q) return this.service.clientes();
-    return this.service.clientes().filter(c =>
+    if (!q) return base;
+    return base.filter(c =>
       c.razon_social.toLowerCase().includes(q) ||
       c.rut.toLowerCase().includes(q) ||
       c.email_contacto.toLowerCase().includes(q)

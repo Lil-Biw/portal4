@@ -33,7 +33,7 @@ export class ClientesController {
   constructor(private readonly clientesService: ClientesService) {}
 
   private assertEmpresaPermitida(user: JwtUser, empresaId: string) {
-    if (user?.rol === 'super_admin') return;
+    if (user?.rol === 'super_admin' || user?.rol === 'admin_smartclarity') return;
     if (!user?.cliente_id || user.cliente_id !== empresaId) {
       throw new ForbiddenException('No puedes ver ni modificar otra empresa');
     }
@@ -69,14 +69,7 @@ export class ClientesController {
 
   @Put(':id')
   @Roles('super_admin', 'admin_smartclarity')
-  update(
-    @Param('id') id: string,
-    @Body() dto: UpdateClienteDto,
-    @Req() req: Request,
-  ) {
-    const user = (req as any).user;
-    if (user?.rol === 'admin_smartclarity' && user.cliente_id !== id)
-      throw new ForbiddenException('Solo puedes editar tu propia empresa');
+  update(@Param('id') id: string, @Body() dto: UpdateClienteDto) {
     return this.clientesService.update(id, dto);
   }
 
@@ -101,13 +94,7 @@ export class ClientesController {
   subirLogo(
     @Param('id') id: string,
     @UploadedFile() archivo: Express.Multer.File & { buffer: Buffer },
-    @Req() req: Request,
   ) {
-    const user = (req as any).user;
-    if (user?.rol === 'admin_smartclarity' && user.cliente_id !== id)
-      throw new ForbiddenException(
-        'Solo puedes modificar el logo de tu propia empresa',
-      );
     if (!archivo) throw new BadRequestException('No se proporcionó archivo');
     return this.clientesService.subirLogo(id, archivo);
   }
