@@ -1,6 +1,7 @@
-import { Component, EventEmitter, Input, OnChanges, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, Output, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { NgFor } from '@angular/common';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { CentroCosto, CreateCentroDto } from '../../../../shared/models/centro.model';
 import { Cliente } from '../../../../shared/models/cliente.model';
 
@@ -11,12 +12,23 @@ import { Cliente } from '../../../../shared/models/cliente.model';
   templateUrl: './centro-form.component.html',
 })
 export class CentroFormComponent implements OnChanges {
+  private readonly sanitizer = inject(DomSanitizer);
+
   @Input() initial: CentroCosto | null = null;
   @Input() clientes: Cliente[] = [];
   @Input() submitLabel = 'Guardar';
   @Output() submitted = new EventEmitter<CreateCentroDto>();
 
   form: CreateCentroDto = this.empty();
+
+  get previewMapUrl(): SafeResourceUrl | null {
+    const lat = this.form.ubicacion_latitud;
+    const lng = this.form.ubicacion_longitud;
+    if (lat == null || lng == null) return null;
+    return this.sanitizer.bypassSecurityTrustResourceUrl(
+      `https://maps.google.com/maps?q=${lat},${lng}&output=embed&z=14`
+    );
+  }
 
   ngOnChanges(): void {
     this.form = this.initial
