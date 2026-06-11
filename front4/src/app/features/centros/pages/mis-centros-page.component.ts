@@ -4,7 +4,6 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { CentrosService } from '../centros.service';
-import { AuthService } from '../../auth/auth.service';
 import { ConsumidorContextService } from '../../../profile/consumidor-context.service';
 import { SolicitudesService } from '../../solicitudes/solicitudes.service';
 import { DocumentosService } from '../../documentos/documentos.service';
@@ -34,7 +33,6 @@ import { asId } from '../../../shared/utils';
 export class MisCentrosPageComponent implements OnInit, OnDestroy {
   private  readonly consumidorContext  = inject(ConsumidorContextService);
   private  readonly router             = inject(Router);
-  private  readonly authService        = inject(AuthService);
   protected readonly service           = inject(CentrosService);
   protected readonly solicitudesService = inject(SolicitudesService);
   protected readonly documentosService  = inject(DocumentosService);
@@ -78,11 +76,6 @@ export class MisCentrosPageComponent implements OnInit, OnDestroy {
     'Continuidad\nOperacional',
   ];
 
-  protected puedeEditar = computed(() => {
-    const rol = this.authService.usuarioActual()?.rol;
-    return rol === 'super_admin' || rol === 'admin_smartclarity';
-  });
-
   protected spiderValues = computed<number[]>(() => {
     const centroId = asId(this.consumidorContext.centroSeleccionado()?._id);
     if (!centroId) return [50, 50, 50, 50, 50];
@@ -91,38 +84,6 @@ export class MisCentrosPageComponent implements OnInit, OnDestroy {
     if (raw && raw.length === 5) return raw.map(v => v * 10);
     return [50, 50, 50, 50, 50];
   });
-
-  protected editandoScore = signal(false);
-  protected guardandoScore = signal(false);
-  protected valoresEdit = signal<number[]>([5, 5, 5, 5, 5]);
-
-  protected iniciarEdicion(): void {
-    const centroId = asId(this.consumidorContext.centroSeleccionado()?._id);
-    const centro = centroId ? (this.service.centros().find(c => asId(c._id) === centroId) ?? this.consumidorContext.centroSeleccionado()) : null;
-    const raw = centro?.score_smartclarity;
-    this.valoresEdit.set(raw && raw.length === 5 ? [...raw] : [5, 5, 5, 5, 5]);
-    this.editandoScore.set(true);
-  }
-
-  protected setValorEdit(index: number, value: number): void {
-    this.valoresEdit.update(v => { const c = [...v]; c[index] = value; return c; });
-  }
-
-  protected cancelarEdicion(): void {
-    this.editandoScore.set(false);
-  }
-
-  protected guardarScore(): void {
-    const centro = this.consumidorContext.centroSeleccionado();
-    if (!centro) return;
-    const vals = this.valoresEdit();
-    if (vals.some(v => v < 1 || v > 10)) return;
-    this.guardandoScore.set(true);
-    this.service.updateScoreSmartclarity(String(centro.cliente_id), centro._id, vals, () => {
-      this.guardandoScore.set(false);
-      this.editandoScore.set(false);
-    });
-  }
 
   // ── Score documental del centro ─────────────────────────────────────────
   protected scoreDelCentro = computed(() => {
@@ -195,9 +156,14 @@ export class MisCentrosPageComponent implements OnInit, OnDestroy {
   protected mapUrl = computed((): SafeResourceUrl => {
     const c = this.consumidorContext.centroSeleccionado();
     if (!c) return '';
-    const parts = [c.ubicacion_direccion, c.ubicacion_ciudad, c.ubicacion_region, c.ubicacion_pais]
-      .filter(Boolean).join(', ');
-    const q = encodeURIComponent(parts || c.nombre);
+    let q: string;
+    if (c.ubicacion_latitud != null && c.ubicacion_longitud != null) {
+      q = `${c.ubicacion_latitud},${c.ubicacion_longitud}`;
+    } else {
+      const parts = [c.ubicacion_direccion, c.ubicacion_ciudad, c.ubicacion_region, c.ubicacion_pais]
+        .filter(Boolean).join(', ');
+      q = encodeURIComponent(parts || c.nombre);
+    }
     return this.sanitizer.bypassSecurityTrustResourceUrl(
       `https://maps.google.com/maps?q=${q}&output=embed&z=14`
     );
