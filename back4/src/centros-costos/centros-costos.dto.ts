@@ -2,6 +2,7 @@ import {
   IsString, IsOptional, IsBoolean,
   IsMongoId, MinLength,
   IsArray, ArrayMinSize, ArrayMaxSize, IsInt, Min, Max,
+  IsNumber,
 } from 'class-validator';
 import { PartialType } from '@nestjs/mapped-types';
 
@@ -14,6 +15,8 @@ export class CreateCentroCostoDto {
   @IsString() @IsOptional() ubicacion_ciudad?: string;
   @IsString() @IsOptional() ubicacion_region?: string;
   @IsString() @IsOptional() ubicacion_pais?: string;
+  @IsNumber() @Min(-90) @Max(90) @IsOptional() ubicacion_latitud?: number;
+  @IsNumber() @Min(-180) @Max(180) @IsOptional() ubicacion_longitud?: number;
 }
 
 export class UpdateCentroCostoDto extends PartialType(CreateCentroCostoDto) {

@@ -24,6 +24,8 @@ export class CentroCosto {
   @Prop({ trim: true }) ubicacion_ciudad?: string;
   @Prop({ trim: true }) ubicacion_region?: string;
   @Prop({ trim: true }) ubicacion_pais?: string;
+  @Prop() ubicacion_latitud?: number;
+  @Prop() ubicacion_longitud?: number;
   @Prop({ default: true }) activo: boolean;
   @Prop({ type: [Documento], default: [] }) documentos: Documento[];
   @Prop({ type: [Number], default: [5, 5, 5, 5, 5] }) score_smartclarity: number[];
