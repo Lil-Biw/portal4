@@ -34,6 +34,18 @@
     <span>País</span>
     <input [(ngModel)]="form.ubicacion_pais" name="pais" />
   </label>
+  <label class="field">
+    <span>Latitud GPS</span>
+    <input type="number" step="any" min="-90" max="90"
+           [(ngModel)]="form.ubicacion_latitud" name="latitud"
+           placeholder="ej. -33.4569" />
+  </label>
+  <label class="field">
+    <span>Longitud GPS</span>
+    <input type="number" step="any" min="-180" max="180"
+           [(ngModel)]="form.ubicacion_longitud" name="longitud"
+           placeholder="ej. -70.6483" />
+  </label>
   <div class="form-footer">
     <button type="submit" class="btn-primary">{{ submitLabel }}</button>
   </div>

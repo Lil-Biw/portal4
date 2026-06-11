@@ -29,6 +29,8 @@ export class CentroFormComponent implements OnChanges {
           ubicacion_ciudad: this.initial.ubicacion_ciudad ?? '',
           ubicacion_region: this.initial.ubicacion_region ?? '',
           ubicacion_pais: this.initial.ubicacion_pais ?? 'Chile',
+          ubicacion_latitud: this.initial.ubicacion_latitud,
+          ubicacion_longitud: this.initial.ubicacion_longitud,
         }
       : this.empty();
   }
@@ -36,6 +38,6 @@ export class CentroFormComponent implements OnChanges {
   submit(): void { this.submitted.emit(this.form); }
 
   private empty(): CreateCentroDto {
-    return { cliente_id: '', codigo: '', nombre: '', descripcion: '', ubicacion_direccion: '', ubicacion_ciudad: '', ubicacion_region: '', ubicacion_pais: 'Chile' };
+    return { cliente_id: '', codigo: '', nombre: '', descripcion: '', ubicacion_direccion: '', ubicacion_ciudad: '', ubicacion_region: '', ubicacion_pais: 'Chile', ubicacion_latitud: undefined, ubicacion_longitud: undefined };
   }
 }
