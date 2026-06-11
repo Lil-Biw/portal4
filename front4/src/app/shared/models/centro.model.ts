@@ -8,6 +8,8 @@ export interface CentroCosto {
   ubicacion_ciudad?: string;
   ubicacion_region?: string;
   ubicacion_pais?: string;
+  ubicacion_latitud?: number;
+  ubicacion_longitud?: number;
   activo: boolean;
   score_smartclarity?: number[];
   documentos?: DocumentoRef[];
@@ -34,6 +36,8 @@ export interface CreateCentroDto {
   ubicacion_ciudad?: string;
   ubicacion_region?: string;
   ubicacion_pais?: string;
+  ubicacion_latitud?: number;
+  ubicacion_longitud?: number;
 }
 
 export type UpdateCentroDto = Partial<CreateCentroDto>;
