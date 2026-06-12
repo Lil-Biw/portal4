@@ -20,17 +20,23 @@ export class CentroFormComponent implements OnChanges {
   @Output() submitted = new EventEmitter<CreateCentroDto>();
 
   form: CreateCentroDto = this.empty();
+  previewMapUrl: SafeResourceUrl | null = null;
 
-  get previewMapUrl(): SafeResourceUrl | null {
+  get puedePrevisualizar(): boolean {
+    return this.form.ubicacion_latitud != null && this.form.ubicacion_longitud != null;
+  }
+
+  verEnMapa(): void {
     const lat = this.form.ubicacion_latitud;
     const lng = this.form.ubicacion_longitud;
-    if (lat == null || lng == null) return null;
-    return this.sanitizer.bypassSecurityTrustResourceUrl(
+    if (lat == null || lng == null) return;
+    this.previewMapUrl = this.sanitizer.bypassSecurityTrustResourceUrl(
       `https://maps.google.com/maps?q=${lat},${lng}&output=embed&z=14`
     );
   }
 
   ngOnChanges(): void {
+    this.previewMapUrl = null;
     this.form = this.initial
       ? {
           cliente_id: this.initial.cliente_id,
