@@ -184,18 +184,60 @@
   }
 </div>
 
-<!-- ══ MODAL ACTIVIDAD ═══════════════════════════════════════════════════ -->
+<!-- ══ MODAL ACTIVIDAD — WIZARD ════════════════════════════════════════ -->
 @if (showModal()) {
   <div class="modal-overlay" (click)="cerrarModal()">
-    <div class="modal-box" style="max-width:820px" (click)="$event.stopPropagation()">
+    <div class="modal-box modal-box--wizard" (click)="$event.stopPropagation()">
+
       <h3 class="modal-title">{{ editingId() ? 'Editar actividad' : 'Nueva actividad' }}</h3>
+
+      <!-- STEPPER -->
+      <div class="wizard-stepper">
+        <button class="wz-step"
+          [class.wz-step--active]="paso() === 1"
+          [class.wz-step--completed]="paso() > 1"
+          [class.wz-step--clickable]="pasoMaxAlcanzado() >= 1"
+          (click)="irAPaso(1)">
+          <div class="wz-circle">@if (paso() > 1) { ✓ } @else { 1 }</div>
+          <span class="wz-label">Información</span>
+        </button>
+        <div class="wz-line" [class.wz-line--done]="paso() > 1"></div>
+        <button class="wz-step"
+          [class.wz-step--active]="paso() === 2"
+          [class.wz-step--completed]="paso() > 2"
+          [class.wz-step--clickable]="pasoMaxAlcanzado() >= 2"
+          (click)="irAPaso(2)">
+          <div class="wz-circle">@if (paso() > 2) { ✓ } @else { 2 }</div>
+          <span class="wz-label">Notificaciones</span>
+        </button>
+        <div class="wz-line" [class.wz-line--done]="paso() > 2"></div>
+        <button class="wz-step"
+          [class.wz-step--active]="paso() === 3"
+          [class.wz-step--completed]="paso() > 3"
+          [class.wz-step--clickable]="pasoMaxAlcanzado() >= 3"
+          (click)="irAPaso(3)">
+          <div class="wz-circle">@if (paso() > 3) { ✓ } @else { 3 }</div>
+          <span class="wz-label">Documentos</span>
+        </button>
+        <div class="wz-line" [class.wz-line--done]="paso() > 3"></div>
+        <button class="wz-step"
+          [class.wz-step--active]="paso() === 4"
+          [class.wz-step--completed]="false"
+          [class.wz-step--clickable]="pasoMaxAlcanzado() >= 4"
+          (click)="irAPaso(4)">
+          <div class="wz-circle">4</div>
+          <span class="wz-label">Resumen</span>
+        </button>
+      </div>
 
       <app-status-banner [status]="service.status()"></app-status-banner>
 
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;align-items:start">
-
-        <!-- Columna izquierda: parámetros -->
-        <div class="modal-fields" style="margin:0">
+      <!-- ── PASO 1: Información ──────────────────────────────────── -->
+      @if (paso() === 1) {
+        <div class="modal-fields">
+          @if (errorPaso1()) {
+            <p class="wz-error">{{ errorPaso1() }}</p>
+          }
           <div class="field">
             <label>Nombre *</label>
             <input type="text" [ngModel]="form().nombre" (ngModelChange)="patchForm('nombre', $event)" placeholder="Nombre de la actividad" />
@@ -249,89 +291,94 @@
               </div>
             </div>
           }
-
-          <!-- Opciones de notificación por correo (solo si hay centro seleccionado) -->
-          @if (form().centro_costo_id) {
-          <div class="field">
-            <label style="display:flex;align-items:center;gap:.5rem;cursor:pointer;font-weight:600">
-              <input type="checkbox" [checked]="notifNotificar()" (change)="toggleNotifNotificar()" style="accent-color:#0095d6;width:15px;height:15px" />
-              <span>Notificar por correo</span>
-            </label>
-            @if (notifNotificar()) {
-              <div style="display:flex;gap:0;margin-top:.6rem;border-bottom:2px solid #e5e7eb">
-                <button type="button"
-                  [style.border-bottom]="notifTab() === 'usuarios' ? '2px solid #0095d6' : '2px solid transparent'"
-                  [style.color]="notifTab() === 'usuarios' ? '#0095d6' : '#6b7280'"
-                  style="background:none;border:none;padding:.3rem .7rem;font-size:.8rem;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:.35rem"
-                  (click)="notifTab.set('usuarios')">
-                  <input type="checkbox" [checked]="notifTodosUsuariosSeleccionados()" (change)="toggleSeleccionarTodosUsuarios()" (click)="$event.stopPropagation()" style="accent-color:#0095d6;width:12px;height:12px;cursor:pointer;flex-shrink:0" />
-                  Usuarios ({{ notifUsuariosIds().length }}/{{ usuariosParaCentro().length }})
-                </button>
-                <button type="button"
-                  [style.border-bottom]="notifTab() === 'admins' ? '2px solid #0095d6' : '2px solid transparent'"
-                  [style.color]="notifTab() === 'admins' ? '#0095d6' : '#6b7280'"
-                  style="background:none;border:none;padding:.3rem .7rem;font-size:.8rem;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:.35rem"
-                  (click)="notifTab.set('admins')">
-                  <input type="checkbox" [checked]="notifTodosAdminsSeleccionados()" (change)="toggleSeleccionarTodosAdmins()" (click)="$event.stopPropagation()" style="accent-color:#0095d6;width:12px;height:12px;cursor:pointer;flex-shrink:0" />
-                  Admins ({{ notifAdminsIds().length }}/{{ adminsParaEmpresa().length }})
-                </button>
-                <button type="button"
-                  [style.border-bottom]="notifTab() === 'super-admins' ? '2px solid #0095d6' : '2px solid transparent'"
-                  [style.color]="notifTab() === 'super-admins' ? '#0095d6' : '#6b7280'"
-                  style="background:none;border:none;padding:.3rem .7rem;font-size:.8rem;font-weight:600;cursor:pointer"
-                  (click)="notifTab.set('super-admins')">
-                  Super Admins
-                </button>
-              </div>
-              @if (notifTab() === 'usuarios') {
-                @if (usuariosParaCentro().length > 0) {
-                  <div style="display:flex;flex-direction:column;gap:.35rem;max-height:120px;overflow-y:auto;border:1px solid rgba(34,33,33,.2);border-top:none;border-radius:0 0 8px 8px;padding:.5rem .75rem">
-                    @for (u of usuariosParaCentro(); track u._id) {
-                      <label style="display:flex;align-items:center;gap:.5rem;cursor:pointer;font-size:.875rem;color:#374151">
-                        <input type="checkbox" [checked]="notifUsuariosIds().includes(u._id)" (change)="toggleNotifUsuario(u._id)" style="accent-color:#0095d6;width:15px;height:15px" />
-                        <span>{{ u.nombre }}</span>
-                      </label>
-                    }
-                  </div>
-                } @else {
-                  <p style="margin:.3rem 0 0;font-size:.8rem;color:#9ca3af">No hay usuarios asignados a este centro.</p>
-                }
-              }
-              @if (notifTab() === 'admins') {
-                @if (adminsParaEmpresa().length > 0) {
-                  <div style="display:flex;flex-direction:column;gap:.35rem;max-height:120px;overflow-y:auto;border:1px solid rgba(34,33,33,.2);border-top:none;border-radius:0 0 8px 8px;padding:.5rem .75rem">
-                    @for (u of adminsParaEmpresa(); track u._id) {
-                      <label style="display:flex;align-items:center;gap:.5rem;cursor:pointer;font-size:.875rem;color:#374151">
-                        <input type="checkbox" [checked]="notifAdminsIds().includes(u._id)" (change)="toggleNotifAdmin(u._id)" style="accent-color:#0095d6;width:15px;height:15px" />
-                        <span>{{ u.nombre }}</span>
-                      </label>
-                    }
-                  </div>
-                } @else {
-                  <p style="margin:.3rem 0 0;font-size:.8rem;color:#9ca3af">No hay administradores para esta empresa.</p>
-                }
-              }
-              @if (notifTab() === 'super-admins') {
-                <div style="display:flex;flex-direction:column;gap:.5rem;border:1px solid rgba(34,33,33,.2);border-top:none;border-radius:0 0 8px 8px;padding:.5rem .75rem">
-                  <label style="display:flex;align-items:center;gap:.5rem;cursor:pointer;font-size:.82rem;color:#374151;font-weight:600">
-                    <input type="checkbox" [checked]="notifSuperAdmins()" (change)="notifSuperAdmins.update(v => !v)" style="accent-color:#0095d6;width:15px;height:15px" />
-                    <span>Notificar a todos los Super Admins</span>
-                  </label>
-                </div>
-              }
-            }
-          </div>
-          }
-
         </div>
+      }
 
-        <!-- Columna derecha: documentos -->
-        <div style="border-left:1px solid #f3f4f6;padding-left:1.5rem">
-          <p style="margin:0 0 .6rem;font-size:.82rem;font-weight:700;color:#374151">Documentos adjuntos</p>
+      <!-- ── PASO 2: Notificaciones ──────────────────────────────── -->
+      @if (paso() === 2) {
+        <div class="modal-fields">
+          @if (form().centro_costo_id) {
+            <div class="field">
+              <label style="display:flex;align-items:center;gap:.5rem;cursor:pointer;font-weight:600">
+                <input type="checkbox" [checked]="notifNotificar()" (change)="toggleNotifNotificar()" style="accent-color:#0095d6;width:15px;height:15px" />
+                <span>Notificar por correo</span>
+              </label>
+              @if (notifNotificar()) {
+                <div style="display:flex;gap:0;margin-top:.6rem;border-bottom:2px solid #e5e7eb">
+                  <button type="button"
+                    [style.border-bottom]="notifTab() === 'usuarios' ? '2px solid #0095d6' : '2px solid transparent'"
+                    [style.color]="notifTab() === 'usuarios' ? '#0095d6' : '#6b7280'"
+                    style="background:none;border:none;padding:.3rem .7rem;font-size:.8rem;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:.35rem"
+                    (click)="notifTab.set('usuarios')">
+                    <input type="checkbox" [checked]="notifTodosUsuariosSeleccionados()" (change)="toggleSeleccionarTodosUsuarios()" (click)="$event.stopPropagation()" style="accent-color:#0095d6;width:12px;height:12px;cursor:pointer;flex-shrink:0" />
+                    Usuarios ({{ notifUsuariosIds().length }}/{{ usuariosParaCentro().length }})
+                  </button>
+                  <button type="button"
+                    [style.border-bottom]="notifTab() === 'admins' ? '2px solid #0095d6' : '2px solid transparent'"
+                    [style.color]="notifTab() === 'admins' ? '#0095d6' : '#6b7280'"
+                    style="background:none;border:none;padding:.3rem .7rem;font-size:.8rem;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:.35rem"
+                    (click)="notifTab.set('admins')">
+                    <input type="checkbox" [checked]="notifTodosAdminsSeleccionados()" (change)="toggleSeleccionarTodosAdmins()" (click)="$event.stopPropagation()" style="accent-color:#0095d6;width:12px;height:12px;cursor:pointer;flex-shrink:0" />
+                    Admins ({{ notifAdminsIds().length }}/{{ adminsParaEmpresa().length }})
+                  </button>
+                  <button type="button"
+                    [style.border-bottom]="notifTab() === 'super-admins' ? '2px solid #0095d6' : '2px solid transparent'"
+                    [style.color]="notifTab() === 'super-admins' ? '#0095d6' : '#6b7280'"
+                    style="background:none;border:none;padding:.3rem .7rem;font-size:.8rem;font-weight:600;cursor:pointer"
+                    (click)="notifTab.set('super-admins')">
+                    Super Admins
+                  </button>
+                </div>
+                @if (notifTab() === 'usuarios') {
+                  @if (usuariosParaCentro().length > 0) {
+                    <div style="display:flex;flex-direction:column;gap:.35rem;max-height:180px;overflow-y:auto;border:1px solid rgba(34,33,33,.2);border-top:none;border-radius:0 0 8px 8px;padding:.5rem .75rem">
+                      @for (u of usuariosParaCentro(); track u._id) {
+                        <label style="display:flex;align-items:center;gap:.5rem;cursor:pointer;font-size:.875rem;color:#374151">
+                          <input type="checkbox" [checked]="notifUsuariosIds().includes(u._id)" (change)="toggleNotifUsuario(u._id)" style="accent-color:#0095d6;width:15px;height:15px" />
+                          <span>{{ u.nombre }}</span>
+                        </label>
+                      }
+                    </div>
+                  } @else {
+                    <p style="margin:.3rem 0 0;font-size:.8rem;color:#9ca3af">No hay usuarios asignados a este centro.</p>
+                  }
+                }
+                @if (notifTab() === 'admins') {
+                  @if (adminsParaEmpresa().length > 0) {
+                    <div style="display:flex;flex-direction:column;gap:.35rem;max-height:180px;overflow-y:auto;border:1px solid rgba(34,33,33,.2);border-top:none;border-radius:0 0 8px 8px;padding:.5rem .75rem">
+                      @for (u of adminsParaEmpresa(); track u._id) {
+                        <label style="display:flex;align-items:center;gap:.5rem;cursor:pointer;font-size:.875rem;color:#374151">
+                          <input type="checkbox" [checked]="notifAdminsIds().includes(u._id)" (change)="toggleNotifAdmin(u._id)" style="accent-color:#0095d6;width:15px;height:15px" />
+                          <span>{{ u.nombre }}</span>
+                        </label>
+                      }
+                    </div>
+                  } @else {
+                    <p style="margin:.3rem 0 0;font-size:.8rem;color:#9ca3af">No hay administradores para esta empresa.</p>
+                  }
+                }
+                @if (notifTab() === 'super-admins') {
+                  <div style="display:flex;flex-direction:column;gap:.5rem;border:1px solid rgba(34,33,33,.2);border-top:none;border-radius:0 0 8px 8px;padding:.5rem .75rem">
+                    <label style="display:flex;align-items:center;gap:.5rem;cursor:pointer;font-size:.82rem;color:#374151;font-weight:600">
+                      <input type="checkbox" [checked]="notifSuperAdmins()" (change)="notifSuperAdmins.update(v => !v)" style="accent-color:#0095d6;width:15px;height:15px" />
+                      <span>Notificar a todos los Super Admins</span>
+                    </label>
+                  </div>
+                }
+              }
+            </div>
+          } @else {
+            <p style="font-size:.87rem;color:#6b7280;padding:.5rem 0">No hay centro de costos seleccionado. Vuelve al paso 1 para seleccionarlo.</p>
+          }
+        </div>
+      }
 
+      <!-- ── PASO 3: Documentos ──────────────────────────────────── -->
+      @if (paso() === 3) {
+        <div class="modal-fields">
+          <p style="font-size:.82rem;font-weight:700;color:#374151;margin:0 0 .6rem">Documentos adjuntos</p>
           @if (!editingId()) {
-            <!-- MODO CREACIÓN -->
-            <div style="max-height:220px;overflow-y:auto;margin-bottom:.5rem">
+            <div style="max-height:200px;overflow-y:auto;margin-bottom:.5rem">
               @for (doc of docsPendientes; track $index) {
                 <div style="display:flex;align-items:center;justify-content:space-between;gap:.5rem;padding:.4rem 0;border-bottom:1px solid #f3f4f6">
                   <div style="min-width:0;flex:1">
@@ -353,10 +400,8 @@
                 style="font-size:.85rem;padding:.4rem .6rem;border:1px solid rgba(34,33,33,.2);border-radius:.375rem;width:100%;box-sizing:border-box" />
               <button class="btn-ghost btn-sm" (click)="agregarDocPendiente()" [disabled]="!pendienteFileSelected">+ Agregar a la lista</button>
             </div>
-
           } @else {
-            <!-- MODO EDICIÓN -->
-            <div style="max-height:220px;overflow-y:auto;margin-bottom:.5rem">
+            <div style="max-height:200px;overflow-y:auto;margin-bottom:.5rem">
               @if (actividadEditando?.documentos?.length) {
                 @for (doc of actividadEditando!.documentos!; track doc.nombre) {
                   <div style="display:flex;align-items:center;justify-content:space-between;gap:.5rem;padding:.45rem 0;border-bottom:1px solid #f3f4f6">
@@ -384,21 +429,74 @@
             </div>
           }
         </div>
-      </div>
+      }
 
+      <!-- ── PASO 4: Resumen ─────────────────────────────────────── -->
+      @if (paso() === 4) {
+        <div class="modal-fields">
+          <div class="wz-resumen">
+            <div class="wz-resumen-row">
+              <span class="wz-resumen-label">Nombre</span>
+              <span class="wz-resumen-value">{{ form().nombre }}</span>
+            </div>
+            <div class="wz-resumen-row">
+              <span class="wz-resumen-label">Tipo</span>
+              <span class="wz-resumen-value">{{ resumenTipoNombre() }}</span>
+            </div>
+            <div class="wz-resumen-row">
+              <span class="wz-resumen-label">Fecha</span>
+              <span class="wz-resumen-value">{{ form().fecha }}</span>
+            </div>
+            @if (form().descripcion) {
+              <div class="wz-resumen-row">
+                <span class="wz-resumen-label">Descripción</span>
+                <span class="wz-resumen-value">{{ form().descripcion }}</span>
+              </div>
+            }
+            <div class="wz-resumen-row">
+              <span class="wz-resumen-label">Empresa</span>
+              <span class="wz-resumen-value">{{ resumenEmpresaNombre() }}</span>
+            </div>
+            <div class="wz-resumen-row">
+              <span class="wz-resumen-label">Centro de costos</span>
+              <span class="wz-resumen-value">{{ resumenCentroNombre() }}</span>
+            </div>
+            <div class="wz-resumen-row">
+              <span class="wz-resumen-label">Notificaciones</span>
+              <span class="wz-resumen-value">{{ resumenNotificaciones() }}</span>
+            </div>
+            <div class="wz-resumen-row">
+              <span class="wz-resumen-label">Documentos</span>
+              <span class="wz-resumen-value">{{ resumenDocumentosTexto }}</span>
+            </div>
+          </div>
+        </div>
+      }
+
+      <!-- FOOTER -->
       <div class="modal-footer">
-        @if (editingId()) {
+        @if (paso() === 4 && editingId()) {
           <button class="btn-danger btn-sm" (click)="eliminarActividad(editingId()!)">Eliminar</button>
         }
         <div style="display:flex;gap:.5rem;margin-left:auto">
-          <button class="btn-ghost" (click)="cerrarModal()" [disabled]="service.saving() || subiendoDocs">Cancelar</button>
-          <button class="btn-primary" (click)="guardar()" [disabled]="service.saving() || subiendoDocs">
-            @if (subiendoDocs) { Subiendo documentos... }
-            @else if (service.saving()) { Guardando... }
-            @else { Guardar }
-          </button>
+          @if (paso() === 1) {
+            <button class="btn-ghost" (click)="cerrarModal()">Cancelar</button>
+          } @else {
+            <button class="btn-ghost" (click)="retroceder()" [disabled]="service.saving() || subiendoDocs">← Anterior</button>
+          }
+          @if (paso() < 4) {
+            <button class="btn-primary" (click)="avanzar()">Siguiente →</button>
+          } @else {
+            <button class="btn-primary" (click)="guardar()" [disabled]="service.saving() || subiendoDocs"
+              style="background:#22c55e;border-color:#22c55e">
+              @if (subiendoDocs) { Subiendo... }
+              @else if (service.saving()) { Guardando... }
+              @else { Guardar ✓ }
+            </button>
+          }
         </div>
       </div>
+
     </div>
   </div>
 }
