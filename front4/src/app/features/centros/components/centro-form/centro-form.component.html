@@ -34,19 +34,21 @@
     <span>País</span>
     <input [(ngModel)]="form.ubicacion_pais" name="pais" />
   </label>
-  <label class="field">
-    <span>Latitud GPS</span>
-    <input type="number" step="any" min="-90" max="90"
-           [(ngModel)]="form.ubicacion_latitud" name="latitud"
-           placeholder="ej. -33.4569" />
-  </label>
-  <label class="field">
-    <span>Longitud GPS</span>
-    <input type="number" step="any" min="-180" max="180"
-           [(ngModel)]="form.ubicacion_longitud" name="longitud"
-           placeholder="ej. -70.6483" />
-  </label>
-  @if (puedePrevisualizar) {
+  <div class="field" style="grid-column:1/-1">
+    <span>Coordenadas GPS</span>
+    <input [(ngModel)]="dmsInput" name="dms"
+           (ngModelChange)="onDmsChange()"
+           placeholder='ej. 38°45&apos;32.8"S 72°36&apos;34.3"W' />
+    @if (dmsError) {
+      <small style="color:var(--color-danger,#dc3545)">{{ dmsError }}</small>
+    }
+    @if (puedePrevisualizar && !dmsError) {
+      <small style="color:#6c757d">
+        Decimal: {{ form.ubicacion_latitud | number:'1.6-6' }}, {{ form.ubicacion_longitud | number:'1.6-6' }}
+      </small>
+    }
+  </div>
+  @if (puedePrevisualizar && !dmsError) {
     <div style="grid-column:1/-1">
       <button type="button" class="btn-ghost btn-sm" (click)="verEnMapa()">
         Ver en mapa
