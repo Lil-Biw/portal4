@@ -102,6 +102,37 @@ export class ActividadesPageComponent implements OnInit {
     this.usuariosService.usuarios().filter(u => u.rol === 'super_admin')
   );
 
+  protected resumenTipoNombre = computed(() =>
+    this.tiposService.tipos().find(t => t._id === this.form().tipo_id)?.nombre ?? ''
+  );
+  protected resumenEmpresaNombre = computed(() =>
+    this.clientesService.clientes().find(c => asId(c._id) === this.form().empresa_id)?.razon_social ?? ''
+  );
+  protected resumenCentroNombre = computed(() =>
+    this.centrosService.centros().find(c => asId(c._id) === this.form().centro_costo_id)?.nombre ?? ''
+  );
+  protected resumenNotificaciones = computed(() => {
+    if (!this.notifNotificar()) return 'Sin notificaciones';
+    const u = this.notifUsuariosIds().length;
+    const a = this.notifAdminsIds().length;
+    const s = this.notifSuperAdmins();
+    const parts: string[] = [];
+    if (u > 0) parts.push(`${u} usuario${u > 1 ? 's' : ''}`);
+    if (a > 0) parts.push(`${a} admin${a > 1 ? 's' : ''}`);
+    if (s)     parts.push('super admins');
+    return parts.length > 0 ? parts.join(' · ') : 'Sin destinatarios';
+  });
+
+  get resumenDocumentosTexto(): string {
+    if (this.editingId()) {
+      const docs = this.actividadEditando?.documentos ?? [];
+      return docs.length > 0 ? `${docs.length} archivo${docs.length > 1 ? 's' : ''}` : 'Sin documentos';
+    }
+    return this.docsPendientes.length > 0
+      ? `${this.docsPendientes.length} archivo${this.docsPendientes.length > 1 ? 's' : ''} por subir`
+      : 'Sin documentos';
+  }
+
   protected filtroEmpresaId = signal<string>('');
   protected filtroTipoId    = signal<string>('');
 
@@ -159,6 +190,11 @@ export class ActividadesPageComponent implements OnInit {
   colorDeActividad(a: Actividad): string {
     return this.tipoDeActividad(a)?.color ?? '#9ca3af';
   }
+
+  // Wizard
+  protected paso             = signal<1 | 2 | 3 | 4>(1);
+  protected pasoMaxAlcanzado = signal<1 | 2 | 3 | 4>(1);
+  protected errorPaso1       = signal('');
 
   protected showModal     = signal(false);
   protected editingId     = signal<string | null>(null);
@@ -277,11 +313,44 @@ export class ActividadesPageComponent implements OnInit {
     this.notifSuperAdmins.set(false);
   }
 
+  private validarPaso1(): boolean {
+    const f = this.form();
+    if (!f.nombre.trim())   { this.errorPaso1.set('El nombre es requerido.');         return false; }
+    if (!f.tipo_id)         { this.errorPaso1.set('Selecciona un tipo.');             return false; }
+    if (!f.fecha)           { this.errorPaso1.set('La fecha es requerida.');          return false; }
+    if (!f.centro_costo_id) { this.errorPaso1.set('Selecciona un centro de costos.'); return false; }
+    this.errorPaso1.set('');
+    return true;
+  }
+
+  avanzar(): void {
+    const p = this.paso();
+    if (p === 1 && !this.validarPaso1()) return;
+    if (p < 4) {
+      const next = (p + 1) as 1 | 2 | 3 | 4;
+      this.paso.set(next);
+      if (next > this.pasoMaxAlcanzado()) this.pasoMaxAlcanzado.set(next);
+    }
+  }
+
+  retroceder(): void {
+    const p = this.paso();
+    if (p > 1) this.paso.set((p - 1) as 1 | 2 | 3 | 4);
+  }
+
+  irAPaso(n: 1 | 2 | 3 | 4): void {
+    if (n > this.pasoMaxAlcanzado()) return;
+    this.paso.set(n);
+  }
+
   abrirCrear(fecha = ''): void {
     this.editingId.set(null);
     this.form.set(emptyForm(fecha));
     this.docsPendientes = [];
     this.resetNotif();
+    this.paso.set(1);
+    this.pasoMaxAlcanzado.set(1);
+    this.errorPaso1.set('');
     this.showModal.set(true);
     this.service.clearStatus();
   }
@@ -300,6 +369,9 @@ export class ActividadesPageComponent implements OnInit {
       fecha:           a.fecha.slice(0, 10),
     });
     this.resetNotif();
+    this.paso.set(1);
+    this.pasoMaxAlcanzado.set(4);
+    this.errorPaso1.set('');
     this.showModal.set(true);
     this.service.clearStatus();
   }
@@ -308,6 +380,9 @@ export class ActividadesPageComponent implements OnInit {
     this.showModal.set(false);
     this.editingId.set(null);
     this.confirmDelete.set(null);
+    this.paso.set(1);
+    this.pasoMaxAlcanzado.set(1);
+    this.errorPaso1.set('');
   }
 
   patchForm(field: keyof ActividadForm, value: string | string[]): void {
