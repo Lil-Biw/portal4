@@ -8,7 +8,6 @@ import { ActividadesService } from '../../actividades/actividades.service';
 import { FormsModule } from '@angular/forms';
 import { StatChipComponent, ChipVariant } from '../../../shared/components/stat-chip/stat-chip.component';
 import { SpiderChartComponent } from '../../../shared/components/spider-chart/spider-chart.component';
-import { AuthService } from '../../auth/auth.service';
 import { ClientesService } from '../../clientes/clientes.service';
 import { CentroCosto } from '../../../shared/models/centro.model';
 import { Proyecto } from '../../../shared/models/proyecto.model';
@@ -39,7 +38,6 @@ export class MiFichaPageComponent {
   private readonly proyectosService    = inject(ProyectosService);
   private readonly actividadesService  = inject(ActividadesService);
   private readonly router              = inject(Router);
-  private readonly authService         = inject(AuthService);
   private readonly clientesService     = inject(ClientesService);
 
   protected empresa = computed(() => this.consumidorContext.empresaSeleccionada());
@@ -124,11 +122,6 @@ export class MiFichaPageComponent {
     'Continuidad\nOperacional',
   ];
 
-  protected puedeEditar = computed(() => {
-    const rol = this.authService.usuarioActual()?.rol;
-    return rol === 'super_admin' || rol === 'admin_smartclarity';
-  });
-
   protected mostrarPromedio = computed(() => {
     const empId = this.empresa()?._id;
     const emp = empId ? (this.clientesService.clientes().find(c => c._id === empId) ?? this.empresa()) : null;
@@ -151,48 +144,6 @@ export class MiFichaPageComponent {
     if (raw && raw.length === 5) return raw.map(v => v * 10);
     return [50, 50, 50, 50, 50];
   });
-
-  protected editandoScore = signal(false);
-  protected guardandoScore = signal(false);
-  protected guardandoConfigGrafico = signal(false);
-  protected valoresEdit = signal<number[]>([5, 5, 5, 5, 5]);
-
-  protected iniciarEdicion(): void {
-    const empId = this.empresa()?._id;
-    const emp = empId ? (this.clientesService.clientes().find(c => c._id === empId) ?? this.empresa()) : null;
-    const raw = emp?.score_smartclarity;
-    this.valoresEdit.set(raw && raw.length === 5 ? [...raw] : [5, 5, 5, 5, 5]);
-    this.editandoScore.set(true);
-  }
-
-  protected setValorEdit(index: number, value: number): void {
-    this.valoresEdit.update(v => { const c = [...v]; c[index] = value; return c; });
-  }
-
-  protected cancelarEdicion(): void {
-    this.editandoScore.set(false);
-  }
-
-  protected toggleMostrarPromedio(): void {
-    const emp = this.empresa();
-    if (!emp) return;
-    this.guardandoConfigGrafico.set(true);
-    this.clientesService.updateConfigGrafico(emp._id, !this.mostrarPromedio(), () => {
-      this.guardandoConfigGrafico.set(false);
-    });
-  }
-
-  protected guardarScore(): void {
-    const emp = this.empresa();
-    if (!emp) return;
-    const vals = this.valoresEdit();
-    if (vals.some(v => v < 1 || v > 10)) return;
-    this.guardandoScore.set(true);
-    this.clientesService.updateScoreSmartclarity(emp._id, vals, () => {
-      this.guardandoScore.set(false);
-      this.editandoScore.set(false);
-    });
-  }
 
   readonly certificados = [
     { nombre: 'Certificado ISO 9001',      vencimiento: '30 nov 2026' },

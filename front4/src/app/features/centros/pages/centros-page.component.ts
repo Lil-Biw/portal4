@@ -14,13 +14,14 @@ import { asId } from '../../../shared/utils';
 import { ConsumidorContextService } from '../../../profile/consumidor-context.service';
 import { ProfileService } from '../../../profile/profile.service';
 import { AuthService } from '../../auth/auth.service';
+import { SpiderChartComponent } from '../../../shared/components/spider-chart/spider-chart.component';
 
-type ModalMode = 'crear' | 'editar' | 'buscar' | 'activo' | null;
+type ModalMode = 'crear' | 'editar' | 'buscar' | 'activo' | 'score' | null;
 
 @Component({
   selector: 'app-centros-page',
   standalone: true,
-  imports: [FormsModule, StatusBannerComponent, CentroFormComponent, CentrosListComponent, ActivosFormComponent],
+  imports: [FormsModule, StatusBannerComponent, CentroFormComponent, CentrosListComponent, ActivosFormComponent, SpiderChartComponent],
   templateUrl: './centros-page.component.html',
   styles: [`
     .page-header {
@@ -91,9 +92,33 @@ export class CentrosPageComponent implements OnInit {
   protected readonly activosService   = inject(ActivosService);
   private   readonly authService      = inject(AuthService);
 
-  protected modal           = signal<ModalMode>(null);
-  protected busqueda        = signal('');
+  protected modal            = signal<ModalMode>(null);
+  protected busqueda         = signal('');
   protected centroParaActivo = signal<CentroCosto | null>(null);
+  protected centroParaScore  = signal<CentroCosto | null>(null);
+  protected valoresScoreEdit = signal<number[]>([5, 5, 5, 5, 5]);
+  protected guardandoScore   = signal(false);
+  protected scoreError       = signal<string | null>(null);
+
+  readonly spiderLabels = [
+    'RRHH y\ndocumentación',
+    'Normativa',
+    'Suministro',
+    'Seguridad\nOperacional',
+    'Continuidad\nOperacional',
+  ];
+
+  protected spiderPreviewValues = computed<number[]>(() =>
+    this.valoresScoreEdit().map(v => v * 10)
+  );
+
+  protected scoreHayError = computed(() =>
+    this.valoresScoreEdit().some(v => !Number.isInteger(v) || v < 1 || v > 10)
+  );
+
+  protected campoFuera(v: number): boolean {
+    return !Number.isInteger(v) || v < 1 || v > 10;
+  }
 
   constructor() {
     effect(() => {
@@ -143,6 +168,9 @@ export class CentrosPageComponent implements OnInit {
     this.service.clearStatus();
     this.centroParaActivo.set(null);
     this.activosService.clearStatus();
+    this.centroParaScore.set(null);
+    this.guardandoScore.set(false);
+    this.scoreError.set(null);
   }
 
   protected abrirAgregarActivo(centro: CentroCosto): void {
@@ -153,6 +181,34 @@ export class CentrosPageComponent implements OnInit {
 
   protected crearActivo(dto: CreateActivoDto): void {
     this.activosService.crear(dto);
+  }
+
+  protected abrirEditarScore(centro: CentroCosto): void {
+    this.centroParaScore.set(centro);
+    const raw = centro.score_smartclarity;
+    this.valoresScoreEdit.set(raw && raw.length === 5 ? [...raw] : [5, 5, 5, 5, 5]);
+    this.scoreError.set(null);
+    this.modal.set('score');
+  }
+
+  protected setValorScore(index: number, value: number): void {
+    this.valoresScoreEdit.update(v => { const c = [...v]; c[index] = value; return c; });
+    this.scoreError.set(null);
+  }
+
+  protected guardarScore(): void {
+    const centro = this.centroParaScore();
+    if (!centro) return;
+    const vals = this.valoresScoreEdit();
+    if (vals.some(v => !Number.isInteger(v) || v < 1 || v > 10)) {
+      this.scoreError.set('Rango permitido: 1 a 10 números naturales.');
+      return;
+    }
+    this.guardandoScore.set(true);
+    this.service.updateScoreSmartclarity(String(centro.cliente_id), centro._id, vals, (ok) => {
+      this.guardandoScore.set(false);
+      if (ok) this.cerrar();
+    });
   }
 
   protected crear(dto: CreateCentroDto): void   { this.service.crear(dto); }

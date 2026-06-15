@@ -20,6 +20,7 @@ export class CentrosListComponent implements OnChanges {
   @Output() eliminado     = new EventEmitter<string>();
   @Output() verCentro     = new EventEmitter<CentroCosto>();
   @Output() agregarActivo = new EventEmitter<CentroCosto>();
+  @Output() editarScore   = new EventEmitter<CentroCosto>();
 
   private _centros  = signal<CentroCosto[]>([]);
   private _clientes = signal<Cliente[]>([]);

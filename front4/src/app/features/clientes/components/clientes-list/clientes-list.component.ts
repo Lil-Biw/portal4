@@ -12,7 +12,8 @@ export class ClientesListComponent {
   @Input() clientes: Cliente[] = [];
   @Input() seleccionadoId: string | null = null;
   @Input() mostrarVerFicha = true;
-  @Output() editado   = new EventEmitter<Cliente>();
-  @Output() eliminado = new EventEmitter<string>();
-  @Output() verFicha  = new EventEmitter<Cliente>();
+  @Output() editado      = new EventEmitter<Cliente>();
+  @Output() eliminado    = new EventEmitter<string>();
+  @Output() verFicha     = new EventEmitter<Cliente>();
+  @Output() editarScore  = new EventEmitter<Cliente>();
 }

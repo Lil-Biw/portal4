@@ -10,13 +10,14 @@ import { ClientesListComponent } from '../components/clientes-list/clientes-list
 import { Cliente, CreateClienteDto } from '../../../shared/models/cliente.model';
 import { ProfileService } from '../../../profile/profile.service';
 import { ConsumidorContextService } from '../../../profile/consumidor-context.service';
+import { SpiderChartComponent } from '../../../shared/components/spider-chart/spider-chart.component';
 
-type ModalMode = 'crear' | 'editar' | 'buscar' | null;
+type ModalMode = 'crear' | 'editar' | 'buscar' | 'score' | null;
 
 @Component({
   selector: 'app-clientes-page',
   standalone: true,
-  imports: [NgIf, FormsModule, StatusBannerComponent, ClienteFormComponent, ClientesListComponent],
+  imports: [NgIf, FormsModule, StatusBannerComponent, ClienteFormComponent, ClientesListComponent, SpiderChartComponent],
   templateUrl: './clientes-page.component.html',
   styles: [`
     .page-header {
@@ -94,9 +95,35 @@ export class ClientesPageComponent implements OnInit {
   private  readonly router                = inject(Router);
   private  readonly authService           = inject(AuthService);
 
-  protected modal = signal<ModalMode>(null);
-  protected busqueda = signal('');
-  protected pendingLogo = signal<File | null>(null);
+  protected modal            = signal<ModalMode>(null);
+  protected busqueda         = signal('');
+  protected pendingLogo      = signal<File | null>(null);
+  protected clienteParaScore = signal<Cliente | null>(null);
+  protected valoresScoreEdit = signal<number[]>([5, 5, 5, 5, 5]);
+  protected guardandoScore   = signal(false);
+  protected scoreError       = signal<string | null>(null);
+  protected mostrarPromedioEdit = signal(false);
+  protected guardandoPromedio   = signal(false);
+
+  readonly spiderLabels = [
+    'RRHH y\ndocumentación',
+    'Normativa',
+    'Suministro',
+    'Seguridad\nOperacional',
+    'Continuidad\nOperacional',
+  ];
+
+  protected spiderPreviewValues = computed<number[]>(() =>
+    this.valoresScoreEdit().map(v => v * 10)
+  );
+
+  protected scoreHayError = computed(() =>
+    this.valoresScoreEdit().some(v => !Number.isInteger(v) || v < 1 || v > 10)
+  );
+
+  protected campoFuera(v: number): boolean {
+    return !Number.isInteger(v) || v < 1 || v > 10;
+  }
 
   protected esAdminCliente = computed(() => this.authService.usuarioActual()?.rol === 'admin_smartclarity');
 
@@ -139,6 +166,49 @@ export class ClientesPageComponent implements OnInit {
     this.service.seleccionado.set(null);
     this.service.clearStatus();
     this.pendingLogo.set(null);
+    this.clienteParaScore.set(null);
+    this.guardandoScore.set(false);
+    this.scoreError.set(null);
+  }
+
+  protected abrirEditarScore(cliente: Cliente): void {
+    this.clienteParaScore.set(cliente);
+    const raw = cliente.score_smartclarity;
+    this.valoresScoreEdit.set(raw && raw.length === 5 ? [...raw] : [5, 5, 5, 5, 5]);
+    this.mostrarPromedioEdit.set(cliente.mostrar_grafico_promedio ?? false);
+    this.scoreError.set(null);
+    this.modal.set('score');
+  }
+
+  protected setValorScore(index: number, value: number): void {
+    this.valoresScoreEdit.update(v => { const c = [...v]; c[index] = value; return c; });
+    this.scoreError.set(null);
+  }
+
+  protected guardarScore(): void {
+    const cliente = this.clienteParaScore();
+    if (!cliente) return;
+    const vals = this.valoresScoreEdit();
+    if (vals.some(v => !Number.isInteger(v) || v < 1 || v > 10)) {
+      this.scoreError.set('Rango permitido: 1 a 10 números naturales.');
+      return;
+    }
+    this.guardandoScore.set(true);
+    this.service.updateScoreSmartclarity(cliente._id, vals, (ok) => {
+      this.guardandoScore.set(false);
+      if (ok) this.cerrar();
+    });
+  }
+
+  protected togglePromedio(): void {
+    const cliente = this.clienteParaScore();
+    if (!cliente) return;
+    const nuevo = !this.mostrarPromedioEdit();
+    this.guardandoPromedio.set(true);
+    this.service.updateConfigGrafico(cliente._id, nuevo, () => {
+      this.mostrarPromedioEdit.set(nuevo);
+      this.guardandoPromedio.set(false);
+    });
   }
 
   protected crear(dto: CreateClienteDto): void {

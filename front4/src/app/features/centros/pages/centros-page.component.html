@@ -16,7 +16,8 @@
   (editado)="abrirEditar($event)"
   (eliminado)="eliminar($event)"
   (verCentro)="irACentro($event)"
-  (agregarActivo)="abrirAgregarActivo($event)">
+  (agregarActivo)="abrirAgregarActivo($event)"
+  (editarScore)="abrirEditarScore($event)">
 </app-centros-list>
 
 <!-- ── Modal ──────────────────────────────────────────── -->
@@ -70,6 +71,71 @@
           (eliminado)="eliminar($event)"
           (verCentro)="irACentro($event)">
         </app-centros-list>
+      }
+
+      @if (modal() === 'score') {
+        <div class="modal-header">
+          <h3>Score SmartClarity — {{ centroParaScore()?.nombre }}</h3>
+          <button class="modal-close" (click)="cerrar()">&#x2715;</button>
+        </div>
+
+        <!-- Preview gráfico -->
+        <div style="display:flex;justify-content:center;margin-bottom:1.25rem">
+          <app-spider-chart
+            [labels]="spiderLabels"
+            [values]="spiderPreviewValues()"
+            [size]="240">
+          </app-spider-chart>
+        </div>
+
+        <!-- Inputs 1–10 -->
+        <div style="display:flex;flex-direction:column;gap:.65rem">
+          @for (label of spiderLabels; track $index) {
+            @let val = valoresScoreEdit()[$index];
+            @let fuera = campoFuera(val);
+            <div style="display:flex;align-items:center;gap:.75rem">
+              <span style="font-size:.82rem;color:#374151;min-width:160px;flex-shrink:0">{{ label }}</span>
+              <input
+                type="number" min="1" max="10" step="1"
+                [value]="val"
+                (input)="setValorScore($index, +$any($event.target).value)"
+                style="width:64px;padding:.35rem .45rem;border-radius:7px;font-size:.9rem;text-align:center;font-family:inherit"
+                [style.border]="fuera ? '1.5px solid #dc2626' : '1.5px solid #d1d5db'">
+              @if (fuera) {
+                <span style="font-size:.75rem;color:#dc2626;font-weight:600">⚠ 1–10</span>
+              }
+            </div>
+          }
+        </div>
+
+        <!-- Advertencia global -->
+        @if (scoreError()) {
+          <div style="margin-top:.85rem;padding:.55rem .8rem;border-radius:8px;background:#fef2f2;border:1px solid #fecaca;font-size:.82rem;color:#dc2626;font-weight:600">
+            ⚠ {{ scoreError() }}
+          </div>
+        }
+        @if (scoreHayError()) {
+          <div style="margin-top:.85rem;padding:.55rem .8rem;border-radius:8px;background:#fef2f2;border:1px solid #fecaca;font-size:.82rem;color:#dc2626">
+            Rango permitido: 1 a 10 (números naturales).
+          </div>
+        }
+
+        <!-- Acciones -->
+        <div style="display:flex;gap:.6rem;margin-top:1.1rem">
+          <button
+            (click)="guardarScore()"
+            [disabled]="guardandoScore() || scoreHayError()"
+            style="padding:.45rem 1.1rem;background:#0095d6;color:#fff;border:none;border-radius:8px;font-size:.84rem;font-weight:600;cursor:pointer;font-family:inherit"
+            [style.opacity]="(guardandoScore() || scoreHayError()) ? '0.55' : '1'">
+            {{ guardandoScore() ? 'Guardando…' : 'Guardar' }}
+          </button>
+          <button
+            (click)="cerrar()"
+            [disabled]="guardandoScore()"
+            style="padding:.45rem 1.1rem;background:none;border:1.5px solid #d1d5db;border-radius:8px;font-size:.84rem;font-weight:600;cursor:pointer;color:#374151;font-family:inherit">
+            Cancelar
+          </button>
+        </div>
       }
 
       @if (modal() === 'activo') {
