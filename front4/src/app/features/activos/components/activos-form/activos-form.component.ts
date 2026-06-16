@@ -237,28 +237,32 @@ export class ActivosFormComponent implements OnChanges {
     return this._centros().filter(c => asId(c.cliente_id) === this.empresaId());
   });
 
-  ngOnChanges(_: SimpleChanges): void {
-    this._centros.set(this.centros);
-    if (this.initial) {
-      this.form = {
-        nombre:          this.initial.nombre,
-        tipo_activo:     this.initial.tipo_activo,
-        centro_costo_id: this.initial.centro_costo_id,
-        descripcion:     this.initial.descripcion ?? '',
-      };
-      const centro = this.centros.find(c => asId(c._id) === asId(this.initial!.centro_costo_id));
-      this.empresaId.set(centro ? asId(centro.cliente_id) : '');
-    } else {
-      this.form = {
-        nombre:          '',
-        tipo_activo:     '',
-        centro_costo_id: this.centroFijo?._id ?? '',
-        descripcion:     '',
-      };
-      this.empresaId.set('');
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['centros']) {
+      this._centros.set(this.centros);
     }
-    if (this.centroFijo) {
-      this.form.centro_costo_id = this.centroFijo._id;
+    if (changes['initial']) {
+      if (this.initial) {
+        this.form = {
+          nombre:          this.initial.nombre,
+          tipo_activo:     this.initial.tipo_activo,
+          centro_costo_id: this.initial.centro_costo_id,
+          descripcion:     this.initial.descripcion ?? '',
+        };
+        const centro = this.centros.find(c => asId(c._id) === asId(this.initial!.centro_costo_id));
+        this.empresaId.set(centro ? asId(centro.cliente_id) : '');
+      } else {
+        this.form = {
+          nombre:          '',
+          tipo_activo:     '',
+          centro_costo_id: this.centroFijo?._id ?? '',
+          descripcion:     '',
+        };
+        this.empresaId.set('');
+      }
+      if (this.centroFijo) {
+        this.form.centro_costo_id = this.centroFijo._id;
+      }
     }
   }
 
