@@ -136,13 +136,21 @@
             <dd style="margin:0;font-size:.82rem;color:#1f2937">{{ centroActivo.ubicacion_pais }}</dd>
           </div>
         }
+        @if (centroActivo.ubicacion_latitud != null && centroActivo.ubicacion_longitud != null) {
+          <div style="display:flex;gap:.5rem">
+            <dt style="font-size:.78rem;color:#6b7280;min-width:80px;flex-shrink:0">Coordenadas</dt>
+            <dd style="margin:0;font-size:.82rem;color:#1f2937;font-variant-numeric:tabular-nums">
+              {{ centroActivo.ubicacion_latitud | number:'1.6-6' }}, {{ centroActivo.ubicacion_longitud | number:'1.6-6' }}
+            </dd>
+          </div>
+        }
       </dl>
     </div>
 
     <!-- Recuadro 2: Mapa -->
     <div class="card" style="min-height:320px;padding:.75rem;overflow:hidden;display:flex;flex-direction:column">
       <h3 style="margin:0 0 .65rem;font-size:.95rem;font-weight:700;color:#1f2937;flex-shrink:0">Localización</h3>
-      @if (centroActivo.ubicacion_ciudad || centroActivo.ubicacion_direccion) {
+      @if (centroActivo.ubicacion_ciudad || centroActivo.ubicacion_direccion || centroActivo.ubicacion_latitud != null) {
         <iframe
           [src]="mapUrl()"
           style="flex:1;width:100%;min-height:240px;border:none;border-radius:8px;display:block"
@@ -152,7 +160,7 @@
         </iframe>
       } @else {
         <div style="flex:1;min-height:240px;display:flex;align-items:center;justify-content:center;color:#9ca3af;font-size:.85rem;background:#f9fafb;border-radius:8px">
-          Sin dirección registrada
+          Sin localización registrada
         </div>
       }
     </div>
@@ -300,7 +308,7 @@
           <div style="display:flex;align-items:center;justify-content:space-between;padding:.5rem .65rem;border-radius:8px;border:1px solid rgba(34,33,33,.08)">
             <div>
               <span style="display:block;font-size:.84rem;font-weight:600;color:#1f2937">{{ a.nombre }}</span>
-              <span style="font-size:.74rem;color:#6b7280">{{ a.tipo_activo }}</span>
+              <span style="font-size:.74rem;color:#6b7280">{{ tipoActivoNombre(a) }}</span>
               @if (a.descripcion) {
                 <span style="display:block;font-size:.74rem;color:#9ca3af">{{ a.descripcion }}</span>
               }

@@ -10,6 +10,7 @@ import { AuthService } from '../../auth/auth.service';
 
 import { StatusBannerComponent } from '../../../shared/components/status-banner/status-banner.component';
 import { Actividad, TipoActividad } from '../../../shared/models/actividad.model';
+import { Activo, TipoActivo } from '../../../shared/models/activo.model';
 import { asId, toDateKey } from '../../../shared/utils';
 import { createCalendarState, CalendarView, CALENDAR_DAYS, CALENDAR_MONTHS } from '../../../shared/calendar-state';
 
@@ -249,6 +250,11 @@ export class ActividadesPageComponent implements OnInit {
 
   colorDeActividad(a: Actividad): string {
     return this.tipoDeActividad(a)?.color ?? '#9ca3af';
+  }
+
+  tipoActivoNombre(a: Activo): string {
+    if (typeof a.tipo_activo_id === 'object') return (a.tipo_activo_id as TipoActivo).nombre;
+    return '';
   }
 
   // Wizard

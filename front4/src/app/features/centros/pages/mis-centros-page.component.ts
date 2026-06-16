@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy, inject, computed, signal } from '@angular/core';
-import { NgIf } from '@angular/common';
+import { NgIf, DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
@@ -11,12 +11,13 @@ import { ActivosService } from '../../activos/activos.service';
 import { SpiderChartComponent } from '../../../shared/components/spider-chart/spider-chart.component';
 import { StatChipComponent, ChipVariant } from '../../../shared/components/stat-chip/stat-chip.component';
 import { CentroCosto } from '../../../shared/models/centro.model';
+import { Activo, TipoActivo } from '../../../shared/models/activo.model';
 import { asId } from '../../../shared/utils';
 
 @Component({
   selector: 'app-mis-centros-page',
   standalone: true,
-  imports: [NgIf, FormsModule, SpiderChartComponent, StatChipComponent],
+  imports: [NgIf, FormsModule, DecimalPipe, SpiderChartComponent, StatChipComponent],
   templateUrl: './mis-centros-page.component.html',
   styles: [`
     .centro-card {
@@ -200,5 +201,10 @@ export class MisCentrosPageComponent implements OnInit, OnDestroy {
 
   volver(): void {
     this.consumidorContext.seleccionarCentro(null);
+  }
+
+  tipoActivoNombre(a: Activo): string {
+    if (typeof a.tipo_activo_id === 'object') return (a.tipo_activo_id as TipoActivo).nombre;
+    return '';
   }
 }

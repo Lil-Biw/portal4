@@ -313,7 +313,7 @@
                   <label style="display:flex;align-items:center;gap:.5rem;cursor:pointer;font-size:.875rem;color:#374151">
                     <input type="checkbox" [checked]="form().activo_ids.includes(a._id)" (change)="toggleActivo(a._id)" style="accent-color:#0095d6;width:15px;height:15px" />
                     <span>{{ a.nombre }}</span>
-                    <span style="font-size:.75rem;color:#9ca3af">{{ a.tipo_activo }}</span>
+                    <span style="font-size:.75rem;color:#9ca3af">{{ tipoActivoNombre(a) }}</span>
                   </label>
                 }
               </div>
