@@ -4,10 +4,9 @@ import { ActivosService } from '../activos.service';
 import { CentrosService } from '../../centros/centros.service';
 import { ClientesService } from '../../clientes/clientes.service';
 import { StatusBannerComponent } from '../../../shared/components/status-banner/status-banner.component';
-import { ActivosFormComponent } from '../components/activos-form/activos-form.component';
+import { ActivosFormComponent, DocPendiente } from '../components/activos-form/activos-form.component';
 import { ActivosListComponent } from '../components/activos-list/activos-list.component';
-import { Activo, CreateActivoDto } from '../../../shared/models/activo.model';
-import { AuthService } from '../../auth/auth.service';
+import { Activo, CreateActivoDto, DocActivo } from '../../../shared/models/activo.model';
 
 type ModalMode = 'crear' | 'editar' | 'buscar' | null;
 
@@ -40,8 +39,8 @@ type ModalMode = 'crear' | 'editar' | 'buscar' | null;
       border-radius: 16px;
       box-shadow: 0 20px 60px rgba(15,23,42,.18);
       width: 100%;
-      max-width: 640px;
-      max-height: 85vh;
+      max-width: 860px;
+      max-height: 90vh;
       overflow-y: auto;
       padding: 1.5rem;
     }
@@ -79,10 +78,13 @@ export class ActivosPageComponent implements OnInit {
   protected readonly service         = inject(ActivosService);
   protected readonly centrosService  = inject(CentrosService);
   protected readonly clientesService = inject(ClientesService);
-  private readonly authService       = inject(AuthService);
 
-  protected modal    = signal<ModalMode>(null);
-  protected busqueda = signal('');
+  protected modal     = signal<ModalMode>(null);
+  protected busqueda  = signal('');
+  protected editingId = signal<string | null>(null);
+
+  protected docsPendientes: DocPendiente[] = [];
+  protected subiendoDocs = false;
 
   protected activosFiltrados = computed(() => {
     const q = this.busqueda().toLowerCase().trim();
@@ -92,13 +94,26 @@ export class ActivosPageComponent implements OnInit {
     );
   });
 
+  protected get activoEditando(): Activo | null {
+    const id = this.editingId();
+    return id ? this.service.activos().find(a => a._id === id) ?? null : null;
+  }
+
+  protected get docsExistentes(): DocActivo[] {
+    return this.activoEditando?.documentos ?? [];
+  }
+
   constructor() {
     effect(() => {
-      if (this.service.status()?.type === 'ok' && this.modal() !== null && this.modal() !== 'buscar') {
+      if (
+        this.service.status()?.type === 'ok' &&
+        this.modal() !== null &&
+        this.modal() !== 'buscar' &&
+        !this.subiendoDocs
+      ) {
         this.cerrar();
       }
     });
-
   }
 
   ngOnInit(): void {
@@ -108,6 +123,8 @@ export class ActivosPageComponent implements OnInit {
   }
 
   protected abrirCrear(): void {
+    this.editingId.set(null);
+    this.docsPendientes = [];
     this.service.seleccionado.set(null);
     this.service.clearStatus();
     this.modal.set('crear');
@@ -120,17 +137,28 @@ export class ActivosPageComponent implements OnInit {
   }
 
   protected abrirEditar(activo: Activo): void {
+    this.editingId.set(activo._id);
     this.service.seleccionar(activo);
     this.modal.set('editar');
   }
 
   protected cerrar(): void {
     this.modal.set(null);
+    this.editingId.set(null);
+    this.docsPendientes = [];
+    this.subiendoDocs = false;
     this.service.seleccionado.set(null);
     this.service.clearStatus();
   }
 
-  protected crear(dto: CreateActivoDto): void   { this.service.crear(dto); }
+  protected crear(dto: CreateActivoDto): void {
+    this.service.crear(dto, (nuevo) => {
+      if (this.docsPendientes.length === 0) return;
+      this.subiendoDocs = true;
+      this.editingId.set(nuevo._id);
+      this.subirDocsPendientesSecuencial(nuevo._id, dto.centro_costo_id, 0);
+    });
+  }
 
   protected actualizar(dto: CreateActivoDto): void {
     const id = this.service.seleccionado()?._id;
@@ -145,6 +173,47 @@ export class ActivosPageComponent implements OnInit {
 
   protected editarDesdeBuscar(activo: Activo): void {
     this.service.seleccionar(activo);
+    this.editingId.set(activo._id);
     this.modal.set('editar');
+  }
+
+  protected onDocAgregado(doc: DocPendiente): void {
+    this.docsPendientes = [...this.docsPendientes, doc];
+  }
+
+  protected onDocQuitado(index: number): void {
+    this.docsPendientes = this.docsPendientes.filter((_, i) => i !== index);
+  }
+
+  protected onDocSubido(doc: DocPendiente): void {
+    const activo = this.activoEditando;
+    if (!activo) return;
+    this.service.subirDocumento(activo._id, activo.centro_costo_id, doc.file, doc.nombre);
+  }
+
+  protected onDocEliminado(nombre: string): void {
+    const activo = this.activoEditando;
+    if (!activo) return;
+    this.service.eliminarDocumento(activo._id, activo.centro_costo_id, nombre);
+  }
+
+  protected onDocDescargado(ev: { nombre: string; nombreDisplay?: string }): void {
+    const activo = this.activoEditando;
+    if (!activo) return;
+    this.service.descargarDocumento(activo._id, activo.centro_costo_id, ev.nombre, ev.nombreDisplay);
+  }
+
+  private subirDocsPendientesSecuencial(activoId: string, centroId: string, index: number): void {
+    if (index >= this.docsPendientes.length) {
+      this.docsPendientes = [];
+      this.subiendoDocs = false;
+      this.cerrar();
+      return;
+    }
+    const { file, nombre } = this.docsPendientes[index];
+    this.service.subirDocumento(activoId, centroId, file, nombre,
+      () => this.subirDocsPendientesSecuencial(activoId, centroId, index + 1),
+      () => { this.subiendoDocs = false; },
+    );
   }
 }

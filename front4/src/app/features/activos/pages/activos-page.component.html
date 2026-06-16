@@ -32,7 +32,14 @@
         <app-activos-form
           submitLabel="Crear activo"
           [centros]="centrosService.centros()"
-          (submitted)="crear($event)">
+          [clientes]="clientesService.clientes()"
+          [editingId]="null"
+          [docsPendientes]="docsPendientes"
+          [docsExistentes]="[]"
+          (submitted)="crear($event)"
+          (cancelar)="cerrar()"
+          (docAgregado)="onDocAgregado($event)"
+          (docQuitado)="onDocQuitado($event)">
         </app-activos-form>
       }
 
@@ -46,8 +53,16 @@
         <app-activos-form
           [initial]="service.seleccionado()"
           [centros]="centrosService.centros()"
+          [clientes]="clientesService.clientes()"
+          [editingId]="editingId()"
+          [docsPendientes]="[]"
+          [docsExistentes]="docsExistentes"
           submitLabel="Guardar cambios"
-          (submitted)="actualizar($event)">
+          (submitted)="actualizar($event)"
+          (cancelar)="cerrar()"
+          (docSubido)="onDocSubido($event)"
+          (docEliminado)="onDocEliminado($event)"
+          (docDescargado)="onDocDescargado($event)">
         </app-activos-form>
       }
 
