@@ -1,6 +1,7 @@
 import { Component, OnInit, inject, computed, effect, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivosService } from '../activos.service';
+import { TiposActivoService } from '../tipos-activo.service';
 import { CentrosService } from '../../centros/centros.service';
 import { ConsumidorContextService } from '../../../profile/consumidor-context.service';
 import { ActivosListComponent } from '../components/activos-list/activos-list.component';
@@ -34,6 +35,7 @@ import { asId } from '../../../shared/utils';
         [activos]="activosFiltrados()"
         [centros]="centrosService.centros()"
         [clientes]="clientes()"
+        [tipos]="tiposService.tipos()"
         [mostrarAcciones]="false">
       </app-activos-list>
     }
@@ -59,9 +61,10 @@ import { asId } from '../../../shared/utils';
   `],
 })
 export class MisActivosPageComponent implements OnInit {
-  protected readonly service       = inject(ActivosService);
+  protected readonly service        = inject(ActivosService);
+  protected readonly tiposService   = inject(TiposActivoService);
   protected readonly centrosService = inject(CentrosService);
-  private   readonly ctx           = inject(ConsumidorContextService);
+  private   readonly ctx            = inject(ConsumidorContextService);
 
   protected busqueda        = signal('');
   protected busquedaVisible = signal(false);
@@ -85,7 +88,7 @@ export class MisActivosPageComponent implements OnInit {
     const q    = this.busqueda().toLowerCase().trim();
     const ids  = this.centroIdsPorEmpresa();
     let list   = this.service.activos().filter(a => ids.has(asId(a.centro_costo_id)));
-    if (q) list = list.filter(a => a.nombre.toLowerCase().includes(q) || a.tipo_activo.toLowerCase().includes(q));
+    if (q) list = list.filter(a => a.nombre.toLowerCase().includes(q));
     return list;
   });
 
