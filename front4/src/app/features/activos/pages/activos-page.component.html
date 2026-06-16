@@ -3,7 +3,7 @@
   <h2>Activos</h2>
   <div class="header-actions">
     @if (puedeGestionarTipos()) {
-      <button class="btn-ghost" (click)="toggleTipos()">Tipos</button>
+      <button class="btn-ghost" (click)="abrirTiposModal()">Crear tipo de activo</button>
     }
     <button class="btn-ghost" (click)="abrirBuscar()">Buscar</button>
     <button class="btn-primary" (click)="abrirCrear()">+ Crear</button>
@@ -21,69 +21,12 @@
   (eliminado)="eliminar($event)">
 </app-activos-list>
 
-<!-- Panel tipos (solo super_admin) -->
-@if (puedeGestionarTipos()) {
-  <div class="tipos-section">
-    <div class="tipos-header" (click)="toggleTipos()">
-      <h3 class="tipos-title">Tipos de activo ({{ tiposService.tipos().length }})</h3>
-      <div style="display:flex;align-items:center;gap:.5rem">
-        <button class="btn-ghost btn-sm" (click)="$event.stopPropagation(); abrirNuevoTipo()">+ Nuevo tipo</button>
-        <span class="tipos-chevron">{{ showTipos() ? '▲' : '▼' }}</span>
-      </div>
-    </div>
-
-    @if (showTipos()) {
-      <app-status-banner [status]="tiposService.status()"></app-status-banner>
-
-      @if (showTipoForm()) {
-        <div class="tipo-form-inline">
-          <input
-            class="tipo-input"
-            type="text"
-            placeholder="Nombre del tipo"
-            [ngModel]="tipoForm().nombre"
-            (ngModelChange)="patchTipoForm('nombre', $event)" />
-          <div style="display:flex;align-items:center;gap:.5rem">
-            <input
-              type="color"
-              [ngModel]="tipoForm().color"
-              (ngModelChange)="patchTipoForm('color', $event)"
-              style="width:36px;height:36px;border:none;padding:0;cursor:pointer;border-radius:6px" />
-            <span style="font-size:.78rem;color:#6b7280">{{ tipoForm().color }}</span>
-          </div>
-          <div style="display:flex;gap:.5rem">
-            <button class="btn-primary btn-sm" (click)="guardarTipo()">Guardar</button>
-            <button class="btn-ghost btn-sm" (click)="cerrarTipoForm()">Cancelar</button>
-          </div>
-        </div>
-      }
-
-      @if (tiposService.tipos().length === 0) {
-        <p class="tipos-empty">No hay tipos definidos. Crea uno para comenzar.</p>
-      } @else {
-        <div class="tipos-list">
-          @for (t of tiposService.tipos(); track t._id) {
-            <div class="tipo-item">
-              <span class="tipo-dot" [style.background]="t.color"></span>
-              <span class="tipo-nombre">{{ t.nombre }}</span>
-              <div class="tipo-actions">
-                <button class="btn-ghost btn-sm" (click)="abrirEditarTipo(t)">Editar</button>
-                <button class="btn-danger btn-sm" (click)="eliminarTipo(t._id)">Eliminar</button>
-              </div>
-            </div>
-          }
-        </div>
-      }
-    }
-  </div>
-}
-
-<!-- Modal -->
+<!-- Modales -->
 @if (modal() !== null) {
   <div class="modal-backdrop" (click)="cerrar()">
     <div class="modal" (click)="$event.stopPropagation()">
 
-      <!-- Crear -->
+      <!-- Crear activo -->
       @if (modal() === 'crear') {
         <div class="modal-header">
           <h3>Nuevo activo</h3>
@@ -105,7 +48,7 @@
         </app-activos-form>
       }
 
-      <!-- Editar -->
+      <!-- Editar activo -->
       @if (modal() === 'editar') {
         <div class="modal-header">
           <h3>Editar activo</h3>
@@ -129,7 +72,7 @@
         </app-activos-form>
       }
 
-      <!-- Buscar -->
+      <!-- Buscar activo -->
       @if (modal() === 'buscar') {
         <div class="modal-header">
           <h3>Buscar activo</h3>
@@ -150,6 +93,70 @@
           (editado)="editarDesdeBuscar($event)"
           (eliminado)="eliminar($event)">
         </app-activos-list>
+      }
+
+      <!-- Tipos de activo -->
+      @if (modal() === 'tipos') {
+        <div class="modal-header">
+          <h3>Tipos de activo</h3>
+          <button class="modal-close" (click)="cerrar()">&#x2715;</button>
+        </div>
+        <app-status-banner [status]="tiposService.status()"></app-status-banner>
+
+        <div class="tipos-modal">
+
+          <!-- Columna 1: formulario -->
+          <div>
+            <p class="tipos-col-title">{{ editingTipoId() ? 'Editar tipo' : 'Nuevo tipo' }}</p>
+            <input
+              class="tipo-input"
+              type="text"
+              placeholder="Nombre del tipo *"
+              [ngModel]="tipoForm().nombre"
+              (ngModelChange)="patchTipoForm('nombre', $event)" />
+            <div style="display:flex;align-items:center;gap:.6rem;margin-bottom:.75rem">
+              <input
+                type="color"
+                [ngModel]="tipoForm().color"
+                (ngModelChange)="patchTipoForm('color', $event)"
+                style="width:40px;height:40px;border:none;padding:0;cursor:pointer;border-radius:8px" />
+              <span style="font-size:.8rem;color:#6b7280">{{ tipoForm().color }}</span>
+              <span style="width:20px;height:20px;border-radius:50%;flex-shrink:0"
+                [style.background]="tipoForm().color"></span>
+            </div>
+            <div style="display:flex;gap:.5rem">
+              <button class="btn-primary btn-sm" (click)="guardarTipo()"
+                [disabled]="!tipoForm().nombre.trim()">
+                {{ editingTipoId() ? 'Guardar cambios' : 'Crear tipo' }}
+              </button>
+              @if (editingTipoId()) {
+                <button class="btn-ghost btn-sm" (click)="abrirNuevoTipo()">Cancelar</button>
+              }
+            </div>
+          </div>
+
+          <!-- Columna 2: lista de tipos -->
+          <div>
+            <p class="tipos-col-title">Tipos creados ({{ tiposService.tipos().length }})</p>
+            @if (tiposService.tipos().length === 0) {
+              <p class="tipos-empty">Aún no hay tipos creados.</p>
+            } @else {
+              <div class="tipos-list">
+                @for (t of tiposService.tipos(); track t._id) {
+                  <div class="tipo-item">
+                    <span class="tipo-dot" [style.background]="t.color"></span>
+                    <span class="tipo-nombre">{{ t.nombre }}</span>
+                    <div class="tipo-actions">
+                      <button class="btn-ghost btn-sm" (click)="abrirEditarTipo(t)">Editar</button>
+                      <button class="btn-danger btn-sm" (click)="eliminarTipo(t._id)">Eliminar</button>
+                    </div>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+
+        </div>
       }
 
     </div>

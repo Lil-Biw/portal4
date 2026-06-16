@@ -10,7 +10,7 @@ import { ActivosFormComponent, DocPendiente } from '../components/activos-form/a
 import { ActivosListComponent } from '../components/activos-list/activos-list.component';
 import { Activo, CreateActivoDto, DocActivo, TipoActivo } from '../../../shared/models/activo.model';
 
-type ModalMode = 'crear' | 'editar' | 'buscar' | null;
+type ModalMode = 'crear' | 'editar' | 'buscar' | 'tipos' | null;
 
 interface TipoForm { nombre: string; color: string; }
 function emptyTipoForm(): TipoForm { return { nombre: '', color: '#0095d6' }; }
@@ -77,28 +77,20 @@ function emptyTipoForm(): TipoForm { return { nombre: '', color: '#0095d6' }; }
       box-sizing: border-box;
     }
     .search-input:focus { outline: none; border-color: #0095d6; }
-    .tipos-section {
-      border: 1px solid rgba(34,33,33,.1);
-      border-radius: 12px;
-      background: #fff;
-      box-shadow: 0 2px 8px rgba(15,23,42,.04);
-      overflow: hidden;
-      margin-top: 1.25rem;
+    .tipos-modal {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+      align-items: start;
     }
-    .tipos-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: .85rem 1rem;
-      cursor: pointer;
-      user-select: none;
-      transition: background .1s;
+    .tipos-col-title {
+      font-size: .9rem;
+      font-weight: 700;
+      color: #374151;
+      margin: 0 0 .75rem;
     }
-    .tipos-header:hover { background: rgba(34,33,33,.02); }
-    .tipos-title { margin: 0; font-size: .95rem; font-weight: 700; color: #1f2937; }
-    .tipos-chevron { font-size: .8rem; color: #9ca3af; }
-    .tipos-empty { padding: 1rem; color: #9ca3af; font-size: .85rem; margin: 0; }
-    .tipos-list { display: flex; flex-direction: column; gap: 0; padding: 0 1rem 1rem; }
+    .tipos-empty { color: #9ca3af; font-size: .85rem; margin: .5rem 0; }
+    .tipos-list { display: flex; flex-direction: column; gap: 0; }
     .tipo-item {
       display: flex;
       align-items: center;
@@ -108,25 +100,17 @@ function emptyTipoForm(): TipoForm { return { nombre: '', color: '#0095d6' }; }
     }
     .tipo-item:last-child { border-bottom: none; }
     .tipo-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
-    .tipo-nombre { font-size: .85rem; font-weight: 600; color: #1f2937; }
-    .tipo-actions { display: flex; gap: .35rem; margin-left: auto; flex-shrink: 0; }
-    .tipo-form-inline {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      gap: .6rem;
-      padding: .75rem 1rem;
-      background: #f9fafb;
-      border-top: 1px solid rgba(34,33,33,.06);
-      border-bottom: 1px solid rgba(34,33,33,.06);
-    }
+    .tipo-nombre { font-size: .85rem; font-weight: 600; color: #1f2937; flex: 1; }
+    .tipo-actions { display: flex; gap: .35rem; flex-shrink: 0; }
     .tipo-input {
-      padding: .45rem .7rem;
+      width: 100%;
+      padding: .5rem .7rem;
       border: 1px solid rgba(34,33,33,.2);
       border-radius: 8px;
       font-size: .85rem;
       font-family: inherit;
-      min-width: 160px;
+      box-sizing: border-box;
+      margin-bottom: .5rem;
     }
     .tipo-input:focus { outline: 2px solid #0095d6; border-color: transparent; }
   `],
@@ -220,6 +204,8 @@ export class ActivosPageComponent implements OnInit {
     this.subiendoDocs = false;
     this.service.seleccionado.set(null);
     this.service.clearStatus();
+    this.showTipoForm.set(false);
+    this.editingTipoId.set(null);
   }
 
   protected crear(dto: CreateActivoDto): void {
@@ -289,12 +275,17 @@ export class ActivosPageComponent implements OnInit {
   }
 
   // ── Gestión de tipos ──────────────────────────────────────────────
-  protected showTipos     = signal(false);
   protected showTipoForm  = signal(false);
   protected editingTipoId = signal<string | null>(null);
   protected tipoForm      = signal<TipoForm>(emptyTipoForm());
 
-  toggleTipos(): void { this.showTipos.update(v => !v); }
+  abrirTiposModal(): void {
+    this.editingTipoId.set(null);
+    this.tipoForm.set(emptyTipoForm());
+    this.showTipoForm.set(false);
+    this.tiposService.clearStatus();
+    this.modal.set('tipos');
+  }
 
   abrirNuevoTipo(): void {
     this.editingTipoId.set(null);
