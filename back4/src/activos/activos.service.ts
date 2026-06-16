@@ -19,7 +19,7 @@ export class ActivosService {
         $in: [centroCostoId, new Types.ObjectId(centroCostoId)],
       };
     }
-    return this.activoModel.find(filter).select('-documentos.contenido').lean();
+    return this.activoModel.find(filter).populate('tipo_activo_id').select('-documentos.contenido').lean();
   }
 
   async findAllByEmpresa(empresaId: string, centroCostoId?: string) {
@@ -41,11 +41,11 @@ export class ActivosService {
         ],
       };
     }
-    return this.activoModel.find(filter).select('-documentos.contenido').lean();
+    return this.activoModel.find(filter).populate('tipo_activo_id').select('-documentos.contenido').lean();
   }
 
   async findOne(id: string) {
-    const activo = await this.activoModel.findById(id).select('-documentos.contenido').lean();
+    const activo = await this.activoModel.findById(id).populate('tipo_activo_id').select('-documentos.contenido').lean();
     if (!activo) throw new NotFoundException(`Activo ${id} no encontrado`);
     return activo;
   }
@@ -53,14 +53,18 @@ export class ActivosService {
   async create(dto: CreateActivoDto) {
     const activo = new this.activoModel({
       ...dto,
+      tipo_activo_id: new Types.ObjectId(dto.tipo_activo_id),
       centro_costo_id: new Types.ObjectId(dto.centro_costo_id),
     });
     return activo.save();
   }
 
   async update(id: string, dto: UpdateActivoDto) {
+    const updateData: Record<string, unknown> = { ...dto };
+    if (dto.tipo_activo_id) updateData['tipo_activo_id'] = new Types.ObjectId(dto.tipo_activo_id);
     const activo = await this.activoModel
-      .findByIdAndUpdate(id, dto, { new: true, runValidators: true })
+      .findByIdAndUpdate(id, updateData, { new: true, runValidators: true })
+      .populate('tipo_activo_id')
       .select('-documentos.contenido')
       .lean();
     if (!activo) throw new NotFoundException(`Activo ${id} no encontrado`);
