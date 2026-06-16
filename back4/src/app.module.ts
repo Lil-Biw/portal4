@@ -11,6 +11,7 @@ import { ProyectosModule } from './proyectos/proyectos.module';
 import { PermisosModule } from './permisos/permisos.module';
 import { SolicitudesModule } from './solicitudes/solicitudes.module';
 import { TiposActividadModule } from './tipos-actividad/tipos-actividad.module';
+import { TiposActivoModule } from './tipos-activo/tipos-activo.module';
 import { ActividadesModule } from './actividades/actividades.module';
 import { ActivosModule } from './activos/activos.module';
 import { NoticiasModule } from './noticias/noticias.module';
@@ -27,6 +28,7 @@ import { NoticiasModule } from './noticias/noticias.module';
     PermisosModule,
     SolicitudesModule,
     TiposActividadModule,
+    TiposActivoModule,
     ActividadesModule,
     ActivosModule,
     NoticiasModule,
