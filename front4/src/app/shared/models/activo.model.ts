@@ -1,3 +1,10 @@
+export interface DocActivo {
+  nombre: string;
+  nombre_display: string;
+  tamano_bytes: number;
+  tipo_mime: string;
+}
+
 export interface Activo {
   _id: string;
   nombre: string;
@@ -5,6 +12,7 @@ export interface Activo {
   centro_costo_id: string;
   descripcion?: string;
   activo: boolean;
+  documentos?: DocActivo[];
   creado_en?: string;
   actualizado_en?: string;
 }
