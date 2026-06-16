@@ -5,10 +5,23 @@ export interface DocActivo {
   tipo_mime: string;
 }
 
+export interface TipoActivo {
+  _id: string;
+  nombre: string;
+  color: string;
+}
+
+export interface CreateTipoActivoDto {
+  nombre: string;
+  color: string;
+}
+
+export type UpdateTipoActivoDto = Partial<CreateTipoActivoDto>;
+
 export interface Activo {
   _id: string;
   nombre: string;
-  tipo_activo: string;
+  tipo_activo_id: string | TipoActivo;
   centro_costo_id: string;
   descripcion?: string;
   activo: boolean;
@@ -19,7 +32,7 @@ export interface Activo {
 
 export interface CreateActivoDto {
   nombre: string;
-  tipo_activo: string;
+  tipo_activo_id: string;
   centro_costo_id: string;
   descripcion?: string;
 }

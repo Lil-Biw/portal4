@@ -3,7 +3,7 @@ import {
   SimpleChanges, computed, signal,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Activo, CreateActivoDto, DocActivo } from '../../../../shared/models/activo.model';
+import { Activo, CreateActivoDto, DocActivo, TipoActivo } from '../../../../shared/models/activo.model';
 import { CentroCosto } from '../../../../shared/models/centro.model';
 import { Cliente } from '../../../../shared/models/cliente.model';
 import { asId } from '../../../../shared/utils';
@@ -123,7 +123,12 @@ export interface DocPendiente { file: File; nombre: string; }
           </div>
           <div class="field">
             <label>Tipo de activo *</label>
-            <input type="text" [(ngModel)]="form.tipo_activo" name="tipo_activo" required placeholder="Ej: Maquinaria, Vehículo" />
+            <select [(ngModel)]="form.tipo_activo_id" name="tipo_activo_id" required>
+              <option value="">Selecciona un tipo</option>
+              @for (t of tipos; track t._id) {
+                <option [value]="t._id">{{ t.nombre }}</option>
+              }
+            </select>
           </div>
           <div class="field">
             <label>Descripción</label>
@@ -198,7 +203,7 @@ export interface DocPendiente { file: File; nombre: string; }
       <div class="form-footer">
         <button type="button" class="btn-ghost" (click)="cancelar.emit()">Cancelar</button>
         <button type="submit" class="btn-primary"
-          [disabled]="!form.nombre || !form.tipo_activo || (!centroFijo && !form.centro_costo_id)">
+          [disabled]="!form.nombre || !form.tipo_activo_id || (!centroFijo && !form.centro_costo_id)">
           {{ submitLabel }}
         </button>
       </div>
@@ -210,6 +215,7 @@ export class ActivosFormComponent implements OnChanges {
   @Input() centroFijo: CentroCosto | null = null;
   @Input() centros: CentroCosto[] = [];
   @Input() clientes: Cliente[] = [];
+  @Input() tipos: TipoActivo[] = [];
   @Input() editingId: string | null = null;
   @Input() docsPendientes: DocPendiente[] = [];
   @Input() docsExistentes: DocActivo[] = [];
@@ -224,7 +230,7 @@ export class ActivosFormComponent implements OnChanges {
   @Output() docDescargado   = new EventEmitter<{ nombre: string; nombreDisplay?: string }>();
 
   empresaId = signal('');
-  form: CreateActivoDto = { nombre: '', tipo_activo: '', centro_costo_id: '', descripcion: '' };
+  form: CreateActivoDto = { nombre: '', tipo_activo_id: '', centro_costo_id: '', descripcion: '' };
 
   fileSelected: File | null = null;
   nombreInput = '';
@@ -243,9 +249,12 @@ export class ActivosFormComponent implements OnChanges {
     }
     if (changes['initial']) {
       if (this.initial) {
+        const tipoId = typeof this.initial.tipo_activo_id === 'object'
+          ? (this.initial.tipo_activo_id as TipoActivo)._id
+          : this.initial.tipo_activo_id as string;
         this.form = {
           nombre:          this.initial.nombre,
-          tipo_activo:     this.initial.tipo_activo,
+          tipo_activo_id:  tipoId,
           centro_costo_id: this.initial.centro_costo_id,
           descripcion:     this.initial.descripcion ?? '',
         };
@@ -254,7 +263,7 @@ export class ActivosFormComponent implements OnChanges {
       } else {
         this.form = {
           nombre:          '',
-          tipo_activo:     '',
+          tipo_activo_id:  '',
           centro_costo_id: this.centroFijo?._id ?? '',
           descripcion:     '',
         };
@@ -310,10 +319,10 @@ export class ActivosFormComponent implements OnChanges {
   }
 
   enviar(): void {
-    if (!this.form.nombre || !this.form.tipo_activo || !this.form.centro_costo_id) return;
+    if (!this.form.nombre || !this.form.tipo_activo_id || !this.form.centro_costo_id) return;
     const dto: CreateActivoDto = {
       nombre:          this.form.nombre.trim(),
-      tipo_activo:     this.form.tipo_activo.trim(),
+      tipo_activo_id:  this.form.tipo_activo_id,
       centro_costo_id: this.form.centro_costo_id,
     };
     if (this.form.descripcion?.trim()) dto.descripcion = this.form.descripcion.trim();

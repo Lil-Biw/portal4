@@ -1,14 +1,19 @@
 import { Component, OnInit, inject, signal, computed, effect } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivosService } from '../activos.service';
+import { TiposActivoService } from '../tipos-activo.service';
 import { CentrosService } from '../../centros/centros.service';
 import { ClientesService } from '../../clientes/clientes.service';
+import { AuthService } from '../../auth/auth.service';
 import { StatusBannerComponent } from '../../../shared/components/status-banner/status-banner.component';
 import { ActivosFormComponent, DocPendiente } from '../components/activos-form/activos-form.component';
 import { ActivosListComponent } from '../components/activos-list/activos-list.component';
-import { Activo, CreateActivoDto, DocActivo } from '../../../shared/models/activo.model';
+import { Activo, CreateActivoDto, DocActivo, TipoActivo } from '../../../shared/models/activo.model';
 
 type ModalMode = 'crear' | 'editar' | 'buscar' | null;
+
+interface TipoForm { nombre: string; color: string; }
+function emptyTipoForm(): TipoForm { return { nombre: '', color: '#0095d6' }; }
 
 @Component({
   selector: 'app-activos-page',
@@ -72,12 +77,70 @@ type ModalMode = 'crear' | 'editar' | 'buscar' | null;
       box-sizing: border-box;
     }
     .search-input:focus { outline: none; border-color: #0095d6; }
+    .tipos-section {
+      border: 1px solid rgba(34,33,33,.1);
+      border-radius: 12px;
+      background: #fff;
+      box-shadow: 0 2px 8px rgba(15,23,42,.04);
+      overflow: hidden;
+      margin-top: 1.25rem;
+    }
+    .tipos-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: .85rem 1rem;
+      cursor: pointer;
+      user-select: none;
+      transition: background .1s;
+    }
+    .tipos-header:hover { background: rgba(34,33,33,.02); }
+    .tipos-title { margin: 0; font-size: .95rem; font-weight: 700; color: #1f2937; }
+    .tipos-chevron { font-size: .8rem; color: #9ca3af; }
+    .tipos-empty { padding: 1rem; color: #9ca3af; font-size: .85rem; margin: 0; }
+    .tipos-list { display: flex; flex-direction: column; gap: 0; padding: 0 1rem 1rem; }
+    .tipo-item {
+      display: flex;
+      align-items: center;
+      gap: .6rem;
+      padding: .55rem 0;
+      border-bottom: 1px solid rgba(34,33,33,.06);
+    }
+    .tipo-item:last-child { border-bottom: none; }
+    .tipo-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+    .tipo-nombre { font-size: .85rem; font-weight: 600; color: #1f2937; }
+    .tipo-actions { display: flex; gap: .35rem; margin-left: auto; flex-shrink: 0; }
+    .tipo-form-inline {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: .6rem;
+      padding: .75rem 1rem;
+      background: #f9fafb;
+      border-top: 1px solid rgba(34,33,33,.06);
+      border-bottom: 1px solid rgba(34,33,33,.06);
+    }
+    .tipo-input {
+      padding: .45rem .7rem;
+      border: 1px solid rgba(34,33,33,.2);
+      border-radius: 8px;
+      font-size: .85rem;
+      font-family: inherit;
+      min-width: 160px;
+    }
+    .tipo-input:focus { outline: 2px solid #0095d6; border-color: transparent; }
   `],
 })
 export class ActivosPageComponent implements OnInit {
   protected readonly service         = inject(ActivosService);
+  protected readonly tiposService    = inject(TiposActivoService);
   protected readonly centrosService  = inject(CentrosService);
   protected readonly clientesService = inject(ClientesService);
+  private readonly authService       = inject(AuthService);
+
+  protected puedeGestionarTipos = computed(() =>
+    this.authService.usuarioActual()?.rol === 'super_admin'
+  );
 
   protected modal     = signal<ModalMode>(null);
   protected busqueda  = signal('');
@@ -89,9 +152,11 @@ export class ActivosPageComponent implements OnInit {
   protected activosFiltrados = computed(() => {
     const q = this.busqueda().toLowerCase().trim();
     if (!q) return this.service.activos();
-    return this.service.activos().filter(a =>
-      a.nombre.toLowerCase().includes(q) || a.tipo_activo.toLowerCase().includes(q)
-    );
+    return this.service.activos().filter(a => {
+      const tipo = this.tipoDeActivo(a);
+      return a.nombre.toLowerCase().includes(q) ||
+        (tipo?.nombre ?? '').toLowerCase().includes(q);
+    });
   });
 
   protected get activoEditando(): Activo | null {
@@ -120,6 +185,12 @@ export class ActivosPageComponent implements OnInit {
     this.centrosService.cargar();
     this.service.cargar();
     this.clientesService.cargar();
+    this.tiposService.cargar();
+  }
+
+  protected tipoDeActivo(a: Activo): TipoActivo | null {
+    if (typeof a.tipo_activo_id === 'object') return a.tipo_activo_id as TipoActivo;
+    return this.tiposService.tipos().find(t => t._id === (a.tipo_activo_id as string)) ?? null;
   }
 
   protected abrirCrear(): void {
@@ -216,4 +287,47 @@ export class ActivosPageComponent implements OnInit {
       () => { this.subiendoDocs = false; },
     );
   }
+
+  // ── Gestión de tipos ──────────────────────────────────────────────
+  protected showTipos     = signal(false);
+  protected showTipoForm  = signal(false);
+  protected editingTipoId = signal<string | null>(null);
+  protected tipoForm      = signal<TipoForm>(emptyTipoForm());
+
+  toggleTipos(): void { this.showTipos.update(v => !v); }
+
+  abrirNuevoTipo(): void {
+    this.editingTipoId.set(null);
+    this.tipoForm.set(emptyTipoForm());
+    this.showTipoForm.set(true);
+    this.tiposService.clearStatus();
+  }
+
+  abrirEditarTipo(t: TipoActivo): void {
+    this.editingTipoId.set(t._id);
+    this.tipoForm.set({ nombre: t.nombre, color: t.color });
+    this.showTipoForm.set(true);
+    this.tiposService.clearStatus();
+  }
+
+  cerrarTipoForm(): void {
+    this.showTipoForm.set(false);
+    this.editingTipoId.set(null);
+  }
+
+  patchTipoForm(field: keyof TipoForm, value: string): void {
+    this.tipoForm.update(f => ({ ...f, [field]: value }));
+  }
+
+  guardarTipo(): void {
+    const f = this.tipoForm();
+    if (!f.nombre.trim()) return;
+    const dto = { nombre: f.nombre.trim(), color: f.color };
+    const id = this.editingTipoId();
+    if (id) this.tiposService.actualizar(id, dto);
+    else     this.tiposService.crear(dto);
+    this.cerrarTipoForm();
+  }
+
+  eliminarTipo(id: string): void { this.tiposService.eliminar(id); }
 }
