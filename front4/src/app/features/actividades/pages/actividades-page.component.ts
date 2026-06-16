@@ -123,6 +123,38 @@ export class ActividadesPageComponent implements OnInit {
     return parts.length > 0 ? parts.join(' · ') : 'Sin destinatarios';
   });
 
+  protected resumenActivosTexto = computed(() => {
+    const n = this.form().activo_ids.length;
+    return n > 0 ? `${n} activo${n > 1 ? 's' : ''} incluido${n > 1 ? 's' : ''}` : 'Sin activos';
+  });
+
+  protected resumenActivosLista = computed(() => {
+    const ids = this.form().activo_ids;
+    return this.activosService.activos()
+      .filter(a => ids.includes(a._id))
+      .map(a => a.nombre);
+  });
+
+  protected resumenNotifLista = computed(() => {
+    if (!this.notifNotificar()) return [];
+    const items: string[] = [];
+    const todos = this.usuariosService.usuarios();
+    for (const id of this.notifUsuariosIds()) {
+      const u = todos.find(x => x._id === id);
+      if (u) items.push(u.nombre);
+    }
+    for (const id of this.notifAdminsIds()) {
+      const u = todos.find(x => x._id === id);
+      if (u) items.push(`${u.nombre} (admin)`);
+    }
+    if (this.notifSuperAdmins()) items.push('Todos los super admins');
+    return items;
+  });
+
+  protected showResumenActivos = signal(false);
+  protected showResumenNotif   = signal(false);
+  protected modalLupa          = signal<'activos' | 'notif' | null>(null);
+
   get resumenDocumentosTexto(): string {
     if (this.editingId()) {
       const docs = this.actividadEditando?.documentos ?? [];
@@ -163,19 +195,47 @@ export class ActividadesPageComponent implements OnInit {
   readonly days   = CALENDAR_DAYS;
   readonly months = CALENDAR_MONTHS;
 
-  private readonly _cal        = createCalendarState();
-  protected readonly view       = this._cal.view;
-  protected readonly reference  = this._cal.reference;
+  private readonly _cal         = createCalendarState();
+  protected readonly view        = this._cal.view;
+  protected readonly reference   = this._cal.reference;
   protected readonly monthLabel  = this._cal.monthLabel;
+  protected readonly dayLabel    = this._cal.dayLabel;
   protected readonly weekLabel   = this._cal.weekLabel;
   protected readonly calendarDays = this._cal.calendarDays;
   protected readonly weekStart   = this._cal.weekStart;
   protected readonly weekDays    = this._cal.weekDays;
-  navAnterior(): void  { this._cal.navAnterior(); }
-  navSiguiente(): void { this._cal.navSiguiente(); }
-  irAHoy(): void       { this._cal.irAHoy(); }
-  setView(v: CalendarView): void { this._cal.setView(v); }
+  navAnterior(): void            { this._cal.navAnterior(); this.actividadSeleccionadaDia.set(null); }
+  navSiguiente(): void           { this._cal.navSiguiente(); this.actividadSeleccionadaDia.set(null); }
+  irAHoy(): void                 { this._cal.irAHoy(); this.actividadSeleccionadaDia.set(null); }
+  setView(v: CalendarView): void { this._cal.setView(v); this.actividadSeleccionadaDia.set(null); }
   isToday(date: Date): boolean   { return this._cal.isToday(date); }
+
+  protected actividadSeleccionadaDia = signal<import('../../../shared/models/actividad.model').Actividad | null>(null);
+
+  seleccionarActividadDia(a: Actividad): void {
+    this.actividadSeleccionadaDia.set(a);
+  }
+
+  protected readonly detalleActividad = computed(() => {
+    const a = this.actividadSeleccionadaDia();
+    if (!a) return null;
+    const tipo = this.tipoDeActividad(a);
+    const centroId = asId(a.centro_costo_id);
+    const centro = this.centrosService.centros().find(c => asId(c._id) === centroId);
+    const empresa = centro
+      ? this.clientesService.clientes().find(cl => asId(cl._id) === asId(centro.cliente_id))
+      : null;
+    return { a, tipo, centro, empresa };
+  });
+
+  protected readonly detalleActivos = computed(() => {
+    const a = this.actividadSeleccionadaDia();
+    if (!a || !a.activo_ids?.length) return [];
+    return a.activo_ids.map(x => {
+      const id = asId(typeof x === 'object' ? (x as { _id: string })._id : x);
+      return this.activosService.activos().find(act => act._id === id)?.nombre ?? id;
+    });
+  });
 
   actividadesEnDia(date: Date): Actividad[] {
     const key = toDateKey(date);
@@ -351,6 +411,8 @@ export class ActividadesPageComponent implements OnInit {
     this.paso.set(1);
     this.pasoMaxAlcanzado.set(1);
     this.errorPaso1.set('');
+    this.showResumenActivos.set(false);
+    this.showResumenNotif.set(false);
     this.showModal.set(true);
     this.service.clearStatus();
   }
@@ -372,6 +434,8 @@ export class ActividadesPageComponent implements OnInit {
     this.paso.set(1);
     this.pasoMaxAlcanzado.set(4);
     this.errorPaso1.set('');
+    this.showResumenActivos.set(false);
+    this.showResumenNotif.set(false);
     this.showModal.set(true);
     this.service.clearStatus();
   }
@@ -383,6 +447,9 @@ export class ActividadesPageComponent implements OnInit {
     this.paso.set(1);
     this.pasoMaxAlcanzado.set(1);
     this.errorPaso1.set('');
+    this.showResumenActivos.set(false);
+    this.showResumenNotif.set(false);
+    this.modalLupa.set(null);
   }
 
   patchForm(field: keyof ActividadForm, value: string | string[]): void {
@@ -455,12 +522,24 @@ export class ActividadesPageComponent implements OnInit {
     this.cerrarModal();
   }
 
-  protected showTipos      = signal(false);
+  protected showTiposModal = signal(false);
   protected editingTipoId  = signal<string | null>(null);
   protected tipoForm       = signal<TipoForm>(emptyTipoForm());
   protected showTipoForm   = signal(false);
 
-  toggleTipos(): void { this.showTipos.update(v => !v); }
+  abrirTiposModal(): void {
+    this.editingTipoId.set(null);
+    this.tipoForm.set(emptyTipoForm());
+    this.showTipoForm.set(false);
+    this.tiposService.clearStatus();
+    this.showTiposModal.set(true);
+  }
+
+  cerrarTiposModal(): void {
+    this.showTiposModal.set(false);
+    this.editingTipoId.set(null);
+    this.showTipoForm.set(false);
+  }
 
   abrirNuevoTipo(): void {
     this.editingTipoId.set(null);
