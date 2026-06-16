@@ -95,7 +95,7 @@ export interface DocPendiente { file: File; nombre: string; }
           @if (!centroFijo) {
             <div class="field">
               <label>Empresa *</label>
-              <select [(ngModel)]="empresaId" name="empresa_id" (ngModelChange)="onEmpresaChange($event)">
+              <select [ngModel]="empresaId()" name="empresa_id" (ngModelChange)="onEmpresaChange($event)">
                 <option value="">Selecciona una empresa</option>
                 @for (e of clientes; track e._id) {
                   <option [value]="e._id">{{ e.razon_social }}</option>
@@ -104,8 +104,8 @@ export interface DocPendiente { file: File; nombre: string; }
             </div>
             <div class="field">
               <label>Centro de costos *</label>
-              <select [(ngModel)]="form.centro_costo_id" name="centro_costo_id" [disabled]="!empresaId" required>
-                <option value="">{{ empresaId ? 'Selecciona un centro' : 'Primero selecciona una empresa' }}</option>
+              <select [(ngModel)]="form.centro_costo_id" name="centro_costo_id" [disabled]="!empresaId()" required>
+                <option value="">{{ empresaId() ? 'Selecciona un centro' : 'Primero selecciona una empresa' }}</option>
                 @for (c of centrosFiltrados(); track c._id) {
                   <option [value]="c._id">{{ c.nombre }}</option>
                 }
@@ -223,7 +223,7 @@ export class ActivosFormComponent implements OnChanges {
   @Output() docEliminado    = new EventEmitter<string>();
   @Output() docDescargado   = new EventEmitter<{ nombre: string; nombreDisplay?: string }>();
 
-  empresaId = '';
+  empresaId = signal('');
   form: CreateActivoDto = { nombre: '', tipo_activo: '', centro_costo_id: '', descripcion: '' };
 
   fileSelected: File | null = null;
@@ -233,8 +233,8 @@ export class ActivosFormComponent implements OnChanges {
   private _centros = signal<CentroCosto[]>([]);
 
   centrosFiltrados = computed(() => {
-    if (!this.empresaId) return [];
-    return this._centros().filter(c => asId(c.cliente_id) === this.empresaId);
+    if (!this.empresaId()) return [];
+    return this._centros().filter(c => asId(c.cliente_id) === this.empresaId());
   });
 
   ngOnChanges(_: SimpleChanges): void {
@@ -247,7 +247,7 @@ export class ActivosFormComponent implements OnChanges {
         descripcion:     this.initial.descripcion ?? '',
       };
       const centro = this.centros.find(c => asId(c._id) === asId(this.initial!.centro_costo_id));
-      this.empresaId = centro ? asId(centro.cliente_id) : '';
+      this.empresaId.set(centro ? asId(centro.cliente_id) : '');
     } else {
       this.form = {
         nombre:          '',
@@ -255,7 +255,7 @@ export class ActivosFormComponent implements OnChanges {
         centro_costo_id: this.centroFijo?._id ?? '',
         descripcion:     '',
       };
-      this.empresaId = '';
+      this.empresaId.set('');
     }
     if (this.centroFijo) {
       this.form.centro_costo_id = this.centroFijo._id;
@@ -263,7 +263,7 @@ export class ActivosFormComponent implements OnChanges {
   }
 
   onEmpresaChange(empresaId: string): void {
-    this.empresaId = empresaId;
+    this.empresaId.set(empresaId);
     this.form.centro_costo_id = '';
   }
 
