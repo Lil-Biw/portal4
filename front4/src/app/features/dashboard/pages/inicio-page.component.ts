@@ -224,7 +224,7 @@ export class InicioPageComponent implements OnInit {
       normativas: { bg: '#fef3c7', color: '#b45309', tipo: 'documento' },
       anuncios:   { bg: '#dcfce7', color: '#15803d', tipo: 'megafono' },
     };
-    return map[seccion];
+    return map[seccion] ?? { bg: '#f1f5f9', color: '#64748b', tipo: 'carrito' };
   }
 
 }

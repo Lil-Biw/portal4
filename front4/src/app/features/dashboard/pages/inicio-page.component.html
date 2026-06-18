@@ -58,11 +58,10 @@
             </p>
           }
           <!-- Resumen compacto -->
-          @let r2 = resumenCentro(centro._id);
           <p style="margin:0;font-size:.78rem;color:#6b7280">
-            <span style="color:#15803d;font-weight:600">{{ r2.aprobado }} aprob.</span>
+            <span style="color:#15803d;font-weight:600">{{ r.aprobado }} aprob.</span>
             &nbsp;&nbsp;
-            <span style="color:#0284c7;font-weight:600">{{ r2.pendiente }} pend.</span>
+            <span style="color:#0284c7;font-weight:600">{{ r.pendiente }} pend.</span>
           </p>
         </div>
       }
@@ -176,6 +175,11 @@
                     <path d="M11 11.34V20a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1v-5"/>
                     <path d="M3 9.12A14.96 14.96 0 0 0 11 12v-2a14.96 14.96 0 0 0-8-2.88z"/>
                     <path d="M11 10V6a6 6 0 0 1 6 0v8"/>
+                  }
+                  @default {
+                    <circle cx="12" cy="12" r="9"/>
+                    <line x1="12" y1="8" x2="12" y2="12"/>
+                    <line x1="12" y1="16" x2="12.01" y2="16"/>
                   }
                 }
               </svg>
