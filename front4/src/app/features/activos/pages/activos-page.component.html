@@ -10,10 +10,46 @@
   </div>
 </div>
 
+<!-- Recuadro de contexto -->
+<div class="card" style="margin-bottom:1rem">
+  <p style="margin:0 0 .75rem;font-size:.85rem;font-weight:600;color:#374151">Selecciona el contexto</p>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:.75rem">
+    <label class="field">
+      <span>Empresa</span>
+      <select [(ngModel)]="selectedEmpresaId" (ngModelChange)="onEmpresaChange()">
+        <option value="">Todas</option>
+        @for (c of clientesService.clientes(); track c._id) {
+          <option [value]="c._id">{{ c.razon_social }}</option>
+        }
+      </select>
+    </label>
+    <label class="field">
+      <span>Centro de costos</span>
+      <select [(ngModel)]="selectedCentroId" (ngModelChange)="onCentroChange()" [disabled]="!selectedEmpresaId">
+        <option value="">Todos</option>
+        @for (c of centrosFiltrados(); track c._id) {
+          <option [value]="c._id">{{ c.nombre }}</option>
+        }
+      </select>
+    </label>
+    <label class="field">
+      <span>Tipo de activo</span>
+      <select [(ngModel)]="selectedTipoId">
+        <option value="">Todos</option>
+        @for (t of tiposService.tipos(); track t._id) {
+          <option [value]="t._id">{{ t.nombre }}</option>
+        }
+      </select>
+    </label>
+  </div>
+</div>
+
+@if (selectedEmpresaId) {
+
 <app-status-banner [status]="service.status()"></app-status-banner>
 
 <app-activos-list
-  [activos]="service.activos()"
+  [activos]="activosFiltrados()"
   [centros]="centrosService.centros()"
   [clientes]="clientesService.clientes()"
   [tipos]="tiposService.tipos()"
@@ -21,10 +57,16 @@
   (eliminado)="eliminar($event)">
 </app-activos-list>
 
+} @else {
+  <div class="card" style="padding:2rem;text-align:center;color:#9ca3af">
+    <p style="margin:0;font-size:.9rem">Selecciona una empresa para ver los activos.</p>
+  </div>
+}
+
 <!-- Modales -->
 @if (modal() !== null) {
   <div class="modal-backdrop" (click)="cerrar()">
-    <div class="modal" (click)="$event.stopPropagation()">
+    <div class="modal" [style.max-width]="modal() === 'tipos' ? '1000px' : '860px'" (click)="$event.stopPropagation()">
 
       <!-- Crear activo -->
       @if (modal() === 'crear') {
@@ -114,15 +156,26 @@
               placeholder="Nombre del tipo *"
               [ngModel]="tipoForm().nombre"
               (ngModelChange)="patchTipoForm('nombre', $event)" />
-            <div style="display:flex;align-items:center;gap:.6rem;margin-bottom:.75rem">
-              <input
-                type="color"
-                [ngModel]="tipoForm().color"
-                (ngModelChange)="patchTipoForm('color', $event)"
-                style="width:40px;height:40px;border:none;padding:0;cursor:pointer;border-radius:8px" />
-              <span style="font-size:.8rem;color:#6b7280">{{ tipoForm().color }}</span>
-              <span style="width:20px;height:20px;border-radius:50%;flex-shrink:0"
-                [style.background]="tipoForm().color"></span>
+            <!-- Selector de color: chips fijos -->
+            <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:.6rem;margin-top:.25rem">
+              @for (c of coloresActivo; track c.valor) {
+                <button type="button"
+                  [title]="c.label"
+                  (click)="patchTipoForm('color', c.valor)"
+                  [style.background]="c.valor"
+                  [style.outline]="tipoForm().color === c.valor ? '3px solid #1f2937' : 'none'"
+                  [style.outline-offset]="'2px'"
+                  [style.transform]="tipoForm().color === c.valor ? 'scale(1.15)' : 'scale(1)'"
+                  style="width:32px;height:32px;border-radius:50%;border:2px solid white;
+                         cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.2);
+                         transition:transform .1s;">
+                </button>
+              }
+            </div>
+            <!-- Preview del ícono resultante -->
+            <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.75rem">
+              <app-activo-icono [color]="tipoForm().color" [size]="20"></app-activo-icono>
+              <span style="font-size:.78rem;color:#6b7280">Ícono asignado al color</span>
             </div>
             <div style="display:flex;gap:.5rem">
               <button class="btn-primary btn-sm" (click)="guardarTipo()"
@@ -145,7 +198,9 @@
                 @for (t of tiposService.tipos(); track t._id) {
                   <div class="tipo-item">
                     <span class="tipo-dot" [style.background]="t.color"></span>
-                    <span class="tipo-nombre">{{ t.nombre }}</span>
+                    <div class="tipo-texto">
+                      <span class="tipo-nombre">{{ t.nombre }}</span>
+                    </div>
                     <div class="tipo-actions">
                       <button class="btn-ghost" (click)="abrirEditarTipo(t)">Editar</button>
                       <button class="btn-danger" (click)="eliminarTipo(t._id)">Eliminar</button>

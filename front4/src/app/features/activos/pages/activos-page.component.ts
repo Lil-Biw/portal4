@@ -8,7 +8,10 @@ import { AuthService } from '../../auth/auth.service';
 import { StatusBannerComponent } from '../../../shared/components/status-banner/status-banner.component';
 import { ActivosFormComponent, DocPendiente } from '../components/activos-form/activos-form.component';
 import { ActivosListComponent } from '../components/activos-list/activos-list.component';
+import { ActivoIconoComponent } from '../components/activo-icono/activo-icono.component';
 import { Activo, CreateActivoDto, DocActivo, TipoActivo } from '../../../shared/models/activo.model';
+import { asId } from '../../../shared/utils';
+import { COLORES_ACTIVO, ColorActivo } from '../activos-icons';
 
 type ModalMode = 'crear' | 'editar' | 'buscar' | 'tipos' | null;
 
@@ -18,7 +21,7 @@ function emptyTipoForm(): TipoForm { return { nombre: '', color: '#0095d6' }; }
 @Component({
   selector: 'app-activos-page',
   standalone: true,
-  imports: [FormsModule, StatusBannerComponent, ActivosFormComponent, ActivosListComponent],
+  imports: [FormsModule, StatusBannerComponent, ActivosFormComponent, ActivosListComponent, ActivoIconoComponent],
   templateUrl: './activos-page.component.html',
   styles: [`
     .page-header {
@@ -90,17 +93,18 @@ function emptyTipoForm(): TipoForm { return { nombre: '', color: '#0095d6' }; }
       margin: 0 0 .75rem;
     }
     .tipos-empty { color: #9ca3af; font-size: .85rem; margin: .5rem 0; }
-    .tipos-list { display: flex; flex-direction: column; gap: 0; }
+    .tipos-list { display: flex; flex-direction: column; gap: 0; max-height: 320px; overflow-y: auto; padding-right: .25rem; }
     .tipo-item {
       display: flex;
-      align-items: center;
+      align-items: flex-start;
       gap: .6rem;
       padding: .55rem 0;
       border-bottom: 1px solid rgba(34,33,33,.06);
     }
     .tipo-item:last-child { border-bottom: none; }
-    .tipo-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
-    .tipo-nombre { font-size: .85rem; font-weight: 600; color: #1f2937; flex: 1; }
+    .tipo-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; margin-top: 3px; }
+    .tipo-texto { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: .15rem; }
+    .tipo-nombre { font-size: .85rem; font-weight: 600; color: #1f2937; word-break: break-word; }
     .tipo-actions { display: flex; gap: .35rem; flex-shrink: 0; }
     .tipo-input {
       width: 100%;
@@ -122,6 +126,8 @@ export class ActivosPageComponent implements OnInit {
   protected readonly clientesService = inject(ClientesService);
   private readonly authService       = inject(AuthService);
 
+  protected readonly coloresActivo: ColorActivo[] = COLORES_ACTIVO;
+
   protected puedeGestionarTipos = computed(() =>
     this.authService.usuarioActual()?.rol === 'super_admin'
   );
@@ -133,14 +139,33 @@ export class ActivosPageComponent implements OnInit {
   protected docsPendientes: DocPendiente[] = [];
   protected subiendoDocs = false;
 
+  // ── Contexto ─────────────────────────────────────────────────────────────
+  private _selectedEmpresaId = signal('');
+  private _selectedCentroId  = signal('');
+  private _selectedTipoId    = signal('');
+
+  get selectedEmpresaId()            { return this._selectedEmpresaId(); }
+  set selectedEmpresaId(v: string)   { this._selectedEmpresaId.set(v); }
+  get selectedCentroId()             { return this._selectedCentroId(); }
+  set selectedCentroId(v: string)    { this._selectedCentroId.set(v); }
+  get selectedTipoId()               { return this._selectedTipoId(); }
+  set selectedTipoId(v: string)      { this._selectedTipoId.set(v); }
+
+  protected centrosFiltrados = computed(() => {
+    if (!this._selectedEmpresaId()) return [];
+    return this.centrosService.centros().filter(c => asId(c.cliente_id) === this._selectedEmpresaId());
+  });
+
   protected activosFiltrados = computed(() => {
-    const q = this.busqueda().toLowerCase().trim();
-    if (!q) return this.service.activos();
-    return this.service.activos().filter(a => {
-      const tipo = this.tipoDeActivo(a);
-      return a.nombre.toLowerCase().includes(q) ||
-        (tipo?.nombre ?? '').toLowerCase().includes(q);
+    const q    = this.busqueda().toLowerCase().trim();
+    const tipo = this._selectedTipoId();
+    let list = this.service.activos();
+    if (tipo) list = list.filter(a => this.tipoDeActivo(a)?._id === tipo);
+    if (q) list = list.filter(a => {
+      const t = this.tipoDeActivo(a);
+      return a.nombre.toLowerCase().includes(q) || (t?.nombre ?? '').toLowerCase().includes(q);
     });
+    return list;
   });
 
   protected get activoEditando(): Activo | null {
@@ -167,9 +192,30 @@ export class ActivosPageComponent implements OnInit {
 
   ngOnInit(): void {
     this.centrosService.cargar();
-    this.service.cargar();
     this.clientesService.cargar();
     this.tiposService.cargar();
+  }
+
+  onEmpresaChange(): void {
+    this._selectedCentroId.set('');
+    this._selectedTipoId.set('');
+    this.recargarActivos();
+  }
+
+  onCentroChange(): void {
+    this.recargarActivos();
+  }
+
+  private recargarActivos(): void {
+    const empresaId = this._selectedEmpresaId();
+    const centroId  = this._selectedCentroId();
+    if (!empresaId) { return; }
+    if (!centroId) {
+      const ids = this.centrosFiltrados().map(c => asId(c._id));
+      this.service.cargarPorCentros(empresaId, ids);
+      return;
+    }
+    this.service.cargar(centroId);
   }
 
   protected tipoDeActivo(a: Activo): TipoActivo | null {
