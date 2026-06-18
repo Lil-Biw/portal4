@@ -78,10 +78,32 @@
       <app-stat-chip [label]="scoreChipLabel()" [variant]="scoreChipVariant()"></app-stat-chip>
     </div>
     <div style="text-align:center;padding:.5rem 0 .75rem">
-      <p style="margin:0 0 .2rem;line-height:1">
-        <span style="font-size:3.5rem;font-weight:700;color:#0095d6">{{ scoreDocumental().pct }}</span>
-        <span style="font-size:1.4rem;color:#6b7280;font-weight:400">/ 100</span>
-      </p>
+      <!-- Gauge SVG -->
+      <svg width="200" height="115" viewBox="0 0 200 115" style="display:block;margin:0 auto;overflow:visible">
+        <defs>
+          <linearGradient id="scoreGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#0095d6"/>
+            <stop offset="100%" stop-color="#22c55e"/>
+          </linearGradient>
+        </defs>
+        <!-- Arco de fondo (270°): dasharray=376.99 de 502.65 total, rotado 135° -->
+        <circle cx="100" cy="110" r="80" fill="none"
+          stroke="#e5e7eb" stroke-width="14"
+          stroke-dasharray="376.99 125.66"
+          transform="rotate(135 100 110)"/>
+        <!-- Arco de progreso -->
+        <circle cx="100" cy="110" r="80" fill="none"
+          stroke="url(#scoreGrad)" stroke-width="14" stroke-linecap="round"
+          [attr.stroke-dasharray]="(376.99 * scoreDocumental().pct / 100) + ' 502.65'"
+          transform="rotate(135 100 110)"/>
+        <!-- Número central -->
+        <text x="100" y="88" text-anchor="middle"
+          font-size="42" font-weight="700" fill="#0095d6">
+          {{ scoreDocumental().pct }}
+        </text>
+        <text x="100" y="106" text-anchor="middle"
+          font-size="13" fill="#6b7280">/ 100</text>
+      </svg>
       @if (scoreDocumental().total > 0) {
         <p style="margin:.4rem 0 .9rem;font-size:.83rem;color:#6b7280">
           {{ scoreDocumental().aprobados }} de {{ scoreDocumental().total }} documentos solicitados aprobados
@@ -89,9 +111,6 @@
       } @else {
         <p style="margin:.4rem 0 .9rem;font-size:.83rem;color:#9ca3af">Sin solicitudes registradas</p>
       }
-      <div style="background:#e5e7eb;border-radius:999px;height:8px;overflow:hidden;margin-bottom:.9rem">
-        <div [style.width]="scoreDocumental().pct + '%'" style="height:100%;background:linear-gradient(90deg,#0095d6,#22c55e);border-radius:999px;transition:width .4s"></div>
-      </div>
       <!-- Recuadros de estado -->
       <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:.4rem">
         <div style="padding:.5rem .3rem;border-radius:9px;text-align:center;background:#dcfce7">
