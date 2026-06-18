@@ -196,17 +196,36 @@
 <!-- Tareas | Mantenciones -->
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:.85rem">
   <div class="card">
-    <h3 style="margin:0 0 .9rem;font-size:1rem;font-weight:700">Tareas pendientes</h3>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.9rem">
+      <h3 style="margin:0;font-size:1rem;font-weight:700">Tareas pendientes</h3>
+      @if (tareasReales().length > 0) {
+        <span style="font-size:.75rem;font-weight:600;color:#fff;background:#ef4444;border-radius:999px;padding:.2rem .6rem">
+          {{ tareasReales().length }} acciones
+        </span>
+      }
+    </div>
     @if (tareasReales().length === 0) {
       <p style="font-size:.83rem;color:#9ca3af;padding:.25rem 0">Sin documentos pendientes de acción.</p>
     } @else {
       @for (t of tareasReales(); track t._id; let last = $last) {
         <div style="display:flex;align-items:center;justify-content:space-between;padding:.7rem 0" [style.border-bottom]="last ? 'none' : '1px solid rgba(34,33,33,.07)'">
-          <div style="display:flex;align-items:center;gap:.65rem">
-            <span style="width:8px;height:8px;border-radius:50%;flex-shrink:0" [style.background]="tareaColor(t.estado)"></span>
-            <span style="font-size:.875rem;color:#1f2937">{{ t.nombre }}</span>
+          <div style="display:flex;align-items:flex-start;gap:.65rem">
+            <span style="width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:.35rem" [style.background]="tareaColor(t.estado)"></span>
+            <div>
+              <p style="margin:0 0 .15rem;font-size:.875rem;color:#1f2937;font-weight:600">{{ t.nombre }}</p>
+              <p style="margin:0;font-size:.75rem;color:#9ca3af">
+                {{ t.tipo }}
+                @if (nombreCentroById(t.centro_costo_id)) {
+                  · {{ nombreCentroById(t.centro_costo_id) }}
+                }
+              </p>
+            </div>
           </div>
-          <span style="font-size:.78rem;font-weight:600;white-space:nowrap;margin-left:.5rem" [style.color]="tareaColor(t.estado)">{{ tareaLabel(t.estado) }}</span>
+          @if (t.estado === 'rechazado') {
+            <span style="font-size:.75rem;font-weight:600;color:#dc2626;background:#fee2e2;border-radius:6px;padding:.2rem .55rem;white-space:nowrap;flex-shrink:0;margin-left:.5rem">
+              Rechazado
+            </span>
+          }
         </div>
       }
     }
