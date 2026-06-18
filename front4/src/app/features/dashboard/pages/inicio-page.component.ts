@@ -1,4 +1,5 @@
 import { Component, OnInit, inject, computed, effect, untracked } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { StatChipComponent, ChipVariant } from '../../../shared/components/stat-chip/stat-chip.component';
 import { ConsumidorContextService } from '../../../profile/consumidor-context.service';
 import { CentrosService } from '../../centros/centros.service';
@@ -22,7 +23,7 @@ interface ResumenSolicitudes {
 @Component({
   selector: 'app-inicio-page',
   standalone: true,
-  imports: [StatChipComponent],
+  imports: [StatChipComponent, RouterLink],
   templateUrl: './inicio-page.component.html',
 })
 export class InicioPageComponent implements OnInit {
