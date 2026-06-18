@@ -3,6 +3,7 @@ import { Activo, TipoActivo } from '../../../../shared/models/activo.model';
 import { CentroCosto } from '../../../../shared/models/centro.model';
 import { Cliente } from '../../../../shared/models/cliente.model';
 import { asId } from '../../../../shared/utils';
+import { ActivoIconoComponent } from '../activo-icono/activo-icono.component';
 
 interface GrupoCentro  { centro: CentroCosto; activos: Activo[]; }
 interface GrupoEmpresa { empresa: Cliente; centros: GrupoCentro[]; }
@@ -10,6 +11,7 @@ interface GrupoEmpresa { empresa: Cliente; centros: GrupoCentro[]; }
 @Component({
   selector: 'app-activos-list',
   standalone: true,
+  imports: [ActivoIconoComponent],
   templateUrl: './activos-list.component.html',
 })
 export class ActivosListComponent implements OnChanges {
