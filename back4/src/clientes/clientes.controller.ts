@@ -16,6 +16,7 @@ import {
   Res,
 } from '@nestjs/common';
 import { Request, Response } from 'express';
+import { sendFile } from '../common/helpers/send-file.helper';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
 import { ClientesService } from './clientes.service';
@@ -114,12 +115,7 @@ export class ClientesController {
   async servirLogo(@Param('id') id: string, @Res() res: Response) {
     const { buffer, tipo_mime, nombre } =
       await this.clientesService.servirLogo(id);
-    res.setHeader('Content-Type', tipo_mime);
-    res.setHeader(
-      'Content-Disposition',
-      `inline; filename="${encodeURIComponent(nombre)}"`,
-    );
-    res.send(buffer);
+    sendFile(res, buffer, tipo_mime, nombre, true);
   }
 
   @Post(':id/documentos')
@@ -158,12 +154,7 @@ export class ClientesController {
     this.assertEmpresaPermitida((req as any).user as JwtUser, id);
     const { buffer, tipo_mime, nombre_display } =
       await this.clientesService.servirDocumento(id, docId);
-    res.setHeader('Content-Type', tipo_mime);
-    res.setHeader(
-      'Content-Disposition',
-      `attachment; filename="${encodeURIComponent(nombre_display)}"`,
-    );
-    res.send(buffer);
+    sendFile(res, buffer, tipo_mime, nombre_display);
   }
 
   @Delete(':id/documentos/:docId')

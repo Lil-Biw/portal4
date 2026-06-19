@@ -13,7 +13,7 @@ import { DonutArcComponent } from '../../../shared/components/donut-arc/donut-ar
 import { ActivoIconoComponent } from '../../activos/components/activo-icono/activo-icono.component';
 import { CentroCosto } from '../../../shared/models/centro.model';
 import { Activo, TipoActivo } from '../../../shared/models/activo.model';
-import { asId } from '../../../shared/utils';
+import { asId, calcularScoreDocumental, scoreChipVariantFn, scoreChipLabelFn, colorEstadoSolicitud, estadoStyleFn } from '../../../shared/utils';
 
 @Component({
   selector: 'app-mis-centros-page',
@@ -90,20 +90,10 @@ export class MisCentrosPageComponent implements OnInit, OnDestroy {
   // ── Score documental del centro ─────────────────────────────────────────
   protected scoreDelCentro = computed(() => {
     const centro = this.consumidorContext.centroSeleccionado();
-    if (!centro) return { pct: 0, aprobados: 0, revision: 0, vencido: 0, rechazado: 0, pendiente: 0, total: 0 };
+    if (!centro) return calcularScoreDocumental([]);
     const sols = this.solicitudesService.solicitudes()
       .filter(s => s.centro_costo_id === asId(centro._id));
-    if (sols.length === 0) return { pct: 0, aprobados: 0, revision: 0, vencido: 0, rechazado: 0, pendiente: 0, total: 0 };
-    const aprobados = sols.filter(s => s.estado === 'aprobado').length;
-    const revision  = sols.filter(s => s.estado === 'revision').length;
-    const vencido   = sols.filter(s => s.estado === 'vencido').length;
-    const rechazado = sols.filter(s => s.estado === 'rechazado').length;
-    const pendiente = sols.filter(s => s.estado === 'pendiente').length;
-    return {
-      pct: Math.round((aprobados / sols.length) * 100),
-      aprobados, revision, vencido, rechazado, pendiente,
-      total: sols.length,
-    };
+    return calcularScoreDocumental(sols);
   });
 
   protected solicitudesDelCentro = computed(() => {
@@ -116,43 +106,14 @@ export class MisCentrosPageComponent implements OnInit, OnDestroy {
   scoreDeCentro(centroId: string) {
     const sols = this.solicitudesService.solicitudes()
       .filter(s => s.centro_costo_id === centroId);
-    if (sols.length === 0) return { pct: 0, aprobados: 0, revision: 0, vencido: 0, rechazado: 0, pendiente: 0, total: 0 };
-    const aprobados = sols.filter(s => s.estado === 'aprobado').length;
-    return {
-      pct: Math.round((aprobados / sols.length) * 100),
-      aprobados,
-      revision:  sols.filter(s => s.estado === 'revision').length,
-      vencido:   sols.filter(s => s.estado === 'vencido').length,
-      rechazado: sols.filter(s => s.estado === 'rechazado').length,
-      pendiente: sols.filter(s => s.estado === 'pendiente').length,
-      total: sols.length,
-    };
+    return calcularScoreDocumental(sols);
   }
 
-  estadoStyle(estado: string): string {
-    const map: Record<string, string> = {
-      pendiente: 'background:#fef3c7;color:#b45309',
-      revision:  'background:#dbeafe;color:#1e40af',
-      aprobado:  'background:#dcfce7;color:#15803d',
-      rechazado: 'background:#fee2e2;color:#dc2626',
-      vencido:   'background:#f3f4f6;color:#374151',
-    };
-    return map[estado] ?? 'background:#f3f4f6;color:#374151';
-  }
+  protected readonly estadoStyle = estadoStyleFn;
 
-  protected scoreChipVariant = computed((): ChipVariant => {
-    const pct = this.scoreDelCentro().pct;
-    if (pct >= 80) return 'ok';
-    if (pct >= 50) return 'warning';
-    return 'danger';
-  });
+  protected scoreChipVariant = computed((): ChipVariant => scoreChipVariantFn(this.scoreDelCentro().pct));
 
-  protected scoreChipLabel = computed((): string => {
-    const pct = this.scoreDelCentro().pct;
-    if (pct >= 80) return 'Bueno';
-    if (pct >= 50) return 'Regular';
-    return 'Bajo';
-  });
+  protected scoreChipLabel = computed((): string => scoreChipLabelFn(this.scoreDelCentro().pct));
 
   // ── Map URL ─────────────────────────────────────────────────────────────
   protected mapUrl = computed((): SafeResourceUrl => {
@@ -235,14 +196,5 @@ export class MisCentrosPageComponent implements OnInit, OnDestroy {
     return { color: '#6b7280', tipo: 'file' };
   }
 
-  dotColorSolicitud(estado: string): string {
-    const map: Record<string, string> = {
-      pendiente: '#0095d6',
-      revision:  '#f59e0b',
-      aprobado:  '#22c55e',
-      rechazado: '#ef4444',
-      vencido:   '#9ca3af',
-    };
-    return map[estado] ?? '#9ca3af';
-  }
+  protected readonly dotColorSolicitud = colorEstadoSolicitud;
 }

@@ -7,7 +7,7 @@ import { SolicitudesService } from '../../solicitudes/solicitudes.service';
 import { DocumentosService } from '../../documentos/documentos.service';
 import { StatChipComponent, ChipVariant } from '../../../shared/components/stat-chip/stat-chip.component';
 import { DonutArcComponent } from '../../../shared/components/donut-arc/donut-arc.component';
-import { asId } from '../../../shared/utils';
+import { asId, calcularScoreDocumental, scoreChipVariantFn, scoreChipLabelFn, colorEstadoSolicitud } from '../../../shared/utils';
 
 @Component({
   selector: 'app-mi-proyecto-detalle-page',
@@ -51,31 +51,12 @@ export class MiProyectoDetallePageComponent implements OnInit, OnDestroy {
     const sols = this.solicitudesService.solicitudes().filter(s =>
       p ? asId(s.proyecto_id) === asId(p._id) : false
     );
-    if (sols.length === 0) return { pct: 0, aprobados: 0, revision: 0, vencido: 0, rechazado: 0, pendiente: 0, total: 0 };
-    const aprobados = sols.filter(s => s.estado === 'aprobado').length;
-    const revision  = sols.filter(s => s.estado === 'revision').length;
-    const vencido   = sols.filter(s => s.estado === 'vencido').length;
-    const rechazado = sols.filter(s => s.estado === 'rechazado').length;
-    const pendiente = sols.filter(s => s.estado === 'pendiente').length;
-    return {
-      pct: Math.round((aprobados / sols.length) * 100),
-      aprobados, revision, vencido, rechazado, pendiente, total: sols.length,
-    };
+    return calcularScoreDocumental(sols);
   });
 
-  protected scoreChipVariant = computed((): ChipVariant => {
-    const pct = this.scoreDoc().pct;
-    if (pct >= 80) return 'ok';
-    if (pct >= 50) return 'warning';
-    return 'danger';
-  });
+  protected scoreChipVariant = computed((): ChipVariant => scoreChipVariantFn(this.scoreDoc().pct));
 
-  protected scoreChipLabel = computed((): string => {
-    const pct = this.scoreDoc().pct;
-    if (pct >= 80) return 'Bueno';
-    if (pct >= 50) return 'Regular';
-    return 'Bajo';
-  });
+  protected scoreChipLabel = computed((): string => scoreChipLabelFn(this.scoreDoc().pct));
 
   protected solicitudesProyecto = computed(() => {
     const p = this.proyecto();
@@ -128,16 +109,7 @@ export class MiProyectoDetallePageComponent implements OnInit, OnDestroy {
     return { color: '#6b7280', tipo: 'file' };
   }
 
-  dotColorSolicitud(estado: string): string {
-    const map: Record<string, string> = {
-      pendiente: '#0095d6',
-      revision:  '#f59e0b',
-      aprobado:  '#22c55e',
-      rechazado: '#ef4444',
-      vencido:   '#9ca3af',
-    };
-    return map[estado] ?? '#9ca3af';
-  }
+  protected readonly dotColorSolicitud = colorEstadoSolicitud;
 
   protected irADocumentos(tab: 'documentacion' | 'solicitudes'): void {
     const c = this.centro();

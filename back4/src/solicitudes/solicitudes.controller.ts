@@ -4,6 +4,7 @@ import {
   UseInterceptors, UploadedFile, BadRequestException,
 } from '@nestjs/common';
 import { Response } from 'express';
+import { sendFile } from '../common/helpers/send-file.helper';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
 import { SolicitudesService } from './solicitudes.service';
@@ -58,8 +59,6 @@ export class SolicitudesController {
   @Get(':solicitudId/adjunto')
   async servirAdjunto(@Param('solicitudId') solicitudId: string, @Res() res: Response) {
     const { buffer, tipo_mime, nombre } = await this.solicitudesService.servirAdjunto(solicitudId);
-    res.setHeader('Content-Type', tipo_mime);
-    res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(nombre)}"`);
-    res.send(buffer);
+    sendFile(res, buffer, tipo_mime, nombre);
   }
 }

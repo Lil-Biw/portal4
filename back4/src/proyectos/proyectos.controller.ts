@@ -4,6 +4,7 @@ import {
   UseInterceptors, UploadedFile, BadRequestException,
 } from '@nestjs/common';
 import { Response } from 'express';
+import { sendFile } from '../common/helpers/send-file.helper';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
 import { ProyectosService } from './proyectos.service';
@@ -76,9 +77,7 @@ export class ProyectosController {
     @Res() res: Response,
   ) {
     const { buffer, tipo_mime, nombre_display } = await this.proyectosService.servirDocumento(proyectoId, docId);
-    res.setHeader('Content-Type', tipo_mime);
-    res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(nombre_display)}"`);
-    res.send(buffer);
+    sendFile(res, buffer, tipo_mime, nombre_display);
   }
 
   @Delete(':proyectoId/documentos/:docId')

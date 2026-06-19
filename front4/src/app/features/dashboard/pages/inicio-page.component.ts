@@ -10,7 +10,7 @@ import { TiposActividadService } from '../../actividades/tipos-actividad.service
 import { NoticiasService } from '../../noticias/noticias.service';
 import { Actividad } from '../../../shared/models/actividad.model';
 import { SeccionNoticia } from '../../../shared/models/noticia.model';
-import { asId } from '../../../shared/utils';
+import { asId, calcularScoreDocumental, scoreChipVariantFn, scoreChipLabelFn } from '../../../shared/utils';
 
 interface ResumenSolicitudes {
   total: number;
@@ -74,34 +74,13 @@ export class InicioPageComponent implements OnInit {
       .slice(0, 5);
   });
 
-  protected scoreDocumental = computed(() => {
-    const sols = this.solicitudesService.solicitudes();
-    if (sols.length === 0) return { pct: 0, aprobados: 0, revision: 0, vencido: 0, rechazado: 0, pendiente: 0, total: 0 };
-    const aprobados  = sols.filter(s => s.estado === 'aprobado').length;
-    const revision   = sols.filter(s => s.estado === 'revision').length;
-    const vencido    = sols.filter(s => s.estado === 'vencido').length;
-    const rechazado  = sols.filter(s => s.estado === 'rechazado').length;
-    const pendiente  = sols.filter(s => s.estado === 'pendiente').length;
-    return {
-      pct: Math.round((aprobados / sols.length) * 100),
-      aprobados, revision, vencido, rechazado, pendiente,
-      total: sols.length,
-    };
-  });
+  protected scoreDocumental = computed(() =>
+    calcularScoreDocumental(this.solicitudesService.solicitudes())
+  );
 
-  protected scoreChipVariant = computed((): ChipVariant => {
-    const pct = this.scoreDocumental().pct;
-    if (pct >= 80) return 'ok';
-    if (pct >= 50) return 'warning';
-    return 'danger';
-  });
+  protected scoreChipVariant = computed((): ChipVariant => scoreChipVariantFn(this.scoreDocumental().pct));
 
-  protected scoreChipLabel = computed((): string => {
-    const pct = this.scoreDocumental().pct;
-    if (pct >= 80) return 'Bueno';
-    if (pct >= 50) return 'Regular';
-    return 'Bajo';
-  });
+  protected scoreChipLabel = computed((): string => scoreChipLabelFn(this.scoreDocumental().pct));
 
   constructor() {
     effect(() => {

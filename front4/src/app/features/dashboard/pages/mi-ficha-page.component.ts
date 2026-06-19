@@ -11,7 +11,7 @@ import { SpiderChartComponent } from '../../../shared/components/spider-chart/sp
 import { ClientesService } from '../../clientes/clientes.service';
 import { CentroCosto } from '../../../shared/models/centro.model';
 import { Proyecto } from '../../../shared/models/proyecto.model';
-import { asId } from '../../../shared/utils';
+import { asId, calcularScoreDocumental, scoreChipVariantFn, scoreChipLabelFn, estadoStyleFn } from '../../../shared/utils';
 
 @Component({
   selector: 'app-mi-ficha-page',
@@ -76,20 +76,9 @@ export class MiFichaPageComponent {
     return this.proyectosService.proyectos().filter(p => asId(p.cliente_id) === asId(emp._id));
   });
 
-  protected scoreDocumental = computed(() => {
-    const sols = this.solicitudesService.solicitudes();
-    if (sols.length === 0) return { pct: 0, aprobados: 0, revision: 0, vencido: 0, rechazado: 0, pendiente: 0, total: 0 };
-    const aprobados = sols.filter(s => s.estado === 'aprobado').length;
-    const revision  = sols.filter(s => s.estado === 'revision').length;
-    const vencido   = sols.filter(s => s.estado === 'vencido').length;
-    const rechazado = sols.filter(s => s.estado === 'rechazado').length;
-    const pendiente = sols.filter(s => s.estado === 'pendiente').length;
-    return {
-      pct: Math.round((aprobados / sols.length) * 100),
-      aprobados, revision, vencido, rechazado, pendiente,
-      total: sols.length,
-    };
-  });
+  protected scoreDocumental = computed(() =>
+    calcularScoreDocumental(this.solicitudesService.solicitudes())
+  );
 
   protected solicitudesEmpresa = computed(() =>
     this.solicitudesService.solicitudes()
@@ -100,19 +89,9 @@ export class MiFichaPageComponent {
       .filter(s => !s.centro_costo_id && !s.proyecto_id)
   );
 
-  protected scoreChipVariant = computed((): ChipVariant => {
-    const pct = this.scoreDocumental().pct;
-    if (pct >= 80) return 'ok';
-    if (pct >= 50) return 'warning';
-    return 'danger';
-  });
+  protected scoreChipVariant = computed((): ChipVariant => scoreChipVariantFn(this.scoreDocumental().pct));
 
-  protected scoreChipLabel = computed((): string => {
-    const pct = this.scoreDocumental().pct;
-    if (pct >= 80) return 'Bueno';
-    if (pct >= 50) return 'Regular';
-    return 'Bajo';
-  });
+  protected scoreChipLabel = computed((): string => scoreChipLabelFn(this.scoreDocumental().pct));
 
   readonly spiderLabels = [
     'RRHH y\ndocumentación',
@@ -185,16 +164,7 @@ export class MiFichaPageComponent {
     return `${base} · al día`;
   }
 
-  estadoStyle(estado: string): string {
-    const map: Record<string, string> = {
-      pendiente: 'background:#fef3c7;color:#b45309',
-      revision:  'background:#dbeafe;color:#1e40af',
-      aprobado:  'background:#dcfce7;color:#15803d',
-      rechazado: 'background:#fee2e2;color:#dc2626',
-      vencido:   'background:#f3f4f6;color:#374151',
-    };
-    return map[estado] ?? 'background:#f3f4f6;color:#374151';
-  }
+  protected readonly estadoStyle = estadoStyleFn;
 
   irADocumentosEmpresa(): void {
     this.router.navigate(['/documentos'], { queryParams: { tab: 'solicitudes' } });

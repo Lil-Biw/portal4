@@ -4,6 +4,7 @@ import {
   UseInterceptors, UploadedFile, BadRequestException,
 } from '@nestjs/common';
 import { Response } from 'express';
+import { sendFile } from '../common/helpers/send-file.helper';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
 import { ActivosService } from './activos.service';
@@ -71,8 +72,6 @@ export class ActivosController {
     @Res() res: Response,
   ) {
     const { buffer, tipo_mime, nombre_display } = await this.activosService.servirDocumento(activoId, nombre);
-    res.setHeader('Content-Type', tipo_mime);
-    res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(nombre_display)}"`);
-    res.send(buffer);
+    sendFile(res, buffer, tipo_mime, nombre_display);
   }
 }
