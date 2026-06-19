@@ -2,12 +2,12 @@
 @if (!centroActivo) {
   <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;margin-bottom:1.25rem;flex-wrap:wrap">
     <div>
-      <h2 style="margin:0 0 .25rem;font-size:1.5rem;font-weight:700;color:#1f2937">Centros de costos</h2>
+      <h2 style="margin:0 0 .25rem;font-size:1.5rem;font-weight:700;color:#1f2937">Centros de costo</h2>
       <p style="margin:0;font-size:.85rem;color:#6b7280">
         @if (empresa) {
-          {{ centros().length }} centro{{ centros().length !== 1 ? 's' : '' }} · {{ empresa.razon_social }}
+          {{ centros().length }} centro{{ centros().length !== 1 ? 's' : '' }} activo{{ centros().length !== 1 ? 's' : '' }} · {{ empresa.razon_social }}
         } @else {
-          Selecciona una empresa en la barra superior para ver sus centros de costos
+          Selecciona una empresa en la barra superior para ver sus centros de costo
         }
       </p>
     </div>
@@ -34,47 +34,51 @@
     </div>
   } @else if (centros().length === 0) {
     <div class="card" style="text-align:center;padding:2.5rem;color:#9ca3af">
-      Esta empresa no tiene centros de costos registrados.
+      Esta empresa no tiene centros de costo registrados.
     </div>
   } @else if (centrosFiltrados().length === 0) {
     <div class="card" style="text-align:center;padding:2.5rem;color:#9ca3af">
       Sin resultados para "{{ busqueda() }}"
     </div>
   } @else {
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1rem">
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:1rem">
       @for (c of centrosFiltrados(); track c._id) {
         @let sc = scoreDeCentro(c._id);
         <div class="card centro-card" (click)="seleccionarCentro(c)">
-          <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:.5rem">
-            <div>
-              <h3 style="margin:0 0 .2rem;font-size:1rem;font-weight:700;color:#1f2937">{{ c.nombre }}</h3>
-              <span style="font-size:.8rem;color:#6b7280">Cód. {{ c.codigo }}</span>
+          <!-- Cabecera: nombre + donut -->
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:.75rem">
+            <div style="flex:1;min-width:0">
+              <h3 style="margin:0 0 .15rem;font-size:1rem;font-weight:700;color:#1f2937;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ c.nombre }}</h3>
+              <span style="font-size:.78rem;color:#6b7280">Cód. {{ c.codigo }}</span>
+              @if (c.ubicacion_ciudad) {
+                <p style="margin:.25rem 0 0;font-size:.8rem;color:#6b7280">
+                  {{ c.ubicacion_ciudad }}{{ c.ubicacion_region ? ', ' + c.ubicacion_region : '' }}
+                </p>
+              }
             </div>
-            <span style="font-size:.72rem;font-weight:600;padding:.2rem .55rem;border-radius:999px;background:rgba(0,149,214,.1);color:#0095d6;white-space:nowrap">Activo</span>
+            <app-donut-arc [value]="sc.pct" [size]="66"></app-donut-arc>
           </div>
-          <p *ngIf="c.ubicacion_ciudad" style="margin:0 0 .3rem;font-size:.82rem;color:#6b7280">
-            {{ c.ubicacion_ciudad }}{{ c.ubicacion_region ? ', ' + c.ubicacion_region : '' }}
-          </p>
-          <!-- Mini score -->
-          @if (sc.total > 0) {
-            <div style="display:flex;align-items:center;gap:.5rem;margin-top:.55rem;padding:.5rem .6rem;border-radius:9px;background:#f9fafb;border:1px solid rgba(34,33,33,.06)">
-              <div style="text-align:center;min-width:44px">
-                <span style="font-size:1.4rem;font-weight:700;color:#0095d6;line-height:1">{{ sc.pct }}</span>
-                <span style="font-size:.7rem;color:#9ca3af;font-weight:400">/100</span>
-              </div>
-              <div style="flex:1">
-                <div style="background:#e5e7eb;border-radius:999px;height:5px;overflow:hidden;margin-bottom:.4rem">
-                  <div [style.width]="sc.pct + '%'" style="height:100%;background:linear-gradient(90deg,#0095d6,#22c55e);border-radius:999px"></div>
-                </div>
-                <div style="display:flex;gap:.3rem">
-                  <span style="font-size:.68rem;font-weight:700;padding:.1rem .3rem;border-radius:5px;background:#dcfce7;color:#15803d">{{ sc.aprobados }}</span>
-                  <span style="font-size:.68rem;font-weight:700;padding:.1rem .3rem;border-radius:5px;background:#fef3c7;color:#b45309">{{ sc.revision }}</span>
-                  <span style="font-size:.68rem;font-weight:700;padding:.1rem .3rem;border-radius:5px;background:#fee2e2;color:#dc2626">{{ sc.vencido }}</span>
-                </div>
-              </div>
+
+          <!-- Separador -->
+          <div style="height:1px;background:rgba(34,33,33,.08);margin:.75rem 0"></div>
+
+          <!-- Contadores -->
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:.5rem">
+            <div style="display:flex;flex-direction:column;align-items:center;padding:.45rem .3rem;border-radius:8px;background:#dcfce7">
+              <span style="font-size:1.2rem;font-weight:700;color:#15803d;line-height:1">{{ sc.aprobados }}</span>
+              <span style="font-size:.68rem;font-weight:600;color:#15803d;margin-top:.15rem">Aprob.</span>
             </div>
-          }
-          <div style="margin-top:.65rem;font-size:.77rem;color:#0095d6;font-weight:600">Ver detalle →</div>
+            <div style="display:flex;flex-direction:column;align-items:center;padding:.45rem .3rem;border-radius:8px;background:#fef3c7">
+              <span style="font-size:1.2rem;font-weight:700;color:#b45309;line-height:1">{{ sc.revision }}</span>
+              <span style="font-size:.68rem;font-weight:600;color:#b45309;margin-top:.15rem">Revisi.</span>
+            </div>
+            <div style="display:flex;flex-direction:column;align-items:center;padding:.45rem .3rem;border-radius:8px;background:#f3f4f6">
+              <span style="font-size:1.2rem;font-weight:700;color:#374151;line-height:1">{{ sc.pendiente }}</span>
+              <span style="font-size:.68rem;font-weight:600;color:#374151;margin-top:.15rem">Pend.</span>
+            </div>
+          </div>
+
+          <div style="margin-top:.65rem;font-size:.78rem;color:#0095d6;font-weight:600">Ver detalle →</div>
         </div>
       }
     </div>
@@ -95,7 +99,7 @@
     <span style="font-size:.78rem;color:#6b7280">Cód. {{ centroActivo.codigo }}</span>
   </div>
 
-  <!-- Grid 2×2 -->
+  <!-- Grid 2 columnas superior -->
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
 
     <!-- Recuadro 1: Información general -->
@@ -108,7 +112,7 @@
         </div>
         <div style="display:flex;gap:.5rem">
           <dt style="font-size:.78rem;color:#6b7280;min-width:80px;flex-shrink:0">Código</dt>
-          <dd style="margin:0;font-size:.82rem;color:#1f2937">{{ centroActivo.codigo }}</dd>
+          <dd style="margin:0;font-size:.82rem;color:#0095d6;font-weight:600">{{ centroActivo.codigo }}</dd>
         </div>
         @if (centroActivo.descripcion) {
           <div style="display:flex;gap:.5rem">
@@ -136,20 +140,21 @@
             <dd style="margin:0;font-size:.82rem;color:#1f2937">{{ centroActivo.ubicacion_pais }}</dd>
           </div>
         }
-        @if (centroActivo.ubicacion_latitud != null && centroActivo.ubicacion_longitud != null) {
-          <div style="display:flex;gap:.5rem">
-            <dt style="font-size:.78rem;color:#6b7280;min-width:80px;flex-shrink:0">Coordenadas</dt>
-            <dd style="margin:0;font-size:.82rem;color:#1f2937;font-variant-numeric:tabular-nums">
-              {{ centroActivo.ubicacion_latitud | number:'1.6-6' }}, {{ centroActivo.ubicacion_longitud | number:'1.6-6' }}
-            </dd>
-          </div>
-        }
       </dl>
     </div>
 
     <!-- Recuadro 2: Mapa -->
     <div class="card" style="min-height:320px;padding:.75rem;overflow:hidden;display:flex;flex-direction:column">
-      <h3 style="margin:0 0 .65rem;font-size:.95rem;font-weight:700;color:#1f2937;flex-shrink:0">Localización</h3>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.65rem;flex-shrink:0">
+        <h3 style="margin:0;font-size:.95rem;font-weight:700;color:#1f2937">Localización</h3>
+        <a [href]="mapsLink()" target="_blank" rel="noopener"
+           style="display:flex;align-items:center;gap:.35rem;font-size:.78rem;font-weight:600;color:#0095d6;text-decoration:none;padding:.3rem .65rem;border-radius:7px;border:1px solid rgba(0,149,214,.3);background:rgba(0,149,214,.06)">
+          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>
+          </svg>
+          Abrir en Maps
+        </a>
+      </div>
       @if (centroActivo.ubicacion_ciudad || centroActivo.ubicacion_direccion || centroActivo.ubicacion_latitud != null) {
         <iframe
           [src]="mapUrl()"
@@ -165,58 +170,56 @@
       }
     </div>
 
-    <!-- Recuadro 3: Score de documentos del centro -->
+    <!-- Recuadro 3: Score documental -->
     <div class="card" style="min-height:220px">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.9rem">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem">
         <h3 style="margin:0;font-size:.95rem;font-weight:700;color:#1f2937">Score documental</h3>
         <app-stat-chip [label]="scoreChipLabel()" [variant]="scoreChipVariant()"></app-stat-chip>
       </div>
-      <div style="text-align:center;padding:.5rem 0">
-        <p style="margin:0 0 .15rem;line-height:1">
-          <span style="font-size:3rem;font-weight:700;color:#0095d6">{{ scoreDelCentro().pct }}</span>
-          <span style="font-size:1.2rem;color:#6b7280;font-weight:400">/ 100</span>
-        </p>
-        @if (scoreDelCentro().total > 0) {
-          <p style="margin:.4rem 0 1rem;font-size:.8rem;color:#6b7280">
-            {{ scoreDelCentro().aprobados }} de {{ scoreDelCentro().total }} solicitudes aprobadas
-          </p>
-        } @else {
-          <p style="margin:.4rem 0 1rem;font-size:.8rem;color:#9ca3af">Sin solicitudes registradas</p>
-        }
-        <div style="background:#e5e7eb;border-radius:999px;height:8px;overflow:hidden;margin-bottom:.75rem">
-          <div
-            [style.width]="scoreDelCentro().pct + '%'"
-            style="height:100%;background:linear-gradient(90deg,#0095d6,#22c55e);border-radius:999px;transition:width .4s">
-          </div>
+      <!-- Donut + texto -->
+      <div style="display:flex;align-items:center;gap:1.25rem;margin-bottom:1rem">
+        <app-donut-arc [value]="scoreDelCentro().pct" [size]="120"></app-donut-arc>
+        <div>
+          @if (scoreDelCentro().total > 0) {
+            <p style="margin:0;font-size:.82rem;color:#6b7280">
+              {{ scoreDelCentro().aprobados }} de {{ scoreDelCentro().total }} solicitudes aprobadas
+            </p>
+          } @else {
+            <p style="margin:0;font-size:.82rem;color:#9ca3af">Sin solicitudes registradas</p>
+          }
         </div>
-        <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:.4rem">
-          <div style="padding:.5rem .3rem;border-radius:9px;text-align:center;background:#dcfce7">
-            <p style="margin:0 0 .1rem;font-size:1.3rem;font-weight:700;color:#15803d;line-height:1">{{ scoreDelCentro().aprobados }}</p>
-            <p style="margin:0;font-size:.62rem;font-weight:600;color:#15803d">Aprobados</p>
-          </div>
-          <div style="padding:.5rem .3rem;border-radius:9px;text-align:center;background:#fef3c7">
-            <p style="margin:0 0 .1rem;font-size:1.3rem;font-weight:700;color:#b45309;line-height:1">{{ scoreDelCentro().revision }}</p>
-            <p style="margin:0;font-size:.62rem;font-weight:600;color:#b45309">Revisión</p>
-          </div>
-          <div style="padding:.5rem .3rem;border-radius:9px;text-align:center;background:#fee2e2">
-            <p style="margin:0 0 .1rem;font-size:1.3rem;font-weight:700;color:#dc2626;line-height:1">{{ scoreDelCentro().vencido }}</p>
-            <p style="margin:0;font-size:.62rem;font-weight:600;color:#dc2626">Vencidos</p>
-          </div>
-          <div style="padding:.5rem .3rem;border-radius:9px;text-align:center;background:#fce7f3">
-            <p style="margin:0 0 .1rem;font-size:1.3rem;font-weight:700;color:#9d174d;line-height:1">{{ scoreDelCentro().rechazado }}</p>
-            <p style="margin:0;font-size:.62rem;font-weight:600;color:#9d174d">Rechazados</p>
-          </div>
-          <div style="padding:.5rem .3rem;border-radius:9px;text-align:center;background:#f0f9ff">
-            <p style="margin:0 0 .1rem;font-size:1.3rem;font-weight:700;color:#0369a1;line-height:1">{{ scoreDelCentro().pendiente }}</p>
-            <p style="margin:0;font-size:.62rem;font-weight:600;color:#0369a1">Pendiente</p>
-          </div>
+      </div>
+      <!-- 5 contadores -->
+      <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:.4rem">
+        <div style="padding:.5rem .3rem;border-radius:9px;text-align:center;background:#dcfce7">
+          <p style="margin:0 0 .1rem;font-size:1.3rem;font-weight:700;color:#15803d;line-height:1">{{ scoreDelCentro().aprobados }}</p>
+          <p style="margin:0;font-size:.62rem;font-weight:600;color:#15803d">Aprobados</p>
+        </div>
+        <div style="padding:.5rem .3rem;border-radius:9px;text-align:center;background:#fef3c7">
+          <p style="margin:0 0 .1rem;font-size:1.3rem;font-weight:700;color:#b45309;line-height:1">{{ scoreDelCentro().revision }}</p>
+          <p style="margin:0;font-size:.62rem;font-weight:600;color:#b45309">Revisión</p>
+        </div>
+        <div style="padding:.5rem .3rem;border-radius:9px;text-align:center;background:#fee2e2">
+          <p style="margin:0 0 .1rem;font-size:1.3rem;font-weight:700;color:#dc2626;line-height:1">{{ scoreDelCentro().vencido }}</p>
+          <p style="margin:0;font-size:.62rem;font-weight:600;color:#dc2626">Vencidos</p>
+        </div>
+        <div style="padding:.5rem .3rem;border-radius:9px;text-align:center;background:#fce7f3">
+          <p style="margin:0 0 .1rem;font-size:1.3rem;font-weight:700;color:#9d174d;line-height:1">{{ scoreDelCentro().rechazado }}</p>
+          <p style="margin:0;font-size:.62rem;font-weight:600;color:#9d174d">Rechazados</p>
+        </div>
+        <div style="padding:.5rem .3rem;border-radius:9px;text-align:center;background:#f0f9ff">
+          <p style="margin:0 0 .1rem;font-size:1.3rem;font-weight:700;color:#0369a1;line-height:1">{{ scoreDelCentro().pendiente }}</p>
+          <p style="margin:0;font-size:.62rem;font-weight:600;color:#0369a1">Pendiente</p>
         </div>
       </div>
     </div>
 
-    <!-- Recuadro 4: Gráfica de araña -->
+    <!-- Recuadro 4: Spider chart -->
     <div class="card" style="min-height:220px;display:flex;flex-direction:column">
-      <h3 style="margin:0 0 .5rem;font-size:.95rem;font-weight:700;color:#1f2937">Score 2 — Evaluación SmartClarity</h3>
+      <div style="margin-bottom:.25rem">
+        <h3 style="margin:0 0 .15rem;font-size:.95rem;font-weight:700;color:#1f2937">Score 2 — Evaluación SmartClarity</h3>
+        <span style="font-size:.76rem;color:#0095d6;font-weight:500">Nivel centro</span>
+      </div>
       <div style="flex:1;display:flex;align-items:center;justify-content:center">
         <app-spider-chart [labels]="spiderLabels" [values]="spiderValues()" [size]="260"></app-spider-chart>
       </div>
@@ -233,8 +236,8 @@
         <h3 style="margin:0;font-size:.95rem;font-weight:700;color:#1f2937">Documentos del centro</h3>
         <button
           (click)="irADocumentos('documentacion')"
-          style="display:flex;align-items:center;gap:.4rem;padding:.45rem .9rem;border-radius:8px;border:1px solid rgba(0,149,214,.3);background:rgba(0,149,214,.06);color:#0095d6;font-size:.8rem;font-weight:600;cursor:pointer;font-family:inherit">
-          <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          style="display:flex;align-items:center;gap:.4rem;padding:.4rem .8rem;border-radius:8px;border:1px solid rgba(0,149,214,.3);background:rgba(0,149,214,.06);color:#0095d6;font-size:.78rem;font-weight:600;cursor:pointer;font-family:inherit">
+          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
           Ir a documentación
         </button>
       </div>
@@ -243,18 +246,39 @@
       } @else {
         <div style="display:flex;flex-direction:column;gap:.4rem">
           @for (d of documentosService.documentosCentro(); track d.nombre) {
-            <div style="display:flex;align-items:center;justify-content:space-between;padding:.5rem .65rem;border-radius:8px;border:1px solid rgba(34,33,33,.08)">
-              <div style="overflow:hidden">
+            @let info = docTipoInfo(d.tipo_mime);
+            <div style="display:flex;align-items:center;gap:.7rem;padding:.5rem .65rem;border-radius:8px;border:1px solid rgba(34,33,33,.08)">
+              <!-- Ícono de archivo -->
+              <div style="width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0"
+                   [style.background]="info.color + '1a'">
+                @switch (info.tipo) {
+                  @case ('pdf') {
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" [attr.stroke]="info.color" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                  }
+                  @case ('zip') {
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" [attr.stroke]="info.color" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><path d="M3 9h18M3 15h18M9 3v18M15 3v18"/></svg>
+                  }
+                  @case ('img') {
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" [attr.stroke]="info.color" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                  }
+                  @default {
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" [attr.stroke]="info.color" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                  }
+                }
+              </div>
+              <!-- Nombre + categoría -->
+              <div style="flex:1;min-width:0">
                 <span style="display:block;font-size:.82rem;font-weight:600;color:#1f2937;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ d.nombre_display || d.nombre }}</span>
                 @if (d.categoria) {
                   <span style="font-size:.72rem;color:#6b7280">{{ d.categoria }}</span>
                 }
               </div>
+              <!-- Acción -->
               <button
-                (click)="documentosService.descargar(d.url, d.nombre_display)"
-                class="btn-ghost btn-sm"
-                style="flex-shrink:0;margin-left:.5rem">
-                Descargar
+                (click)="$event.stopPropagation(); documentosService.descargar(d.url, d.nombre_display)"
+                style="flex-shrink:0;background:none;border:none;cursor:pointer;color:#6b7280;display:flex;align-items:center;padding:.25rem"
+                title="Descargar">
+                <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
               </button>
             </div>
           }
@@ -262,14 +286,14 @@
       }
     </div>
 
-    <!-- Solicitudes del centro -->
+    <!-- Solicitudes documentales -->
     <div class="card">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem">
         <h3 style="margin:0;font-size:.95rem;font-weight:700;color:#1f2937">Solicitudes documentales</h3>
         <button
           (click)="irADocumentos('solicitudes')"
-          style="display:flex;align-items:center;gap:.4rem;padding:.45rem .9rem;border-radius:8px;border:1px solid rgba(0,149,214,.3);background:rgba(0,149,214,.06);color:#0095d6;font-size:.8rem;font-weight:600;cursor:pointer;font-family:inherit">
-          <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+          style="display:flex;align-items:center;gap:.4rem;padding:.4rem .8rem;border-radius:8px;border:1px solid rgba(0,149,214,.3);background:rgba(0,149,214,.06);color:#0095d6;font-size:.78rem;font-weight:600;cursor:pointer;font-family:inherit">
+          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
           Ir a solicitudes
         </button>
       </div>
@@ -278,15 +302,29 @@
       } @else {
         <div style="display:flex;flex-direction:column;gap:.4rem">
           @for (s of solicitudesDelCentro(); track s._id) {
-            <div style="display:flex;align-items:center;justify-content:space-between;padding:.55rem .7rem;border-radius:8px;border:1px solid rgba(34,33,33,.08)">
-              <div>
-                <span style="font-size:.84rem;font-weight:600;color:#1f2937">{{ s.nombre }}</span>
-                <span style="margin-left:.5rem;font-size:.72rem;color:#6b7280">{{ s.tipo }}</span>
+            <div style="display:flex;align-items:center;gap:.65rem;padding:.55rem .7rem;border-radius:8px;border:1px solid rgba(34,33,33,.08)">
+              <!-- Punto de estado -->
+              <span style="width:9px;height:9px;border-radius:50%;flex-shrink:0"
+                    [style.background]="dotColorSolicitud(s.estado)"></span>
+              <!-- Nombre + tipo -->
+              <div style="flex:1;min-width:0">
+                <span style="display:block;font-size:.84rem;font-weight:600;color:#1f2937;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ s.nombre }}</span>
+                <span style="font-size:.72rem;color:#6b7280">{{ s.tipo }}</span>
               </div>
-              <span style="font-size:.7rem;font-weight:700;padding:.18rem .5rem;border-radius:999px;white-space:nowrap;flex-shrink:0;margin-left:.5rem"
-                    [style]="estadoStyle(s.estado)">
-                {{ s.estado }}
-              </span>
+              <!-- Acción / badge -->
+              @if (s.estado === 'pendiente') {
+                <button
+                  (click)="$event.stopPropagation(); irADocumentos('solicitudes')"
+                  style="display:flex;align-items:center;gap:.3rem;padding:.3rem .65rem;border-radius:7px;border:1px solid rgba(0,149,214,.35);background:rgba(0,149,214,.07);color:#0095d6;font-size:.75rem;font-weight:600;cursor:pointer;font-family:inherit;flex-shrink:0">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>
+                  Subir
+                </button>
+              } @else {
+                <span style="font-size:.7rem;font-weight:700;padding:.2rem .55rem;border-radius:999px;white-space:nowrap;flex-shrink:0"
+                      [style]="estadoStyle(s.estado)">
+                  {{ s.estado }}
+                </span>
+              }
             </div>
           }
         </div>
@@ -295,7 +333,7 @@
 
   </div>
 
-  <!-- Recuadro 5: Activos del centro -->
+  <!-- Activos del centro -->
   <div class="card" style="margin-top:1rem">
     <h3 style="margin:0 0 .75rem;font-size:.95rem;font-weight:700;color:#1f2937">Activos del centro</h3>
     @if (activosService.loading()) {
@@ -303,15 +341,13 @@
     } @else if (activosService.activos().length === 0) {
       <p style="color:#9ca3af;font-size:.85rem;margin:0">Sin activos registrados para este centro.</p>
     } @else {
-      <div style="display:flex;flex-direction:column;gap:.4rem">
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:.75rem">
         @for (a of activosService.activos(); track a._id) {
-          <div style="display:flex;align-items:center;justify-content:space-between;padding:.5rem .65rem;border-radius:8px;border:1px solid rgba(34,33,33,.08)">
-            <div>
-              <span style="display:block;font-size:.84rem;font-weight:600;color:#1f2937">{{ a.nombre }}</span>
-              <span style="font-size:.74rem;color:#6b7280">{{ tipoActivoNombre(a) }}</span>
-              @if (a.descripcion) {
-                <span style="display:block;font-size:.74rem;color:#9ca3af">{{ a.descripcion }}</span>
-              }
+          <div style="display:flex;align-items:center;gap:.65rem;padding:.55rem .75rem;border-radius:10px;border:1px solid rgba(34,33,33,.08)">
+            <app-activo-icono [color]="tipoActivoColor(a)" [size]="20"></app-activo-icono>
+            <div style="min-width:0">
+              <span style="display:block;font-size:.84rem;font-weight:600;color:#1f2937;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ a.nombre }}</span>
+              <span style="font-size:.73rem;font-weight:600;white-space:nowrap" [style.color]="tipoActivoColor(a)">{{ tipoActivoNombre(a) }}</span>
             </div>
           </div>
         }

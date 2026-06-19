@@ -18,52 +18,81 @@
     <span>Descripción</span>
     <input [(ngModel)]="form.descripcion" name="descripcion" />
   </label>
-  <label class="field">
-    <span>Dirección</span>
-    <input [(ngModel)]="form.ubicacion_direccion" name="direccion" />
-  </label>
-  <label class="field">
-    <span>Ciudad</span>
-    <input [(ngModel)]="form.ubicacion_ciudad" name="ciudad" />
-  </label>
-  <label class="field">
-    <span>Región</span>
-    <input [(ngModel)]="form.ubicacion_region" name="region" />
-  </label>
-  <label class="field">
-    <span>País</span>
-    <input [(ngModel)]="form.ubicacion_pais" name="pais" />
-  </label>
-  <div class="field" style="grid-column:1/-1">
-    <span>Coordenadas GPS</span>
-    <input [(ngModel)]="dmsInput" name="dms"
-           (ngModelChange)="onDmsChange()"
-           placeholder='ej. 38°45&apos;32.8"S 72°36&apos;34.3"W' />
-    @if (dmsError) {
-      <small style="color:var(--color-danger,#dc3545)">{{ dmsError }}</small>
-    }
-    @if (puedePrevisualizar && !dmsError) {
-      <small style="color:#6c757d">
-        Decimal: {{ form.ubicacion_latitud | number:'1.6-6' }}, {{ form.ubicacion_longitud | number:'1.6-6' }}
-      </small>
-    }
-  </div>
-  @if (puedePrevisualizar && !dmsError) {
-    <div style="grid-column:1/-1">
-      <button type="button" class="btn-ghost btn-sm" (click)="verEnMapa()">
-        Ver en mapa
+
+  <!-- Tabs de ubicación -->
+  <div style="grid-column:1/-1">
+    <div style="display:flex;gap:0;border-bottom:2px solid rgba(34,33,33,.1);margin-bottom:1rem">
+      <button
+        type="button"
+        (click)="setTabUbicacion('direccion')"
+        style="padding:.55rem 1.1rem;border:none;background:none;cursor:pointer;font-size:.88rem;font-weight:600;font-family:inherit;border-bottom:2px solid transparent;margin-bottom:-2px;transition:color .15s,border-color .15s"
+        [style.color]="tabUbicacion === 'direccion' ? '#0095d6' : '#6b7280'"
+        [style.border-bottom-color]="tabUbicacion === 'direccion' ? '#0095d6' : 'transparent'">
+        Dirección
+      </button>
+      <button
+        type="button"
+        (click)="setTabUbicacion('coordenadas')"
+        style="padding:.55rem 1.1rem;border:none;background:none;cursor:pointer;font-size:.88rem;font-weight:600;font-family:inherit;border-bottom:2px solid transparent;margin-bottom:-2px;transition:color .15s,border-color .15s"
+        [style.color]="tabUbicacion === 'coordenadas' ? '#0095d6' : '#6b7280'"
+        [style.border-bottom-color]="tabUbicacion === 'coordenadas' ? '#0095d6' : 'transparent'">
+        Coordenadas Google
       </button>
     </div>
-  }
-  @if (previewMapUrl) {
-    <div style="grid-column:1/-1">
-      <iframe [src]="previewMapUrl"
-              width="100%" height="240"
-              style="border:0;border-radius:8px;display:block;margin-top:8px"
-              allowfullscreen loading="lazy">
-      </iframe>
-    </div>
-  }
+
+    @if (tabUbicacion === 'direccion') {
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+        <label class="field">
+          <span>Dirección</span>
+          <input [(ngModel)]="form.ubicacion_direccion" name="direccion" />
+        </label>
+        <label class="field">
+          <span>Ciudad</span>
+          <input [(ngModel)]="form.ubicacion_ciudad" name="ciudad" />
+        </label>
+        <label class="field">
+          <span>Región</span>
+          <input [(ngModel)]="form.ubicacion_region" name="region" />
+        </label>
+        <label class="field">
+          <span>País</span>
+          <input [(ngModel)]="form.ubicacion_pais" name="pais" />
+        </label>
+      </div>
+    }
+
+    @if (tabUbicacion === 'coordenadas') {
+      <div>
+        <label class="field">
+          <span>Coordenadas GPS</span>
+          <input [(ngModel)]="dmsInput" name="dms"
+                 (ngModelChange)="onDmsChange()"
+                 placeholder='ej. 38°45&apos;32.8"S 72°36&apos;34.3"W' />
+        </label>
+        @if (dmsError) {
+          <small style="color:var(--color-danger,#dc3545);display:block;margin-top:.25rem">{{ dmsError }}</small>
+        }
+        @if (puedePrevisualizar && !dmsError) {
+          <small style="color:#6c757d;display:block;margin-top:.25rem">
+            Decimal: {{ form.ubicacion_latitud | number:'1.6-6' }}, {{ form.ubicacion_longitud | number:'1.6-6' }}
+          </small>
+          <div style="margin-top:.5rem">
+            <button type="button" class="btn-ghost btn-sm" (click)="verEnMapa()">
+              Ver en mapa
+            </button>
+          </div>
+        }
+        @if (previewMapUrl) {
+          <iframe [src]="previewMapUrl"
+                  width="100%" height="240"
+                  style="border:0;border-radius:8px;display:block;margin-top:8px"
+                  allowfullscreen loading="lazy">
+          </iframe>
+        }
+      </div>
+    }
+  </div>
+
   <div class="form-footer">
     <button type="submit" class="btn-primary">{{ submitLabel }}</button>
   </div>

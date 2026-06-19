@@ -32,40 +32,39 @@ interface Notificacion {
     :host { display:block; }
     .topbar {
       height:60px;
-      border-radius:14px;
-      border:1px solid rgba(34,33,33,.1);
+      border-radius:0;
+      border:none;
+      border-bottom:1px solid rgba(255,255,255,.06);
       display:flex;
       align-items:center;
       justify-content:space-between;
       gap:1rem;
-      padding:0 1.25rem;
-      box-shadow:0 2px 12px rgba(15,23,42,.06);
-      background:#fff;
+      padding:0 1.5rem;
+      box-shadow:0 1px 8px rgba(0,0,0,.18);
+      background:rgba(18,26,36,.85);
+      backdrop-filter:blur(14px);
+      -webkit-backdrop-filter:blur(14px);
     }
-    .topbar.admin      { border-left:4px solid #000000; }
-    .topbar.consumidor { border-left:4px solid #0095d6; }
 
-    .brand { display:flex; align-items:center; gap:.6rem; flex-shrink:0; }
-    .brand-logo { height:36px; width:auto; display:block; border-radius:8px; }
-    .brand-name { font-weight:800; font-size:1.05rem; color:#0095d6; letter-spacing:-.5px; }
+    .topbar-left  { display:flex; align-items:center; gap:.6rem; flex:1; }
+    .topbar-center { display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+    .actions      { display:flex; align-items:center; gap:.75rem; flex:1; justify-content:flex-end; }
 
-    .context-slot { display:flex; align-items:center; gap:.6rem; flex:1; }
     .empresa-select {
       padding:.4rem .7rem;
       border-radius:8px;
-      border:1px solid rgba(0,149,214,.35);
+      border:1px solid rgba(77,184,240,.4);
       font-size:.85rem;
-      color:#374151;
-      background:#fff;
+      color:#e2eaf2;
+      background:rgba(255,255,255,.08);
       cursor:pointer;
       min-width:180px;
       max-width:260px;
     }
-    .empresa-select:focus { outline:none; border-color:#0095d6; }
+    .empresa-select:focus { outline:none; border-color:#4db8f0; }
+    .empresa-select option { background:#18222e; color:#e2eaf2; }
 
-    .icons-slot { display:flex; align-items:center; gap:.5rem; position:relative; z-index:1000; }
-
-    .actions { display:flex; align-items:center; gap:.75rem; flex-shrink:0; }
+    .icons-slot { display:flex; align-items:center; gap:.5rem; }
     .mode-chip {
       background:#0095d6;
       color:#fff;
@@ -76,11 +75,14 @@ interface Notificacion {
       letter-spacing:.3px;
     }
     .topbar.consumidor .mode-chip { background:#0095d6; }
-    .topbar.admin .mode-chip { background:#000000; }
+    .topbar.admin .mode-chip { background:#2d3f52; color:#8aa4b8; }
     .toggle-btn {
-      border:1px solid rgba(34,33,33,.18);
+      display:flex;
+      align-items:center;
+      gap:.4rem;
+      border:1px solid rgba(255,255,255,.18);
       background:transparent;
-      color:#374151;
+      color:#c8daea;
       border-radius:10px;
       padding:.45rem .85rem;
       font-weight:600;
@@ -88,9 +90,7 @@ interface Notificacion {
       font-size:.85rem;
       transition:background .15s;
     }
-    .toggle-btn:hover { background:rgba(34,33,33,.06); }
-    .topbar.admin .toggle-btn { border-color:#000000; color:#000000; }
-    .topbar.consumidor .toggle-btn { border-color:#0095d6; color:#0095d6; }
+    .toggle-btn:hover { background:rgba(255,255,255,.08); }
 
     /* Notificaciones */
     .notif-btn {
@@ -100,12 +100,12 @@ interface Notificacion {
       cursor: pointer;
       padding: .35rem;
       border-radius: 8px;
-      color: #6b7280;
+      color: #8aa4b8;
       display: flex;
       align-items: center;
       transition: background .12s, color .12s;
     }
-    .notif-btn:hover { background: rgba(34,33,33,.06); color: #374151; }
+    .notif-btn:hover { background: rgba(255,255,255,.08); color: #c8daea; }
     .notif-badge {
       position: absolute;
       top: 2px;

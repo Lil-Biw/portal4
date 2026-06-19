@@ -1,6 +1,8 @@
-import { Component, OnInit, inject, signal, computed, effect } from '@angular/core';
+import { Component, OnInit, inject, signal, computed, effect, untracked } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
+import { forkJoin, catchError, of } from 'rxjs';
 import { CentrosService } from '../centros.service';
 import { ClientesService } from '../../clientes/clientes.service';
 import { StatusBannerComponent } from '../../../shared/components/status-banner/status-banner.component';
@@ -15,6 +17,8 @@ import { ConsumidorContextService } from '../../../profile/consumidor-context.se
 import { ProfileService } from '../../../profile/profile.service';
 import { AuthService } from '../../auth/auth.service';
 import { SpiderChartComponent } from '../../../shared/components/spider-chart/spider-chart.component';
+import { ApiService } from '../../../core/services/api.service';
+import { Solicitud } from '../../solicitudes/solicitudes.service';
 
 type ModalMode = 'crear' | 'editar' | 'buscar' | 'activo' | 'score' | null;
 
@@ -26,12 +30,13 @@ type ModalMode = 'crear' | 'editar' | 'buscar' | 'activo' | 'score' | null;
   styles: [`
     .page-header {
       display: flex;
-      align-items: center;
+      align-items: flex-start;
       justify-content: space-between;
-      margin-bottom: 1.25rem;
+      margin-bottom: 1.5rem;
     }
-    .page-header h2 { margin: 0; font-size: 1.25rem; font-weight: 700; color: #1f2937; }
-    .header-actions { display: flex; gap: .6rem; }
+    .page-header h2 { margin: 0 0 .2rem; font-size: 1.5rem; font-weight: 700; color: #1f2937; }
+    .page-subtitle { margin: 0; font-size: .875rem; color: #6b7280; }
+    .header-actions { display: flex; gap: .6rem; align-items: center; }
 
     .modal-backdrop {
       position: fixed;
@@ -84,13 +89,30 @@ type ModalMode = 'crear' | 'editar' | 'buscar' | 'activo' | 'score' | null;
   `],
 })
 export class CentrosPageComponent implements OnInit {
-  protected readonly service          = inject(CentrosService);
-  protected readonly clientesService  = inject(ClientesService);
+  protected readonly service           = inject(CentrosService);
+  protected readonly clientesService   = inject(ClientesService);
   private   readonly consumidorContext = inject(ConsumidorContextService);
   private   readonly profileService    = inject(ProfileService);
-  private   readonly router           = inject(Router);
-  protected readonly activosService   = inject(ActivosService);
-  private   readonly authService      = inject(AuthService);
+  private   readonly router            = inject(Router);
+  protected readonly activosService    = inject(ActivosService);
+  private   readonly authService       = inject(AuthService);
+  private   readonly http              = inject(HttpClient);
+  private   readonly api               = inject(ApiService);
+
+  private todasSolicitudes = signal<Solicitud[]>([]);
+
+  protected scoresPorCentro = computed((): Map<string, number> => {
+    const map = new Map<string, number>();
+    const sols = this.todasSolicitudes();
+    const centroIds = [...new Set(sols.map(s => s.centro_costo_id).filter(Boolean) as string[])];
+    for (const centroId of centroIds) {
+      const del = sols.filter(s => s.centro_costo_id === centroId);
+      if (del.length === 0) continue;
+      const aprobados = del.filter(s => s.estado === 'aprobado').length;
+      map.set(centroId, Math.round(aprobados / del.length * 100));
+    }
+    return map;
+  });
 
   protected modal            = signal<ModalMode>(null);
   protected busqueda         = signal('');
@@ -125,6 +147,22 @@ export class CentrosPageComponent implements OnInit {
       if (this.activosService.status()?.type === 'ok' && this.modal() === 'activo') {
         this.cerrar();
       }
+    });
+    effect(() => {
+      const clientes = this.clientesService.clientes();
+      if (clientes.length > 0) {
+        untracked(() => this.cargarSolicitudesGlobal(clientes.map(c => asId(c._id))));
+      }
+    });
+  }
+
+  private cargarSolicitudesGlobal(clienteIds: string[]): void {
+    const reqs = clienteIds.map(id =>
+      this.http.get<Solicitud[]>(this.api.url(`/empresas/${id}/solicitudes`))
+        .pipe(catchError(() => of([] as Solicitud[])))
+    );
+    forkJoin(reqs).subscribe(resultados => {
+      this.todasSolicitudes.set(resultados.flat());
     });
   }
 

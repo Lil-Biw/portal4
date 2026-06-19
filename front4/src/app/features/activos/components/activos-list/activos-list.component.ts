@@ -13,6 +13,71 @@ interface GrupoEmpresa { empresa: Cliente; centros: GrupoCentro[]; }
   standalone: true,
   imports: [ActivoIconoComponent],
   templateUrl: './activos-list.component.html',
+  styles: [`
+    .activos-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      background: #fff;
+      border: 1px solid rgba(34,33,33,.08);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    .activo-row {
+      display: flex;
+      align-items: center;
+      gap: .75rem;
+      padding: .6rem .9rem;
+      border-bottom: 1px solid rgba(34,33,33,.06);
+      transition: background .12s;
+    }
+    .activo-row:last-child { border-bottom: none; }
+    .activo-row:hover { background: #f9fafb; }
+    .activo-icono-placeholder {
+      width: 38px;
+      height: 38px;
+      flex-shrink: 0;
+    }
+    .activo-info {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: .1rem;
+    }
+    .activo-top {
+      display: flex;
+      align-items: baseline;
+      gap: .5rem;
+      min-width: 0;
+    }
+    .activo-nombre {
+      font-size: .875rem;
+      font-weight: 600;
+      color: #1f2937;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      flex-shrink: 0;
+    }
+    .activo-tipo {
+      font-size: .75rem;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    .activo-desc {
+      font-size: .75rem;
+      color: #9ca3af;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .activo-actions {
+      display: flex;
+      gap: .35rem;
+      flex-shrink: 0;
+    }
+  `],
 })
 export class ActivosListComponent implements OnChanges {
   @Input() activos: Activo[]      = [];

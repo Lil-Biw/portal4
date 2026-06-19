@@ -57,12 +57,29 @@
               {{ centro.ubicacion_ciudad }}{{ centro.ubicacion_region ? ', ' + centro.ubicacion_region : '' }}
             </p>
           }
-          <!-- Resumen compacto -->
-          <p style="margin:0;font-size:.78rem;color:#6b7280">
-            <span style="color:#15803d;font-weight:600">{{ r.aprobado }} aprob.</span>
-            &nbsp;&nbsp;
-            <span style="color:#0284c7;font-weight:600">{{ r.pendiente }} pend.</span>
-          </p>
+          <!-- Resumen de estados -->
+          <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:.2rem;margin-top:.4rem">
+            <div style="text-align:center">
+              <p style="margin:0;font-size:.85rem;font-weight:700;color:#15803d;line-height:1">{{ r.aprobado }}</p>
+              <p style="margin:0;font-size:.55rem;color:#15803d">Aprob.</p>
+            </div>
+            <div style="text-align:center">
+              <p style="margin:0;font-size:.85rem;font-weight:700;color:#b45309;line-height:1">{{ r.revision }}</p>
+              <p style="margin:0;font-size:.55rem;color:#b45309">Revis.</p>
+            </div>
+            <div style="text-align:center">
+              <p style="margin:0;font-size:.85rem;font-weight:700;color:#0369a1;line-height:1">{{ r.pendiente }}</p>
+              <p style="margin:0;font-size:.55rem;color:#0369a1">Pend.</p>
+            </div>
+            <div style="text-align:center">
+              <p style="margin:0;font-size:.85rem;font-weight:700;color:#dc2626;line-height:1">{{ r.vencido }}</p>
+              <p style="margin:0;font-size:.55rem;color:#dc2626">Venc.</p>
+            </div>
+            <div style="text-align:center">
+              <p style="margin:0;font-size:.85rem;font-weight:700;color:#9d174d;line-height:1">{{ r.rechazado }}</p>
+              <p style="margin:0;font-size:.55rem;color:#9d174d">Rechaz.</p>
+            </div>
+          </div>
         </div>
       }
     </div>
@@ -76,42 +93,31 @@
       <h3 style="margin:0;font-size:1rem;font-weight:700">Score 1 — Cumplimiento documental</h3>
       <app-stat-chip [label]="scoreChipLabel()" [variant]="scoreChipVariant()"></app-stat-chip>
     </div>
-    <div style="text-align:center;padding:.5rem 0 .75rem">
-      <!-- Gauge SVG -->
-      <svg width="200" height="115" viewBox="0 0 200 115" style="display:block;margin:0 auto;overflow:visible">
-        <defs>
-          <linearGradient id="scoreGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stop-color="#0095d6"/>
-            <stop offset="100%" stop-color="#22c55e"/>
-          </linearGradient>
-        </defs>
-        <!-- Arco de fondo (270°): dasharray=376.99 de 502.65 total, rotado 135° -->
-        <circle cx="100" cy="110" r="80" fill="none"
-          stroke="#e5e7eb" stroke-width="14"
-          stroke-dasharray="376.99 125.66"
-          transform="rotate(135 100 110)"/>
-        <!-- Arco de progreso -->
-        <circle cx="100" cy="110" r="80" fill="none"
-          stroke="url(#scoreGrad)" stroke-width="14" stroke-linecap="round"
-          [attr.stroke-dasharray]="(376.99 * scoreDocumental().pct / 100) + ' 502.65'"
-          transform="rotate(135 100 110)"/>
-        <!-- Número central -->
-        <text x="100" y="88" text-anchor="middle"
-          font-size="42" font-weight="700" fill="#0095d6">
-          {{ scoreDocumental().pct }}
-        </text>
-        <text x="100" y="106" text-anchor="middle"
-          font-size="13" fill="#6b7280">/ 100</text>
+    <div style="display:flex;flex-direction:column;align-items:center;padding:.25rem 0 .5rem">
+      <!-- Gauge SVG — igual que mi-ficha -->
+      <svg viewBox="0 0 200 155" style="width:160px;display:block">
+        <circle cx="100" cy="90" r="70" fill="none" stroke="#e5e7eb" stroke-width="16"
+          stroke-dasharray="330 440" stroke-linecap="round"
+          transform="rotate(135 100 90)"/>
+        <circle cx="100" cy="90" r="70" fill="none" stroke-width="16"
+          stroke-linecap="round"
+          [attr.stroke]="scoreDocumental().pct >= 80 ? '#22c55e' : scoreDocumental().pct >= 50 ? '#f59e0b' : '#ef4444'"
+          [attr.stroke-dasharray]="(scoreDocumental().pct * 3.30).toFixed(1) + ' 440'"
+          transform="rotate(135 100 90)"/>
+        <text x="100" y="87" text-anchor="middle" dominant-baseline="middle"
+          style="font-size:38px;font-weight:700"
+          [attr.fill]="scoreDocumental().pct >= 80 ? '#15803d' : scoreDocumental().pct >= 50 ? '#b45309' : '#dc2626'">{{ scoreDocumental().pct }}</text>
+        <text x="100" y="113" text-anchor="middle" style="font-size:14px;fill:#6b7280">/ 100</text>
       </svg>
       @if (scoreDocumental().total > 0) {
-        <p style="margin:.4rem 0 .9rem;font-size:.83rem;color:#6b7280">
+        <p style="margin:.1rem 0 .75rem;font-size:.8rem;color:#6b7280;text-align:center">
           {{ scoreDocumental().aprobados }} de {{ scoreDocumental().total }} documentos solicitados aprobados
         </p>
       } @else {
-        <p style="margin:.4rem 0 .9rem;font-size:.83rem;color:#9ca3af">Sin solicitudes registradas</p>
+        <p style="margin:.1rem 0 .75rem;font-size:.8rem;color:#9ca3af;text-align:center">Sin solicitudes registradas</p>
       }
       <!-- Recuadros de estado -->
-      <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:.4rem">
+      <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:.4rem;width:100%">
         <div style="padding:.5rem .3rem;border-radius:9px;text-align:center;background:#dcfce7">
           <p style="margin:0 0 .1rem;font-size:1.3rem;font-weight:700;color:#15803d;line-height:1">{{ scoreDocumental().aprobados }}</p>
           <p style="margin:0;font-size:.62rem;font-weight:600;color:#15803d">Aprobados</p>
@@ -145,45 +151,29 @@
       <p style="font-size:.83rem;color:#9ca3af;padding:.25rem 0">Sin novedades publicadas por el momento.</p>
     } @else {
       <div style="display:flex;flex-direction:column;gap:.6rem">
-        @for (n of noticiasService.noticias().slice(0,4); track n._id) {
+        @for (n of noticiasService.noticias().slice(0,2); track n._id) {
           <div
             style="display:flex;align-items:flex-start;gap:.7rem;cursor:pointer;padding:.5rem;border-radius:10px;border:1px solid rgba(34,33,33,.07);transition:background .15s"
             (click)="abrirNoticia(n.enlace)"
             onmouseenter="this.style.background='rgba(0,149,214,.04)'"
             onmouseleave="this.style.background='transparent'">
-            <!-- Ícono por sección -->
-            @let cfg = noticiaIconConfig(n.seccion);
-            <div [style.background]="cfg.bg"
-              style="width:60px;height:60px;flex-shrink:0;border-radius:8px;display:flex;align-items:center;justify-content:center">
-              <svg width="26" height="26" viewBox="0 0 24 24" fill="none"
-                [attr.stroke]="cfg.color"
-                stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                @switch (cfg.tipo) {
-                  @case ('carrito') {
-                    <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
-                    <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
-                  }
-                  @case ('documento') {
-                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                    <polyline points="14 2 14 8 20 8"/>
-                    <line x1="16" y1="13" x2="8" y2="13"/>
-                    <line x1="16" y1="17" x2="8" y2="17"/>
-                    <polyline points="10 9 9 9 8 9"/>
-                  }
-                  @case ('megafono') {
-                    <path d="M18 8a6 6 0 0 1 0 8"/>
-                    <path d="M11 11.34V20a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1v-5"/>
-                    <path d="M3 9.12A14.96 14.96 0 0 0 11 12v-2a14.96 14.96 0 0 0-8-2.88z"/>
-                    <path d="M11 10V6a6 6 0 0 1 6 0v8"/>
-                  }
-                  @default {
-                    <circle cx="12" cy="12" r="9"/>
-                    <line x1="12" y1="8" x2="12" y2="12"/>
-                    <line x1="12" y1="16" x2="12.01" y2="16"/>
-                  }
-                }
-              </svg>
-            </div>
+            <!-- Imagen de la noticia -->
+            @if (noticiasService.imagenUrl(n)) {
+              <img [src]="noticiasService.imagenUrl(n)!" alt=""
+                style="width:70px;height:70px;flex-shrink:0;border-radius:8px;object-fit:cover">
+            } @else {
+              @let cfg = noticiaIconConfig(n.seccion);
+              <div [style.background]="cfg.bg"
+                style="width:70px;height:70px;flex-shrink:0;border-radius:8px;display:flex;align-items:center;justify-content:center">
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="none"
+                  [attr.stroke]="cfg.color"
+                  stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="9"/>
+                  <line x1="12" y1="8" x2="12" y2="12"/>
+                  <line x1="12" y1="16" x2="12.01" y2="16"/>
+                </svg>
+              </div>
+            }
             <!-- Texto -->
             <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:.18rem">
               <p style="margin:0;font-size:.82rem;font-weight:700;color:#1f2937;line-height:1.3">{{ n.titulo }}</p>
@@ -229,6 +219,14 @@
             <span style="font-size:.75rem;font-weight:600;color:#dc2626;background:#fee2e2;border-radius:6px;padding:.2rem .55rem;white-space:nowrap;flex-shrink:0;margin-left:.5rem">
               Rechazado
             </span>
+          } @else if (t.estado === 'vencido') {
+            <span style="font-size:.75rem;font-weight:600;color:#b45309;background:#fef3c7;border-radius:6px;padding:.2rem .55rem;white-space:nowrap;flex-shrink:0;margin-left:.5rem">
+              Vencido
+            </span>
+          } @else if (t.estado === 'pendiente') {
+            <span style="font-size:.75rem;font-weight:600;color:#0369a1;background:#e0f2fe;border-radius:6px;padding:.2rem .55rem;white-space:nowrap;flex-shrink:0;margin-left:.5rem">
+              Pendiente
+            </span>
           }
         </div>
       }
@@ -238,7 +236,7 @@
   <div class="card">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.9rem">
       <h3 style="margin:0;font-size:1rem;font-weight:700">Actividades</h3>
-      <a routerLink="/mis-mantenciones" style="font-size:.8rem;color:#0095d6;text-decoration:none;font-weight:500">Ver calendario</a>
+      <a routerLink="/mis-actividades" style="font-size:.8rem;color:#0095d6;text-decoration:none;font-weight:500">Ver calendario</a>
     </div>
     @if (proxActividades().length === 0) {
       <p style="font-size:.83rem;color:#9ca3af;padding:.25rem 0">Sin actividades registradas para esta empresa.</p>
@@ -253,7 +251,7 @@
           </div>
           <!-- Barra de color -->
           <div style="width:3px;border-radius:2px;align-self:stretch;flex-shrink:0"
-            [style.background]="actividadColorBarra(m.fecha)"></div>
+            [style.background]="actividadColorTipo(m)"></div>
           <!-- Contenido -->
           <div style="flex:1;min-width:0">
             <p style="margin:0 0 .1rem;font-size:.875rem;font-weight:600;color:#1f2937;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ m.nombre }}</p>
@@ -261,7 +259,7 @@
           </div>
           <!-- Fecha relativa -->
           <span style="font-size:.75rem;font-weight:600;white-space:nowrap;flex-shrink:0"
-            [style.color]="actividadColorBarra(m.fecha)">
+            [style.color]="actividadColorTipo(m)">
             {{ actividadFechaLabel(m.fecha) }}
           </span>
         </div>

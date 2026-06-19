@@ -28,12 +28,13 @@ export class NoticiasService {
   }
 
   async create(dto: CreateNoticiaDto) {
-    const noticia = await new this.noticiaModel(dto).save();
-    void this.notificarTodosLosUsuarios(noticia);
-    return noticia;
+    return new this.noticiaModel(dto).save();
   }
 
-  private async notificarTodosLosUsuarios(noticia: Noticia & { _id: unknown; enlace: string }) {
+  private async notificarTodosLosUsuarios(noticia: {
+    titulo: string; resumen: string; enlace: string; seccion: string;
+    imagenBuffer?: Buffer; imagenMimetype?: string;
+  }) {
     try {
       const usuarios = await this.usuarioModel
         .find({ activo: true })
@@ -48,10 +49,12 @@ export class NoticiasService {
       await this.mailService.notificarNuevaNoticia({
         destinatarios,
         noticia: {
-          titulo:  noticia.titulo,
-          resumen: noticia.resumen,
-          enlace:  noticia.enlace,
-          seccion: noticia.seccion,
+          titulo:         noticia.titulo,
+          resumen:        noticia.resumen,
+          enlace:         noticia.enlace,
+          seccion:        noticia.seccion,
+          imagenBuffer:   noticia.imagenBuffer,
+          imagenMimetype: noticia.imagenMimetype,
         },
       });
     } catch (err: unknown) {
@@ -66,13 +69,24 @@ export class NoticiasService {
     const mimetype = archivo.mimetype || 'image/jpeg';
     const imagen_url = `/api/v1/noticias/${id}/imagen`;
 
-    return this.noticiaModel
+    const actualizada = await this.noticiaModel
       .findByIdAndUpdate(
         id,
         { imagen_url, imagen_data: archivo.buffer, imagen_mimetype: mimetype },
         { new: true },
       )
       .lean();
+
+    void this.notificarTodosLosUsuarios({
+      titulo:         noticia.titulo,
+      resumen:        noticia.resumen,
+      enlace:         noticia.enlace,
+      seccion:        noticia.seccion,
+      imagenBuffer:   archivo.buffer,
+      imagenMimetype: archivo.mimetype || 'image/jpeg',
+    });
+
+    return actualizada;
   }
 
   async findOne(id: string) {

@@ -1,9 +1,17 @@
 <!-- Encabezado -->
 <div class="page-header">
-  <h2>Centro de costos</h2>
+  <div>
+    <h2>Centros de costo</h2>
+    <p class="page-subtitle">Sucursales y unidades operativas por empresa.</p>
+  </div>
   <div class="header-actions">
-    <button class="btn-ghost" (click)="abrirBuscar()">Buscar</button>
-    <button class="btn-primary" (click)="abrirCrear()">+ Crear</button>
+    <button class="btn-ghost" (click)="abrirBuscar()">
+      <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:.35rem">
+        <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+      </svg>
+      Buscar
+    </button>
+    <button class="btn-primary" (click)="abrirCrear()">+ Crear centro</button>
   </div>
 </div>
 
@@ -13,6 +21,7 @@
 <app-centros-list
   [centros]="service.centros()"
   [clientes]="clientesService.clientes()"
+  [scoresPorCentro]="scoresPorCentro()"
   (editado)="abrirEditar($event)"
   (eliminado)="eliminar($event)"
   (verCentro)="irACentro($event)"

@@ -28,7 +28,9 @@
         </div>
         <div style="display:flex;gap:.5rem">
           <dt style="font-size:.78rem;color:#6b7280;min-width:90px;flex-shrink:0">Email</dt>
-          <dd style="margin:0;font-size:.82rem;color:#1f2937">{{ empresa()!.email_contacto }}</dd>
+          <dd style="margin:0;font-size:.82rem;color:#1f2937">
+            <a [href]="'mailto:' + empresa()!.email_contacto" style="color:#0095d6;text-decoration:none">{{ empresa()!.email_contacto }}</a>
+          </dd>
         </div>
         @if (empresa()!.telefono) {
           <div style="display:flex;gap:.5rem">
@@ -59,11 +61,19 @@
       </dl>
     </div>
 
-    <!-- Recuadro 2: Resumen estado documentos + actividades -->
+    <!-- Recuadro 2: Estado documentos + Actividades recientes -->
     <div class="card" style="display:flex;flex-direction:column;gap:.9rem">
+
       <!-- Estado documentos -->
       <div>
-        <h3 style="margin:0 0 .55rem;font-size:.95rem;font-weight:700;color:#1f2937">Estado documentos</h3>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.55rem">
+          <h3 style="margin:0;font-size:.95rem;font-weight:700;color:#1f2937">Estado documentos</h3>
+          @if (solicitudesEmpresa().length > 3) {
+            <button class="btn-ghost btn-sm" style="font-size:.74rem;padding:.2rem .5rem;color:#0095d6;border:none" (click)="irADocumentosEmpresa()">
+              Ver todos ({{ solicitudesEmpresa().length }})
+            </button>
+          }
+        </div>
         @if (solicitudesEmpresa().length === 0) {
           <p style="font-size:.78rem;color:#9ca3af;margin:0">Sin solicitudes registradas.</p>
         } @else {
@@ -73,13 +83,9 @@
               <span style="font-size:.68rem;font-weight:700;padding:.14rem .42rem;border-radius:999px;white-space:nowrap;flex-shrink:0" [style]="estadoStyle(s.estado)">{{ s.estado }}</span>
             </div>
           }
-          @if (solicitudesEmpresa().length > 3) {
-            <button class="btn-ghost btn-sm" style="font-size:.74rem;margin-top:.3rem;padding:.25rem .55rem" (click)="irADocumentosEmpresa()">
-              Ver todos ({{ solicitudesEmpresa().length }}) →
-            </button>
-          }
         }
       </div>
+
       <!-- Actividades recientes -->
       <div style="border-top:1px solid rgba(34,33,33,.07);padding-top:.75rem">
         <h3 style="margin:0 0 .55rem;font-size:.95rem;font-weight:700;color:#1f2937">Actividades recientes</h3>
@@ -105,31 +111,43 @@
       </div>
     </div>
 
-    <!-- Recuadro 3: Score documental de la empresa -->
+    <!-- Recuadro 3: Score documental con donut chart -->
     <div class="card">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.9rem">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem">
         <h3 style="margin:0;font-size:.95rem;font-weight:700;color:#1f2937">Score 1 — Cumplimiento documental</h3>
         <app-stat-chip [label]="scoreChipLabel()" [variant]="scoreChipVariant()"></app-stat-chip>
       </div>
-      <div style="text-align:center;padding:.25rem 0 .5rem">
-        <p style="margin:0 0 .15rem;line-height:1">
-          <span style="font-size:3rem;font-weight:700;color:#0095d6">{{ scoreDocumental().pct }}</span>
-          <span style="font-size:1.2rem;color:#6b7280;font-weight:400">/ 100</span>
-        </p>
+      <div style="display:flex;flex-direction:column;align-items:center">
+
+        <!-- Donut arc chart -->
+        <svg viewBox="0 0 200 155" style="width:170px;display:block">
+          <!-- Background track (270° arc) -->
+          <circle cx="100" cy="90" r="70" fill="none" stroke="#e5e7eb" stroke-width="16"
+            stroke-dasharray="330 440" stroke-linecap="round"
+            transform="rotate(135 100 90)"/>
+          <!-- Score arc -->
+          <circle cx="100" cy="90" r="70" fill="none" stroke-width="16"
+            stroke-linecap="round"
+            [attr.stroke]="scoreDocumental().pct >= 80 ? '#22c55e' : scoreDocumental().pct >= 50 ? '#f59e0b' : '#ef4444'"
+            [attr.stroke-dasharray]="(scoreDocumental().pct * 3.30).toFixed(1) + ' 440'"
+            transform="rotate(135 100 90)"/>
+          <!-- Score number -->
+          <text x="100" y="87" text-anchor="middle" dominant-baseline="middle"
+            style="font-size:38px;font-weight:700"
+            [attr.fill]="scoreDocumental().pct >= 80 ? '#15803d' : scoreDocumental().pct >= 50 ? '#b45309' : '#dc2626'">{{ scoreDocumental().pct }}</text>
+          <text x="100" y="113" text-anchor="middle" style="font-size:14px;fill:#6b7280">/ 100</text>
+        </svg>
+
         @if (scoreDocumental().total > 0) {
-          <p style="margin:.35rem 0 .8rem;font-size:.8rem;color:#6b7280">
+          <p style="margin:.1rem 0 .75rem;font-size:.8rem;color:#6b7280;text-align:center">
             {{ scoreDocumental().aprobados }} de {{ scoreDocumental().total }} documentos solicitados aprobados
           </p>
         } @else {
-          <p style="margin:.35rem 0 .8rem;font-size:.8rem;color:#9ca3af">Sin solicitudes registradas</p>
+          <p style="margin:.1rem 0 .75rem;font-size:.8rem;color:#9ca3af;text-align:center">Sin solicitudes registradas</p>
         }
-        <div style="background:#e5e7eb;border-radius:999px;height:8px;overflow:hidden;margin-bottom:.8rem">
-          <div
-            [style.width]="scoreDocumental().pct + '%'"
-            style="height:100%;background:linear-gradient(90deg,#0095d6,#22c55e);border-radius:999px;transition:width .4s">
-          </div>
-        </div>
-        <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:.4rem">
+
+        <!-- Recuadros de estado -->
+        <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:.4rem;width:100%">
           <div style="padding:.5rem .3rem;border-radius:9px;text-align:center;background:#dcfce7">
             <p style="margin:0 0 .1rem;font-size:1.3rem;font-weight:700;color:#15803d;line-height:1">{{ scoreDocumental().aprobados }}</p>
             <p style="margin:0;font-size:.62rem;font-weight:600;color:#15803d">Aprobados</p>
@@ -177,29 +195,42 @@
     <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:.9rem;flex-wrap:wrap;gap:.5rem">
       <div>
         <h3 style="margin:0 0 .2rem;font-size:.95rem;font-weight:700;color:#1f2937">Documentos de empresa</h3>
-        <p style="margin:0;font-size:.78rem;color:#6b7280">
-          {{ docsNivelEmpresa().length }} documento{{ docsNivelEmpresa().length !== 1 ? 's' : '' }} a nivel empresa
-        </p>
       </div>
       <button
-        class="btn-ghost btn-sm"
-        style="font-size:.78rem;padding:.35rem .75rem"
+        class="btn-primary btn-sm"
+        style="display:flex;align-items:center;gap:.35rem;font-size:.8rem;padding:.4rem .85rem"
         (click)="irADocumentosEmpresa()">
-        Ver en Documentos →
+        <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+          <path d="M6.5 1v8M3 5l3.5-4 3.5 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M1 10h11v2H1z" fill="currentColor" opacity=".25"/>
+          <rect x="1" y="10.5" width="11" height="1.5" rx=".75" fill="currentColor"/>
+        </svg>
+        Subir documento
       </button>
     </div>
 
     @if (docsNivelEmpresa().length === 0) {
       <p style="color:#9ca3af;font-size:.85rem;padding:.25rem 0">Sin documentos registrados a nivel empresa.</p>
     } @else {
-      <div style="display:flex;flex-direction:column;gap:.4rem">
+      <div style="display:flex;flex-direction:column;gap:.35rem">
         @for (s of docsNivelEmpresa(); track s._id) {
-          <div style="display:flex;align-items:center;justify-content:space-between;padding:.55rem .7rem;border-radius:8px;border:1px solid rgba(34,33,33,.08)">
-            <div>
-              <span style="font-size:.84rem;font-weight:600;color:#1f2937">{{ s.nombre }}</span>
-              <span style="margin-left:.5rem;font-size:.72rem;color:#6b7280">{{ s.tipo }}</span>
+          <div style="display:flex;align-items:center;gap:.75rem;padding:.55rem .7rem;border-radius:8px;border:1px solid rgba(34,33,33,.08)">
+            <!-- Ícono tipo archivo -->
+            <svg width="30" height="36" viewBox="0 0 30 36" fill="none" style="flex-shrink:0">
+              <path d="M3 0h16l11 11v25H3V0z"
+                [attr.fill]="s.adjunto?.tipo_mime === 'application/pdf' ? '#ef4444' : '#0095d6'"/>
+              <path d="M19 0v11h11" fill="white" opacity=".25"/>
+              <rect x="7" y="16" width="16" height="1.8" rx=".9" fill="white" opacity=".7"/>
+              <rect x="7" y="20.5" width="12" height="1.8" rx=".9" fill="white" opacity=".7"/>
+              <rect x="7" y="25" width="14" height="1.8" rx=".9" fill="white" opacity=".7"/>
+            </svg>
+            <!-- Nombre y meta -->
+            <div style="flex:1;min-width:0">
+              <p style="margin:0 0 .1rem;font-size:.84rem;font-weight:600;color:#1f2937;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ s.nombre }}</p>
+              <p style="margin:0;font-size:.73rem;color:#6b7280">{{ s.tipo }} · {{ formatFechaShort(s.creado_en) }}</p>
             </div>
-            <span style="font-size:.7rem;font-weight:700;padding:.18rem .5rem;border-radius:999px;white-space:nowrap;flex-shrink:0;margin-left:.5rem"
+            <!-- Estado -->
+            <span style="font-size:.7rem;font-weight:700;padding:.18rem .5rem;border-radius:999px;white-space:nowrap;flex-shrink:0"
                   [style]="estadoStyle(s.estado)">
               {{ s.estado }}
             </span>
@@ -220,16 +251,14 @@
     @if (centrosDeEmpresa().length === 0) {
       <p style="color:#9ca3af;font-size:.875rem;padding:.25rem 0">Esta empresa no tiene centros de costos registrados.</p>
     } @else {
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:.5rem">
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:.5rem">
         @for (c of centrosDeEmpresa(); track c._id) {
-          <div style="border:1px solid rgba(34,33,33,.1);border-radius:10px;padding:.75rem;display:flex;align-items:center;justify-content:space-between;gap:.5rem">
-            <div>
-              <strong style="display:block;font-size:.86rem;color:#1f2937">{{ c.nombre }}</strong>
-              <span style="font-size:.74rem;color:#6b7280">{{ resumenCentro(c._id) }}</span>
-            </div>
+          <div style="border:1px solid rgba(34,33,33,.1);border-radius:10px;padding:.85rem 1rem">
+            <strong style="display:block;font-size:.88rem;color:#1f2937;margin-bottom:.2rem">{{ c.nombre }}</strong>
+            <span style="display:block;font-size:.74rem;color:#9ca3af;margin-bottom:.5rem">{{ resumenCentro(c._id) }}</span>
             <button
               class="btn-ghost btn-sm"
-              style="flex-shrink:0;font-size:.76rem;padding:.28rem .6rem"
+              style="font-size:.76rem;padding:.2rem 0;color:#0095d6;border:none;background:none;cursor:pointer"
               (click)="irACentro(c)">
               Ver →
             </button>

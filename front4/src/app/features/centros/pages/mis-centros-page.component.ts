@@ -1,5 +1,4 @@
 import { Component, OnInit, OnDestroy, inject, computed, signal } from '@angular/core';
-import { NgIf, DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
@@ -10,6 +9,8 @@ import { DocumentosService } from '../../documentos/documentos.service';
 import { ActivosService } from '../../activos/activos.service';
 import { SpiderChartComponent } from '../../../shared/components/spider-chart/spider-chart.component';
 import { StatChipComponent, ChipVariant } from '../../../shared/components/stat-chip/stat-chip.component';
+import { DonutArcComponent } from '../../../shared/components/donut-arc/donut-arc.component';
+import { ActivoIconoComponent } from '../../activos/components/activo-icono/activo-icono.component';
 import { CentroCosto } from '../../../shared/models/centro.model';
 import { Activo, TipoActivo } from '../../../shared/models/activo.model';
 import { asId } from '../../../shared/utils';
@@ -17,7 +18,7 @@ import { asId } from '../../../shared/utils';
 @Component({
   selector: 'app-mis-centros-page',
   standalone: true,
-  imports: [NgIf, FormsModule, DecimalPipe, SpiderChartComponent, StatChipComponent],
+  imports: [FormsModule, SpiderChartComponent, StatChipComponent, DonutArcComponent, ActivoIconoComponent],
   templateUrl: './mis-centros-page.component.html',
   styles: [`
     .centro-card {
@@ -206,5 +207,42 @@ export class MisCentrosPageComponent implements OnInit, OnDestroy {
   tipoActivoNombre(a: Activo): string {
     if (typeof a.tipo_activo_id === 'object') return (a.tipo_activo_id as TipoActivo).nombre;
     return '';
+  }
+
+  tipoActivoColor(a: Activo): string {
+    if (typeof a.tipo_activo_id === 'object') return (a.tipo_activo_id as TipoActivo).color ?? '#0095d6';
+    return '#0095d6';
+  }
+
+  protected mapsLink = computed((): string => {
+    const c = this.consumidorContext.centroSeleccionado();
+    if (!c) return '#';
+    if (c.ubicacion_latitud != null && c.ubicacion_longitud != null) {
+      return `https://www.google.com/maps?q=${c.ubicacion_latitud},${c.ubicacion_longitud}`;
+    }
+    const parts = [c.ubicacion_direccion, c.ubicacion_ciudad, c.ubicacion_region, c.ubicacion_pais]
+      .filter(Boolean).join(', ');
+    return `https://www.google.com/maps/search/${encodeURIComponent(parts || c.nombre)}`;
+  });
+
+  docTipoInfo(mime: string): { color: string; tipo: 'pdf' | 'doc' | 'xls' | 'zip' | 'img' | 'file' } {
+    if (!mime) return { color: '#6b7280', tipo: 'file' };
+    if (mime.includes('pdf'))                           return { color: '#ef4444', tipo: 'pdf' };
+    if (mime.includes('word') || mime.includes('.document')) return { color: '#3b82f6', tipo: 'doc' };
+    if (mime.includes('excel') || mime.includes('.sheet'))   return { color: '#22c55e', tipo: 'xls' };
+    if (mime.includes('zip') || mime.includes('rar') || mime.includes('tar')) return { color: '#8b5cf6', tipo: 'zip' };
+    if (mime.startsWith('image/'))                      return { color: '#f59e0b', tipo: 'img' };
+    return { color: '#6b7280', tipo: 'file' };
+  }
+
+  dotColorSolicitud(estado: string): string {
+    const map: Record<string, string> = {
+      pendiente: '#0095d6',
+      revision:  '#f59e0b',
+      aprobado:  '#22c55e',
+      rechazado: '#ef4444',
+      vencido:   '#9ca3af',
+    };
+    return map[estado] ?? '#9ca3af';
   }
 }

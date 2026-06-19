@@ -102,19 +102,29 @@ export class MisActividadesPageComponent implements OnInit {
   readonly days   = CALENDAR_DAYS;
   readonly months = CALENDAR_MONTHS;
 
-  private readonly _cal        = createCalendarState();
-  protected readonly view       = this._cal.view;
-  protected readonly reference  = this._cal.reference;
-  protected readonly monthLabel  = this._cal.monthLabel;
-  protected readonly weekLabel   = this._cal.weekLabel;
-  protected readonly calendarDays = this._cal.calendarDays;
-  protected readonly weekStart   = this._cal.weekStart;
-  protected readonly weekDays    = this._cal.weekDays;
+  private readonly _cal            = createCalendarState();
+  protected readonly view           = this._cal.view;
+  protected readonly reference      = this._cal.reference;
+  protected readonly monthLabel     = this._cal.monthLabel;
+  protected readonly weekLabel      = this._cal.weekLabel;
+  protected readonly dayLabel       = this._cal.dayLabel;
+  protected readonly calendarDays   = this._cal.calendarDays;
+  protected readonly weekStart      = this._cal.weekStart;
+  protected readonly weekDays       = this._cal.weekDays;
   navAnterior(): void  { this._cal.navAnterior(); }
   navSiguiente(): void { this._cal.navSiguiente(); }
   irAHoy(): void       { this._cal.irAHoy(); }
   setView(v: CalendarView): void { this._cal.setView(v); }
   isToday(date: Date): boolean   { return this._cal.isToday(date); }
+
+  protected actividadSeleccionadaDia = signal<Actividad | null>(null);
+  protected lupaActivosDia = signal(false);
+
+  seleccionarActividadDia(a: Actividad): void {
+    this.actividadSeleccionadaDia.set(a);
+    this.actividadDetalle.set(a);
+    this.lupaActivosDia.set(false);
+  }
 
   protected centroNombre(a: Actividad): string {
     return this.centrosService.centros().find(c => asId(c._id) === asId(a.centro_costo_id))?.nombre ?? '';

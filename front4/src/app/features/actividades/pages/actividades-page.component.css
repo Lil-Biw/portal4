@@ -28,14 +28,44 @@
   gap: .75rem;
   flex-wrap: wrap;
 }
+.cal-toolbar-center {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  flex-wrap: wrap;
+  flex: 1;
+  justify-content: center;
+}
+.cal-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: .35rem;
+  font-size: .78rem;
+  font-weight: 500;
+  color: #374151;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: .2rem .4rem;
+  border-radius: 6px;
+  transition: background .12s, opacity .12s;
+}
+.cal-legend-item:hover { background: rgba(0,0,0,.05); }
+.cal-legend-item--active { background: rgba(0,0,0,.07); font-weight: 700; }
+.cal-legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
 .cal-nav {
   display: flex;
   align-items: center;
-  gap: .4rem;
+  gap: .75rem;
 }
 .cal-nav-btn {
   background: none;
-  border: 1px solid rgba(34,33,33,.18);
+  border: 1px solid #0095d6;
   border-radius: 8px;
   width: 32px;
   height: 32px;
@@ -44,29 +74,32 @@
   justify-content: center;
   cursor: pointer;
   font-size: 1.1rem;
-  color: #374151;
+  color: #0095d6;
   transition: background .12s;
+  flex-shrink: 0;
 }
-.cal-nav-btn:hover { background: rgba(34,33,33,.06); }
+.cal-nav-btn:hover { background: rgba(0,149,214,.08); }
 .cal-label {
   font-size: 1rem;
   font-weight: 700;
   color: #1f2937;
-  min-width: 160px;
+  min-width: 120px;
   text-align: center;
+  flex-shrink: 0;
 }
 .cal-today-btn {
   font-size: .78rem;
   font-weight: 600;
-  padding: .3rem .65rem;
+  padding: .3rem .75rem;
   border-radius: 8px;
-  border: 1px solid rgba(34,33,33,.18);
+  border: 1px solid #0095d6;
   background: none;
   cursor: pointer;
-  color: #374151;
+  color: #0095d6;
   transition: background .12s;
+  flex-shrink: 0;
 }
-.cal-today-btn:hover { background: rgba(34,33,33,.06); }
+.cal-today-btn:hover { background: rgba(0,149,214,.08); }
 .cal-empresa-filter {
   padding: .35rem .7rem;
   border: 1px solid rgba(34,33,33,.18);
@@ -163,7 +196,7 @@
 .cal-grid-week {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  min-height: 200px;
+  min-height: 460px;
 }
 .cal-week-col {
   border-right: 1px solid rgba(34,33,33,.07);
@@ -207,7 +240,7 @@
   flex-direction: column;
   gap: .25rem;
   cursor: pointer;
-  min-height: 120px;
+  min-height: 360px;
 }
 .cal-week-empty { flex: 1; }
 
@@ -234,12 +267,11 @@
 /* ── Day view ───────────────────────────────────────────────────── */
 .cal-day-layout {
   display: flex;
-  min-height: 320px;
+  min-height: 460px;
 }
 
 .cal-day-list {
-  width: 35%;
-  min-width: 180px;
+  flex: 1;
   border-right: 1px solid rgba(34,33,33,.1);
   display: flex;
   flex-direction: column;
@@ -291,17 +323,13 @@
   white-space: nowrap;
 }
 
-.cal-day-list-add {
+.cal-day-list-footer {
   margin-top: auto;
   padding: .65rem 1rem;
-  font-size: .8rem;
-  font-weight: 600;
-  color: #0095d6;
-  cursor: pointer;
   border-top: 1px solid rgba(34,33,33,.08);
-  transition: background .1s;
+  display: flex;
+  justify-content: center;
 }
-.cal-day-list-add:hover { background: rgba(0,149,214,.05); }
 
 .cal-day-detail {
   flex: 1;
@@ -379,6 +407,8 @@
 .cal-day-detail-footer {
   padding-top: .5rem;
   border-top: 1px solid rgba(34,33,33,.08);
+  display: flex;
+  justify-content: center;
 }
 
 /* ── Tipos section ─────────────────────────────────────────────── */
@@ -396,19 +426,20 @@
   margin: 0 0 .75rem;
 }
 .tipos-empty { color: #9ca3af; font-size: .85rem; margin: .5rem 0; }
-.tipos-list { display: flex; flex-direction: column; gap: 0; }
+.tipos-list { display: flex; flex-direction: column; gap: 0; max-height: 320px; overflow-y: auto; padding-right: .25rem; }
 .tipo-item {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: .6rem;
   padding: .55rem 0;
   border-bottom: 1px solid rgba(34,33,33,.06);
 }
 .tipo-item:last-child { border-bottom: none; }
-.tipo-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
-.tipo-nombre { font-size: .85rem; font-weight: 600; color: #1f2937; }
-.tipo-desc { font-size: .77rem; color: #9ca3af; flex: 1; }
-.tipo-actions { display: flex; gap: .35rem; margin-left: auto; flex-shrink: 0; }
+.tipo-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; margin-top: 3px; }
+.tipo-texto { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: .15rem; }
+.tipo-nombre { font-size: .85rem; font-weight: 600; color: #1f2937; word-break: break-word; }
+.tipo-desc { font-size: .77rem; color: #9ca3af; word-break: break-word; }
+.tipo-actions { display: flex; gap: .5rem; flex-shrink: 0; white-space: nowrap; }
 .tipo-input {
   width: 100%;
   padding: .5rem .7rem;
@@ -420,7 +451,12 @@
   margin-bottom: .5rem;
 }
 .tipo-input:focus { outline: 2px solid #0095d6; border-color: transparent; }
-.modal-box--tipos { max-width: 680px; }
+.modal-box--tipos {
+  max-width: 1000px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+}
 
 /* ── Modal ──────────────────────────────────────────────────────── */
 .modal-overlay {

@@ -27,17 +27,24 @@ type ModalMode = 'crear-admin' | 'crear-usuario' | 'editar' | 'buscar' | null;
         display: flex;
         align-items: center;
         justify-content: space-between;
-        margin-bottom: 1.25rem;
+        margin-bottom: 1.5rem;
       }
+      .header-title { display: flex; flex-direction: column; gap: 2px; }
       .page-header h2 {
         margin: 0;
-        font-size: 1.25rem;
+        font-size: 1.35rem;
         font-weight: 700;
         color: #1f2937;
+      }
+      .header-subtitle {
+        margin: 0;
+        font-size: 0.82rem;
+        color: #9ca3af;
       }
       .header-actions {
         display: flex;
         gap: 0.6rem;
+        align-items: center;
       }
 
       .modal-backdrop {
@@ -102,15 +109,13 @@ type ModalMode = 'crear-admin' | 'crear-usuario' | 'editar' | 'buscar' | null;
         margin-bottom: 1.5rem;
       }
       .empresa-titulo {
-        font-size: 0.8rem;
+        font-size: 0.72rem;
         font-weight: 700;
-        color: #6b7280;
+        color: #9ca3af;
         text-transform: uppercase;
-        letter-spacing: 0.6px;
+        letter-spacing: 0.8px;
         margin: 0 0 0.5rem;
-        padding: 0.4rem 0.6rem;
-        background: rgba(34, 33, 33, 0.05);
-        border-radius: 6px;
+        padding: 0 0.25rem;
       }
     `,
   ],

@@ -1,6 +1,6 @@
 import { signal, computed } from '@angular/core';
 
-export type CalendarView = 'month' | 'week';
+export type CalendarView = 'month' | 'week' | 'day';
 export interface DayCell { date: Date; currentMonth: boolean; }
 
 export const CALENDAR_DAYS   = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
@@ -21,6 +21,12 @@ export function createCalendarState() {
     d.setDate(d.getDate() - dow);
     d.setHours(0, 0, 0, 0);
     return d;
+  });
+
+  const dayLabel = computed(() => {
+    const d = reference();
+    const dow = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'][d.getDay()];
+    return `${dow}, ${d.getDate()} de ${CALENDAR_MONTHS[d.getMonth()]} ${d.getFullYear()}`;
   });
 
   const weekLabel = computed(() => {
@@ -56,7 +62,8 @@ export function createCalendarState() {
     reference.update(d => {
       const n = new Date(d);
       if (view() === 'month') n.setMonth(n.getMonth() - 1);
-      else n.setDate(n.getDate() - 7);
+      else if (view() === 'week') n.setDate(n.getDate() - 7);
+      else n.setDate(n.getDate() - 1);
       return n;
     });
   }
@@ -65,7 +72,8 @@ export function createCalendarState() {
     reference.update(d => {
       const n = new Date(d);
       if (view() === 'month') n.setMonth(n.getMonth() + 1);
-      else n.setDate(n.getDate() + 7);
+      else if (view() === 'week') n.setDate(n.getDate() + 7);
+      else n.setDate(n.getDate() + 1);
       return n;
     });
   }
@@ -80,5 +88,5 @@ export function createCalendarState() {
            date.getFullYear() === today.getFullYear();
   }
 
-  return { view, reference, monthLabel, weekLabel, calendarDays, weekStart, weekDays, navAnterior, navSiguiente, irAHoy, setView, isToday };
+  return { view, reference, monthLabel, dayLabel, weekLabel, calendarDays, weekStart, weekDays, navAnterior, navSiguiente, irAHoy, setView, isToday };
 }

@@ -1,9 +1,13 @@
-import { Component, OnInit, inject, signal, computed } from '@angular/core';
+import { Component, OnInit, inject, signal, computed, effect, untracked } from '@angular/core';
 import { NgIf } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { HttpClient } from '@angular/common/http';
+import { forkJoin, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 import { ClientesService } from '../clientes.service';
 import { AuthService } from '../../auth/auth.service';
+import { ApiService } from '../../../core/services/api.service';
 import { StatusBannerComponent } from '../../../shared/components/status-banner/status-banner.component';
 import { ClienteFormComponent } from '../components/cliente-form/cliente-form.component';
 import { ClientesListComponent } from '../components/clientes-list/clientes-list.component';
@@ -11,6 +15,8 @@ import { Cliente, CreateClienteDto } from '../../../shared/models/cliente.model'
 import { ProfileService } from '../../../profile/profile.service';
 import { ConsumidorContextService } from '../../../profile/consumidor-context.service';
 import { SpiderChartComponent } from '../../../shared/components/spider-chart/spider-chart.component';
+import { Solicitud } from '../../solicitudes/solicitudes.service';
+import { asId } from '../../../shared/utils';
 
 type ModalMode = 'crear' | 'editar' | 'buscar' | 'score' | null;
 
@@ -24,15 +30,23 @@ type ModalMode = 'crear' | 'editar' | 'buscar' | 'score' | null;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-bottom: 1.25rem;
+      margin-bottom: 1.5rem;
     }
     .page-header h2 {
-      margin: 0;
-      font-size: 1.25rem;
-      font-weight: 700;
-      color: #1f2937;
+      margin: 0 0 .2rem;
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: #111827;
     }
-    .header-actions { display: flex; gap: .6rem; }
+    .page-subtitle {
+      margin: 0;
+      font-size: .83rem;
+      color: #6b7280;
+    }
+    .header-actions { display: flex; gap: .6rem; align-items: center; }
+    .btn-buscar {
+      display: flex; align-items: center; gap: .4rem;
+    }
 
     /* Modal overlay */
     .modal-backdrop {
@@ -94,6 +108,45 @@ export class ClientesPageComponent implements OnInit {
   private  readonly consumidorContext     = inject(ConsumidorContextService);
   private  readonly router                = inject(Router);
   private  readonly authService           = inject(AuthService);
+  private  readonly http                  = inject(HttpClient);
+  private  readonly api                   = inject(ApiService);
+
+  private  readonly todasSolicitudes   = signal<Solicitud[]>([]);
+  private  readonly loadingDocs        = signal(false);
+
+  protected readonly scoresPorEmpresa = computed((): Map<string, number> => {
+    const sols = this.todasSolicitudes();
+    const map = new Map<string, number>();
+    for (const emp of this.service.clientes()) {
+      const empSols   = sols.filter(s => asId(s.empresa_id) === asId(emp._id));
+      if (empSols.length === 0) continue;
+      const aprobados = empSols.filter(s => s.estado === 'aprobado').length;
+      map.set(asId(emp._id), Math.round(aprobados / empSols.length * 100));
+    }
+    return map;
+  });
+
+  constructor() {
+    effect(() => {
+      const clientes = this.service.clientes();
+      if (clientes.length > 0) {
+        untracked(() => this.cargarSolicitudesGlobal(clientes.map(c => asId(c._id))));
+      }
+    });
+  }
+
+  private cargarSolicitudesGlobal(clienteIds: string[]): void {
+    if (this.loadingDocs()) return;
+    this.loadingDocs.set(true);
+    const reqs = clienteIds.map(id =>
+      this.http.get<Solicitud[] | { data: Solicitud[] }>(this.api.url(`/empresas/${id}/solicitudes`))
+        .pipe(catchError(() => of([] as Solicitud[])))
+    );
+    forkJoin(reqs).subscribe(resultados => {
+      this.todasSolicitudes.set(resultados.flatMap(r => Array.isArray(r) ? r : r.data));
+      this.loadingDocs.set(false);
+    });
+  }
 
   protected modal            = signal<ModalMode>(null);
   protected busqueda         = signal('');

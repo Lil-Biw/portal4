@@ -5,7 +5,6 @@ import {
   homeGuard,
   soloAdminGuard,
   soloConsumidorGuard,
-  soloSuperAdminGuard,
   usuariosAdminGuard,
 } from './features/auth/auth.guard';
 
@@ -140,6 +139,14 @@ export const routes: Routes = [
             (m) => m.MisActividadesPageComponent,
           ),
       },
+      {
+        path: 'mis-activos',
+        canActivate: [soloConsumidorGuard],
+        loadComponent: () =>
+          import('./features/activos/pages/mis-activos-page.component').then(
+            (m) => m.MisActivosPageComponent,
+          ),
+      },
 
       // ── Compartidas ────────────────────────────────────────────────
       {
@@ -159,7 +166,6 @@ export const routes: Routes = [
       },
       {
         path: 'noticias',
-        canActivate: [soloSuperAdminGuard],
         loadComponent: () =>
           import('./features/noticias/pages/noticias-page.component').then(
             (m) => m.NoticiasPageComponent,

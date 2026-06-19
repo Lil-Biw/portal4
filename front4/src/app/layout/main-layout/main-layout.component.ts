@@ -10,38 +10,33 @@ import { ProfileService } from '../../profile/profile.service';
   imports: [RouterOutlet, TopbarComponent, SidebarComponent],
   templateUrl: './main-layout.component.html',
   styles: [`
-    :host { display:block; }
+    :host { display:block; height:100vh; overflow:hidden; }
     .layout {
       display:grid;
-      grid-template-rows:auto 1fr;
-      min-height:100vh;
-      background:#dde0e4;
-      transition:background .3s;
-    }
-    .layout.admin      { background:#cfd2d6; }
-    .layout.consumidor { background:#b8d8ef; }
-    .topbar-wrap {
-      padding:1rem 1rem 0;
-      max-width:1440px;
-      width:100%;
-      margin:0 auto;
-      box-sizing:border-box;
-    }
-    .page-wrap {
-      padding:1rem;
-      max-width:1440px;
-      width:100%;
-      margin:0 auto;
-      box-sizing:border-box;
-    }
-    .page {
-      display:grid;
       grid-template-columns:220px 1fr;
-      gap:1rem;
-      align-items:start;
+      grid-template-rows:60px 1fr;
+      height:100vh;
+      overflow:hidden;
+      background:#e9ecf0;
     }
-    aside { position:sticky; top:1rem; }
-    .content { min-width:0; }
+    aside {
+      grid-column:1;
+      grid-row:1 / 3;
+      overflow-y:auto;
+      height:100%;
+    }
+    header {
+      grid-column:2;
+      grid-row:1;
+    }
+    .content {
+      grid-column:2;
+      grid-row:2;
+      padding:1.5rem 2rem;
+      overflow-y:auto;
+      min-width:0;
+      background:#e9ecf0;
+    }
   `],
 })
 export class MainLayoutComponent {

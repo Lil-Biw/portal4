@@ -4,13 +4,14 @@ import { ProyectosService } from '../proyectos.service';
 import { CentrosService } from '../../centros/centros.service';
 import { SolicitudesService } from '../../solicitudes/solicitudes.service';
 import { ConsumidorContextService } from '../../../profile/consumidor-context.service';
+import { DonutArcComponent } from '../../../shared/components/donut-arc/donut-arc.component';
 import { Proyecto } from '../../../shared/models/proyecto.model';
 import { asId } from '../../../shared/utils';
 
 @Component({
   selector: 'app-mis-proyectos-page',
   standalone: true,
-  imports: [],
+  imports: [DonutArcComponent],
   templateUrl: './mis-proyectos-page.component.html',
   styles: [`
     .proyecto-card {
@@ -92,15 +93,27 @@ export class MisProyectosPageComponent {
   scoreDeProyecto(proyectoId: string) {
     const sols = this.solicitudesService.solicitudes()
       .filter(s => s.proyecto_id === proyectoId);
-    if (sols.length === 0) return { pct: 0, aprobados: 0, revision: 0, vencido: 0, total: 0 };
+    if (sols.length === 0) return { pct: 0, aprobados: 0, revision: 0, vencido: 0, pendiente: 0, total: 0 };
     const aprobados = sols.filter(s => s.estado === 'aprobado').length;
     return {
       pct: Math.round((aprobados / sols.length) * 100),
       aprobados,
-      revision: sols.filter(s => s.estado === 'revision').length,
-      vencido:  sols.filter(s => s.estado === 'vencido').length,
+      revision:  sols.filter(s => s.estado === 'revision').length,
+      vencido:   sols.filter(s => s.estado === 'vencido').length,
+      pendiente: sols.filter(s => s.estado === 'pendiente').length,
       total: sols.length,
     };
+  }
+
+  dotColorSolicitud(estado: string): string {
+    const map: Record<string, string> = {
+      pendiente: '#0095d6',
+      revision:  '#f59e0b',
+      aprobado:  '#22c55e',
+      rechazado: '#ef4444',
+      vencido:   '#9ca3af',
+    };
+    return map[estado] ?? '#9ca3af';
   }
 
   verDetalle(proyecto: Proyecto): void {

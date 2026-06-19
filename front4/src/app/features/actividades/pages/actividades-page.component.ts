@@ -9,10 +9,12 @@ import { UsuariosService } from '../../usuarios/usuarios.service';
 import { AuthService } from '../../auth/auth.service';
 
 import { StatusBannerComponent } from '../../../shared/components/status-banner/status-banner.component';
+import { ActividadIconoComponent } from '../components/actividad-icono/actividad-icono.component';
 import { Actividad, TipoActividad } from '../../../shared/models/actividad.model';
 import { Activo, TipoActivo } from '../../../shared/models/activo.model';
 import { asId, toDateKey } from '../../../shared/utils';
 import { createCalendarState, CalendarView, CALENDAR_DAYS, CALENDAR_MONTHS } from '../../../shared/calendar-state';
+import { COLORES_ACTIVIDAD, ColorActividad } from '../actividades-icons';
 
 interface ActividadForm {
   nombre: string;
@@ -40,7 +42,7 @@ function emptyTipoForm(): TipoForm {
 @Component({
   selector: 'app-actividades-page',
   standalone: true,
-  imports: [FormsModule, StatusBannerComponent],
+  imports: [FormsModule, StatusBannerComponent, ActividadIconoComponent],
   templateUrl: './actividades-page.component.html',
   styleUrl: './actividades-page.component.css',
 })
@@ -52,6 +54,8 @@ export class ActividadesPageComponent implements OnInit {
   protected readonly activosService   = inject(ActivosService);
   protected readonly usuariosService  = inject(UsuariosService);
   private readonly authService        = inject(AuthService);
+
+  protected readonly coloresActividad: ColorActividad[] = COLORES_ACTIVIDAD;
 
   protected puedeGestionarTipos = computed(() =>
     this.authService.usuarioActual()?.rol === 'super_admin'
@@ -66,6 +70,18 @@ export class ActividadesPageComponent implements OnInit {
   protected activosParaCentro = computed(() =>
     this.activosService.activos().filter(a => asId(a.centro_costo_id) === this.form().centro_costo_id)
   );
+
+  protected filtroActivo = signal('');
+
+  protected activosFiltrados = computed(() => {
+    const q = this.filtroActivo().toLowerCase().trim();
+    const activos = this.activosParaCentro();
+    if (!q) return activos;
+    return activos.filter(a =>
+      a.nombre.toLowerCase().includes(q) ||
+      this.tipoActivoNombre(a).toLowerCase().includes(q)
+    );
+  });
 
   protected usuariosParaCentro = computed(() => {
     const centroId = this.form().centro_costo_id;
@@ -155,6 +171,7 @@ export class ActividadesPageComponent implements OnInit {
   protected showResumenActivos = signal(false);
   protected showResumenNotif   = signal(false);
   protected modalLupa          = signal<'activos' | 'notif' | null>(null);
+  protected lupaDetalleDia     = signal(false);
 
   get resumenDocumentosTexto(): string {
     if (this.editingId()) {
@@ -205,16 +222,17 @@ export class ActividadesPageComponent implements OnInit {
   protected readonly calendarDays = this._cal.calendarDays;
   protected readonly weekStart   = this._cal.weekStart;
   protected readonly weekDays    = this._cal.weekDays;
-  navAnterior(): void            { this._cal.navAnterior(); this.actividadSeleccionadaDia.set(null); }
-  navSiguiente(): void           { this._cal.navSiguiente(); this.actividadSeleccionadaDia.set(null); }
-  irAHoy(): void                 { this._cal.irAHoy(); this.actividadSeleccionadaDia.set(null); }
-  setView(v: CalendarView): void { this._cal.setView(v); this.actividadSeleccionadaDia.set(null); }
+  navAnterior(): void            { this._cal.navAnterior(); this.actividadSeleccionadaDia.set(null); this.lupaDetalleDia.set(false); }
+  navSiguiente(): void           { this._cal.navSiguiente(); this.actividadSeleccionadaDia.set(null); this.lupaDetalleDia.set(false); }
+  irAHoy(): void                 { this._cal.irAHoy(); this.actividadSeleccionadaDia.set(null); this.lupaDetalleDia.set(false); }
+  setView(v: CalendarView): void { this._cal.setView(v); this.actividadSeleccionadaDia.set(null); this.lupaDetalleDia.set(false); }
   isToday(date: Date): boolean   { return this._cal.isToday(date); }
 
   protected actividadSeleccionadaDia = signal<import('../../../shared/models/actividad.model').Actividad | null>(null);
 
   seleccionarActividadDia(a: Actividad): void {
     this.actividadSeleccionadaDia.set(a);
+    this.lupaDetalleDia.set(false);
   }
 
   protected readonly detalleActividad = computed(() => {
@@ -417,6 +435,7 @@ export class ActividadesPageComponent implements OnInit {
     this.paso.set(1);
     this.pasoMaxAlcanzado.set(1);
     this.errorPaso1.set('');
+    this.filtroActivo.set('');
     this.showResumenActivos.set(false);
     this.showResumenNotif.set(false);
     this.showModal.set(true);
@@ -425,6 +444,7 @@ export class ActividadesPageComponent implements OnInit {
 
   abrirEditar(a: Actividad): void {
     this.editingId.set(a._id);
+    this.filtroActivo.set('');
     const centroId = asId(a.centro_costo_id);
     const centro = this.centrosService.centros().find(c => asId(c._id) === centroId);
     this.form.set({
@@ -461,6 +481,7 @@ export class ActividadesPageComponent implements OnInit {
   patchForm(field: keyof ActividadForm, value: string | string[]): void {
     if (field === 'centro_costo_id') {
       this.form.update(f => ({ ...f, centro_costo_id: value as string, activo_ids: [] }));
+      this.filtroActivo.set('');
       this.notifUsuariosIds.set(this.usuariosParaCentro().map(u => u._id));
     } else if (field === 'empresa_id') {
       this.form.update(f => ({ ...f, empresa_id: value as string }));

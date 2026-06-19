@@ -1,171 +1,206 @@
-<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem">
-  <h2 style="margin:0;font-size:1.5rem;font-weight:700;color:#1f2937">Resumen general</h2>
-  <button class="btn-primary" (click)="refresh()">Actualizar todo</button>
-</div>
+<div class="page">
 
-<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1rem;align-items:start">
+  <!-- Saludo -->
+  <div class="greeting">
+    <h1>{{ saludo() }}, {{ nombreUsuario() }}</h1>
+    <p>Esto es lo que requiere tu atención hoy, {{ fechaHoy() }}.</p>
+  </div>
 
-  <!-- 1. Empresas -->
-  <div class="card" style="display:flex;flex-direction:column">
-    <h3 style="margin:0 0 .75rem;font-size:1rem;font-weight:700;display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
-      Empresas
-      <span style="background:rgba(0,149,214,.1);color:#0095d6;padding:.2rem .6rem;border-radius:999px;font-size:.78rem;font-weight:700">{{ clientesService.clientes().length }}</span>
-    </h3>
-    <div class="scroll-area">
-      @if (clientesService.clientes().length === 0) {
-        <p class="empty">Sin empresas registradas.</p>
-      }
-      @for (c of clientesService.clientes(); track c._id) {
-        <div style="padding:.55rem 0;border-bottom:1px solid rgba(34,33,33,.07)">
-          <strong style="font-size:.875rem;display:block">{{ c.razon_social }}</strong>
-          <span style="font-size:.78rem;color:#6b7280">{{ c.rut }} · {{ c.email_contacto }}</span>
+  <!-- Stats -->
+  <div class="stats">
+    <div class="stat">
+      <div class="stat-top">
+        <div class="stat-icon" style="background:rgba(0,149,214,.1)">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0095d6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="8" y="2" width="8" height="4" rx="1"/><rect x="1" y="14" width="6" height="4" rx="1"/>
+            <rect x="9" y="14" width="6" height="4" rx="1"/><rect x="17" y="14" width="6" height="4" rx="1"/>
+            <path d="M4 14v-3h16v3"/><path d="M12 6v5"/>
+          </svg>
         </div>
-      }
+        <span class="stat-badge blue">{{ empresasCount() }} empresa{{ empresasCount() !== 1 ? 's' : '' }}</span>
+      </div>
+      <div class="stat-num">{{ centrosCount() }}</div>
+      <div class="stat-label">Centros de costo</div>
     </div>
-  </div>
 
-  <!-- 2. Centro de costos -->
-  <div class="card" style="display:flex;flex-direction:column">
-    <h3 style="margin:0 0 .75rem;font-size:1rem;font-weight:700;display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
-      Centros de costos
-      <span style="background:rgba(0,149,214,.1);color:#0095d6;padding:.2rem .6rem;border-radius:999px;font-size:.78rem;font-weight:700">{{ centrosService.centros().length }}</span>
-    </h3>
-    <div class="scroll-area">
-      @if (centrosService.centros().length === 0) {
-        <p class="empty">Sin centros registrados.</p>
-      }
-      @for (c of centrosService.centros(); track c._id) {
-        <div style="padding:.55rem 0;border-bottom:1px solid rgba(34,33,33,.07)">
-          <strong style="font-size:.875rem;display:block">{{ c.nombre }}</strong>
-          <span style="font-size:.78rem;color:#6b7280">Cód. {{ c.codigo }}{{ c.ubicacion_ciudad ? ' · ' + c.ubicacion_ciudad : '' }}</span>
+    <div class="stat">
+      <div class="stat-top">
+        <div class="stat-icon" style="background:rgba(22,163,74,.1)">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+          </svg>
         </div>
-      }
-    </div>
-  </div>
-
-  <!-- 3. Proyectos -->
-  <div class="card" style="display:flex;flex-direction:column">
-    <h3 style="margin:0 0 .75rem;font-size:1rem;font-weight:700;display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
-      Proyectos
-      <span style="background:rgba(0,149,214,.1);color:#0095d6;padding:.2rem .6rem;border-radius:999px;font-size:.78rem;font-weight:700">{{ proyectosService.proyectos().length }}</span>
-    </h3>
-    <div class="scroll-area">
-      @if (proyectosService.proyectos().length === 0) {
-        <p class="empty">Sin proyectos registrados.</p>
-      }
-      @for (p of proyectosService.proyectos(); track p._id) {
-        <div style="padding:.55rem 0;border-bottom:1px solid rgba(34,33,33,.07);display:flex;align-items:flex-start;justify-content:space-between;gap:.5rem">
-          <div>
-            <strong style="font-size:.875rem;display:block">{{ p.nombre }}</strong>
-            <span style="font-size:.78rem;color:#6b7280">Cód. {{ p.codigo }}</span>
-          </div>
-          <span style="font-size:.7rem;font-weight:700;padding:.15rem .45rem;border-radius:999px;background:rgba(34,33,33,.07);color:#6b7280;white-space:nowrap;flex-shrink:0">{{ p.estado }}</span>
-        </div>
-      }
-    </div>
-  </div>
-
-  <!-- 4. Actividades -->
-  <div class="card" style="display:flex;flex-direction:column">
-    <h3 style="margin:0 0 .75rem;font-size:1rem;font-weight:700;display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
-      Actividades
-      <span style="background:rgba(0,149,214,.1);color:#0095d6;padding:.2rem .6rem;border-radius:999px;font-size:.78rem;font-weight:700">{{ actividadesService.actividades().length }}</span>
-    </h3>
-    <div class="scroll-area">
-      @if (actividadesService.loading()) {
-        <p class="empty">Cargando...</p>
-      } @else if (actividadesService.actividades().length === 0) {
-        <p class="empty">Sin actividades registradas.</p>
-      } @else {
-        @for (m of actividadesService.actividades(); track m._id) {
-          <div style="padding:.55rem 0;border-bottom:1px solid rgba(34,33,33,.07);display:flex;align-items:flex-start;justify-content:space-between;gap:.5rem">
-            <strong style="font-size:.875rem;display:block">{{ m.nombre }}</strong>
-            <span style="font-size:.78rem;color:#6b7280;flex-shrink:0">{{ m.fecha.slice(0,10) }}</span>
-          </div>
-        }
-      }
-    </div>
-  </div>
-
-  <!-- 5. Documentos -->
-  <div class="card" style="display:flex;flex-direction:column">
-    <h3 style="margin:0 0 .75rem;font-size:1rem;font-weight:700;display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
-      Documentos
-      <span style="background:rgba(0,149,214,.1);color:#0095d6;padding:.2rem .6rem;border-radius:999px;font-size:.78rem;font-weight:700">{{ todasSolicitudes().length }}</span>
-    </h3>
-    @if (loadingDocs()) {
-      <p class="empty">Cargando solicitudes…</p>
-    } @else if (todasSolicitudes().length === 0) {
-      <p class="empty">Sin solicitudes registradas.</p>
-    } @else {
-      <div class="scroll-area" style="display:flex;flex-direction:column;gap:.4rem">
-        @for (emp of resumenEmpresas(); track emp.nombre) {
-          <div style="display:flex;align-items:center;justify-content:space-between;padding-top:.25rem">
-            <span style="font-size:.82rem;font-weight:700;color:#1f2937">{{ emp.nombre }}</span>
-            <span style="font-size:.75rem;font-weight:700;color:#0095d6;background:rgba(0,149,214,.08);padding:.1rem .45rem;border-radius:999px">{{ emp.total }}</span>
-          </div>
-          @for (cr of emp.centros; track cr.centro._id) {
-            <div style="display:flex;align-items:center;justify-content:space-between;padding-left:.9rem">
-              <span style="font-size:.77rem;color:#374151;display:flex;align-items:center;gap:.35rem">
-                <span style="width:1px;height:12px;background:rgba(34,33,33,.15);display:inline-block"></span>
-                {{ cr.centro.nombre }}
-              </span>
-              <span style="font-size:.72rem;color:#6b7280;font-weight:600">{{ cr.total }}</span>
-            </div>
-            @for (pr of cr.proyectos; track pr.proyecto._id) {
-              <div style="display:flex;align-items:center;justify-content:space-between;padding-left:1.75rem">
-                <span style="font-size:.73rem;color:#6b7280;display:flex;align-items:center;gap:.3rem">
-                  <span style="width:1px;height:10px;background:rgba(34,33,33,.1);display:inline-block"></span>
-                  {{ pr.proyecto.nombre }}
-                </span>
-                <span style="font-size:.7rem;color:#9ca3af;font-weight:600">{{ pr.total }}</span>
-              </div>
-            }
-          }
+        @if (proyectosEsteMes() > 0) {
+          <span class="stat-badge green">+{{ proyectosEsteMes() }} este mes</span>
+        } @else {
+          <span class="stat-badge green">activos</span>
         }
       </div>
-    }
-  </div>
+      <div class="stat-num">{{ proyectosActivosCount() }}</div>
+      <div class="stat-label">Proyectos activos</div>
+    </div>
 
-  <!-- 6. Noticias -->
-  <div class="card" style="display:flex;flex-direction:column">
-    <h3 style="margin:0 0 .75rem;font-size:1rem;font-weight:700;display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
-      Noticias
-      <span style="background:rgba(0,149,214,.1);color:#0095d6;padding:.2rem .6rem;border-radius:999px;font-size:.78rem;font-weight:700">{{ noticiasService.noticias().length }}</span>
-    </h3>
-    <div class="scroll-area">
-      @if (noticiasService.noticias().length === 0) {
-        <p class="empty">Sin noticias publicadas.</p>
-      }
-      @for (n of noticiasService.noticias(); track n._id) {
-        <div style="padding:.55rem 0;border-bottom:1px solid rgba(34,33,33,.07)">
-          <strong style="font-size:.875rem;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ n.titulo }}</strong>
-          <span style="font-size:.78rem;color:#6b7280">{{ n.creado_en | slice:0:10 }}</span>
+    <div class="stat">
+      <div class="stat-top">
+        <div class="stat-icon" style="background:rgba(99,102,241,.1)">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/>
+            <line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+          </svg>
         </div>
-      }
+        @if (actividadesEstaSemanaCount() > 0) {
+          <span class="stat-badge purple">{{ actividadesEstaSemanaCount() }} esta semana</span>
+        } @else {
+          <span class="stat-badge purple">este mes</span>
+        }
+      </div>
+      <div class="stat-num">{{ actividadesDelMesCount() }}</div>
+      <div class="stat-label">Actividades del mes</div>
+    </div>
+
+    <div class="stat">
+      <div class="stat-top">
+        <div class="stat-icon" style="background:rgba(245,158,11,.1)">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+          </svg>
+        </div>
+        @if (docsPendientesCount() > 0) {
+          <span class="stat-badge amber">Revisar</span>
+        } @else {
+          <span class="stat-badge green" style="background:rgba(22,163,74,.1);color:#16a34a">Al día</span>
+        }
+      </div>
+      <div class="stat-num">{{ docsPendientesCount() }}</div>
+      <div class="stat-label">Documentos pendientes</div>
     </div>
   </div>
 
-  <!-- 7. Usuarios -->
-  <div class="card" style="display:flex;flex-direction:column">
-    <h3 style="margin:0 0 .75rem;font-size:1rem;font-weight:700;display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
-      Usuarios
-      <span style="background:rgba(0,149,214,.1);color:#0095d6;padding:.2rem .6rem;border-radius:999px;font-size:.78rem;font-weight:700">{{ usuariosService.usuarios().length }}</span>
-    </h3>
-    <div class="scroll-area">
-      @if (usuariosService.usuarios().length === 0) {
-        <p class="empty">Sin usuarios registrados.</p>
-      }
-      @for (u of usuariosService.usuarios(); track u._id) {
-        <div style="padding:.55rem 0;border-bottom:1px solid rgba(34,33,33,.07);display:flex;align-items:flex-start;justify-content:space-between;gap:.5rem">
-          <div>
-            <strong style="font-size:.875rem;display:block">{{ u.nombre }}</strong>
-            <span style="font-size:.78rem;color:#6b7280">{{ u.email }}</span>
+  <!-- Paneles 2×2 -->
+  <div class="panels">
+
+    <!-- Requiere tu atención -->
+    <div class="panel">
+      <div class="panel-head">
+        <h2>Requiere tu atención</h2>
+        <a class="ver-todo" routerLink="/documentos">Ver todo</a>
+      </div>
+      <div class="panel-body">
+        @if (atencionItems().length === 0) {
+          <p class="empty">Sin elementos urgentes — todo al día.</p>
+        } @else {
+          <div class="aten-list">
+            @for (item of atencionItems(); track item.id) {
+              <div class="aten-item">
+                <div class="aten-icon" [style.background]="item.iconBg + '22'">
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" [attr.stroke]="item.iconBg" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                    <polyline points="14 2 14 8 20 8"/>
+                  </svg>
+                </div>
+                <div class="aten-body">
+                  <div class="aten-title">{{ item.titulo }}</div>
+                  <div class="aten-sub">{{ item.subtitulo }}</div>
+                </div>
+                <span class="badge" [ngClass]="item.badgeClass">{{ item.badgeLabel }}</span>
+              </div>
+            }
           </div>
-          <span style="font-size:.7rem;font-weight:700;padding:.15rem .45rem;border-radius:999px;background:rgba(0,149,214,.1);color:#0095d6;white-space:nowrap;flex-shrink:0">{{ u.rol }}</span>
-        </div>
-      }
+        }
+      </div>
     </div>
-  </div>
 
+    <!-- Próximas actividades -->
+    <div class="panel">
+      <div class="panel-head">
+        <h2>Próximas actividades</h2>
+        <a class="ver-todo" routerLink="/actividades">Ver todo</a>
+      </div>
+      <div class="panel-body">
+        @if (proximasActividades().length === 0) {
+          <p class="empty">Sin actividades próximas programadas.</p>
+        } @else {
+          <div class="prox-list">
+            @for (act of proximasActividades(); track act.nombre + act.dia) {
+              <div class="prox-item">
+                <div class="prox-fecha">
+                  <span class="prox-dia">{{ act.dia }}</span>
+                  <span class="prox-mes">{{ act.mes }}</span>
+                </div>
+                <div class="prox-bar" [style.background]="act.accentColor"></div>
+                <div class="prox-body">
+                  <div class="prox-nombre">{{ act.nombre }}</div>
+                  <div class="prox-lugar">{{ act.lugar }}</div>
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- Score SmartClarity -->
+    <div class="panel">
+      <div class="panel-head">
+        <h2>Score SmartClarity</h2>
+      </div>
+      <div class="panel-body">
+        @if (loadingDocs()) {
+          <p class="empty">Calculando scores…</p>
+        } @else if (scoreEmpresas().length === 0) {
+          <p class="empty">Sin datos de documentos aún.</p>
+        } @else {
+          <div class="score-list">
+            @for (emp of scoreEmpresas(); track emp.nombre) {
+              <div class="score-row">
+                <div class="score-head">
+                  <span class="score-nom">{{ emp.nombre }}</span>
+                  <span class="score-num" [style.color]="scoreColor(emp.score)">{{ emp.score }}</span>
+                </div>
+                <div class="score-track">
+                  <div class="score-fill" [style.width]="emp.score + '%'" [style.background]="scoreColor(emp.score)"></div>
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- Últimas noticias -->
+    <div class="panel">
+      <div class="panel-head">
+        <h2>Últimas noticias</h2>
+        <a class="ver-todo" routerLink="/noticias">Ver todo</a>
+      </div>
+      <div class="panel-body">
+        @if (ultimasNoticias().length === 0) {
+          <p class="empty">Sin noticias publicadas.</p>
+        } @else {
+          <div class="news-list">
+            @for (n of ultimasNoticias(); track n._id) {
+              <div class="news-item">
+                @if (noticiasService.imagenUrl(n)) {
+                  <img [src]="noticiasService.imagenUrl(n)!" alt=""
+                    style="width:64px;height:64px;border-radius:10px;object-fit:cover;flex-shrink:0">
+                } @else {
+                  <div class="news-icon" [style.background]="noticiaColor(n.seccion) + '18'">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" [attr.stroke]="noticiaColor(n.seccion)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M3 11l19-9-9 19-2-8-8-2z"/>
+                    </svg>
+                  </div>
+                }
+                <div class="news-body">
+                  <div class="news-title">{{ n.titulo }}</div>
+                  <div class="news-date">{{ noticiaFecha(n.creado_en) }}</div>
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </div>
+    </div>
+
+  </div>
 </div>

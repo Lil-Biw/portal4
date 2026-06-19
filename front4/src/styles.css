@@ -230,6 +230,68 @@ body { margin: 0; background: var(--bg); color: var(--ink-900); }
 }
 .empresa-select:focus { outline: none; border-color: #0095d6; }
 
+/* ── Dashboard layout (resumen admin) ──────────────── */
+.dash-main-grid,
+.panels {
+  display: grid;
+  grid-template-columns: 1fr 380px;
+  grid-template-rows: 270px 270px;
+  grid-auto-flow: column;
+  gap: 1rem;
+}
+@media (max-width: 1100px) {
+  .dash-main-grid,
+  .panels {
+    grid-template-columns: 1fr;
+    grid-template-rows: repeat(4, 270px);
+    grid-auto-flow: row;
+  }
+}
+
+/* ── Dashboard cards (resumen admin) ───────────────── */
+.dash-card,
+.panel {
+  background: #fff;
+  border: 1px solid rgba(34,33,33,.08);
+  border-radius: 16px;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-sizing: border-box;
+  min-height: 0;
+}
+.dash-card .card-header,
+.panel .panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+  flex-shrink: 0;
+}
+.dash-card .card-header h2,
+.panel .panel-head h2 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #111827;
+}
+.dash-card .card-body,
+.panel .panel-body {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+  padding-right: 2px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0,0,0,.13) transparent;
+}
+.dash-card .card-body::-webkit-scrollbar,
+.panel .panel-body::-webkit-scrollbar { width: 4px; }
+.dash-card .card-body::-webkit-scrollbar-track,
+.panel .panel-body::-webkit-scrollbar-track { background: transparent; }
+.dash-card .card-body::-webkit-scrollbar-thumb,
+.panel .panel-body::-webkit-scrollbar-thumb { background: rgba(0,0,0,.15); border-radius: 4px; }
+
 /* ── Dashboard ──────────────────────────────────────── */
 .pct-badge {
   width: 52px;

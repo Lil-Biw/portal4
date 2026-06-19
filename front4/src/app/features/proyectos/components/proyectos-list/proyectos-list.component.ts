@@ -1,24 +1,138 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { NgFor, NgIf, SlicePipe } from '@angular/common';
 import { Proyecto } from '../../../../shared/models/proyecto.model';
 import { Cliente } from '../../../../shared/models/cliente.model';
 import { CentroCosto } from '../../../../shared/models/centro.model';
 import { asId } from '../../../../shared/utils';
 
-const ESTADO_CHIP: Record<string, { label: string; color: string }> = {
-  borrador: { label: 'Borrador', color: '#6b7280' },
-  activo:   { label: 'Activo',   color: '#0095d6' },
-  cerrado:  { label: 'Cerrado',  color: '#9ca3af' },
+const ESTADO_CHIP: Record<string, { label: string; color: string; bg: string }> = {
+  borrador:  { label: 'Borrador', color: '#6b7280', bg: 'rgba(107,114,128,.12)' },
+  activo:    { label: 'Activo',   color: '#16a34a', bg: 'rgba(22,163,74,.12)'   },
+  cerrado:   { label: 'Cerrado',  color: '#9ca3af', bg: 'rgba(156,163,175,.12)' },
+  en_pausa:  { label: 'En pausa', color: '#d97706', bg: 'rgba(217,119,6,.12)'   },
 };
 
-interface GrupoCentro  { centro: CentroCosto; proyectos: Proyecto[]; }
-interface GrupoEmpresa { empresa: Cliente; centros: GrupoCentro[]; }
+const MESES = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+
+interface GrupoEmpresa { empresa: Cliente; proyectos: Proyecto[]; }
 
 @Component({
   selector: 'app-proyectos-list',
   standalone: true,
-  imports: [NgFor, NgIf, SlicePipe],
+  imports: [],
   templateUrl: './proyectos-list.component.html',
+  styles: [`
+    .grupos { display: flex; flex-direction: column; gap: 1.5rem; }
+
+    .grupo-empresa {
+      border: 1.5px solid rgba(0,149,214,.2);
+      border-radius: 16px;
+      overflow: hidden;
+      background: #fff;
+    }
+
+    .grupo-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: .75rem 1.25rem;
+      background: rgba(0,149,214,.05);
+      border-bottom: 1px solid rgba(0,149,214,.15);
+    }
+    .grupo-title {
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+      font-weight: 700;
+      font-size: .9rem;
+      color: #1f2937;
+    }
+    .grupo-title svg { color: #0095d6; flex-shrink: 0; }
+    .grupo-count {
+      font-size: .78rem;
+      font-weight: 600;
+      color: #0095d6;
+    }
+
+    .proyecto-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1rem;
+      padding: 1rem;
+    }
+    @media (max-width: 700px) {
+      .proyecto-grid { grid-template-columns: 1fr; }
+    }
+
+    .proyecto-card {
+      border: 1px solid rgba(34,33,33,.1);
+      border-radius: 12px;
+      padding: 1rem 1.1rem;
+      display: flex;
+      flex-direction: column;
+      gap: .5rem;
+      background: #fff;
+      transition: box-shadow .15s, border-color .15s;
+    }
+    .proyecto-card:hover { box-shadow: 0 4px 14px rgba(0,0,0,.08); border-color: rgba(34,33,33,.2); }
+
+    .proyecto-card-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: .5rem;
+    }
+    .proyecto-nombre {
+      font-weight: 700;
+      font-size: .95rem;
+      color: #1f2937;
+      line-height: 1.3;
+    }
+    .estado-badge {
+      padding: .2rem .65rem;
+      border-radius: 999px;
+      font-size: .72rem;
+      font-weight: 700;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .proyecto-meta {
+      margin: 0;
+      font-size: .8rem;
+      color: #6b7280;
+    }
+    .proyecto-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: .5rem;
+      margin-top: .25rem;
+    }
+    .proyecto-fechas {
+      display: flex;
+      align-items: center;
+      gap: .35rem;
+      font-size: .8rem;
+      color: #6b7280;
+    }
+    .proyecto-fechas svg { flex-shrink: 0; }
+    .btn-icon {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      border: 1px solid rgba(34,33,33,.15);
+      background: transparent;
+      color: #6b7280;
+      cursor: pointer;
+      transition: all .15s;
+    }
+    .btn-icon:hover { border-color: rgba(34,33,33,.3); background: rgba(34,33,33,.04); color: #374151; }
+    .btn-icon-danger { border-color: rgba(239,68,68,.25); color: #ef4444; }
+    .btn-icon-danger:hover { border-color: rgba(239,68,68,.4); background: rgba(239,68,68,.06); color: #dc2626; }
+    .proyecto-acciones { display: flex; gap: .4rem; }
+  `],
 })
 export class ProyectosListComponent {
   @Input() proyectos: Proyecto[]    = [];
@@ -31,30 +145,28 @@ export class ProyectosListComponent {
   get grupos(): GrupoEmpresa[] {
     const empresaMap = new Map<string, GrupoEmpresa>();
 
-    // Paso 1: construir grupos desde centros (todos aparecen, con o sin proyectos)
-    for (const centro of this.centros) {
-      const empKey = asId(centro.cliente_id);
+    for (const p of this.proyectos) {
+      const empKey = asId(p.cliente_id);
       if (!empresaMap.has(empKey)) {
         const empresa = this.clientes.find(x => asId(x._id) === empKey);
         if (!empresa) continue;
-        empresaMap.set(empKey, { empresa, centros: [] });
+        empresaMap.set(empKey, { empresa, proyectos: [] });
       }
-      empresaMap.get(empKey)!.centros.push({ centro, proyectos: [] });
-    }
-
-    // Paso 2: distribuir proyectos en sus centros
-    for (const p of this.proyectos) {
-      const empKey    = asId(p.cliente_id);
-      const centroKey = asId(p.centro_costo_id);
-      const grupoEmp  = empresaMap.get(empKey);
-      if (!grupoEmp) continue;
-      const grupoCentro = grupoEmp.centros.find(gc => asId(gc.centro._id) === centroKey);
-      if (!grupoCentro) continue;
-      grupoCentro.proyectos.push(p);
+      empresaMap.get(empKey)!.proyectos.push(p);
     }
 
     return Array.from(empresaMap.values());
   }
 
+  centroPorId(id: string): string {
+    return this.centros.find(c => asId(c._id) === id)?.nombre ?? '';
+  }
+
   estadoChip(estado: string) { return ESTADO_CHIP[estado] ?? ESTADO_CHIP['borrador']; }
+
+  formatFecha(iso?: string): string {
+    if (!iso) return '';
+    const [y, m, d] = iso.slice(0, 10).split('-');
+    return `${parseInt(d)} ${MESES[parseInt(m) - 1]} ${y}`;
+  }
 }

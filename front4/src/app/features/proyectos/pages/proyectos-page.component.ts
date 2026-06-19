@@ -21,12 +21,14 @@ type ModalMode = 'crear' | 'editar' | 'buscar' | null;
   styles: [`
     .page-header {
       display: flex;
-      align-items: center;
+      align-items: flex-start;
       justify-content: space-between;
       margin-bottom: 1.25rem;
+      gap: 1rem;
     }
-    .page-header h2 { margin: 0; font-size: 1.25rem; font-weight: 700; color: #1f2937; }
-    .header-actions { display: flex; gap: .6rem; }
+    .page-header h2 { margin: 0 0 .15rem; font-size: 1.4rem; font-weight: 700; color: #1f2937; }
+    .page-subtitle { margin: 0; font-size: .85rem; color: #6b7280; }
+    .header-actions { display: flex; gap: .6rem; flex-shrink: 0; align-items: flex-start; }
 
     .modal-backdrop {
       position: fixed;

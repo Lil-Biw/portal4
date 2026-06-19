@@ -6,7 +6,9 @@ import { CentrosService } from '../../centros/centros.service';
 import { ProyectosService } from '../../proyectos/proyectos.service';
 import { SolicitudesService } from '../../solicitudes/solicitudes.service';
 import { ActividadesService } from '../../actividades/actividades.service';
+import { TiposActividadService } from '../../actividades/tipos-actividad.service';
 import { NoticiasService } from '../../noticias/noticias.service';
+import { Actividad } from '../../../shared/models/actividad.model';
 import { SeccionNoticia } from '../../../shared/models/noticia.model';
 import { asId } from '../../../shared/utils';
 
@@ -32,6 +34,7 @@ export class InicioPageComponent implements OnInit {
   protected readonly proyectosService    = inject(ProyectosService);
   protected readonly solicitudesService  = inject(SolicitudesService);
   protected readonly actividadesService  = inject(ActividadesService);
+  protected readonly tiposActividadService = inject(TiposActividadService);
   protected readonly noticiasService     = inject(NoticiasService);
 
   readonly fecha = new Date().toLocaleDateString('es-CL', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
@@ -66,7 +69,7 @@ export class InicioPageComponent implements OnInit {
     hace30.setDate(hace30.getDate() - 30);
     hace30.setHours(0, 0, 0, 0);
     return this.actividadesService.actividades()
-      .filter(a => ids.has(asId(a.centro_costo_id)) && new Date(a.fecha) >= hace30)
+      .filter(a => ids.has(asId(a.centro_costo_id)) && this.parseFechaLocal(a.fecha) >= hace30)
       .sort((a, b) => b.fecha.localeCompare(a.fecha))
       .slice(0, 5);
   });
@@ -118,6 +121,7 @@ export class InicioPageComponent implements OnInit {
 
   ngOnInit(): void {
     this.noticiasService.cargar();
+    this.tiposActividadService.cargar();
   }
 
   protected tareaColor(estado: string): string {
@@ -181,19 +185,24 @@ export class InicioPageComponent implements OnInit {
     return this.centrosService.centros().find(c => c._id === id)?.nombre ?? '';
   }
 
+  private parseFechaLocal(iso: string): Date {
+    const [y, m, d] = iso.slice(0, 10).split('-').map(Number);
+    return new Date(y, m - 1, d);
+  }
+
   protected actividadDia(iso: string): string {
-    return new Date(iso).toLocaleDateString('es-CL', { day: 'numeric' });
+    return this.parseFechaLocal(iso).toLocaleDateString('es-CL', { day: 'numeric' });
   }
 
   protected actividadMes(iso: string): string {
-    return new Date(iso)
+    return this.parseFechaLocal(iso)
       .toLocaleDateString('es-CL', { month: 'short' })
       .toUpperCase()
       .replace('.', '');
   }
 
   protected actividadFechaLabel(iso: string): string {
-    const d = new Date(iso); d.setHours(0, 0, 0, 0);
+    const d = this.parseFechaLocal(iso);
     const hoy = new Date(); hoy.setHours(0, 0, 0, 0);
     const diff = Math.round((d.getTime() - hoy.getTime()) / 86400000);
     if (diff === 0) return 'Hoy';
@@ -208,14 +217,12 @@ export class InicioPageComponent implements OnInit {
     return d.toLocaleDateString('es-CL', { day: 'numeric', month: 'short' }).replace('.', '');
   }
 
-  protected actividadColorBarra(iso: string): string {
-    const d = new Date(iso); d.setHours(0, 0, 0, 0);
-    const hoy = new Date(); hoy.setHours(0, 0, 0, 0);
-    const diff = Math.round((d.getTime() - hoy.getTime()) / 86400000);
-    if (diff === 0) return '#0095d6';
-    if (diff < 0)  return '#22c55e';
-    if (diff <= 7) return '#f59e0b';
-    return '#9ca3af';
+  protected actividadColorTipo(a: Actividad): string {
+    if (typeof a.tipo_id === 'object' && a.tipo_id !== null) {
+      return (a.tipo_id as { color: string }).color ?? '#9ca3af';
+    }
+    const tipoId = a.tipo_id as string;
+    return this.tiposActividadService.tipos().find(t => t._id === tipoId)?.color ?? '#9ca3af';
   }
 
   protected noticiaIconConfig(seccion: SeccionNoticia): { bg: string; color: string; tipo: 'carrito' | 'documento' | 'megafono' } {

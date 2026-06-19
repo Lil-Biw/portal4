@@ -52,6 +52,24 @@ export class CentroFormComponent implements OnChanges {
   dmsInput = '';
   dmsError = '';
   previewMapUrl: SafeResourceUrl | null = null;
+  tabUbicacion: 'direccion' | 'coordenadas' = 'direccion';
+
+  setTabUbicacion(tab: 'direccion' | 'coordenadas'): void {
+    if (this.tabUbicacion === tab) return;
+    this.tabUbicacion = tab;
+    if (tab === 'coordenadas') {
+      this.form.ubicacion_direccion = '';
+      this.form.ubicacion_ciudad = '';
+      this.form.ubicacion_region = '';
+      this.form.ubicacion_pais = '';
+    } else {
+      this.form.ubicacion_latitud = undefined;
+      this.form.ubicacion_longitud = undefined;
+      this.dmsInput = '';
+      this.dmsError = '';
+      this.previewMapUrl = null;
+    }
+  }
 
   get puedePrevisualizar(): boolean {
     return this.form.ubicacion_latitud != null && this.form.ubicacion_longitud != null;
@@ -93,6 +111,7 @@ export class CentroFormComponent implements OnChanges {
     const lat = this.initial?.ubicacion_latitud;
     const lng = this.initial?.ubicacion_longitud;
     this.dmsInput = (lat != null && lng != null) ? decimalToDms(lat, lng) : '';
+    this.tabUbicacion = (lat != null && lng != null) ? 'coordenadas' : 'direccion';
     this.form = this.initial
       ? {
           cliente_id: this.initial.cliente_id,

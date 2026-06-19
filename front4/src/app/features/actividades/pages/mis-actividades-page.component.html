@@ -12,29 +12,35 @@
     <button class="cal-nav-btn" (click)="navAnterior()">‹</button>
     <span class="cal-label">
       @if (view() === 'month') { {{ monthLabel() }} }
-      @else { {{ weekLabel() }} }
+      @else if (view() === 'week') { {{ weekLabel() }} }
+      @else { {{ dayLabel() }} }
     </span>
     <button class="cal-nav-btn" (click)="navSiguiente()">›</button>
     <button class="cal-today-btn" (click)="irAHoy()">Hoy</button>
   </div>
+  <!-- Chips de tipo (centro, como en admin) -->
+  <div class="cal-toolbar-center">
+    @for (t of tiposService.tipos(); track t._id) {
+      <button
+        class="cal-legend-item"
+        [class.cal-legend-item--active]="filtroTipoId() === t._id"
+        (click)="filtroTipoId.set(filtroTipoId() === t._id ? '' : t._id)"
+        [title]="'Filtrar por ' + t.nombre">
+        <span class="cal-legend-dot" [style.background]="t.color"></span>
+        {{ t.nombre }}
+      </button>
+    }
+  </div>
   <div style="display:flex;align-items:center;gap:.75rem;flex-wrap:wrap">
-    <select
-      class="cal-empresa-filter"
-      [ngModel]="filtroTipoId()"
-      (ngModelChange)="filtroTipoId.set($event)">
-      <option value="">Todos los tipos</option>
-      @for (t of tiposService.tipos(); track t._id) {
-        <option [value]="t._id">{{ t.nombre }}</option>
-      }
-    </select>
     <div class="cal-view-toggle">
       <button [class.active]="view() === 'month'" (click)="setView('month')">Mes</button>
       <button [class.active]="view() === 'week'"  (click)="setView('week')">Semana</button>
+      <button [class.active]="view() === 'day'"   (click)="setView('day')">Día</button>
     </div>
   </div>
 </div>
 
-<!-- Vista mes -->
+<!-- ══ VISTA MES ══════════════════════════════════════════════════════════ -->
 @if (view() === 'month') {
   <div class="card cal-card">
     <div class="cal-grid-header">
@@ -60,7 +66,7 @@
   </div>
 }
 
-<!-- Vista semana -->
+<!-- ══ VISTA SEMANA ═══════════════════════════════════════════════════════ -->
 @if (view() === 'week') {
   <div class="card cal-card">
     <div class="cal-grid-week">
@@ -87,8 +93,119 @@
   </div>
 }
 
+<!-- ══ VISTA DÍA ════════════════════════════════════════════════════════ -->
+@if (view() === 'day') {
+  <div class="card cal-card">
+    <div class="cal-day-layout">
+
+      <!-- Panel izquierdo: lista de actividades -->
+      <div class="cal-day-list">
+        <div class="cal-day-list-header">Actividades</div>
+        @let acts = actividadesEnDia(reference());
+        @if (acts.length === 0) {
+          <p class="cal-day-list-empty">Sin actividades para este día</p>
+        }
+        @for (a of acts; track a._id) {
+          <div
+            class="cal-day-item"
+            [class.selected]="actividadSeleccionadaDia()?._id === a._id"
+            (click)="seleccionarActividadDia(a)">
+            <span class="cal-day-item-dot" [style.background]="colorDeActividad(a)"></span>
+            <span class="cal-day-item-nombre">{{ a.nombre }}</span>
+          </div>
+        }
+      </div>
+
+      <!-- Panel derecho: detalle inline (read-only) -->
+      <div class="cal-day-detail">
+        @if (!actividadSeleccionadaDia()) {
+          <p class="cal-day-detail-empty">Selecciona una actividad para ver sus detalles</p>
+        } @else {
+          @let det = actividadSeleccionadaDia()!;
+          <div class="cal-day-detail-content">
+            <div class="cal-day-detail-header">
+              <span class="cal-day-detail-dot" [style.background]="colorDeActividad(det)"></span>
+              <h3 class="cal-day-detail-nombre">{{ det.nombre }}</h3>
+            </div>
+            <div class="cal-day-detail-fields">
+              <div class="cal-day-field">
+                <span class="cal-day-field-label">Tipo</span>
+                <span class="cal-day-field-value">{{ tipoDeActividad(det)?.nombre ?? '—' }}</span>
+              </div>
+              <div class="cal-day-field">
+                <span class="cal-day-field-label">Fecha</span>
+                <span class="cal-day-field-value">{{ det.fecha.slice(0,10) }}</span>
+              </div>
+              <div class="cal-day-field">
+                <span class="cal-day-field-label">Centro de costos</span>
+                <span class="cal-day-field-value">{{ centroNombre(det) }}</span>
+              </div>
+              @if (det.descripcion) {
+                <div class="cal-day-field">
+                  <span class="cal-day-field-label">Descripción</span>
+                  <span class="cal-day-field-value">{{ det.descripcion }}</span>
+                </div>
+              }
+              <div class="cal-day-field">
+                <span class="cal-day-field-label">Activos</span>
+                <span class="cal-day-field-value">
+                  @if (activosDetalle().length === 0) { Sin activos }
+                  @else { {{ activosDetalle().length }} activo{{ activosDetalle().length > 1 ? 's' : '' }} }
+                </span>
+                @if (activosDetalle().length > 0) {
+                  <button type="button" (click)="lupaActivosDia.set(true)"
+                    style="margin-left:auto;background:none;border:none;cursor:pointer;padding:0;color:#9ca3af;display:flex;align-items:center;flex-shrink:0"
+                    title="Ver activos">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                      <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                    </svg>
+                  </button>
+                }
+              </div>
+              <div class="cal-day-field" style="flex-direction:column;align-items:flex-start;gap:.4rem">
+                <span class="cal-day-field-label">Documentos</span>
+                @if ((det.documentos ?? []).length === 0) {
+                  <span class="cal-day-field-value">Sin documentos</span>
+                } @else {
+                  @for (doc of det.documentos!; track doc.nombre) {
+                    <div style="display:flex;align-items:center;justify-content:space-between;gap:.5rem;width:100%;padding:.3rem 0;border-bottom:1px solid #f3f4f6">
+                      <span style="font-size:.82rem;color:#374151;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;flex:1">{{ doc.nombre_display }}</span>
+                      <button
+                        style="background:none;border:1px solid #e5e7eb;border-radius:6px;padding:.2rem .55rem;font-size:.76rem;cursor:pointer;color:#0095d6;font-weight:600;flex-shrink:0"
+                        (click)="descargarDocActividad(det._id, doc.nombre, doc.nombre_display)">
+                        Descargar
+                      </button>
+                    </div>
+                  }
+                }
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+
+      @if (lupaActivosDia()) {
+        <div class="lupa-overlay" (click)="lupaActivosDia.set(false)">
+          <div class="lupa-box" (click)="$event.stopPropagation()">
+            <div class="lupa-header">
+              <span class="lupa-title">Activos incluidos</span>
+              <button class="lupa-close" (click)="lupaActivosDia.set(false)">✕</button>
+            </div>
+            <div class="lupa-body">
+              @for (a of activosDetalle(); track a._id) {
+                <div class="lupa-item lupa-item--blue">· {{ a.nombre }}</div>
+              }
+            </div>
+          </div>
+        </div>
+      }
+
+    </div>
+  </div>
+}
+
 <!-- Modal de detalle de actividad -->
-@if (actividadDetalle()) {
+@if (actividadDetalle() && view() !== 'day') {
   <div style="position:fixed;inset:0;background:rgba(15,23,42,.45);display:flex;align-items:center;justify-content:center;z-index:100;padding:1rem"
        (click)="cerrarDetalle()">
     <div style="background:#fff;border-radius:16px;box-shadow:0 20px 60px rgba(15,23,42,.18);width:100%;max-width:520px;max-height:85vh;overflow-y:auto;padding:1.5rem"
@@ -170,21 +287,6 @@
         </div>
       }
 
-    </div>
-  </div>
-}
-
-<!-- Leyenda de tipos -->
-@if (tiposService.tipos().length > 0) {
-  <div class="card" style="margin-top:1rem;padding:.75rem 1rem">
-    <div style="display:flex;flex-wrap:wrap;gap:.75rem;align-items:center">
-      <span style="font-size:.78rem;font-weight:700;color:#6b7280">Tipos:</span>
-      @for (t of tiposService.tipos(); track t._id) {
-        <div style="display:flex;align-items:center;gap:.35rem">
-          <span style="width:10px;height:10px;border-radius:50%;flex-shrink:0" [style.background]="t.color"></span>
-          <span style="font-size:.78rem;color:#374151;font-weight:500">{{ t.nombre }}</span>
-        </div>
-      }
     </div>
   </div>
 }

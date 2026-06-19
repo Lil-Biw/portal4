@@ -5,7 +5,6 @@
     @if (puedeGestionarTipos()) {
       <button class="btn-ghost" (click)="abrirTiposModal()">Crear tipo de activo</button>
     }
-    <button class="btn-ghost" (click)="abrirBuscar()">Buscar</button>
     <button class="btn-primary" (click)="abrirCrear()">+ Crear</button>
   </div>
 </div>
@@ -32,14 +31,49 @@
         }
       </select>
     </label>
-    <label class="field">
+    <div class="field">
       <span>Tipo de activo</span>
-      <select [(ngModel)]="selectedTipoId">
-        <option value="">Todos</option>
-        @for (t of tiposService.tipos(); track t._id) {
-          <option [value]="t._id">{{ t.nombre }}</option>
+      <div class="tipo-combo">
+        <input
+          class="tipo-combo-input"
+          type="text"
+          placeholder="Todos los tipos..."
+          [ngModel]="tipoComboQuery()"
+          name="tipo_combo_ctx"
+          (ngModelChange)="onTipoComboInput($event)"
+          (focus)="tipoComboOpen.set(true)"
+          (blur)="onTipoComboBlur()"
+          autocomplete="off" />
+        <span class="tipo-combo-arrow">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="6 9 12 15 18 9"/>
+          </svg>
+        </span>
+        @if (tipoComboOpen()) {
+          <div class="tipo-combo-dropdown">
+            <div class="tipo-combo-option" [class.tipo-combo-option--active]="!_selectedTipoId()"
+                 (mousedown)="selectTipoCombo(null)">Todos</div>
+            @for (t of tipoComboFiltrados(); track t._id) {
+              <div class="tipo-combo-option" [class.tipo-combo-option--active]="_selectedTipoId() === t._id"
+                   (mousedown)="selectTipoCombo(t)">
+                <span class="tipo-combo-dot" [style.background]="t.color"></span>
+                {{ t.nombre }}
+              </div>
+            }
+            @if (tipoComboFiltrados().length === 0) {
+              <div class="tipo-combo-empty">Sin resultados</div>
+            }
+          </div>
         }
-      </select>
+      </div>
+    </div>
+    <label class="field">
+      <span>Buscar</span>
+      <input
+        type="text"
+        placeholder="Nombre o tipo..."
+        [ngModel]="busqueda()"
+        (ngModelChange)="busqueda.set($event)" />
     </label>
   </div>
 </div>
@@ -156,26 +190,20 @@
               placeholder="Nombre del tipo *"
               [ngModel]="tipoForm().nombre"
               (ngModelChange)="patchTipoForm('nombre', $event)" />
-            <!-- Selector de color: chips fijos -->
-            <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:.6rem;margin-top:.25rem">
+            <!-- Selector de ícono/color -->
+            <p style="font-size:.78rem;color:#6b7280;margin:0 0 .4rem">Selecciona un ícono</p>
+            <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:.75rem">
               @for (c of coloresActivo; track c.valor) {
                 <button type="button"
                   [title]="c.label"
                   (click)="patchTipoForm('color', c.valor)"
-                  [style.background]="c.valor"
-                  [style.outline]="tipoForm().color === c.valor ? '3px solid #1f2937' : 'none'"
-                  [style.outline-offset]="'2px'"
-                  [style.transform]="tipoForm().color === c.valor ? 'scale(1.15)' : 'scale(1)'"
-                  style="width:32px;height:32px;border-radius:50%;border:2px solid white;
-                         cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.2);
-                         transition:transform .1s;">
+                  [style.box-shadow]="tipoForm().color === c.valor ? '0 0 0 3px ' + c.valor : 'none'"
+                  [style.transform]="tipoForm().color === c.valor ? 'scale(1.12)' : 'scale(1)'"
+                  style="padding:0;border:none;background:none;cursor:pointer;
+                         border-radius:12px;transition:transform .12s,box-shadow .12s;">
+                  <app-activo-icono [color]="c.valor" [size]="22"></app-activo-icono>
                 </button>
               }
-            </div>
-            <!-- Preview del ícono resultante -->
-            <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.75rem">
-              <app-activo-icono [color]="tipoForm().color" [size]="20"></app-activo-icono>
-              <span style="font-size:.78rem;color:#6b7280">Ícono asignado al color</span>
             </div>
             <div style="display:flex;gap:.5rem">
               <button class="btn-primary btn-sm" (click)="guardarTipo()"
@@ -197,7 +225,7 @@
               <div class="tipos-list">
                 @for (t of tiposService.tipos(); track t._id) {
                   <div class="tipo-item">
-                    <span class="tipo-dot" [style.background]="t.color"></span>
+                    <app-activo-icono [color]="t.color" [size]="16"></app-activo-icono>
                     <div class="tipo-texto">
                       <span class="tipo-nombre">{{ t.nombre }}</span>
                     </div>

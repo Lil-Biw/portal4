@@ -96,15 +96,14 @@ function emptyTipoForm(): TipoForm { return { nombre: '', color: '#0095d6' }; }
     .tipos-list { display: flex; flex-direction: column; gap: 0; max-height: 320px; overflow-y: auto; padding-right: .25rem; }
     .tipo-item {
       display: flex;
-      align-items: flex-start;
+      align-items: center;
       gap: .6rem;
-      padding: .55rem 0;
+      padding: .5rem 0;
       border-bottom: 1px solid rgba(34,33,33,.06);
     }
     .tipo-item:last-child { border-bottom: none; }
-    .tipo-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; margin-top: 3px; }
-    .tipo-texto { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: .15rem; }
-    .tipo-nombre { font-size: .85rem; font-weight: 600; color: #1f2937; word-break: break-word; }
+    .tipo-texto { flex: 1; min-width: 0; }
+    .tipo-nombre { font-size: .85rem; font-weight: 600; color: #1f2937; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .tipo-actions { display: flex; gap: .35rem; flex-shrink: 0; }
     .tipo-input {
       width: 100%;
@@ -117,6 +116,38 @@ function emptyTipoForm(): TipoForm { return { nombre: '', color: '#0095d6' }; }
       margin-bottom: .5rem;
     }
     .tipo-input:focus { outline: 2px solid #0095d6; border-color: transparent; }
+
+    /* ── Tipo-combo (context card) ───────────────────────────── */
+    .tipo-combo { position: relative; }
+    .tipo-combo-input {
+      width: 100%; box-sizing: border-box;
+      padding: .55rem .75rem; padding-right: 2rem;
+      border: 1px solid rgba(34,33,33,.15); border-radius: 8px;
+      font-size: .875rem; color: #1f2937; font-family: inherit;
+      background: #fff; cursor: text; outline: none;
+      transition: border-color .15s;
+    }
+    .tipo-combo-input:focus { border-color: #0095d6; }
+    .tipo-combo-input::placeholder { color: #9ca3af; }
+    .tipo-combo-arrow {
+      position: absolute; right: .65rem; top: 50%; transform: translateY(-50%);
+      pointer-events: none; color: #9ca3af; display: flex; align-items: center;
+    }
+    .tipo-combo-dropdown {
+      position: absolute; top: calc(100% + 4px); left: 0; right: 0;
+      background: #fff; border: 1px solid rgba(34,33,33,.15); border-radius: 8px;
+      box-shadow: 0 8px 24px rgba(15,23,42,.12); z-index: 200;
+      max-height: 200px; overflow-y: auto;
+    }
+    .tipo-combo-option {
+      padding: .5rem .75rem; font-size: .875rem; color: #374151;
+      cursor: pointer; display: flex; align-items: center; gap: .5rem;
+      transition: background .1s;
+    }
+    .tipo-combo-option:hover, .tipo-combo-option--active { background: #f0f9ff; color: #0095d6; }
+    .tipo-combo-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+    .tipo-combo-empty { padding: .5rem .75rem; font-size: .83rem; color: #9ca3af; }
+
   `],
 })
 export class ActivosPageComponent implements OnInit {
@@ -140,9 +171,9 @@ export class ActivosPageComponent implements OnInit {
   protected subiendoDocs = false;
 
   // ── Contexto ─────────────────────────────────────────────────────────────
-  private _selectedEmpresaId = signal('');
-  private _selectedCentroId  = signal('');
-  private _selectedTipoId    = signal('');
+  private _selectedEmpresaId   = signal('');
+  private _selectedCentroId    = signal('');
+  protected _selectedTipoId    = signal('');
 
   get selectedEmpresaId()            { return this._selectedEmpresaId(); }
   set selectedEmpresaId(v: string)   { this._selectedEmpresaId.set(v); }
@@ -151,16 +182,49 @@ export class ActivosPageComponent implements OnInit {
   get selectedTipoId()               { return this._selectedTipoId(); }
   set selectedTipoId(v: string)      { this._selectedTipoId.set(v); }
 
+  protected tipoComboQuery = signal('');
+  protected tipoComboOpen  = signal(false);
+
+  protected tipoComboFiltrados = computed(() => {
+    const q = this.tipoComboQuery().toLowerCase().trim();
+    const tipos = this.tiposService.tipos();
+    return q ? tipos.filter(t => t.nombre.toLowerCase().includes(q)) : tipos;
+  });
+
+  protected onTipoComboInput(q: string): void {
+    this.tipoComboQuery.set(q);
+    this._selectedTipoId.set('');
+    this.tipoComboOpen.set(true);
+  }
+
+  protected selectTipoCombo(t: { _id: string; nombre: string } | null): void {
+    this._selectedTipoId.set(t?._id ?? '');
+    this.tipoComboQuery.set(t?.nombre ?? '');
+    this.tipoComboOpen.set(false);
+  }
+
+  protected onTipoComboBlur(): void {
+    setTimeout(() => {
+      this.tipoComboOpen.set(false);
+      if (!this._selectedTipoId()) this.tipoComboQuery.set('');
+    }, 150);
+  }
+
   protected centrosFiltrados = computed(() => {
     if (!this._selectedEmpresaId()) return [];
     return this.centrosService.centros().filter(c => asId(c.cliente_id) === this._selectedEmpresaId());
   });
 
   protected activosFiltrados = computed(() => {
-    const q    = this.busqueda().toLowerCase().trim();
-    const tipo = this._selectedTipoId();
+    const q      = this.busqueda().toLowerCase().trim();
+    const tipo   = this._selectedTipoId();
+    const tipoQ  = this.tipoComboQuery().toLowerCase().trim();
     let list = this.service.activos();
-    if (tipo) list = list.filter(a => this.tipoDeActivo(a)?._id === tipo);
+    if (tipo) {
+      list = list.filter(a => this.tipoDeActivo(a)?._id === tipo);
+    } else if (tipoQ) {
+      list = list.filter(a => (this.tipoDeActivo(a)?.nombre ?? '').toLowerCase().includes(tipoQ));
+    }
     if (q) list = list.filter(a => {
       const t = this.tipoDeActivo(a);
       return a.nombre.toLowerCase().includes(q) || (t?.nombre ?? '').toLowerCase().includes(q);

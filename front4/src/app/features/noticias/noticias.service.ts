@@ -61,6 +61,16 @@ export class NoticiasService {
     });
   }
 
+  actualizar(id: string, dto: CreateNoticiaDto): void {
+    this.http.put<Noticia>(`${this.url}/${id}`, dto).subscribe({
+      next: updated => {
+        this.noticias.update(list => list.map(n => n._id === id ? updated : n));
+        this.status.set({ type: 'ok', text: 'Publicación actualizada.' });
+      },
+      error: err => this.setError(err),
+    });
+  }
+
   eliminar(id: string): void {
     this.http.delete(`${this.url}/${id}`).subscribe({
       next: () => {

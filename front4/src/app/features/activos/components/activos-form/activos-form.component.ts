@@ -85,6 +85,35 @@ export interface DocPendiente { file: File; nombre: string; }
     @media (max-width: 600px) {
       .form-dos-col { grid-template-columns: 1fr; }
     }
+    .tipo-combo { position: relative; }
+    .tipo-combo-input {
+      width: 100%; box-sizing: border-box;
+      padding: .55rem .75rem; padding-right: 2rem;
+      border: 1px solid rgba(34,33,33,.15); border-radius: 8px;
+      font-size: .875rem; color: #1f2937; font-family: inherit;
+      background: #fff; cursor: text; outline: none;
+      transition: border-color .15s;
+    }
+    .tipo-combo-input:focus { border-color: #0095d6; }
+    .tipo-combo-input::placeholder { color: #9ca3af; }
+    .tipo-combo-arrow {
+      position: absolute; right: .65rem; top: 50%; transform: translateY(-50%);
+      pointer-events: none; color: #9ca3af; display: flex; align-items: center;
+    }
+    .tipo-combo-dropdown {
+      position: absolute; top: calc(100% + 4px); left: 0; right: 0;
+      background: #fff; border: 1px solid rgba(34,33,33,.15); border-radius: 8px;
+      box-shadow: 0 8px 24px rgba(15,23,42,.12); z-index: 200;
+      max-height: 200px; overflow-y: auto;
+    }
+    .tipo-combo-option {
+      padding: .5rem .75rem; font-size: .875rem; color: #374151;
+      cursor: pointer; display: flex; align-items: center; gap: .5rem;
+      transition: background .1s;
+    }
+    .tipo-combo-option:hover, .tipo-combo-option--active { background: #f0f9ff; color: #0095d6; }
+    .tipo-combo-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+    .tipo-combo-empty { padding: .5rem .75rem; font-size: .83rem; color: #9ca3af; }
   `],
   template: `
     <form (ngSubmit)="enviar()">
@@ -123,12 +152,39 @@ export interface DocPendiente { file: File; nombre: string; }
           </div>
           <div class="field">
             <label>Tipo de activo *</label>
-            <select [(ngModel)]="form.tipo_activo_id" name="tipo_activo_id" required>
-              <option value="">Selecciona un tipo</option>
-              @for (t of tipos; track t._id) {
-                <option [value]="t._id">{{ t.nombre }}</option>
+            <div class="tipo-combo">
+              <input
+                class="tipo-combo-input"
+                type="text"
+                placeholder="Buscar tipo de activo..."
+                [ngModel]="tipoQuery()"
+                name="tipo_query"
+                (ngModelChange)="onTipoInput($event)"
+                (focus)="tipoDropdownOpen.set(true)"
+                (blur)="onTipoBlur()"
+                autocomplete="off" />
+              <span class="tipo-combo-arrow">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="6 9 12 15 18 9"/>
+                </svg>
+              </span>
+              @if (tipoDropdownOpen()) {
+                <div class="tipo-combo-dropdown">
+                  @for (t of tiposFiltrados(); track t._id) {
+                    <div
+                      class="tipo-combo-option"
+                      [class.tipo-combo-option--active]="form.tipo_activo_id === t._id"
+                      (mousedown)="selectTipo(t)">
+                      <span class="tipo-combo-dot" [style.background]="t.color"></span>
+                      {{ t.nombre }}
+                    </div>
+                  }
+                  @if (tiposFiltrados().length === 0) {
+                    <div class="tipo-combo-empty">Sin resultados para "{{ tipoQuery() }}"</div>
+                  }
+                </div>
               }
-            </select>
+            </div>
           </div>
           <div class="field">
             <label>Descripción</label>
@@ -232,6 +288,16 @@ export class ActivosFormComponent implements OnChanges {
   empresaId = signal('');
   form: CreateActivoDto = { nombre: '', tipo_activo_id: '', centro_costo_id: '', descripcion: '' };
 
+  tipoQuery         = signal('');
+  tipoDropdownOpen  = signal(false);
+  private _tipos    = signal<TipoActivo[]>([]);
+
+  tiposFiltrados = computed(() => {
+    const q = this.tipoQuery().toLowerCase().trim();
+    if (!q) return this._tipos();
+    return this._tipos().filter(t => t.nombre.toLowerCase().includes(q));
+  });
+
   fileSelected: File | null = null;
   nombreInput = '';
   fileInputVisible = signal(true);
@@ -246,6 +312,10 @@ export class ActivosFormComponent implements OnChanges {
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['centros']) {
       this._centros.set(this.centros);
+    }
+    if (changes['tipos']) {
+      this._tipos.set(this.tipos);
+      this.syncTipoQuery();
     }
     if (changes['initial']) {
       if (this.initial) {
@@ -268,11 +338,38 @@ export class ActivosFormComponent implements OnChanges {
           descripcion:     '',
         };
         this.empresaId.set('');
+        this.tipoQuery.set('');
       }
       if (this.centroFijo) {
         this.form.centro_costo_id = this.centroFijo._id;
       }
+      this.syncTipoQuery();
     }
+  }
+
+  private syncTipoQuery(): void {
+    if (!this.form.tipo_activo_id) return;
+    const tipo = this.tipos.find(t => t._id === this.form.tipo_activo_id);
+    if (tipo) this.tipoQuery.set(tipo.nombre);
+  }
+
+  onTipoInput(q: string): void {
+    this.tipoQuery.set(q);
+    this.form.tipo_activo_id = '';
+    this.tipoDropdownOpen.set(true);
+  }
+
+  selectTipo(t: TipoActivo): void {
+    this.form.tipo_activo_id = t._id;
+    this.tipoQuery.set(t.nombre);
+    this.tipoDropdownOpen.set(false);
+  }
+
+  onTipoBlur(): void {
+    setTimeout(() => {
+      this.tipoDropdownOpen.set(false);
+      if (!this.form.tipo_activo_id) this.tipoQuery.set('');
+    }, 150);
   }
 
   onEmpresaChange(empresaId: string): void {

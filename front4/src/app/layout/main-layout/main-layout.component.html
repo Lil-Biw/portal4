@@ -1,18 +1,11 @@
-<div class="layout" [class.admin]="mode() === 'admin'" [class.consumidor]="mode() === 'consumidor'">
-  <header class="topbar-wrap">
-    <app-topbar [mode]="mode()">
-      <!-- Iconos del topbar — agregar aquí botones con el atributo topbar-icons -->
-    </app-topbar>
+<div class="layout">
+  <aside>
+    <app-sidebar [mode]="mode()"></app-sidebar>
+  </aside>
+  <header>
+    <app-topbar [mode]="mode()"></app-topbar>
   </header>
-
-  <div class="page-wrap">
-    <div class="page">
-      <aside>
-        <app-sidebar [mode]="mode()"></app-sidebar>
-      </aside>
-      <main class="content">
-        <router-outlet></router-outlet>
-      </main>
-    </div>
-  </div>
+  <main class="content">
+    <router-outlet></router-outlet>
+  </main>
 </div>

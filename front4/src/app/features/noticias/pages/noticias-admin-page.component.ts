@@ -2,7 +2,7 @@ import { Component, inject, effect, signal, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { NoticiasService } from '../noticias.service';
 import { StatusBannerComponent } from '../../../shared/components/status-banner/status-banner.component';
-import { SECCIONES, SeccionNoticia } from '../../../shared/models/noticia.model';
+import { SECCIONES, SeccionNoticia, Noticia } from '../../../shared/models/noticia.model';
 
 @Component({
   selector: 'app-noticias-admin-page',
@@ -15,9 +15,10 @@ export class NoticiasAdminPageComponent implements OnInit {
   protected readonly service  = inject(NoticiasService);
   protected readonly secciones = SECCIONES;
 
-  protected showModal    = signal(false);
+  protected showModal     = signal(false);
+  protected editandoId    = signal<string | null>(null);
   protected imagenPreview = signal<string | null>(null);
-  protected imagenFile   = signal<File | null>(null);
+  protected imagenFile    = signal<File | null>(null);
   protected form = { titulo: '', enlace: '', resumen: '', seccion: 'novedades' as SeccionNoticia };
 
   constructor() {
@@ -39,10 +40,21 @@ export class NoticiasAdminPageComponent implements OnInit {
     this.form = { titulo: '', enlace: '', resumen: '', seccion: this.service.seccionActiva() };
     this.imagenFile.set(null);
     this.imagenPreview.set(null);
+    this.editandoId.set(null);
     this.showModal.set(true);
   }
 
-  cerrarModal() { this.showModal.set(false); }
+  abrirEditar(event: MouseEvent, noticia: Noticia): void {
+    event.stopPropagation();
+    this.service.clearStatus();
+    this.form = { titulo: noticia.titulo, enlace: noticia.enlace, resumen: noticia.resumen, seccion: noticia.seccion };
+    this.imagenFile.set(null);
+    this.imagenPreview.set(null);
+    this.editandoId.set(noticia._id);
+    this.showModal.set(true);
+  }
+
+  cerrarModal() { this.showModal.set(false); this.editandoId.set(null); }
 
   formValido(): boolean {
     return this.form.titulo.trim().length >= 2
@@ -59,12 +71,15 @@ export class NoticiasAdminPageComponent implements OnInit {
     reader.readAsDataURL(file);
   }
 
-  publicar(): void {
+  guardar(): void {
     if (!this.formValido()) return;
-    this.service.crear(
-      { titulo: this.form.titulo.trim(), enlace: this.form.enlace.trim(), resumen: this.form.resumen.trim(), seccion: this.form.seccion },
-      this.imagenFile() ?? undefined,
-    );
+    const dto = { titulo: this.form.titulo.trim(), enlace: this.form.enlace.trim(), resumen: this.form.resumen.trim(), seccion: this.form.seccion };
+    const id = this.editandoId();
+    if (id) {
+      this.service.actualizar(id, dto);
+    } else {
+      this.service.crear(dto, this.imagenFile() ?? undefined);
+    }
   }
 
   eliminar(event: MouseEvent, id: string): void {
@@ -74,6 +89,14 @@ export class NoticiasAdminPageComponent implements OnInit {
 
   countSeccion(seccion: SeccionNoticia): number {
     return this.service.noticias().filter(n => n.seccion === seccion).length;
+  }
+
+  seccionColor(seccion: SeccionNoticia): string {
+    return this.secciones.find(s => s.value === seccion)?.color ?? '#0095d6';
+  }
+
+  seccionLabel(seccion: SeccionNoticia): string {
+    return this.secciones.find(s => s.value === seccion)?.labelMin ?? seccion;
   }
 
   abrirEnlace(url: string): void {

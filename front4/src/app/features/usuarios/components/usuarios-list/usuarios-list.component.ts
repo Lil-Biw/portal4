@@ -1,15 +1,95 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { NgFor, NgIf } from '@angular/common';
-import { Usuario } from '../../../../shared/models/usuario.model';
+import { Usuario, RolUsuario } from '../../../../shared/models/usuario.model';
 
 @Component({
   selector: 'app-usuarios-list',
   standalone: true,
-  imports: [NgFor, NgIf],
+  imports: [],
   templateUrl: './usuarios-list.component.html',
   styles: [`
-    .rol-super-admin { border-left: 3px solid #f59e0b !important; background: rgba(245,158,11,.06) !important; }
-    .rol-admin        { border-left: 3px solid #0095d6 !important; background: rgba(0,149,214,.06) !important; }
+    .user-list {
+      background: #fff;
+      border-radius: 12px;
+      border: 1px solid rgba(34,33,33,.1);
+      overflow: hidden;
+    }
+    .user-row {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.85rem 1rem;
+      border-bottom: 1px solid rgba(34,33,33,.07);
+    }
+    .user-row:last-child { border-bottom: none; }
+
+    .avatar {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: #fff;
+      flex-shrink: 0;
+      background: #6b7280;
+    }
+    .avatar-usuario        { background: #6b7280; }
+    .avatar-admin          { background: #0095d6; }
+    .avatar-super          { background: #f59e0b; }
+
+    .user-info {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+    }
+    .user-name  { font-size: 0.88rem; font-weight: 600; color: #1f2937; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .user-email { font-size: 0.78rem; color: #6b7280; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+    .role-badge {
+      font-size: 0.72rem;
+      font-weight: 600;
+      padding: 0.22rem 0.65rem;
+      border-radius: 999px;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .badge-usuario { background: rgba(107,114,128,.1);  color: #4b5563; }
+    .badge-admin   { background: rgba(0,149,214,.1);    color: #0075a8; }
+    .badge-super   { background: rgba(245,158,11,.12);  color: #b45309; }
+
+    .user-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+      flex-shrink: 0;
+    }
+    .btn-accion {
+      background: none;
+      border: none;
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: #6b7280;
+      cursor: pointer;
+      padding: 0.3rem 0.5rem;
+      border-radius: 6px;
+    }
+    .btn-accion:hover { color: #1f2937; background: rgba(34,33,33,.06); }
+    .btn-icon {
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 0.35rem;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      color: #9ca3af;
+    }
+    .btn-icon:hover { background: rgba(34,33,33,.07); color: #4b5563; }
+    .btn-icon.danger:hover { background: rgba(239,68,68,.08); color: #ef4444; }
   `],
 })
 export class UsuariosListComponent {
@@ -17,4 +97,27 @@ export class UsuariosListComponent {
   @Input() seleccionadoId: string | null = null;
   @Output() editado   = new EventEmitter<Usuario>();
   @Output() eliminado = new EventEmitter<string>();
+
+  initials(nombre: string): string {
+    const parts = nombre.trim().split(/\s+/);
+    if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
+    return nombre.slice(0, 2).toUpperCase();
+  }
+
+  rolClass(rol: RolUsuario): string {
+    if (rol === 'super_admin') return 'super';
+    if (rol === 'admin_smartclarity') return 'admin';
+    return 'usuario';
+  }
+
+  rolLabel(rol: RolUsuario): string {
+    if (rol === 'super_admin') return 'Super Admin';
+    if (rol === 'admin_smartclarity') return 'Admin SmartClarity';
+    return 'Usuario';
+  }
+
+  accionLabel(u: Usuario): string {
+    if (u.rol === 'super_admin') return 'Total';
+    return u.permiso_acceso === 'editar' ? 'Editar' : 'Ver';
+  }
 }

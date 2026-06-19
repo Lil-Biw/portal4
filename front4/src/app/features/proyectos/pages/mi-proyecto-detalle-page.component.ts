@@ -6,12 +6,13 @@ import { CentrosService } from '../../centros/centros.service';
 import { SolicitudesService } from '../../solicitudes/solicitudes.service';
 import { DocumentosService } from '../../documentos/documentos.service';
 import { StatChipComponent, ChipVariant } from '../../../shared/components/stat-chip/stat-chip.component';
+import { DonutArcComponent } from '../../../shared/components/donut-arc/donut-arc.component';
 import { asId } from '../../../shared/utils';
 
 @Component({
   selector: 'app-mi-proyecto-detalle-page',
   standalone: true,
-  imports: [StatChipComponent],
+  imports: [StatChipComponent, DonutArcComponent],
   templateUrl: './mi-proyecto-detalle-page.component.html',
   styles: [`
     .cards-grid { display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-bottom:1.5rem; }
@@ -115,6 +116,27 @@ export class MiProyectoDetallePageComponent implements OnInit, OnDestroy {
 
   protected descargarDoc(url: string, nombreDisplay?: string): void {
     this.documentosService.descargar(url, nombreDisplay);
+  }
+
+  docTipoInfo(mime: string): { color: string; tipo: 'pdf' | 'doc' | 'xls' | 'zip' | 'img' | 'file' } {
+    if (!mime) return { color: '#6b7280', tipo: 'file' };
+    if (mime.includes('pdf'))                                return { color: '#ef4444', tipo: 'pdf' };
+    if (mime.includes('word') || mime.includes('.document')) return { color: '#3b82f6', tipo: 'doc' };
+    if (mime.includes('excel') || mime.includes('.sheet'))   return { color: '#22c55e', tipo: 'xls' };
+    if (mime.includes('zip') || mime.includes('rar') || mime.includes('tar')) return { color: '#8b5cf6', tipo: 'zip' };
+    if (mime.startsWith('image/'))                           return { color: '#f59e0b', tipo: 'img' };
+    return { color: '#6b7280', tipo: 'file' };
+  }
+
+  dotColorSolicitud(estado: string): string {
+    const map: Record<string, string> = {
+      pendiente: '#0095d6',
+      revision:  '#f59e0b',
+      aprobado:  '#22c55e',
+      rechazado: '#ef4444',
+      vencido:   '#9ca3af',
+    };
+    return map[estado] ?? '#9ca3af';
   }
 
   protected irADocumentos(tab: 'documentacion' | 'solicitudes'): void {

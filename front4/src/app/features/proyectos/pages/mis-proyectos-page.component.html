@@ -42,40 +42,52 @@
 } @else {
   <div style="display:flex;flex-direction:column;gap:1.25rem">
     @for (grupo of centrosConProyectos(); track grupo.nombre) {
-      <!-- Recuadro por centro -->
+      <!-- Agrupación por centro -->
       <div style="border:1px solid rgba(34,33,33,.12);border-radius:14px;padding:1rem;background:#fff;box-shadow:0 1px 6px rgba(15,23,42,.04)">
         <h3 style="margin:0 0 .85rem;font-size:.88rem;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.04em;display:flex;align-items:center;gap:.5rem">
           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="18"/><rect x="14" y="9" width="7" height="12"/><path d="M10 3h4v4h-4z"/></svg>
           {{ grupo.nombre }}
         </h3>
-        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:.75rem">
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:.75rem">
           @for (p of grupo.proyectos; track p._id) {
             @let sc = scoreDeProyecto(p._id);
             <div class="card proyecto-card" (click)="verDetalle(p)" style="margin:0">
-              <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:.5rem">
-                <h3 style="margin:0;font-size:1rem;font-weight:700;color:#1f2937">{{ p.nombre }}</h3>
-                <span style="font-size:.72rem;font-weight:700;padding:.2rem .55rem;border-radius:999px;white-space:nowrap;flex-shrink:0;margin-left:.5rem"
-                      [style]="estadoBadgeStyle(p.estado)">{{ p.estado }}</span>
-              </div>
-              <p style="margin:0 0 .3rem;font-size:.8rem;color:#6b7280">Cód. {{ p.codigo }}</p>
-              @if (p.descripcion) {
-                <p style="margin:0 0 .45rem;font-size:.8rem;color:#9ca3af;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
-                  {{ p.descripcion }}
-                </p>
-              }
-              @if (sc.total > 0) {
-                <div style="padding:.45rem .55rem;border-radius:8px;background:#f9fafb;border:1px solid rgba(34,33,33,.06)">
-                  <div style="background:#e5e7eb;border-radius:999px;height:4px;overflow:hidden;margin-bottom:.35rem">
-                    <div [style.width]="sc.pct + '%'" style="height:100%;background:linear-gradient(90deg,#0095d6,#22c55e);border-radius:999px"></div>
+              <!-- Cabecera: nombre + estado + donut -->
+              <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:.6rem">
+                <div style="flex:1;min-width:0">
+                  <div style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;margin-bottom:.15rem">
+                    <h3 style="margin:0;font-size:1rem;font-weight:700;color:#1f2937;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ p.nombre }}</h3>
+                    <span style="font-size:.7rem;font-weight:700;padding:.18rem .5rem;border-radius:999px;white-space:nowrap;flex-shrink:0"
+                          [style]="estadoBadgeStyle(p.estado)">{{ p.estado }}</span>
                   </div>
-                  <div style="display:flex;gap:.25rem">
-                    <span style="font-size:.65rem;font-weight:700;padding:.08rem .28rem;border-radius:4px;background:#dcfce7;color:#15803d">{{ sc.aprobados }}</span>
-                    <span style="font-size:.65rem;font-weight:700;padding:.08rem .28rem;border-radius:4px;background:#fef3c7;color:#b45309">{{ sc.revision }}</span>
-                    <span style="font-size:.65rem;font-weight:700;padding:.08rem .28rem;border-radius:4px;background:#fee2e2;color:#dc2626">{{ sc.vencido }}</span>
-                  </div>
+                  <p style="margin:0;font-size:.78rem;color:#6b7280">Cód. {{ p.codigo }}</p>
+                  @if (p.descripcion) {
+                    <p style="margin:.2rem 0 0;font-size:.78rem;color:#9ca3af;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ p.descripcion }}</p>
+                  }
                 </div>
-              }
-              <div style="margin-top:.6rem;font-size:.77rem;color:#0095d6;font-weight:600">Ver proyecto →</div>
+                <app-donut-arc [value]="sc.pct" [size]="66"></app-donut-arc>
+              </div>
+
+              <!-- Separador -->
+              <div style="height:1px;background:rgba(34,33,33,.08);margin:.75rem 0"></div>
+
+              <!-- Contadores -->
+              <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:.5rem">
+                <div style="display:flex;flex-direction:column;align-items:center;padding:.45rem .3rem;border-radius:8px;background:#dcfce7">
+                  <span style="font-size:1.2rem;font-weight:700;color:#15803d;line-height:1">{{ sc.aprobados }}</span>
+                  <span style="font-size:.68rem;font-weight:600;color:#15803d;margin-top:.15rem">Aprob.</span>
+                </div>
+                <div style="display:flex;flex-direction:column;align-items:center;padding:.45rem .3rem;border-radius:8px;background:#fef3c7">
+                  <span style="font-size:1.2rem;font-weight:700;color:#b45309;line-height:1">{{ sc.revision }}</span>
+                  <span style="font-size:.68rem;font-weight:600;color:#b45309;margin-top:.15rem">Revisi.</span>
+                </div>
+                <div style="display:flex;flex-direction:column;align-items:center;padding:.45rem .3rem;border-radius:8px;background:#f3f4f6">
+                  <span style="font-size:1.2rem;font-weight:700;color:#374151;line-height:1">{{ sc.pendiente }}</span>
+                  <span style="font-size:.68rem;font-weight:600;color:#374151;margin-top:.15rem">Pend.</span>
+                </div>
+              </div>
+
+              <div style="margin-top:.65rem;font-size:.78rem;color:#0095d6;font-weight:600">Ver proyecto →</div>
             </div>
           }
         </div>
