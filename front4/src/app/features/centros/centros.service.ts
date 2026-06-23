@@ -19,7 +19,7 @@ export class CentrosService {
   // Admin: carga todos los centros
   cargar(): void {
     this.loading.set(true);
-    this.http.get<{ data: CentroCosto[] } | CentroCosto[]>(this.api.url('/centros-costos')).subscribe({
+    this.http.get<{ data: CentroCosto[] } | CentroCosto[]>(this.api.url('/centros-costos?limit=200')).subscribe({
       next: (res) => {
         this.centros.set(Array.isArray(res) ? res : res.data);
         this.loading.set(false);
@@ -32,7 +32,7 @@ export class CentrosService {
   cargarPorEmpresa(empresaId: string): void {
     this.loading.set(true);
     this.http.get<{ data: CentroCosto[] } | CentroCosto[]>(
-      this.api.url(`/empresas/${empresaId}/centros`)
+      this.api.url(`/empresas/${empresaId}/centros?limit=200`)
     ).subscribe({
       next: (res) => {
         this.centros.set(Array.isArray(res) ? res : res.data);
