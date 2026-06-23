@@ -1,9 +1,9 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { forkJoin, of } from 'rxjs';
+import { Subscription, forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { ApiService } from '../../core/services/api.service';
-import { Activo, CreateActivoDto, UpdateActivoDto } from '../../shared/models/activo.model';
+import { Activo, ActividadHistorialItem, CreateActivoDto, UpdateActivoDto } from '../../shared/models/activo.model';
 import { Status } from '../../shared/models/status.model';
 import { CentrosService } from '../centros/centros.service';
 import { asId } from '../../shared/utils';
@@ -14,11 +14,14 @@ export class ActivosService {
   private readonly api  = inject(ApiService);
   private readonly centrosService = inject(CentrosService);
 
-  readonly activos      = signal<Activo[]>([]);
-  readonly seleccionado = signal<Activo | null>(null);
-  readonly status       = signal<Status | null>(null);
-  readonly loading      = signal(false);
-  readonly saving       = signal(false);
+  readonly activos          = signal<Activo[]>([]);
+  readonly seleccionado     = signal<Activo | null>(null);
+  readonly status           = signal<Status | null>(null);
+  readonly loading          = signal(false);
+  readonly saving           = signal(false);
+  readonly historialActivo  = signal<ActividadHistorialItem[]>([]);
+  readonly loadingHistorial = signal(false);
+  private historialSub: Subscription | null = null;
 
   cargar(centroCostoId?: string): void {
     this.loading.set(true);
@@ -152,12 +155,46 @@ export class ActivosService {
     const url = this.api.url(
       `/empresas/${empresaId}/centros/${centroId}/activos/${activoId}/documentos/${encodeURIComponent(nombre)}`
     );
+    this.triggerDownload(url, nombreDisplay || nombre);
+  }
+
+  descargarDocumentoActividad(actividadId: string, centroId: string, nombre: string, nombreDisplay?: string): void {
+    const { empresaId } = this.resolverIds(centroId);
+    if (!empresaId) { this.status.set({ type: 'error', text: 'Centro no encontrado' }); return; }
+    const url = this.api.url(
+      `/empresas/${empresaId}/centros/${centroId}/actividades/${actividadId}/documentos/${encodeURIComponent(nombre)}`
+    );
+    this.triggerDownload(url, nombreDisplay || nombre);
+  }
+
+  cargarHistorial(activoId: string, centroId: string): void {
+    this.historialSub?.unsubscribe();
+    const { empresaId } = this.resolverIds(centroId);
+    if (!empresaId) return;
+    this.loadingHistorial.set(true);
+    this.historialActivo.set([]);
+    this.historialSub = this.http.get<ActividadHistorialItem[]>(
+      this.api.url(`/empresas/${empresaId}/centros/${centroId}/activos/${activoId}/historial`)
+    ).subscribe({
+      next: (res) => { this.historialActivo.set(res); this.loadingHistorial.set(false); },
+      error: () => { this.loadingHistorial.set(false); },
+    });
+  }
+
+  resetHistorial(): void {
+    this.historialSub?.unsubscribe();
+    this.historialSub = null;
+    this.historialActivo.set([]);
+    this.loadingHistorial.set(false);
+  }
+
+  private triggerDownload(url: string, fileName: string): void {
     this.http.get(url, { responseType: 'blob' }).subscribe({
       next: (blob) => {
         const objectUrl = URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = objectUrl;
-        link.download = nombreDisplay || nombre;
+        link.download = fileName;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);

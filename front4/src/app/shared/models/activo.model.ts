@@ -38,3 +38,27 @@ export interface CreateActivoDto {
 }
 
 export type UpdateActivoDto = Partial<CreateActivoDto>;
+
+export interface TipoActividad {
+  _id: string;
+  nombre: string;
+  color?: string;
+}
+
+export interface DocActividad {
+  nombre: string;
+  nombre_display: string;
+  tamano_bytes: number;
+  tipo_mime: string;
+}
+
+export interface ActividadHistorialItem {
+  _id: string;
+  nombre: string;
+  descripcion?: string;
+  tipo_id: TipoActividad | string;
+  centro_costo_id: string;
+  fecha: string;
+  documentos?: DocActividad[];
+  creado_en?: string;
+}

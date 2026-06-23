@@ -40,12 +40,13 @@
                       <span class="activo-tipo" [style.color]="tipo.color">{{ tipo.nombre }}</span>
                     }
                   </div>
-                  @if (mostrarAcciones) {
-                    <div class="activo-actions">
+                  <div class="activo-actions">
+                    <button class="btn-ghost btn-sm" (click)="revisado.emit(a)">Revisar activo</button>
+                    @if (mostrarAcciones) {
                       <button class="btn-ghost btn-sm" (click)="editado.emit(a)">Editar</button>
                       <button class="btn-danger btn-sm" (click)="eliminado.emit(a._id)">Eliminar</button>
-                    </div>
-                  }
+                    }
+                  </div>
                 </div>
               }
             </div>

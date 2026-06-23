@@ -156,6 +156,7 @@
         <app-activos-form
           submitLabel="Crear activo"
           [centroFijo]="centroParaActivo()"
+          [tipos]="tiposActivoService.tipos()"
           (submitted)="crearActivo($event)">
         </app-activos-form>
       }

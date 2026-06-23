@@ -1,9 +1,7 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ProyectoSchema } from './proyectos.schema';
-import { ProyectosController } from './proyectos.controller';
-import { ProyectosAdminController } from './proyectos-admin.controller';
-import { ProyectosEmpresaController } from './proyectos-empresa.controller';
+import { ProyectosController, ProyectosAdminController, ProyectosEmpresaController } from './proyectos.controller';
 import { ProyectosService } from './proyectos.service';
 import { CentroCostoSchema } from '../centros-costos/centros-costos.schema';
 

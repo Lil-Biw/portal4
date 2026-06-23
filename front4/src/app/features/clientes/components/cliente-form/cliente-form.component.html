@@ -51,6 +51,21 @@
   </label>
 
   <div class="form-footer">
-    <button type="submit" class="btn-primary">{{ submitLabel }}</button>
+    <button type="submit" class="btn-primary" [disabled]="saving"
+      style="display:inline-flex;align-items:center;gap:.5rem;min-width:130px;justify-content:center">
+      @if (saving) {
+        <span style="
+          width:14px;height:14px;flex-shrink:0;
+          border:2px solid rgba(255,255,255,.35);
+          border-top-color:#fff;
+          border-radius:50%;
+          animation:btn-spin .65s linear infinite;
+          display:inline-block">
+        </span>
+        Guardando...
+      } @else {
+        {{ submitLabel }}
+      }
+    </button>
   </div>
 </form>

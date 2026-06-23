@@ -9,11 +9,12 @@ import { StatusBannerComponent } from '../../../shared/components/status-banner/
 import { ActivosFormComponent, DocPendiente } from '../components/activos-form/activos-form.component';
 import { ActivosListComponent } from '../components/activos-list/activos-list.component';
 import { ActivoIconoComponent } from '../components/activo-icono/activo-icono.component';
+import { ActivoRevisarModalComponent } from '../components/activo-revisar-modal/activo-revisar-modal.component';
 import { Activo, CreateActivoDto, DocActivo, TipoActivo } from '../../../shared/models/activo.model';
 import { asId } from '../../../shared/utils';
 import { COLORES_ACTIVO, ColorActivo } from '../activos-icons';
 
-type ModalMode = 'crear' | 'editar' | 'buscar' | 'tipos' | null;
+type ModalMode = 'crear' | 'editar' | 'buscar' | 'tipos' | 'revisar' | null;
 
 interface TipoForm { nombre: string; color: string; }
 function emptyTipoForm(): TipoForm { return { nombre: '', color: '#0095d6' }; }
@@ -21,7 +22,7 @@ function emptyTipoForm(): TipoForm { return { nombre: '', color: '#0095d6' }; }
 @Component({
   selector: 'app-activos-page',
   standalone: true,
-  imports: [FormsModule, StatusBannerComponent, ActivosFormComponent, ActivosListComponent, ActivoIconoComponent],
+  imports: [FormsModule, StatusBannerComponent, ActivosFormComponent, ActivosListComponent, ActivoIconoComponent, ActivoRevisarModalComponent],
   templateUrl: './activos-page.component.html',
   styles: [`
     .page-header {
@@ -163,9 +164,10 @@ export class ActivosPageComponent implements OnInit {
     this.authService.usuarioActual()?.rol === 'super_admin'
   );
 
-  protected modal     = signal<ModalMode>(null);
-  protected busqueda  = signal('');
-  protected editingId = signal<string | null>(null);
+  protected modal            = signal<ModalMode>(null);
+  protected busqueda         = signal('');
+  protected editingId        = signal<string | null>(null);
+  protected activoRevisando  = signal<Activo | null>(null);
 
   protected docsPendientes: DocPendiente[] = [];
   protected subiendoDocs = false;
@@ -247,6 +249,7 @@ export class ActivosPageComponent implements OnInit {
         this.service.status()?.type === 'ok' &&
         this.modal() !== null &&
         this.modal() !== 'buscar' &&
+        this.modal() !== 'revisar' &&
         !this.subiendoDocs
       ) {
         this.cerrar();
@@ -307,6 +310,12 @@ export class ActivosPageComponent implements OnInit {
     this.modal.set('editar');
   }
 
+  protected abrirRevisar(activo: Activo): void {
+    this.activoRevisando.set(activo);
+    this.service.cargarHistorial(activo._id, activo.centro_costo_id);
+    this.modal.set('revisar');
+  }
+
   protected cerrar(): void {
     this.modal.set(null);
     this.editingId.set(null);
@@ -314,8 +323,20 @@ export class ActivosPageComponent implements OnInit {
     this.subiendoDocs = false;
     this.service.seleccionado.set(null);
     this.service.clearStatus();
+    this.activoRevisando.set(null);
+    this.service.resetHistorial();
     this.showTipoForm.set(false);
     this.editingTipoId.set(null);
+  }
+
+  protected onDescargarActivoDoc(ev: { nombre: string; nombreDisplay?: string }): void {
+    const activo = this.activoRevisando();
+    if (!activo) return;
+    this.service.descargarDocumento(activo._id, activo.centro_costo_id, ev.nombre, ev.nombreDisplay);
+  }
+
+  protected onDescargarActividadDoc(ev: { actividadId: string; centroId: string; nombre: string; nombreDisplay?: string }): void {
+    this.service.descargarDocumentoActividad(ev.actividadId, ev.centroId, ev.nombre, ev.nombreDisplay);
   }
 
   protected crear(dto: CreateActivoDto): void {

@@ -87,6 +87,7 @@ export class ActivosListComponent implements OnChanges {
   @Input() mostrarAcciones = true;
   @Output() editado   = new EventEmitter<Activo>();
   @Output() eliminado = new EventEmitter<string>();
+  @Output() revisado  = new EventEmitter<Activo>();
 
   private _activos  = signal<Activo[]>([]);
   private _centros  = signal<CentroCosto[]>([]);

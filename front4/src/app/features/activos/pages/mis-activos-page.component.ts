@@ -5,12 +5,14 @@ import { TiposActivoService } from '../tipos-activo.service';
 import { CentrosService } from '../../centros/centros.service';
 import { ConsumidorContextService } from '../../../profile/consumidor-context.service';
 import { ActivosListComponent } from '../components/activos-list/activos-list.component';
+import { ActivoRevisarModalComponent } from '../components/activo-revisar-modal/activo-revisar-modal.component';
+import { Activo } from '../../../shared/models/activo.model';
 import { asId } from '../../../shared/utils';
 
 @Component({
   selector: 'app-mis-activos-page',
   standalone: true,
-  imports: [FormsModule, ActivosListComponent],
+  imports: [FormsModule, ActivosListComponent, ActivoRevisarModalComponent],
   template: `
     <div class="page-header">
       <h2>Mis activos</h2>
@@ -36,8 +38,24 @@ import { asId } from '../../../shared/utils';
         [centros]="centrosService.centros()"
         [clientes]="clientes()"
         [tipos]="tiposService.tipos()"
-        [mostrarAcciones]="false">
+        [mostrarAcciones]="false"
+        (revisado)="abrirRevisar($event)">
       </app-activos-list>
+    }
+
+    @if (activoRevisando()) {
+      <div class="modal-backdrop" (click)="cerrarRevisar()">
+        <div class="modal" (click)="$event.stopPropagation()">
+          <app-activo-revisar-modal
+            [activo]="activoRevisando()"
+            [historial]="service.historialActivo()"
+            [loadingHistorial]="service.loadingHistorial()"
+            (cerrar)="cerrarRevisar()"
+            (descargarActivoDoc)="onDescargarActivoDoc($event)"
+            (descargarActividadDoc)="onDescargarActividadDoc($event)">
+          </app-activo-revisar-modal>
+        </div>
+      </div>
     }
   `,
   styles: [`
@@ -58,6 +76,16 @@ import { asId } from '../../../shared/utils';
       box-sizing: border-box;
     }
     .search-input:focus { outline: none; border-color: #0095d6; }
+    .modal-backdrop {
+      position: fixed; inset: 0; background: rgba(15,23,42,.45);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 100; padding: 1rem;
+    }
+    .modal {
+      background: #fff; border-radius: 16px;
+      box-shadow: 0 20px 60px rgba(15,23,42,.18);
+      width: 100%; max-width: 700px; max-height: 90vh; overflow-y: auto; padding: 1.5rem;
+    }
   `],
 })
 export class MisActivosPageComponent implements OnInit {
@@ -68,6 +96,7 @@ export class MisActivosPageComponent implements OnInit {
 
   protected busqueda        = signal('');
   protected busquedaVisible = signal(false);
+  protected activoRevisando = signal<Activo | null>(null);
 
   protected clientes = computed(() => {
     const empresa = this.ctx.empresaSeleccionada();
@@ -107,6 +136,26 @@ export class MisActivosPageComponent implements OnInit {
         this.service.cargarPorCentros(asId(empresa._id), centroIds);
       }
     });
+  }
+
+  protected abrirRevisar(activo: Activo): void {
+    this.activoRevisando.set(activo);
+    this.service.cargarHistorial(activo._id, activo.centro_costo_id);
+  }
+
+  protected cerrarRevisar(): void {
+    this.activoRevisando.set(null);
+    this.service.resetHistorial();
+  }
+
+  protected onDescargarActivoDoc(ev: { nombre: string; nombreDisplay?: string }): void {
+    const activo = this.activoRevisando();
+    if (!activo) return;
+    this.service.descargarDocumento(activo._id, activo.centro_costo_id, ev.nombre, ev.nombreDisplay);
+  }
+
+  protected onDescargarActividadDoc(ev: { actividadId: string; centroId: string; nombre: string; nombreDisplay?: string }): void {
+    this.service.descargarDocumentoActividad(ev.actividadId, ev.centroId, ev.nombre, ev.nombreDisplay);
   }
 
   ngOnInit(): void {}

@@ -172,6 +172,16 @@ export class ActividadesPageComponent implements OnInit {
   protected showResumenNotif   = signal(false);
   protected modalLupa          = signal<'activos' | 'notif' | null>(null);
   protected lupaDetalleDia     = signal(false);
+  protected tipoDropdownOpen   = signal(false);
+
+  protected tipoSeleccionado = computed(() =>
+    this.tiposService.tipos().find(t => t._id === this.form().tipo_id) ?? null
+  );
+
+  seleccionarTipo(tipoId: string): void {
+    this.patchForm('tipo_id', tipoId);
+    this.tipoDropdownOpen.set(false);
+  }
 
   get resumenDocumentosTexto(): string {
     if (this.editingId()) {
@@ -183,8 +193,14 @@ export class ActividadesPageComponent implements OnInit {
       : 'Sin documentos';
   }
 
-  protected filtroEmpresaId = signal<string>('');
-  protected filtroTipoId    = signal<string>('');
+  protected filtroEmpresaId  = signal<string>('');
+  protected filtroTiposIds   = signal<string[]>([]);
+
+  toggleFiltroTipo(id: string): void {
+    this.filtroTiposIds.update(ids =>
+      ids.includes(id) ? ids.filter(x => x !== id) : [...ids, id]
+    );
+  }
 
   private centroIdsPorEmpresa = computed((): Set<string> => {
     const empId = this.filtroEmpresaId();
@@ -197,15 +213,17 @@ export class ActividadesPageComponent implements OnInit {
   });
 
   protected actividadesFiltradas = computed(() => {
-    const empId  = this.filtroEmpresaId();
-    const tipoId = this.filtroTipoId();
+    const empId   = this.filtroEmpresaId();
+    const tipoIds = this.filtroTiposIds();
     let list = this.service.actividades();
     if (empId) {
       const ids = this.centroIdsPorEmpresa();
       list = list.filter(a => ids.has(asId(a.centro_costo_id)));
     }
-    if (tipoId) {
-      list = list.filter(a => asId(typeof a.tipo_id === 'object' ? (a.tipo_id as TipoActividad)._id : a.tipo_id as string) === tipoId);
+    if (tipoIds.length > 0) {
+      list = list.filter(a =>
+        tipoIds.includes(asId(typeof a.tipo_id === 'object' ? (a.tipo_id as TipoActividad)._id : a.tipo_id as string))
+      );
     }
     return list;
   });

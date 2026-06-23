@@ -305,3 +305,5 @@ body { margin: 0; background: var(--bg); color: var(--ink-900); }
   border: 2.5px solid;
   flex-shrink: 0;
 }
+
+@keyframes btn-spin { to { transform: rotate(360deg); } }

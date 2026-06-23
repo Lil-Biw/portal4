@@ -121,7 +121,7 @@ const BUILDING_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="32" height
 
       <!-- Footer Eclariti -->
       <a class="eclariti-link" href="https://app.clarityenergy.cl/loginv5/" target="_blank" rel="noopener">
-        <span class="eclariti-bolt" [innerHTML]="getIcon('bolt')"></span>
+        <img src="/logotipo_eclarity_transparent_upscaled.png" alt="Eclariti" class="eclariti-logo" />
         <span class="eclariti-text">Eclariti</span>
       </a>
     </nav>
@@ -317,26 +317,23 @@ const BUILDING_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="32" height
         align-items: center;
         gap: 0.5rem;
         padding: 1.25rem 0.75rem 0.6rem;
-        margin-top: 2rem;
         border-top: 1px solid rgba(255, 255, 255, 0.07);
-        color: #a78bfa;
-        font-size: 0.82rem;
-        font-weight: 600;
         text-decoration: none;
-        border-radius: 0 0 0 0;
         transition: opacity 0.15s;
       }
       .eclariti-link:hover {
         opacity: 0.75;
       }
-      .eclariti-bolt {
-        display: flex;
-        align-items: center;
+      .eclariti-logo {
+        width: 20px;
+        height: 20px;
+        object-fit: contain;
         flex-shrink: 0;
       }
       .eclariti-text {
-        position: relative;
-        top: 2px;
+        font-size: 0.82rem;
+        font-weight: 600;
+        color: #a78bfa;
       }
     `,
   ],

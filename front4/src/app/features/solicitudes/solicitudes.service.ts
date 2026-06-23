@@ -63,11 +63,11 @@ export class SolicitudesService {
   clearStatus(): void { this.status.set(null); }
 
   private computarAdjuntoUrl(s: Solicitud): Solicitud {
-    if ((s as any).adjunto) {
+    if (s.adjunto) {
       return {
         ...s,
         archivo_url: this.api.url(`/empresas/${s.empresa_id}/solicitudes/${s._id}/adjunto`),
-        archivo_nombre: (s as any).adjunto.nombre,
+        archivo_nombre: s.adjunto.nombre,
       };
     }
     return s;
@@ -157,7 +157,7 @@ export class SolicitudesService {
     });
   }
 
-  cambiarEstado(id: string, estado: EstadoSolicitud, motivoRechazo?: string, notificacion?: NotificacionOpciones): void {
+  cambiarEstado(id: string, estado: EstadoSolicitud, motivoRechazo?: string, notificacion?: NotificacionOpciones, onSuccess?: () => void): void {
     const empresaId = this.getEmpresaId(id);
     if (!empresaId) return;
     const body: Record<string, unknown> = { estado };
@@ -167,6 +167,7 @@ export class SolicitudesService {
       next: (actualizada) => {
         this.solicitudes.update(prev => prev.map(s => s._id === id ? this.computarAdjuntoUrl(actualizada) : s));
         this.status.set({ type: 'ok', text: `Estado actualizado a "${this.estadoLabel(estado)}".` });
+        onSuccess?.();
       },
       error: (err) => {
         const msg = err.error?.message ?? 'Error al cambiar el estado.';

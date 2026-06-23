@@ -31,11 +31,11 @@
 </app-clientes-list>
 
 <!-- ── Modal ──────────────────────────────────────────── -->
-<div class="modal-backdrop" *ngIf="modal() !== null" (click)="cerrar()">
-  <div class="modal" (click)="$event.stopPropagation()">
+@if (modal() !== null) {
+  <div class="modal-backdrop" (click)="cerrar()">
+    <div class="modal" (click)="$event.stopPropagation()">
 
-    <!-- Crear -->
-    <ng-container *ngIf="modal() === 'crear'">
+    @if (modal() === 'crear') {
       <div class="modal-header">
         <h3>Nueva empresa</h3>
         <button class="modal-close" (click)="cerrar()">&#x2715;</button>
@@ -43,13 +43,13 @@
       <app-status-banner [status]="service.status()"></app-status-banner>
       <app-cliente-form
         submitLabel="Crear empresa"
+        [saving]="service.saving()"
         (logoFile)="pendingLogo.set($event)"
         (submitted)="crear($event)">
       </app-cliente-form>
-    </ng-container>
+    }
 
-    <!-- Editar -->
-    <ng-container *ngIf="modal() === 'editar'">
+    @if (modal() === 'editar') {
       <div class="modal-header">
         <h3>Editar empresa</h3>
         <button class="modal-close" (click)="cerrar()">&#x2715;</button>
@@ -58,13 +58,13 @@
       <app-cliente-form
         [initial]="service.seleccionado()"
         submitLabel="Guardar cambios"
+        [saving]="service.saving()"
         (logoFile)="pendingLogo.set($event)"
         (submitted)="actualizar($event)">
       </app-cliente-form>
-    </ng-container>
+    }
 
-    <!-- Score SmartClarity -->
-    <ng-container *ngIf="modal() === 'score'">
+    @if (modal() === 'score') {
       <div class="modal-header">
         <h3>Score SmartClarity — {{ clienteParaScore()?.razon_social }}</h3>
         <button class="modal-close" (click)="cerrar()">&#x2715;</button>
@@ -147,10 +147,9 @@
           Cerrar
         </button>
       </div>
-    </ng-container>
+    }
 
-    <!-- Buscar -->
-    <ng-container *ngIf="modal() === 'buscar'">
+    @if (modal() === 'buscar') {
       <div class="modal-header">
         <h3>Buscar empresa</h3>
         <button class="modal-close" (click)="cerrar()">&#x2715;</button>
@@ -169,7 +168,8 @@
         (eliminado)="eliminar($event)"
         (verFicha)="irAFicha($event)">
       </app-clientes-list>
-    </ng-container>
+    }
 
+    </div>
   </div>
-</div>
+}

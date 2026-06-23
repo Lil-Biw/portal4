@@ -10,6 +10,7 @@ import { CentroFormComponent } from '../components/centro-form/centro-form.compo
 import { CentrosListComponent } from '../components/centros-list/centros-list.component';
 import { CentroCosto, CreateCentroDto } from '../../../shared/models/centro.model';
 import { ActivosService } from '../../activos/activos.service';
+import { TiposActivoService } from '../../activos/tipos-activo.service';
 import { ActivosFormComponent } from '../../activos/components/activos-form/activos-form.component';
 import { CreateActivoDto } from '../../../shared/models/activo.model';
 import { asId } from '../../../shared/utils';
@@ -95,6 +96,7 @@ export class CentrosPageComponent implements OnInit {
   private   readonly profileService    = inject(ProfileService);
   private   readonly router            = inject(Router);
   protected readonly activosService    = inject(ActivosService);
+  protected readonly tiposActivoService = inject(TiposActivoService);
   private   readonly authService       = inject(AuthService);
   private   readonly http              = inject(HttpClient);
   private   readonly api               = inject(ApiService);
@@ -181,6 +183,7 @@ export class CentrosPageComponent implements OnInit {
   ngOnInit(): void {
     this.service.cargar();
     this.clientesService.cargar();
+    this.tiposActivoService.cargar();
   }
 
   protected abrirCrear(): void {

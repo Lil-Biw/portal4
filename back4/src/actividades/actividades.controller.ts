@@ -1,9 +1,9 @@
 import {
   Controller, Get, Post, Put, Delete,
-  Param, Body, Query, Res, UseGuards,
+  Param, Body, Query, Req, Res, UseGuards,
   UseInterceptors, UploadedFile, BadRequestException,
 } from '@nestjs/common';
-import { Response } from 'express';
+import { Request, Response } from 'express';
 import { sendFile } from '../common/helpers/send-file.helper';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
@@ -77,5 +77,41 @@ export class ActividadesController {
   ) {
     const { buffer, tipo_mime, nombre_display } = await this.service.servirDocumento(actividadId, nombre);
     sendFile(res, buffer, tipo_mime, nombre_display);
+  }
+}
+
+@Controller('empresas/:empresaId/actividades')
+@UseGuards(EmpresaAccessGuard)
+export class ActividadesEmpresaController {
+  constructor(private readonly svc: ActividadesService) {}
+
+  @Get()
+  findAll(@Param('empresaId') empresaId: string) {
+    return this.svc.findAllByEmpresa(empresaId);
+  }
+}
+
+@Controller('actividades')
+@Roles('super_admin', 'admin_smartclarity')
+export class ActividadesAdminController {
+  constructor(private readonly svc: ActividadesService) {}
+
+  @Get()
+  findAll(
+    @Query('centro_costo_id') centroCostoId?: string,
+    @Query('desde') desde?: string,
+    @Query('hasta') hasta?: string,
+    @Req() req?: Request,
+  ) {
+    const user = (req as any)?.user;
+    if (user?.rol === 'admin_smartclarity' && user?.cliente_id) {
+      return this.svc.findAllByEmpresa(user.cliente_id, centroCostoId, desde, hasta);
+    }
+    return this.svc.findAll(centroCostoId, desde, hasta);
+  }
+
+  @Get(':id')
+  findOne(@Param('id') id: string) {
+    return this.svc.findOne(id);
   }
 }

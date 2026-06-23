@@ -89,3 +89,34 @@ export class ProyectosController {
     return this.proyectosService.eliminarDocumento(proyectoId, docId);
   }
 }
+
+@Controller('proyectos')
+@Roles('super_admin', 'admin_smartclarity')
+export class ProyectosAdminController {
+  constructor(private readonly svc: ProyectosService) {}
+
+  @Get()
+  findAll(@Query('page') page = '1', @Query('limit') limit = '20') {
+    return this.svc.findAll(+page, +limit);
+  }
+
+  @Get(':id')
+  findOne(@Param('id') id: string) {
+    return this.svc.findOne(id);
+  }
+}
+
+@Controller('empresas/:empresaId/proyectos')
+@UseGuards(EmpresaAccessGuard)
+export class ProyectosEmpresaController {
+  constructor(private readonly svc: ProyectosService) {}
+
+  @Get()
+  findAll(
+    @Param('empresaId') empresaId: string,
+    @Query('page') page = '1',
+    @Query('limit') limit = '20',
+  ) {
+    return this.svc.findAllByCliente(empresaId, +page, +limit);
+  }
+}

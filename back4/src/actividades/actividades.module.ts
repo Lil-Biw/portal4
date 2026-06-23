@@ -1,9 +1,7 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ActividadSchema } from './actividades.schema';
-import { ActividadesController } from './actividades.controller';
-import { ActividadesAdminController } from './actividades-admin.controller';
-import { ActividadesEmpresaController } from './actividades-empresa.controller';
+import { ActividadesController, ActividadesAdminController, ActividadesEmpresaController } from './actividades.controller';
 import { ActividadesService } from './actividades.service';
 import { CentroCostoSchema } from '../centros-costos/centros-costos.schema';
 import { UsuarioSchema } from '../usuarios/usuarios.schema';

@@ -131,14 +131,14 @@ export class DocumentosConsumidorPageComponent implements OnInit {
 
   protected solicitudesDeEmpresa = computed(() => {
     const sols = this.solicitudesService.solicitudes()
-      .filter(s => !s.centro_costo_id && !s.proyecto_id);
+      .filter(s => !s.centro_costo_id && !s.proyecto_id && s.estado !== 'aprobado');
     return this.filtrarSolicitudes(sols, this.busquedaEmpresa());
   });
 
   protected solicitudesDeCentro = computed(() => {
     const centroId = this.selectedCentroIdC();
     if (!centroId) return [];
-    const all = this.solicitudesService.solicitudes();
+    const all = this.solicitudesService.solicitudes().filter(s => s.estado !== 'aprobado');
     const sols = centroId === 'todos'
       ? all.filter(s => s.centro_costo_id && !s.proyecto_id)
       : all.filter(s => s.centro_costo_id === centroId && !s.proyecto_id);
@@ -149,7 +149,7 @@ export class DocumentosConsumidorPageComponent implements OnInit {
     const centroId   = this.selectedCentroIdC();
     const proyectoId = this.selectedProyectoIdC();
     if (!centroId || !proyectoId) return [];
-    const all = this.solicitudesService.solicitudes();
+    const all = this.solicitudesService.solicitudes().filter(s => s.estado !== 'aprobado');
     let sols: Solicitud[];
     if (proyectoId === 'todos') {
       if (centroId === 'todos') {
@@ -165,6 +165,7 @@ export class DocumentosConsumidorPageComponent implements OnInit {
     }
     return this.filtrarSolicitudes(sols, this.busquedaProyecto());
   });
+
 
   // ─── lifecycle ────────────────────────────────────────────────────────────
 

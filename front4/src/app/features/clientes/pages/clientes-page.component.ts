@@ -1,5 +1,4 @@
 import { Component, OnInit, inject, signal, computed, effect, untracked } from '@angular/core';
-import { NgIf } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
@@ -23,7 +22,7 @@ type ModalMode = 'crear' | 'editar' | 'buscar' | 'score' | null;
 @Component({
   selector: 'app-clientes-page',
   standalone: true,
-  imports: [NgIf, FormsModule, StatusBannerComponent, ClienteFormComponent, ClientesListComponent, SpiderChartComponent],
+  imports: [FormsModule, StatusBannerComponent, ClienteFormComponent, ClientesListComponent, SpiderChartComponent],
   templateUrl: './clientes-page.component.html',
   styles: [`
     .page-header {

@@ -3,20 +3,33 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { SolicitudDocument } from './solicitudes.schema';
 import { CentroCostoDocument } from '../centros-costos/centros-costos.schema';
+import { ClienteDocument } from '../clientes/clientes.schema';
+import { ProyectoDocument } from '../proyectos/proyectos.schema';
 import { CreateSolicitudDto, UpdateSolicitudDto, CambiarEstadoDto } from './solicitudes.dto';
 import { MailService } from '../mail/mail.service';
 import { NotificacionOpcionesDto } from '../common/dto/notificacion-opciones.dto';
+import { DocumentosHelper, ArchivoInput } from '../common/helpers/documentos.helper';
 
 @Injectable()
 export class SolicitudesService {
   private readonly logger = new Logger(SolicitudesService.name);
 
+  private readonly docsEmpresa:  DocumentosHelper;
+  private readonly docsCentro:   DocumentosHelper;
+  private readonly docsProyecto: DocumentosHelper;
+
   constructor(
     @InjectModel('Solicitud') private solicitudModel: Model<SolicitudDocument>,
     @InjectModel('CentroCosto') private centroCostoModel: Model<CentroCostoDocument>,
+    @InjectModel('Cliente') private clienteModel: Model<ClienteDocument>,
+    @InjectModel('Proyecto') private proyectoModel: Model<ProyectoDocument>,
     @InjectModel('Usuario') private usuarioModel: Model<{ nombre: string; email: string; rol: string; cliente_id: Types.ObjectId; centros_asignados: Types.ObjectId[]; activo: boolean }>,
     private mailService: MailService,
-  ) {}
+  ) {
+    this.docsEmpresa  = new DocumentosHelper(this.clienteModel  as unknown as Model<any>, 'Cliente');
+    this.docsCentro   = new DocumentosHelper(this.centroCostoModel as unknown as Model<any>, 'CentroCosto');
+    this.docsProyecto = new DocumentosHelper(this.proyectoModel as unknown as Model<any>, 'Proyecto');
+  }
 
   async create(dto: CreateSolicitudDto) {
     const { notificacion, ...solicitudData } = dto;
@@ -146,6 +159,9 @@ export class SolicitudesService {
   }
 
   async cambiarEstado(id: string, dto: CambiarEstadoDto) {
+    const estadoPrevio = await this.solicitudModel.findById(id).select('estado').lean();
+    if (!estadoPrevio) throw new NotFoundException(`Solicitud ${id} no encontrada`);
+
     const update: Record<string, unknown> = { estado: dto.estado };
     if (dto.estado === 'rechazado') {
       update['motivo_rechazo'] = dto.motivo_rechazo?.trim() ?? '';
@@ -159,7 +175,34 @@ export class SolicitudesService {
     if (dto.estado === 'rechazado' && solicitud.empresa_id) {
       await this.notificarRechazoSolicitud(solicitud, dto.notificacion);
     }
+    if (dto.estado === 'aprobado' && estadoPrevio.estado !== 'aprobado') {
+      const solFull = await this.solicitudModel.findById(id);
+      if (solFull?.adjunto?.contenido) {
+        await this.crearDocumentoDesde(solFull).catch(err =>
+          this.logger.error('Error al crear documento desde solicitud aprobada:', err)
+        );
+      }
+    }
     return solicitud;
+  }
+
+  private async crearDocumentoDesde(sol: SolicitudDocument): Promise<void> {
+    if (!sol.adjunto?.contenido) return;
+    const raw = sol.adjunto.contenido as unknown;
+    const buffer = Buffer.isBuffer(raw) ? raw : Buffer.from(raw as ArrayBuffer);
+    const archivo: ArchivoInput = {
+      originalname: sol.adjunto.nombre,
+      buffer,
+      mimetype:     sol.adjunto.tipo_mime,
+      size:         buffer.length,
+    };
+    if (sol.proyecto_id) {
+      await this.docsProyecto.agregar(String(sol.proyecto_id), archivo, sol.nombre, sol.tipo);
+    } else if (sol.centro_costo_id) {
+      await this.docsCentro.agregar(String(sol.centro_costo_id), archivo, sol.nombre, sol.tipo);
+    } else {
+      await this.docsEmpresa.agregar(String(sol.empresa_id), archivo, sol.nombre, sol.tipo);
+    }
   }
 
   private async notificarRechazoSolicitud(

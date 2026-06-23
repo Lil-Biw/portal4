@@ -130,6 +130,10 @@ export class DocumentosAdminPageComponent implements OnInit {
     return sols.filter(s => s.centro_costo_id === centro);
   });
 
+  protected solicitudesEnSolicitudes = computed(() =>
+    this.solicitudesTabActual().filter(s => s.estado !== 'aprobado')
+  );
+
   protected usuariosParaSolicitud = computed(() => {
     const empresaId = this.selectedEmpresaId;
     if (!empresaId) return [];
@@ -536,8 +540,40 @@ export class DocumentosAdminPageComponent implements OnInit {
       this.notifRechazoSuperAdmins.set(false);
       this.solicitudEstadoEdit.set(null);
     } else {
-      this.solicitudesService.cambiarEstado(id, estado);
+      const onSuccess = estado === 'aprobado' ? () => this.recargarDocs() : undefined;
+      this.solicitudesService.cambiarEstado(id, estado, undefined, undefined, onSuccess);
       this.solicitudEstadoEdit.set(null);
+    }
+  }
+
+  private recargarDocs(): void {
+    const empresaId  = this.selectedEmpresaId;
+    const centroId   = this.selectedCentroId;
+    const proyectoId = this.selectedProyectoId;
+    const tab = this.tabJerarquia();
+    if (!empresaId) return;
+    if (tab === 'empresa') {
+      this.service.cargarEmpresa(empresaId);
+    } else if (tab === 'centro') {
+      if (centroId === 'todos') {
+        this.service.cargarTodosCentros(empresaId, this.centrosFiltrados);
+      } else if (centroId) {
+        this.service.cargar('centro', empresaId, centroId);
+      }
+    } else if (tab === 'proyecto') {
+      const cId = centroId !== 'todos' ? centroId : undefined;
+      const pId = proyectoId !== 'todos' ? proyectoId : undefined;
+      if (proyectoId === 'todos' && centroId === 'todos') {
+        const todos = this.proyectosService.proyectos().filter(p => asId(p.cliente_id) === empresaId);
+        this.service.cargarTodosProyectos(empresaId, todos, this.centrosFiltrados);
+      } else if (proyectoId === 'todos' && cId) {
+        const delCentro = this.proyectosService.proyectos().filter(
+          p => asId(p.cliente_id) === empresaId && asId(p.centro_costo_id) === cId
+        );
+        this.service.cargarTodosProyectos(empresaId, delCentro, this.centrosFiltrados);
+      } else if (pId && cId) {
+        this.service.cargar('proyecto', empresaId, cId, pId);
+      }
     }
   }
 
@@ -604,8 +640,6 @@ export class DocumentosAdminPageComponent implements OnInit {
         { valor: 'vencido',   label: 'Marcar vencido',    colorBg: '#f3f4f6', colorText: '#374151' },
       ],
       aprobado: [
-        { valor: 'pendiente', label: 'Reabrir',           colorBg: '#fef3c7', colorText: '#92400e' },
-        { valor: 'rechazado', label: 'Rechazar',          colorBg: '#fee2e2', colorText: '#7f1d1d' },
         { valor: 'vencido',   label: 'Marcar vencido',    colorBg: '#f3f4f6', colorText: '#374151' },
       ],
       rechazado: [
@@ -614,7 +648,9 @@ export class DocumentosAdminPageComponent implements OnInit {
         { valor: 'vencido',   label: 'Marcar vencido',    colorBg: '#f3f4f6', colorText: '#374151' },
       ],
       vencido: [
-        { valor: 'pendiente', label: 'Reabrir',           colorBg: '#fef3c7', colorText: '#92400e' },
+        { valor: 'revision',  label: 'Poner en revisión', colorBg: '#dbeafe', colorText: '#1e40af' },
+        { valor: 'aprobado',  label: 'Aprobar',           colorBg: '#dcfce7', colorText: '#14532d' },
+        { valor: 'rechazado', label: 'Rechazar',          colorBg: '#fee2e2', colorText: '#7f1d1d' },
       ],
     };
     return map[actual] ?? [];

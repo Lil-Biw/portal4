@@ -1,8 +1,7 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { CentroCostoSchema } from './centros-costos.schema';
-import { CentrosCostosController } from './centros-costos.controller';
-import { CentrosCostosAdminController } from './centros-costos-admin.controller';
+import { CentrosCostosController, CentrosCostosAdminController } from './centros-costos.controller';
 import { CentrosCostosService } from './centros-costos.service';
 
 @Module({

@@ -88,7 +88,8 @@
   [clientes]="clientesService.clientes()"
   [tipos]="tiposService.tipos()"
   (editado)="abrirEditar($event)"
-  (eliminado)="eliminar($event)">
+  (eliminado)="eliminar($event)"
+  (revisado)="abrirRevisar($event)">
 </app-activos-list>
 
 } @else {
@@ -167,8 +168,21 @@
           [clientes]="clientesService.clientes()"
           [tipos]="tiposService.tipos()"
           (editado)="editarDesdeBuscar($event)"
-          (eliminado)="eliminar($event)">
+          (eliminado)="eliminar($event)"
+          (revisado)="abrirRevisar($event)">
         </app-activos-list>
+      }
+
+      <!-- Revisar activo -->
+      @if (modal() === 'revisar') {
+        <app-activo-revisar-modal
+          [activo]="activoRevisando()"
+          [historial]="service.historialActivo()"
+          [loadingHistorial]="service.loadingHistorial()"
+          (cerrar)="cerrar()"
+          (descargarActivoDoc)="onDescargarActivoDoc($event)"
+          (descargarActividadDoc)="onDescargarActividadDoc($event)">
+        </app-activo-revisar-modal>
       }
 
       <!-- Tipos de activo -->

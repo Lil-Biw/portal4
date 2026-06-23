@@ -13,6 +13,7 @@ export class ClientesService {
   readonly seleccionado = signal<Cliente | null>(null);
   readonly status = signal<Status | null>(null);
   readonly loading = signal(false);
+  readonly saving = signal(false);
 
   cargar(): void {
     this.loading.set(true);
@@ -29,23 +30,27 @@ export class ClientesService {
   }
 
   crear(dto: CreateClienteDto, logoFile?: File | null): void {
+    this.saving.set(true);
     this.http.post<Cliente>(this.api.url('/empresas'), dto).subscribe({
       next: (cliente) => {
         this.status.set({ type: 'ok', text: 'Empresa creada correctamente' });
+        this.saving.set(false);
         if (logoFile) {
           this.subirLogo(cliente._id, logoFile, () => this.cargar());
         } else {
           this.cargar();
         }
       },
-      error: (err) => this.setError(err),
+      error: (err) => { this.setError(err); this.saving.set(false); },
     });
   }
 
   actualizar(id: string, dto: UpdateClienteDto, logoFile?: File | null): void {
+    this.saving.set(true);
     this.http.put<Cliente>(this.api.url(`/empresas/${id}`), dto).subscribe({
       next: () => {
         this.status.set({ type: 'ok', text: 'Empresa actualizada' });
+        this.saving.set(false);
         this.seleccionado.set(null);
         if (logoFile) {
           this.subirLogo(id, logoFile, () => this.cargar());
@@ -53,7 +58,7 @@ export class ClientesService {
           this.cargar();
         }
       },
-      error: (err) => this.setError(err),
+      error: (err) => { this.setError(err); this.saving.set(false); },
     });
   }
 

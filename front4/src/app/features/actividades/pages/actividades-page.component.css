@@ -51,7 +51,7 @@
   transition: background .12s, opacity .12s;
 }
 .cal-legend-item:hover { background: rgba(0,0,0,.05); }
-.cal-legend-item--active { background: rgba(0,0,0,.07); font-weight: 700; }
+.cal-legend-item--active { font-weight: 700; box-shadow: 0 1px 4px rgba(0,0,0,.18); }
 .cal-legend-dot {
   width: 10px;
   height: 10px;
@@ -651,3 +651,53 @@
 }
 .lupa-item--blue  { color: #0369a1; background: #f0f9ff; }
 .lupa-item--green { color: #15803d; background: #f0fdf4; }
+
+/* ── Tipo custom dropdown ──────────────────────────────────────── */
+.tipo-select-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  padding: .45rem .65rem;
+  border: 1px solid rgba(34,33,33,.2);
+  border-radius: 8px;
+  background: #fff;
+  font-size: .875rem;
+  color: #374151;
+  cursor: pointer;
+  font-family: inherit;
+  text-align: left;
+  transition: border-color .15s;
+}
+.tipo-select-btn:hover { border-color: #0095d6; }
+.tipo-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background: #fff;
+  border: 1px solid rgba(34,33,33,.18);
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0,0,0,.12);
+  z-index: 11;
+  max-height: 220px;
+  overflow-y: auto;
+  padding: .3rem 0;
+}
+.tipo-option {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  width: 100%;
+  padding: .45rem .75rem;
+  background: none;
+  border: none;
+  font-size: .875rem;
+  color: #374151;
+  cursor: pointer;
+  font-family: inherit;
+  text-align: left;
+  transition: background .1s;
+}
+.tipo-option:hover { background: #f3f4f6; }
+.tipo-option--selected { background: #eff6ff; color: #1d4ed8; font-weight: 600; }

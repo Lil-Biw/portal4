@@ -26,6 +26,22 @@
     <button class="cal-nav-btn" (click)="navSiguiente()">›</button>
     <button class="cal-today-btn" (click)="irAHoy()">Hoy</button>
   </div>
+  <div class="cal-toolbar-center">
+    @for (t of tiposService.tipos(); track t._id) {
+      @let activo = filtroTiposIds().includes(t._id);
+      <button
+        class="cal-legend-item"
+        [class.cal-legend-item--active]="activo"
+        [style.background]="activo ? t.color : ''"
+        [style.color]="activo ? '#fff' : ''"
+        (click)="toggleFiltroTipo(t._id)"
+        [title]="'Filtrar por ' + t.nombre">
+        <span class="cal-legend-dot"
+          [style.background]="activo ? 'rgba(255,255,255,.75)' : t.color"></span>
+        {{ t.nombre }}
+      </button>
+    }
+  </div>
   <div style="display:flex;align-items:center;gap:.75rem;flex-wrap:wrap">
     <select
       class="cal-empresa-filter"
@@ -34,15 +50,6 @@
       <option value="">Todas las empresas</option>
       @for (e of clientesService.clientes(); track e._id) {
         <option [value]="e._id">{{ e.razon_social }}</option>
-      }
-    </select>
-    <select
-      class="cal-empresa-filter"
-      [ngModel]="filtroTipoId()"
-      (ngModelChange)="filtroTipoId.set($event)">
-      <option value="">Todos los tipos</option>
-      @for (t of tiposService.tipos(); track t._id) {
-        <option [value]="t._id">{{ t.nombre }}</option>
       }
     </select>
     <div class="cal-view-toggle">
@@ -296,12 +303,40 @@
           </div>
           <div class="field">
             <label>Tipo *</label>
-            <select [ngModel]="form().tipo_id" (ngModelChange)="patchForm('tipo_id', $event)">
-              <option value="">Selecciona un tipo</option>
-              @for (t of tiposService.tipos(); track t._id) {
-                <option [value]="t._id">{{ t.nombre }}</option>
+            <div style="position:relative">
+              @if (tipoDropdownOpen()) {
+                <div style="position:fixed;inset:0;z-index:10" (click)="tipoDropdownOpen.set(false)"></div>
               }
-            </select>
+              <button type="button" class="tipo-select-btn"
+                (click)="tipoDropdownOpen.update(v => !v)">
+                @if (tipoSeleccionado()) {
+                  <span class="cal-legend-dot" [style.background]="tipoSeleccionado()!.color"></span>
+                  <span>{{ tipoSeleccionado()!.nombre }}</span>
+                } @else {
+                  <span style="color:#9ca3af">Selecciona un tipo</span>
+                }
+                <svg style="margin-left:auto;flex-shrink:0;width:14px;height:14px;color:#6b7280;transition:transform .15s"
+                  [style.transform]="tipoDropdownOpen() ? 'rotate(180deg)' : 'rotate(0)'"
+                  viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="6 9 12 15 18 9"/>
+                </svg>
+              </button>
+              @if (tipoDropdownOpen()) {
+                <div class="tipo-dropdown">
+                  @for (t of tiposService.tipos(); track t._id) {
+                    <button type="button" class="tipo-option"
+                      [class.tipo-option--selected]="form().tipo_id === t._id"
+                      (click)="seleccionarTipo(t._id)">
+                      <span class="cal-legend-dot" [style.background]="t.color"></span>
+                      {{ t.nombre }}
+                    </button>
+                  }
+                  @if (tiposService.tipos().length === 0) {
+                    <p style="margin:0;padding:.5rem .75rem;font-size:.82rem;color:#9ca3af">Sin tipos creados</p>
+                  }
+                </div>
+              }
+            </div>
           </div>
           <div class="field">
             <label>Fecha *</label>
@@ -594,7 +629,7 @@
 
   <!-- Mini-modal lupa activos -->
   @if (modalLupa() === 'activos') {
-    <div class="lupa-overlay" (click)="modalLupa.set(null)">
+    <div class="lupa-overlay" (click)="$event.stopPropagation(); modalLupa.set(null)">
       <div class="lupa-box" (click)="$event.stopPropagation()">
         <div class="lupa-header">
           <span class="lupa-title">Activos incluidos</span>
@@ -611,7 +646,7 @@
 
   <!-- Mini-modal lupa notificaciones -->
   @if (modalLupa() === 'notif') {
-    <div class="lupa-overlay" (click)="modalLupa.set(null)">
+    <div class="lupa-overlay" (click)="$event.stopPropagation(); modalLupa.set(null)">
       <div class="lupa-box" (click)="$event.stopPropagation()">
         <div class="lupa-header">
           <span class="lupa-title">Destinatarios</span>

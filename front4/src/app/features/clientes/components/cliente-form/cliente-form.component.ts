@@ -15,6 +15,7 @@ export class ClienteFormComponent implements OnChanges {
 
   @Input() initial: Cliente | null = null;
   @Input() submitLabel = 'Guardar';
+  @Input() saving = false;
   @Output() submitted = new EventEmitter<CreateClienteDto>();
   @Output() logoFile = new EventEmitter<File | null>();
 

@@ -1,20 +1,24 @@
 import {
   Controller, Get, Post, Put, Delete,
-  Param, Body, UseGuards, Res,
+  Param, Body, Query, Req, UseGuards, Res,
   UseInterceptors, UploadedFile, BadRequestException,
 } from '@nestjs/common';
-import { Response } from 'express';
+import { Request, Response } from 'express';
 import { sendFile } from '../common/helpers/send-file.helper';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
 import { ActivosService } from './activos.service';
 import { CreateActivoDto, UpdateActivoDto } from './activos.dto';
 import { EmpresaAccessGuard, Roles } from '../common/guards/guards';
+import { ActividadesService } from '../actividades/actividades.service';
 
 @Controller('empresas/:empresaId/centros/:centroId/activos')
 @UseGuards(EmpresaAccessGuard)
 export class ActivosController {
-  constructor(private readonly activosService: ActivosService) {}
+  constructor(
+    private readonly activosService: ActivosService,
+    private readonly actividadesService: ActividadesService,
+  ) {}
 
   @Get()
   findAll(@Param('centroId') centroId: string) {
@@ -73,5 +77,45 @@ export class ActivosController {
   ) {
     const { buffer, tipo_mime, nombre_display } = await this.activosService.servirDocumento(activoId, nombre);
     sendFile(res, buffer, tipo_mime, nombre_display);
+  }
+
+  @Get(':activoId/historial')
+  historial(@Param('activoId') activoId: string) {
+    return this.actividadesService.findByActivo(activoId);
+  }
+}
+
+@Controller('activos')
+@Roles('super_admin', 'admin_smartclarity')
+export class ActivosAdminController {
+  constructor(
+    private readonly svc: ActivosService,
+    private readonly actividadesSvc: ActividadesService,
+  ) {}
+
+  @Get()
+  findAll(
+    @Query('centro_costo_id') centroCostoId?: string,
+    @Req() req?: Request,
+  ) {
+    const user = (req as any)?.user;
+    if (user?.rol === 'admin_smartclarity' && user?.cliente_id) {
+      return this.svc.findAllByEmpresa(user.cliente_id, centroCostoId);
+    }
+    return this.svc.findAll(centroCostoId);
+  }
+
+  @Get(':id')
+  findOne(@Param('id') id: string) {
+    return this.svc.findOne(id);
+  }
+
+  @Get(':id/historial')
+  historial(@Param('id') id: string, @Req() req: Request) {
+    const user = (req as any)?.user;
+    if (user?.rol === 'admin_smartclarity' && user?.cliente_id) {
+      return this.actividadesSvc.findByActivoForEmpresa(id, user.cliente_id);
+    }
+    return this.actividadesSvc.findByActivo(id);
   }
 }

@@ -495,7 +495,7 @@
 
           <app-status-banner [status]="solicitudesService.status()"></app-status-banner>
 
-          @let sols = solicitudesTabActual();
+          @let sols = solicitudesEnSolicitudes();
           @if (sols.length === 0) { <p class="empty">Sin solicitudes para este contexto.</p> }
 
           @for (s of sols; track s._id) {

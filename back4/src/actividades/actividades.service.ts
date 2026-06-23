@@ -72,6 +72,41 @@ export class ActividadesService {
     return a;
   }
 
+  async findByActivo(activoId: string) {
+    let oid: Types.ObjectId;
+    try {
+      oid = new Types.ObjectId(activoId);
+    } catch {
+      return [];
+    }
+    return this.actividadModel
+      .find({ activo_ids: oid })
+      .select('-documentos.contenido')
+      .populate('tipo_id')
+      .sort({ fecha: -1 })
+      .lean();
+  }
+
+  async findByActivoForEmpresa(activoId: string, empresaId: string) {
+    let oid: Types.ObjectId;
+    try {
+      oid = new Types.ObjectId(activoId);
+    } catch {
+      return [];
+    }
+    const centros = await this.centroCostoModel
+      .find({ cliente_id: new Types.ObjectId(empresaId), activo: true })
+      .select('_id')
+      .lean();
+    const centroIds = centros.map(c => c._id);
+    return this.actividadModel
+      .find({ activo_ids: oid, centro_costo_id: { $in: centroIds } })
+      .select('-documentos.contenido')
+      .populate('tipo_id')
+      .sort({ fecha: -1 })
+      .lean();
+  }
+
   async create(dto: CreateActividadDto) {
     const { notificacion, ...actividadData } = dto;
     const a = await new this.actividadModel({
