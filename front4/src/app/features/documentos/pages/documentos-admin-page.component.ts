@@ -54,7 +54,7 @@ export class DocumentosAdminPageComponent implements OnInit {
   set selectedProyectoId(v: string) { this._selectedProyectoId.set(v); }
 
   protected tabJerarquia    = signal<'empresa' | 'centro' | 'proyecto'>('empresa');
-  protected tabAdminActiva  = signal<'documentacion' | 'solicitudes'>('documentacion');
+  protected tabAdminActiva  = signal<'documentacion' | 'solicitudes' | 'vencidos'>('documentacion');
 
   protected showSolicitudForm   = signal(false);
   protected creandoSolicitud    = signal(false);
@@ -686,6 +686,25 @@ export class DocumentosAdminPageComponent implements OnInit {
       vencido: 'Vencido',
     };
     return map[estado];
+  }
+
+  cargarVencidosAdmin(): void {
+    const empresaId  = this.selectedEmpresaId;
+    const centroId   = (this.selectedCentroId   && this.selectedCentroId   !== 'todos') ? this.selectedCentroId   : undefined;
+    const proyectoId = (this.selectedProyectoId && this.selectedProyectoId !== 'todos') ? this.selectedProyectoId : undefined;
+    if (!empresaId) return;
+    this.service.cargarVencidos(empresaId, centroId, proyectoId);
+  }
+
+  marcarVencidoAdmin(docUrl: string): void {
+    const tipo       = this.docTipoActual;
+    const empresaId  = this.selectedEmpresaId;
+    const centroId   = (this.selectedCentroId   && this.selectedCentroId   !== 'todos') ? this.selectedCentroId   : undefined;
+    const proyectoId = (this.selectedProyectoId && this.selectedProyectoId !== 'todos') ? this.selectedProyectoId : undefined;
+    this.service.marcarVencido(
+      docUrl, tipo, empresaId, centroId, proyectoId,
+      this.empresaNombre, this.centroNombre, this.proyectoNombre,
+    );
   }
 
   // ─── private helpers ─────────────────────────────────────────────────────
