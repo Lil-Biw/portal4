@@ -15,6 +15,7 @@ import { TiposActivoModule } from './tipos-activo/tipos-activo.module';
 import { ActividadesModule } from './actividades/actividades.module';
 import { ActivosModule } from './activos/activos.module';
 import { NoticiasModule } from './noticias/noticias.module';
+import { DocumentosVencidosModule } from './documentos-vencidos/documentos-vencidos.module';
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { NoticiasModule } from './noticias/noticias.module';
     ActividadesModule,
     ActivosModule,
     NoticiasModule,
+    DocumentosVencidosModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: JwtAuthGuard },
