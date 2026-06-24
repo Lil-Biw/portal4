@@ -32,3 +32,8 @@ export class UpdateScoreSmartclarityDto {
   @Max(10, { each: true })
   valores: number[];
 }
+
+export class VencerDocumentoCentroDto {
+  @IsString() @IsOptional() empresa_nombre?: string;
+  @IsString() @IsOptional() centro_nombre?: string;
+}

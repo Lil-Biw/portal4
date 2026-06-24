@@ -4,6 +4,7 @@ import { Model, Types } from 'mongoose';
 import { CentroCostoDocument } from './centros-costos.schema';
 import { CreateCentroCostoDto, UpdateCentroCostoDto } from './centros-costos.dto';
 import { DocumentosHelper, ArchivoInput } from '../common/helpers/documentos.helper';
+import { DocumentosVencidosService } from '../documentos-vencidos/documentos-vencidos.service';
 
 @Injectable()
 export class CentrosCostosService {
@@ -11,6 +12,7 @@ export class CentrosCostosService {
 
   constructor(
     @InjectModel('CentroCosto') private centroCostoModel: Model<CentroCostoDocument>,
+    private readonly documentosVencidosService: DocumentosVencidosService,
   ) {
     this.docsHelper = new DocumentosHelper(centroCostoModel, 'Centro de costos');
   }
@@ -111,5 +113,34 @@ export class CentrosCostosService {
 
   eliminarDocumento(centroId: string, docId: string) {
     return this.docsHelper.eliminar(centroId, docId);
+  }
+
+  async vencerDocumento(centroId: string, docId: string, empresaId?: string, empresaNombre?: string, centroNombre?: string) {
+    const centro = await this.centroCostoModel.findById(centroId);
+    if (!centro) throw new NotFoundException(`Centro ${centroId} no encontrado`);
+    const doc = centro.documentos.find((d: any) => String(d._id) === docId);
+    if (!doc) throw new NotFoundException(`Documento ${docId} no encontrado`);
+
+    const resolvedEmpresaId = empresaId ?? String(centro.cliente_id);
+
+    await this.documentosVencidosService.crear({
+      nombre_display: doc.nombre_display,
+      categoria:      doc.categoria,
+      tipo_mime:      doc.tipo_mime,
+      tamano_bytes:   doc.tamano_bytes,
+      origen_tipo:    'centro',
+      empresa_id:     resolvedEmpresaId,
+      centro_id:      centroId,
+      empresa_nombre: empresaNombre,
+      centro_nombre:  centroNombre,
+      subido_en:      doc.subido_en,
+    });
+
+    await this.centroCostoModel.findByIdAndUpdate(
+      centroId,
+      { $pull: { documentos: { _id: (doc as any)._id } } },
+    );
+
+    return { message: 'Documento marcado como vencido', docId };
   }
 }
