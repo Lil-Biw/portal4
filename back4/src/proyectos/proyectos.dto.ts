@@ -16,3 +16,9 @@ export class CreateProyectoDto {
 }
 
 export class UpdateProyectoDto extends PartialType(CreateProyectoDto) {}
+
+export class VencerDocumentoProyectoDto {
+  @IsString() @IsOptional() empresa_nombre?: string;
+  @IsString() @IsOptional() centro_nombre?: string;
+  @IsString() @IsOptional() proyecto_nombre?: string;
+}

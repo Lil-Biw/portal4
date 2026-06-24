@@ -1,5 +1,5 @@
 import {
-  Controller, Get, Post, Put, Delete,
+  Controller, Get, Post, Put, Delete, Patch,
   Param, Body, Query, UseGuards, Res,
   UseInterceptors, UploadedFile, BadRequestException,
 } from '@nestjs/common';
@@ -8,7 +8,7 @@ import { sendFile } from '../common/helpers/send-file.helper';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
 import { ProyectosService } from './proyectos.service';
-import { CreateProyectoDto, UpdateProyectoDto } from './proyectos.dto';
+import { CreateProyectoDto, UpdateProyectoDto, VencerDocumentoProyectoDto } from './proyectos.dto';
 import { EmpresaAccessGuard, Roles } from '../common/guards/guards';
 
 @Controller('empresas/:empresaId/centros/:centroId/proyectos')
@@ -87,6 +87,21 @@ export class ProyectosController {
     @Param('docId') docId: string,
   ) {
     return this.proyectosService.eliminarDocumento(proyectoId, docId);
+  }
+
+  @Patch(':proyectoId/documentos/:docId/vencer')
+  @Roles('super_admin', 'admin_smartclarity', 'usuario')
+  vencerDocumento(
+    @Param('empresaId')  empresaId:  string,
+    @Param('centroId')   centroId:   string,
+    @Param('proyectoId') proyectoId: string,
+    @Param('docId')      docId:      string,
+    @Body() dto: VencerDocumentoProyectoDto,
+  ) {
+    return this.proyectosService.vencerDocumento(
+      proyectoId, docId, empresaId, centroId,
+      dto.empresa_nombre, dto.centro_nombre, dto.proyecto_nombre,
+    );
   }
 }
 

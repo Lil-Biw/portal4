@@ -4,6 +4,7 @@ import { Model, Types } from 'mongoose';
 import { ProyectoDocument } from './proyectos.schema';
 import { CreateProyectoDto, UpdateProyectoDto } from './proyectos.dto';
 import { DocumentosHelper, ArchivoInput } from '../common/helpers/documentos.helper';
+import { DocumentosVencidosService } from '../documentos-vencidos/documentos-vencidos.service';
 
 @Injectable()
 export class ProyectosService {
@@ -12,6 +13,7 @@ export class ProyectosService {
   constructor(
     @InjectModel('Proyecto') private proyectoModel: Model<ProyectoDocument>,
     @InjectModel('CentroCosto') private centroCostoModel: Model<any>,
+    private readonly documentosVencidosService: DocumentosVencidosService,
   ) {
     this.docsHelper = new DocumentosHelper(proyectoModel, 'Proyecto');
   }
@@ -125,5 +127,38 @@ export class ProyectosService {
 
   eliminarDocumento(proyectoId: string, docId: string) {
     return this.docsHelper.eliminar(proyectoId, docId);
+  }
+
+  async vencerDocumento(
+    proyectoId: string, docId: string,
+    empresaId: string, centroId: string,
+    empresaNombre?: string, centroNombre?: string, proyectoNombre?: string,
+  ) {
+    const proyecto = await this.proyectoModel.findById(proyectoId);
+    if (!proyecto) throw new NotFoundException(`Proyecto ${proyectoId} no encontrado`);
+    const doc = proyecto.documentos.find((d: any) => String(d._id) === docId);
+    if (!doc) throw new NotFoundException(`Documento ${docId} no encontrado`);
+
+    await this.documentosVencidosService.crear({
+      nombre_display:  doc.nombre_display,
+      categoria:       doc.categoria,
+      tipo_mime:       doc.tipo_mime,
+      tamano_bytes:    doc.tamano_bytes,
+      origen_tipo:     'proyecto',
+      empresa_id:      empresaId,
+      centro_id:       centroId,
+      proyecto_id:     proyectoId,
+      empresa_nombre:  empresaNombre,
+      centro_nombre:   centroNombre,
+      proyecto_nombre: proyectoNombre,
+      subido_en:       doc.subido_en,
+    });
+
+    await this.proyectoModel.findByIdAndUpdate(
+      proyectoId,
+      { $pull: { documentos: { _id: (doc as any)._id } } },
+    );
+
+    return { message: 'Documento marcado como vencido', docId };
   }
 }
