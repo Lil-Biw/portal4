@@ -49,7 +49,7 @@ export class DocumentosConsumidorPageComponent implements OnInit {
   protected mostrarBuscadorEmpresa    = signal(false);
   protected mostrarBuscadorCentro     = signal(false);
   protected mostrarBuscadorProyecto   = signal(false);
-  protected tabConsumidorActiva       = signal<'documentacion' | 'solicitudes'>('documentacion');
+  protected tabConsumidorActiva       = signal<'documentacion' | 'solicitudes' | 'vencidos'>('documentacion');
   protected tabJerarquia              = signal<'empresa' | 'centro' | 'proyecto'>('empresa');
 
   protected solicitudAdjuntando = signal<string | null>(null);
@@ -418,6 +418,26 @@ export class DocumentosConsumidorPageComponent implements OnInit {
       vencido:   'Vencido',
     };
     return map[estado];
+  }
+
+  cargarVencidosConsumidor(): void {
+    const empresa = this.consumidorContext.empresaSeleccionada();
+    if (!empresa) return;
+    const centroId   = (this.selectedCentroIdC()   && this.selectedCentroIdC()   !== 'todos') ? this.selectedCentroIdC()   : undefined;
+    const proyectoId = (this.selectedProyectoIdC() && this.selectedProyectoIdC() !== 'todos') ? this.selectedProyectoIdC() : undefined;
+    this.service.cargarVencidos(empresa._id, centroId, proyectoId);
+  }
+
+  marcarVencidoConsumidor(docUrl: string): void {
+    const empresa = this.consumidorContext.empresaSeleccionada();
+    if (!empresa) return;
+    const tipo       = this.docTipoActual;
+    const centroId   = (this.selectedCentroIdC()   && this.selectedCentroIdC()   !== 'todos') ? this.selectedCentroIdC()   : undefined;
+    const proyectoId = (this.selectedProyectoIdC() && this.selectedProyectoIdC() !== 'todos') ? this.selectedProyectoIdC() : undefined;
+    this.service.marcarVencido(
+      docUrl, tipo, empresa._id, centroId, proyectoId,
+      this.empresaNombreC, this.centroNombreC, this.proyectoNombreC,
+    );
   }
 
   // ─── private helpers ─────────────────────────────────────────────────────

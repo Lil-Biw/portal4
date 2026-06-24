@@ -249,6 +249,17 @@
             Documentación
           </button>
           <button
+            style="flex:none;padding:.45rem .75rem;border-style:solid;border-width:1px;border-radius:8px;font-size:.78rem;font-weight:600;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;justify-content:center;gap:.35rem"
+            [style.background]="tabConsumidorActiva() === 'vencidos' ? 'rgba(239,68,68,.08)' : 'transparent'"
+            [style.color]="tabConsumidorActiva() === 'vencidos' ? '#dc2626' : '#6b7280'"
+            [style.borderColor]="tabConsumidorActiva() === 'vencidos' ? 'rgba(239,68,68,.2)' : 'transparent'"
+            (click)="tabConsumidorActiva.set('vencidos'); cargarVencidosConsumidor()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
+            Vencidos
+          </button>
+          <button
             style="flex:1;padding:.55rem 1rem;border-style:solid;border-width:1px;border-radius:8px;font-size:.875rem;font-weight:600;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;justify-content:center;gap:.4rem"
             [style.background]="tabConsumidorActiva() === 'solicitudes' ? 'rgba(0,149,214,.08)' : 'transparent'"
             [style.color]="tabConsumidorActiva() === 'solicitudes' ? '#0095d6' : '#6b7280'"
@@ -345,6 +356,7 @@
                 </div>
                 <div style="display:flex;gap:.5rem">
                   <button class="btn-ghost"  style="font-size:.78rem;padding:.35rem .7rem" (click)="service.descargar(d.url, d.nombre_display)">Descargar</button>
+                  <button style="font-size:.78rem;padding:.35rem .7rem;border-radius:.375rem;border:1px solid rgba(239,68,68,.3);background:rgba(239,68,68,.06);color:#dc2626;cursor:pointer" (click)="marcarVencidoConsumidor(d.url)">Vencer</button>
                   <button class="btn-danger" style="font-size:.78rem;padding:.35rem .7rem" (click)="eliminar(d.url, docTipo)">Eliminar</button>
                 </div>
               </div>
@@ -397,6 +409,30 @@
           }
 
         } <!-- fin documentacion -->
+
+        <!-- ── VENCIDOS ──────────────────────────────────────────── -->
+        @if (tabConsumidorActiva() === 'vencidos') {
+          <p style="margin:0 0 .75rem;font-size:.8rem;color:#6b7280">Mostrando los últimos 20 documentos vencidos de este contexto.</p>
+          @if (service.documentosVencidos().length === 0) {
+            <p class="empty">Sin documentos vencidos.</p>
+          }
+          @for (v of service.documentosVencidos(); track v._id) {
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:.6rem 0;border-bottom:1px solid rgba(34,33,33,.07)">
+              <div style="display:flex;align-items:center;gap:.5rem;flex:1;min-width:0">
+                @if (v.categoria) {
+                  <span style="font-size:.7rem;font-weight:600;padding:.2rem .5rem;border-radius:999px;background:#fee2e2;color:#991b1b;white-space:nowrap">{{ v.categoria }}</span>
+                }
+                <span style="font-size:.875rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ v.nombre_display }}</span>
+              </div>
+              <div style="display:flex;gap:.75rem;align-items:center;flex-shrink:0;margin-left:.75rem">
+                @if (v.subido_en) {
+                  <span style="font-size:.75rem;color:#9ca3af">Subido: {{ formatFecha(v.subido_en) }}</span>
+                }
+                <span style="font-size:.75rem;color:#dc2626">Vencido: {{ formatFecha(v.vencido_en) }}</span>
+              </div>
+            </div>
+          }
+        } <!-- fin vencidos -->
 
         <!-- ── SOLICITUDES ────────────────────────────────────────── -->
         @if (tabConsumidorActiva() === 'solicitudes') {
