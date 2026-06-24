@@ -40,3 +40,7 @@ export class UpdateScoreSmartclarityDto {
 export class UpdateConfigGraficoDto {
   @IsBoolean() mostrar_grafico_promedio: boolean;
 }
+
+export class VencerDocumentoEmpresaDto {
+  @IsString() @IsOptional() empresa_nombre?: string;
+}

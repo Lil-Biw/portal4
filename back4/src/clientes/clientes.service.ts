@@ -4,12 +4,16 @@ import { Model } from 'mongoose';
 import { Cliente, ClienteDocument } from './clientes.schema';
 import { CreateClienteDto, UpdateClienteDto } from './clientes.dto';
 import { DocumentosHelper, ArchivoInput } from '../common/helpers/documentos.helper';
+import { DocumentosVencidosService } from '../documentos-vencidos/documentos-vencidos.service';
 
 @Injectable()
 export class ClientesService {
   private readonly docsHelper: DocumentosHelper;
 
-  constructor(@InjectModel('Cliente') private clienteModel: Model<ClienteDocument>) {
+  constructor(
+    @InjectModel('Cliente') private clienteModel: Model<ClienteDocument>,
+    private readonly documentosVencidosService: DocumentosVencidosService,
+  ) {
     this.docsHelper = new DocumentosHelper(clienteModel, 'Cliente', '-logo.contenido -documentos.contenido');
   }
 
@@ -114,5 +118,30 @@ export class ClientesService {
 
   eliminarDocumento(clienteId: string, docId: string) {
     return this.docsHelper.eliminar(clienteId, docId);
+  }
+
+  async vencerDocumento(clienteId: string, docId: string, empresaNombre?: string) {
+    const cliente = await this.clienteModel.findById(clienteId);
+    if (!cliente) throw new NotFoundException(`Cliente ${clienteId} no encontrado`);
+    const doc = cliente.documentos.find((d: any) => String(d._id) === docId);
+    if (!doc) throw new NotFoundException(`Documento ${docId} no encontrado`);
+
+    await this.documentosVencidosService.crear({
+      nombre_display: doc.nombre_display,
+      categoria:      doc.categoria,
+      tipo_mime:      doc.tipo_mime,
+      tamano_bytes:   doc.tamano_bytes,
+      origen_tipo:    'empresa',
+      empresa_id:     clienteId,
+      empresa_nombre: empresaNombre,
+      subido_en:      doc.subido_en,
+    });
+
+    await this.clienteModel.findByIdAndUpdate(
+      clienteId,
+      { $pull: { documentos: { _id: (doc as any)._id } } },
+    );
+
+    return { message: 'Documento marcado como vencido', docId };
   }
 }

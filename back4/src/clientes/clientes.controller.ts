@@ -20,7 +20,7 @@ import { sendFile } from '../common/helpers/send-file.helper';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
 import { ClientesService } from './clientes.service';
-import { CreateClienteDto, UpdateClienteDto, UpdateScoreSmartclarityDto, UpdateConfigGraficoDto } from './clientes.dto';
+import { CreateClienteDto, UpdateClienteDto, UpdateScoreSmartclarityDto, UpdateConfigGraficoDto, VencerDocumentoEmpresaDto } from './clientes.dto';
 import { Roles, Public } from '../common/guards/guards';
 
 interface JwtUser {
@@ -166,5 +166,17 @@ export class ClientesController {
   ) {
     this.assertEmpresaPermitida((req as any).user as JwtUser, id);
     return this.clientesService.eliminarDocumento(id, docId);
+  }
+
+  @Patch(':id/documentos/:docId/vencer')
+  @Roles('super_admin', 'admin_smartclarity', 'usuario')
+  async vencerDocumento(
+    @Param('id') id: string,
+    @Param('docId') docId: string,
+    @Body() dto: VencerDocumentoEmpresaDto,
+    @Req() req: Request,
+  ) {
+    this.assertEmpresaPermitida((req as any).user as JwtUser, id);
+    return this.clientesService.vencerDocumento(id, docId, dto.empresa_nombre);
   }
 }
