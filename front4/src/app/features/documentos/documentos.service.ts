@@ -38,6 +38,20 @@ export interface DocumentoItem {
 
 export type DocTipo = 'empresa' | 'centro' | 'proyecto';
 
+export interface DocumentoVencidoItem {
+  _id: string;
+  nombre_display: string;
+  categoria?: string;
+  tipo_mime: string;
+  tamano_bytes?: number;
+  subido_en?: string;
+  vencido_en: string;
+  origen_tipo: 'empresa' | 'centro' | 'proyecto';
+  empresa_nombre?: string;
+  centro_nombre?: string;
+  proyecto_nombre?: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class DocumentosService {
   private readonly http = inject(HttpClient);
@@ -51,6 +65,7 @@ export class DocumentosService {
   readonly uploadStatus = signal<Record<DocTipo, Status | null>>({
     empresa: null, centro: null, proyecto: null,
   });
+  readonly documentosVencidos = signal<DocumentoVencidoItem[]>([]);
 
   // Carga documentos de una empresa
   cargarEmpresa(empresaId: string): void {
@@ -224,6 +239,48 @@ export class DocumentosService {
         URL.revokeObjectURL(objectUrl);
       },
       error: () => {},
+    });
+  }
+
+  cargarVencidos(empresaId: string, centroId?: string, proyectoId?: string): void {
+    const params: Record<string, string> = { empresaId };
+    if (centroId)   params['centroId']   = centroId;
+    if (proyectoId) params['proyectoId'] = proyectoId;
+    const qs = new URLSearchParams(params).toString();
+    this.http.get<DocumentoVencidoItem[]>(this.api.url(`/documentos-vencidos?${qs}`)).subscribe({
+      next:  (v) => this.documentosVencidos.set(v),
+      error: ()  => this.documentosVencidos.set([]),
+    });
+  }
+
+  marcarVencido(
+    docUrl: string,
+    tipo: DocTipo,
+    empresaId: string,
+    centroId?: string,
+    proyectoId?: string,
+    empresaNombre?: string,
+    centroNombre?: string,
+    proyectoNombre?: string,
+  ): void {
+    const body: Record<string, string> = {};
+    if (empresaNombre)  body['empresa_nombre']  = empresaNombre;
+    if (centroNombre)   body['centro_nombre']   = centroNombre;
+    if (proyectoNombre) body['proyecto_nombre'] = proyectoNombre;
+
+    this.http.patch(docUrl + '/vencer', body).subscribe({
+      next: () => {
+        this.setUploadStatus(tipo, { type: 'ok', text: 'Documento marcado como vencido' });
+        if (tipo === 'empresa') this.cargarEmpresa(empresaId);
+        else if (tipo === 'centro'   && centroId)               this.cargarCentro(empresaId, centroId);
+        else if (tipo === 'proyecto' && centroId && proyectoId) this.cargarProyecto(empresaId, centroId, proyectoId);
+        this.cargarVencidos(empresaId, centroId, proyectoId);
+      },
+      error: (err) => {
+        const raw = err?.error?.message;
+        const text = Array.isArray(raw) ? raw.join('. ') : (raw ?? 'Error al marcar como vencido');
+        this.setUploadStatus(tipo, { type: 'error', text });
+      },
     });
   }
 
