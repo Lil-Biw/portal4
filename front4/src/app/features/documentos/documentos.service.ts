@@ -62,7 +62,7 @@ export class DocumentosService {
   readonly documentosCentro      = signal<DocumentoItem[]>([]);
   readonly documentosProyecto    = signal<DocumentoItem[]>([]);
   readonly documentosPorCentro   = signal<{ nombre: string; docs: DocumentoItem[] }[]>([]);
-  readonly documentosPorProyecto = signal<{ nombre: string; centroNombre: string; docs: DocumentoItem[] }[]>([]);
+  readonly documentosPorProyecto = signal<{ nombre: string; proyectoId: string; centroNombre: string; docs: DocumentoItem[] }[]>([]);
   readonly uploadStatus = signal<Record<DocTipo, Status | null>>({
     empresa: null, centro: null, proyecto: null,
   });
@@ -140,7 +140,8 @@ export class DocumentosService {
         this.documentosPorProyecto.set(
           proyectos
             .map((p, i) => ({
-              nombre: p.nombre,
+              nombre:       p.nombre,
+              proyectoId:   asId(p._id),
               centroNombre: centroMap.get(asId(p.centro_costo_id)) ?? '',
               docs: results[i].map(d =>
                 this.addUrl(d, `/empresas/${empresaId}/centros/${asId(p.centro_costo_id)}/proyectos/${asId(p._id)}/documentos/${d._id}`)
