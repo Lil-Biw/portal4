@@ -1,43 +1,24 @@
 import { Component, EventEmitter, Input, OnChanges, Output, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { NgFor, DecimalPipe } from '@angular/common';
+import { NgFor } from '@angular/common';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { CentroCosto, CreateCentroDto } from '../../../../shared/models/centro.model';
 import { Cliente } from '../../../../shared/models/cliente.model';
 
-// Parsea "38°45'32.8"S 72°36'34.3"W" → { lat, lng } en grados decimales.
-// Acepta °, º, ', ′, ", ″ y espacios variables entre las dos coordenadas.
-function parseDms(input: string): { lat: number; lng: number } | null {
-  const part = /(\d+)[°º]\s*(\d+)[''′]\s*(\d+\.?\d*)["""″]\s*([NSns])\s+(\d+)[°º]\s*(\d+)[''′]\s*(\d+\.?\d*)["""″]\s*([EWew])/;
-  const m = input.trim().match(part);
+// Parsea "lat, lng" en formato decimal de Google Maps, ej: -38.758556, -72.609528
+function parseDecimal(input: string): { lat: number; lng: number } | null {
+  const m = input.trim().match(/^(-?\d+\.?\d*)\s*[,\s]\s*(-?\d+\.?\d*)$/);
   if (!m) return null;
-  const toDecimal = (d: string, min: string, sec: string, dir: string): number => {
-    const val = +d + +min / 60 + +sec / 3600;
-    return (dir.toUpperCase() === 'S' || dir.toUpperCase() === 'W') ? -val : val;
-  };
-  return {
-    lat: toDecimal(m[1], m[2], m[3], m[4]),
-    lng: toDecimal(m[5], m[6], m[7], m[8]),
-  };
-}
-
-// Convierte grados decimales de vuelta a formato DMS para mostrar en el input.
-function decimalToDms(lat: number, lng: number): string {
-  const fmt = (val: number, posDir: string, negDir: string): string => {
-    const abs = Math.abs(val);
-    const d = Math.floor(abs);
-    const mf = (abs - d) * 60;
-    const min = Math.floor(mf);
-    const sec = ((mf - min) * 60).toFixed(1);
-    return `${d}°${min}'${sec}"${val >= 0 ? posDir : negDir}`;
-  };
-  return `${fmt(lat, 'N', 'S')} ${fmt(lng, 'E', 'W')}`;
+  const lat = parseFloat(m[1]);
+  const lng = parseFloat(m[2]);
+  if (isNaN(lat) || isNaN(lng) || lat < -90 || lat > 90 || lng < -180 || lng > 180) return null;
+  return { lat, lng };
 }
 
 @Component({
   selector: 'app-centro-form',
   standalone: true,
-  imports: [FormsModule, NgFor, DecimalPipe],
+  imports: [FormsModule, NgFor],
   templateUrl: './centro-form.component.html',
 })
 export class CentroFormComponent implements OnChanges {
@@ -49,8 +30,8 @@ export class CentroFormComponent implements OnChanges {
   @Output() submitted = new EventEmitter<CreateCentroDto>();
 
   form: CreateCentroDto = this.empty();
-  dmsInput = '';
-  dmsError = '';
+  coordInput = '';
+  coordError = '';
   previewMapUrl: SafeResourceUrl | null = null;
   tabUbicacion: 'direccion' | 'coordenadas' = 'direccion';
 
@@ -65,8 +46,8 @@ export class CentroFormComponent implements OnChanges {
     } else {
       this.form.ubicacion_latitud = undefined;
       this.form.ubicacion_longitud = undefined;
-      this.dmsInput = '';
-      this.dmsError = '';
+      this.coordInput = '';
+      this.coordError = '';
       this.previewMapUrl = null;
     }
   }
@@ -75,23 +56,23 @@ export class CentroFormComponent implements OnChanges {
     return this.form.ubicacion_latitud != null && this.form.ubicacion_longitud != null;
   }
 
-  onDmsChange(): void {
-    if (!this.dmsInput.trim()) {
+  onCoordChange(): void {
+    if (!this.coordInput.trim()) {
       this.form.ubicacion_latitud = undefined;
       this.form.ubicacion_longitud = undefined;
-      this.dmsError = '';
+      this.coordError = '';
       this.previewMapUrl = null;
       return;
     }
-    const result = parseDms(this.dmsInput);
+    const result = parseDecimal(this.coordInput);
     if (result) {
       this.form.ubicacion_latitud = result.lat;
       this.form.ubicacion_longitud = result.lng;
-      this.dmsError = '';
+      this.coordError = '';
     } else {
       this.form.ubicacion_latitud = undefined;
       this.form.ubicacion_longitud = undefined;
-      this.dmsError = 'Formato inválido. Ejemplo: 38°45\'32.8"S 72°36\'34.3"W';
+      this.coordError = 'Formato inválido. Pega las coordenadas de Google Maps, ej: -38.758556, -72.609528';
     }
     this.previewMapUrl = null;
   }
@@ -107,10 +88,10 @@ export class CentroFormComponent implements OnChanges {
 
   ngOnChanges(): void {
     this.previewMapUrl = null;
-    this.dmsError = '';
+    this.coordError = '';
     const lat = this.initial?.ubicacion_latitud;
     const lng = this.initial?.ubicacion_longitud;
-    this.dmsInput = (lat != null && lng != null) ? decimalToDms(lat, lng) : '';
+    this.coordInput = (lat != null && lng != null) ? `${lat}, ${lng}` : '';
     this.tabUbicacion = (lat != null && lng != null) ? 'coordenadas' : 'direccion';
     this.form = this.initial
       ? {

@@ -8,7 +8,7 @@ import { ProyectosService } from '../../proyectos/proyectos.service';
 import { ConsumidorContextService } from '../../../profile/consumidor-context.service';
 import { SolicitudesService, EstadoSolicitud, Solicitud } from '../../solicitudes/solicitudes.service';
 import { StatusBannerComponent } from '../../../shared/components/status-banner/status-banner.component';
-import { asId } from '../../../shared/utils';
+import { asId, detectarCategoriaDocumento } from '../../../shared/utils';
 
 interface PanelState {
   showUpload: boolean;
@@ -49,7 +49,8 @@ export class DocumentosConsumidorPageComponent implements OnInit {
   protected mostrarBuscadorEmpresa    = signal(false);
   protected mostrarBuscadorCentro     = signal(false);
   protected mostrarBuscadorProyecto   = signal(false);
-  protected tabConsumidorActiva       = signal<'documentacion' | 'solicitudes' | 'vencidos'>('documentacion');
+  protected tabConsumidorActiva       = signal<'documentacion' | 'solicitudes'>('documentacion');
+  protected tabDocConsumidor          = signal<'activos' | 'vencidos'>('activos');
   protected tabJerarquia              = signal<'empresa' | 'centro' | 'proyecto'>('empresa');
 
   protected solicitudAdjuntando = signal<string | null>(null);
@@ -166,6 +167,9 @@ export class DocumentosConsumidorPageComponent implements OnInit {
     return this.filtrarSolicitudes(sols, this.busquedaProyecto());
   });
 
+  protected haySolicitudesActivas = computed(() =>
+    this.solicitudesService.solicitudes().some(s => s.estado !== 'aprobado')
+  );
 
   // ─── lifecycle ────────────────────────────────────────────────────────────
 
@@ -174,6 +178,8 @@ export class DocumentosConsumidorPageComponent implements OnInit {
       const empresa = this.consumidorContext.empresaSeleccionada();
       this.selectedCentroIdC.set('');
       this.selectedProyectoIdC.set('');
+      this.tabDocConsumidor.set('activos');
+      this.service.documentosVencidos.set([]);
       if (empresa) {
         this.service.documentosCentro.set([]);
         this.service.documentosProyecto.set([]);
@@ -222,6 +228,8 @@ export class DocumentosConsumidorPageComponent implements OnInit {
   onCentroChangeC(id: string): void {
     this.selectedCentroIdC.set(id);
     this.selectedProyectoIdC.set('');
+    this.tabDocConsumidor.set('activos');
+    this.service.documentosVencidos.set([]);
     const empresa = this.consumidorContext.empresaSeleccionada();
     const empresaId = empresa?._id ?? '';
     this.service.documentosPorProyecto.set([]);
@@ -239,6 +247,8 @@ export class DocumentosConsumidorPageComponent implements OnInit {
   }
 
   onProyectoChangeC(id: string): void {
+    this.tabDocConsumidor.set('activos');
+    this.service.documentosVencidos.set([]);
     this.selectedProyectoIdC.set(id);
     const empresa = this.consumidorContext.empresaSeleccionada();
     const empresaId = empresa?._id ?? '';
@@ -289,6 +299,17 @@ export class DocumentosConsumidorPageComponent implements OnInit {
     const p = this.panels[tipo];
     p.selectedFile = file;
     if (!p.nombreInput) p.nombreInput = file.name;
+    p.categoriaInput = detectarCategoriaDocumento(file.name)!;
+  }
+
+  onDrop(ev: DragEvent, tipo: DocTipo): void {
+    ev.preventDefault();
+    const file = ev.dataTransfer?.files?.[0];
+    if (!file) return;
+    const p = this.panels[tipo];
+    p.selectedFile = file;
+    if (!p.nombreInput) p.nombreInput = file.name;
+    p.categoriaInput = detectarCategoriaDocumento(file.name)!;
   }
 
   confirmarSubida(tipo: DocTipo): void {
@@ -418,6 +439,11 @@ export class DocumentosConsumidorPageComponent implements OnInit {
       vencido:   'Vencido',
     };
     return map[estado];
+  }
+
+  activarTabVencidosConsumidor(): void {
+    this.tabDocConsumidor.set('vencidos');
+    this.cargarVencidosConsumidor();
   }
 
   cargarVencidosConsumidor(): void {

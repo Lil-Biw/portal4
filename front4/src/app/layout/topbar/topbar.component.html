@@ -43,8 +43,8 @@
                 <div class="notif-empty">Sin alertas pendientes</div>
               } @else {
                 @for (n of notificaciones(); track n.titulo + n.detalle) {
-                  <div class="notif-item">
-                    <span class="notif-dot" [style.background]="n.color"></span>
+                  <div class="notif-item" (click)="navegarNotificacion(n)">
+                    <span class="notif-dot" [style.color]="n.color" [innerHTML]="getNotifIcon(n.icono)"></span>
                     <div class="notif-body">
                       <div class="notif-titulo">{{ n.titulo }}</div>
                       <div class="notif-detalle">{{ n.detalle }}</div>

@@ -143,7 +143,7 @@ export class InicioPageComponent implements OnInit {
       const aprobado = sols.filter(s => s.estado === 'aprobado').length;
       result.set(centroId, {
         total:     sols.length,
-        pct:       sols.length > 0 ? Math.round((aprobado / sols.length) * 100) : 0,
+        pct:       sols.length > 0 ? Math.round((aprobado / sols.length) * 100) : 50,
         pendiente: sols.filter(s => s.estado === 'pendiente').length,
         revision:  sols.filter(s => s.estado === 'revision').length,
         aprobado,
@@ -156,7 +156,7 @@ export class InicioPageComponent implements OnInit {
 
   resumenCentro(centroId: string): ResumenSolicitudes {
     return this.resumenPorCentro().get(centroId)
-      ?? { total: 0, pct: 0, pendiente: 0, revision: 0, aprobado: 0, rechazado: 0, vencido: 0 };
+      ?? { total: 0, pct: 50, pendiente: 0, revision: 0, aprobado: 0, rechazado: 0, vencido: 0 };
   }
 
   protected nombreCentroById(id: string | undefined): string {

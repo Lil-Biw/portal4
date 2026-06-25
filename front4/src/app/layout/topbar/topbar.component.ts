@@ -15,12 +15,20 @@ import { asId } from '../../shared/utils';
 
 const BELL_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>`;
 
+const NOTIF_ICONS: Record<string, string> = {
+  calendar: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`,
+  file:     `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>`,
+};
+
 interface Notificacion {
   tipo: 'actividad' | 'solicitud';
   titulo: string;
   detalle: string;
   color: string;
   urgente: boolean;
+  ruta: string;
+  icono: string;
+  queryParams?: Record<string, string>;
 }
 
 @Component({
@@ -126,8 +134,9 @@ interface Notificacion {
     .notif-dropdown {
       position: absolute;
       top: calc(100% + 8px);
-      right: 0;
-      width: 320px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 460px;
       background: #fff;
       border-radius: 12px;
       border: 1px solid rgba(34,33,33,.1);
@@ -136,32 +145,35 @@ interface Notificacion {
       overflow: hidden;
     }
     .notif-header {
-      padding: .65rem 1rem;
-      font-size: .8rem;
+      padding: .7rem 1.1rem;
+      font-size: .88rem;
       font-weight: 700;
       color: #374151;
       border-bottom: 1px solid rgba(34,33,33,.08);
       background: #f9fafb;
     }
-    .notif-list { max-height: 320px; overflow-y: auto; }
+    .notif-list { max-height: 380px; overflow-y: auto; }
     .notif-item {
       display: flex;
-      gap: .6rem;
-      padding: .65rem 1rem;
+      gap: .75rem;
+      padding: .75rem 1.1rem;
       border-bottom: 1px solid rgba(34,33,33,.05);
-      cursor: default;
+      cursor: pointer;
+      transition: background .12s;
     }
+    .notif-item:hover { background: #f0f9ff; }
     .notif-item:last-child { border-bottom: none; }
     .notif-dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      margin-top: .3rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       flex-shrink: 0;
+      margin-top: .15rem;
+      opacity: .85;
     }
     .notif-body { flex: 1; }
-    .notif-titulo { font-size: .8rem; font-weight: 600; color: #1f2937; }
-    .notif-detalle { font-size: .73rem; color: #6b7280; margin-top: .1rem; }
+    .notif-titulo { font-size: .875rem; font-weight: 600; color: #1f2937; }
+    .notif-detalle { font-size: .8rem; color: #6b7280; margin-top: .15rem; }
     .notif-empty {
       padding: 1.25rem 1rem;
       text-align: center;
@@ -196,9 +208,17 @@ export class TopbarComponent implements OnInit {
 
   protected showNotifications = signal(false);
   readonly bellIcon: SafeHtml;
+  private readonly safeNotifIcons: Map<string, SafeHtml>;
+
+  getNotifIcon(key: string): SafeHtml {
+    return this.safeNotifIcons.get(key) ?? this.sanitizer.bypassSecurityTrustHtml('');
+  }
 
   constructor() {
     this.bellIcon = this.sanitizer.bypassSecurityTrustHtml(BELL_SVG);
+    this.safeNotifIcons = new Map(
+      Object.entries(NOTIF_ICONS).map(([k, v]) => [k, this.sanitizer.bypassSecurityTrustHtml(v)])
+    );
 
     // Recarga solicitudes cuando cambia la empresa seleccionada
     effect(() => {
@@ -239,6 +259,10 @@ export class TopbarComponent implements OnInit {
     );
   });
 
+  private centroPorId(id: string): string {
+    return this.centrosService.centros().find(c => asId(c._id) === id)?.nombre ?? '';
+  }
+
   // Notificaciones: próximas actividades (7 días) + solicitudes urgentes
   protected notificaciones = computed((): Notificacion[] => {
     const result: Notificacion[] = [];
@@ -253,19 +277,28 @@ export class TopbarComponent implements OnInit {
         const f = new Date(a.fecha);
         return f >= hoy && f <= limite;
       })
-
       .forEach(a => {
         const tipo = typeof a.tipo_id === 'object'
           ? (a.tipo_id as TipoActividad)
           : this.tiposService.tipos().find(t => t._id === asId(a.tipo_id as string));
-        const fecha = new Date(a.fecha);
-        const diff  = Math.ceil((fecha.getTime() - hoy.getTime()) / 86400000);
+        const fecha  = new Date(a.fecha);
+        const diff   = Math.ceil((fecha.getTime() - hoy.getTime()) / 86400000);
+        const fechaStr = fecha.toLocaleDateString('es-CL', { day: 'numeric', month: 'short' });
+        const centro = this.centroPorId(asId(a.centro_costo_id));
+        const partes = [
+          tipo?.nombre ?? 'Actividad',
+          centro || null,
+          fechaStr,
+          diff === 0 ? 'hoy' : `en ${diff} día${diff !== 1 ? 's' : ''}`,
+        ].filter(Boolean);
         result.push({
           tipo:    'actividad',
           titulo:  a.nombre,
-          detalle: `${tipo?.nombre ?? 'Actividad'} · en ${diff} día${diff !== 1 ? 's' : ''}`,
+          detalle: partes.join(' · '),
           color:   tipo?.color ?? '#0095d6',
           urgente: diff <= 2,
+          icono:   'calendar',
+          ruta:    '/mis-actividades',
         });
       });
 
@@ -273,12 +306,30 @@ export class TopbarComponent implements OnInit {
     this.solicitudesService.solicitudes()
       .filter(s => s.estado === 'pendiente' || s.estado === 'vencido' || s.estado === 'rechazado')
       .forEach(s => {
+        const centro = s.centro_costo_id ? this.centroPorId(s.centro_costo_id) : null;
+        const scope  = centro ?? (s.proyecto_id ? 'Proyecto' : 'Empresa');
+        const estadoTexto: Record<string, string> = {
+          pendiente: 'Pendiente de entrega',
+          vencido:   'Vencida',
+          rechazado: 'Rechazada',
+        };
+        let estadoStr = estadoTexto[s.estado] ?? s.estado;
+        if (s.estado === 'rechazado' && s.motivo_rechazo) {
+          estadoStr += ` — ${s.motivo_rechazo}`;
+        }
+        const partes = [s.tipo, scope, estadoStr].filter(Boolean);
+        const qp: Record<string, string> = { tab: 'solicitudes' };
+        if (s.centro_costo_id) qp['centroId'] = s.centro_costo_id;
+        if (s.proyecto_id)     qp['proyectoId'] = s.proyecto_id;
         result.push({
-          tipo:    'solicitud',
-          titulo:  s.nombre,
-          detalle: `Solicitud ${s.estado}`,
-          color:   s.estado === 'vencido' ? '#f59e0b' : s.estado === 'rechazado' ? '#ef4444' : '#0095d6',
-          urgente: s.estado !== 'pendiente',
+          tipo:        'solicitud',
+          titulo:      s.nombre,
+          detalle:     partes.join(' · '),
+          color:       s.estado === 'vencido' ? '#f59e0b' : s.estado === 'rechazado' ? '#ef4444' : '#0095d6',
+          urgente:     s.estado !== 'pendiente',
+          icono:       'file',
+          ruta:        '/documentos',
+          queryParams: qp,
         });
       });
 
@@ -289,6 +340,15 @@ export class TopbarComponent implements OnInit {
 
   toggleNotifications(): void { this.showNotifications.update(v => !v); }
   cerrarNotifications(): void { this.showNotifications.set(false); }
+
+  navegarNotificacion(n: Notificacion): void {
+    this.cerrarNotifications();
+    const qp = n.queryParams ?? {};
+    // Fuerza re-navegación aunque ya estemos en la misma ruta+params
+    this.router.navigateByUrl('/', { skipLocationChange: true }).then(() =>
+      this.router.navigate([n.ruta], { queryParams: qp })
+    );
+  }
 
   ngOnInit(): void {
     this.clientesService.cargar();

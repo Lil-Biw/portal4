@@ -126,21 +126,22 @@ export class ClientesService {
     const doc = cliente.documentos.find((d: any) => String(d._id) === docId);
     if (!doc) throw new NotFoundException(`Documento ${docId} no encontrado`);
 
+    await this.clienteModel.findByIdAndUpdate(
+      clienteId,
+      { $pull: { documentos: { _id: (doc as any)._id } } },
+    );
+
     await this.documentosVencidosService.crear({
       nombre_display: doc.nombre_display,
       categoria:      doc.categoria,
       tipo_mime:      doc.tipo_mime,
       tamano_bytes:   doc.tamano_bytes,
+      contenido:      doc.contenido,
       origen_tipo:    'empresa',
       empresa_id:     clienteId,
       empresa_nombre: empresaNombre,
       subido_en:      doc.subido_en,
     });
-
-    await this.clienteModel.findByIdAndUpdate(
-      clienteId,
-      { $pull: { documentos: { _id: (doc as any)._id } } },
-    );
 
     return { message: 'Documento marcado como vencido', docId };
   }

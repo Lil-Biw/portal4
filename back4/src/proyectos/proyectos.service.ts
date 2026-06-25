@@ -139,11 +139,17 @@ export class ProyectosService {
     const doc = proyecto.documentos.find((d: any) => String(d._id) === docId);
     if (!doc) throw new NotFoundException(`Documento ${docId} no encontrado`);
 
+    await this.proyectoModel.findByIdAndUpdate(
+      proyectoId,
+      { $pull: { documentos: { _id: (doc as any)._id } } },
+    );
+
     await this.documentosVencidosService.crear({
       nombre_display:  doc.nombre_display,
       categoria:       doc.categoria,
       tipo_mime:       doc.tipo_mime,
       tamano_bytes:    doc.tamano_bytes,
+      contenido:       doc.contenido,
       origen_tipo:     'proyecto',
       empresa_id:      empresaId,
       centro_id:       centroId,
@@ -153,11 +159,6 @@ export class ProyectosService {
       proyecto_nombre: proyectoNombre,
       subido_en:       doc.subido_en,
     });
-
-    await this.proyectoModel.findByIdAndUpdate(
-      proyectoId,
-      { $pull: { documentos: { _id: (doc as any)._id } } },
-    );
 
     return { message: 'Documento marcado como vencido', docId };
   }

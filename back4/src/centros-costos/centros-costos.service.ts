@@ -123,11 +123,17 @@ export class CentrosCostosService {
 
     const resolvedEmpresaId = empresaId ?? String(centro.cliente_id);
 
+    await this.centroCostoModel.findByIdAndUpdate(
+      centroId,
+      { $pull: { documentos: { _id: (doc as any)._id } } },
+    );
+
     await this.documentosVencidosService.crear({
       nombre_display: doc.nombre_display,
       categoria:      doc.categoria,
       tipo_mime:      doc.tipo_mime,
       tamano_bytes:   doc.tamano_bytes,
+      contenido:      doc.contenido,
       origen_tipo:    'centro',
       empresa_id:     resolvedEmpresaId,
       centro_id:      centroId,
@@ -135,11 +141,6 @@ export class CentrosCostosService {
       centro_nombre:  centroNombre,
       subido_en:      doc.subido_en,
     });
-
-    await this.centroCostoModel.findByIdAndUpdate(
-      centroId,
-      { $pull: { documentos: { _id: (doc as any)._id } } },
-    );
 
     return { message: 'Documento marcado como vencido', docId };
   }

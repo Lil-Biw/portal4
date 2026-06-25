@@ -9,6 +9,7 @@ export class DocumentoVencido {
   @Prop({ trim: true }) categoria?: string;
   @Prop({ required: true }) tipo_mime: string;
   @Prop() tamano_bytes?: number;
+  @Prop({ type: Buffer }) contenido?: Buffer;
   @Prop({ required: true, enum: ['empresa', 'centro', 'proyecto'] }) origen_tipo: string;
   @Prop({ type: Types.ObjectId, ref: 'Cliente', required: true }) empresa_id: Types.ObjectId;
   @Prop({ type: Types.ObjectId, ref: 'CentroCosto' }) centro_id?: Types.ObjectId;

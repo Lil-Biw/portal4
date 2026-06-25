@@ -134,8 +134,7 @@
           <!-- Score number -->
           <text x="100" y="87" text-anchor="middle" dominant-baseline="middle"
             style="font-size:38px;font-weight:700"
-            [attr.fill]="scoreDocumental().pct >= 80 ? '#15803d' : scoreDocumental().pct >= 50 ? '#b45309' : '#dc2626'">{{ scoreDocumental().pct }}</text>
-          <text x="100" y="113" text-anchor="middle" style="font-size:14px;fill:#6b7280">/ 100</text>
+            [attr.fill]="scoreDocumental().pct >= 80 ? '#15803d' : scoreDocumental().pct >= 50 ? '#b45309' : '#dc2626'">{{ scoreDocumental().pct }}%</text>
         </svg>
 
         @if (scoreDocumental().total > 0) {

@@ -50,6 +50,7 @@ export interface DocumentoVencidoItem {
   empresa_nombre?: string;
   centro_nombre?: string;
   proyecto_nombre?: string;
+  url: string;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -248,7 +249,9 @@ export class DocumentosService {
     if (proyectoId) params['proyectoId'] = proyectoId;
     const qs = new URLSearchParams(params).toString();
     this.http.get<DocumentoVencidoItem[]>(this.api.url(`/documentos-vencidos?${qs}`)).subscribe({
-      next:  (v) => this.documentosVencidos.set(v),
+      next:  (v) => this.documentosVencidos.set(
+        v.map(item => ({ ...item, url: this.api.url(`/documentos-vencidos/${item._id}`) }))
+      ),
       error: ()  => this.documentosVencidos.set([]),
     });
   }

@@ -6,6 +6,7 @@ export class CreateDocVencidoDto {
   @IsString() @IsOptional() categoria?: string;
   @IsString() tipo_mime: string;
   @IsNumber() @IsOptional() tamano_bytes?: number;
+  @IsOptional() contenido?: Buffer;
   @IsEnum(['empresa', 'centro', 'proyecto']) origen_tipo: 'empresa' | 'centro' | 'proyecto';
   @IsMongoId() empresa_id: string;
   @IsMongoId() @IsOptional() centro_id?: string;

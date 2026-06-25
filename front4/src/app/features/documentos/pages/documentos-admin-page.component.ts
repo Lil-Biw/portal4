@@ -7,7 +7,7 @@ import { ProyectosService } from '../../proyectos/proyectos.service';
 import { SolicitudesService, CreateSolicitudDto, UpdateSolicitudDto, EstadoSolicitud, Solicitud } from '../../solicitudes/solicitudes.service';
 import { UsuariosService } from '../../usuarios/usuarios.service';
 import { StatusBannerComponent } from '../../../shared/components/status-banner/status-banner.component';
-import { asId } from '../../../shared/utils';
+import { asId, detectarCategoriaDocumento } from '../../../shared/utils';
 
 interface PanelState {
   showUpload: boolean;
@@ -54,7 +54,8 @@ export class DocumentosAdminPageComponent implements OnInit {
   set selectedProyectoId(v: string) { this._selectedProyectoId.set(v); }
 
   protected tabJerarquia    = signal<'empresa' | 'centro' | 'proyecto'>('empresa');
-  protected tabAdminActiva  = signal<'documentacion' | 'solicitudes' | 'vencidos'>('documentacion');
+  protected tabAdminActiva  = signal<'documentacion' | 'solicitudes'>('documentacion');
+  protected tabDocAdmin     = signal<'activos' | 'vencidos'>('activos');
 
   protected showSolicitudForm   = signal(false);
   protected creandoSolicitud    = signal(false);
@@ -290,6 +291,8 @@ export class DocumentosAdminPageComponent implements OnInit {
     this.selectedProyectoId = '';
     this.tabJerarquia.set('empresa');
     this.tabAdminActiva.set('documentacion');
+    this.tabDocAdmin.set('activos');
+    this.service.documentosVencidos.set([]);
     this.service.documentosCentro.set([]);
     this.service.documentosProyecto.set([]);
     this.service.documentosPorCentro.set([]);
@@ -301,6 +304,8 @@ export class DocumentosAdminPageComponent implements OnInit {
 
   onCentroChange(): void {
     this.selectedProyectoId = '';
+    this.tabDocAdmin.set('activos');
+    this.service.documentosVencidos.set([]);
     this.service.documentosPorProyecto.set([]);
     if (this.selectedCentroId) this.tabJerarquia.set('centro');
     const centroId = (this.selectedCentroId && this.selectedCentroId !== 'todos') ? this.selectedCentroId : undefined;
@@ -318,6 +323,8 @@ export class DocumentosAdminPageComponent implements OnInit {
   }
 
   onProyectoChange(): void {
+    this.tabDocAdmin.set('activos');
+    this.service.documentosVencidos.set([]);
     if (this.selectedProyectoId) this.tabJerarquia.set('proyecto');
     const centroId   = (this.selectedCentroId   && this.selectedCentroId   !== 'todos') ? this.selectedCentroId   : undefined;
     const proyectoId = (this.selectedProyectoId && this.selectedProyectoId !== 'todos') ? this.selectedProyectoId : undefined;
@@ -362,6 +369,17 @@ export class DocumentosAdminPageComponent implements OnInit {
     const p = this.panels[tipo];
     p.selectedFile = file;
     if (!p.nombreInput) p.nombreInput = file.name;
+    p.categoriaInput = detectarCategoriaDocumento(file.name)!;
+  }
+
+  onDrop(ev: DragEvent, tipo: DocTipo): void {
+    ev.preventDefault();
+    const file = ev.dataTransfer?.files?.[0];
+    if (!file) return;
+    const p = this.panels[tipo];
+    p.selectedFile = file;
+    if (!p.nombreInput) p.nombreInput = file.name;
+    p.categoriaInput = detectarCategoriaDocumento(file.name)!;
   }
 
   confirmarSubida(tipo: DocTipo): void {
@@ -686,6 +704,11 @@ export class DocumentosAdminPageComponent implements OnInit {
       vencido: 'Vencido',
     };
     return map[estado];
+  }
+
+  activarTabVencidosAdmin(): void {
+    this.tabDocAdmin.set('vencidos');
+    this.cargarVencidosAdmin();
   }
 
   cargarVencidosAdmin(): void {

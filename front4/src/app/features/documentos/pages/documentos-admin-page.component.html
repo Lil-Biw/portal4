@@ -234,17 +234,6 @@
               Documentación
             </button>
             <button
-              style="flex:none;padding:.45rem .75rem;border-style:solid;border-width:1px;border-radius:8px;font-size:.78rem;font-weight:600;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;justify-content:center;gap:.35rem"
-              [style.background]="tabAdminActiva() === 'vencidos' ? 'rgba(239,68,68,.08)' : 'transparent'"
-              [style.color]="tabAdminActiva() === 'vencidos' ? '#dc2626' : '#6b7280'"
-              [style.borderColor]="tabAdminActiva() === 'vencidos' ? 'rgba(239,68,68,.2)' : 'transparent'"
-              (click)="tabAdminActiva.set('vencidos'); cargarVencidosAdmin()">
-              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
-              </svg>
-              Vencidos
-            </button>
-            <button
               style="flex:1;padding:.55rem 1rem;border-style:solid;border-width:1px;border-radius:8px;font-size:.875rem;font-weight:600;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;justify-content:center;gap:.4rem"
               [style.background]="tabAdminActiva() === 'solicitudes' ? 'rgba(0,149,214,.08)' : 'transparent'"
               [style.color]="tabAdminActiva() === 'solicitudes' ? '#0095d6' : '#6b7280'"
@@ -260,7 +249,7 @@
 
         <!-- Botones de acción centrados -->
         <div style="padding:.5rem .75rem;display:flex;justify-content:center;gap:.5rem">
-          @if (tabAdminActiva() === 'documentacion') {
+          @if (tabAdminActiva() === 'documentacion' && tabDocAdmin() === 'activos') {
             @if (puedeGestionarDocumento) {
               <button class="btn-primary" style="font-size:.8rem;padding:.4rem .9rem" (click)="toggleUpload(docTipoActual)">+ Subir</button>
             }
@@ -278,6 +267,23 @@
         <!-- ── DOCUMENTACIÓN ──────────────────────────────────────── -->
         @if (tabAdminActiva() === 'documentacion') {
 
+          <!-- Sub-tab Activos / Vencidos -->
+          <div style="display:flex;gap:.25rem;margin-bottom:.75rem">
+            <button
+              style="padding:.3rem .75rem;border-style:solid;border-width:1px;border-radius:6px;font-size:.78rem;font-weight:600;cursor:pointer;transition:all .15s"
+              [style.background]="tabDocAdmin() === 'activos' ? '#f0f9ff' : 'transparent'"
+              [style.color]="tabDocAdmin() === 'activos' ? '#0095d6' : '#6b7280'"
+              [style.borderColor]="tabDocAdmin() === 'activos' ? 'rgba(0,149,214,.25)' : '#e5e7eb'"
+              (click)="tabDocAdmin.set('activos')">Activos</button>
+            <button
+              style="padding:.3rem .75rem;border-style:solid;border-width:1px;border-radius:6px;font-size:.78rem;font-weight:600;cursor:pointer;transition:all .15s"
+              [style.background]="tabDocAdmin() === 'vencidos' ? 'rgba(239,68,68,.06)' : 'transparent'"
+              [style.color]="tabDocAdmin() === 'vencidos' ? '#dc2626' : '#6b7280'"
+              [style.borderColor]="tabDocAdmin() === 'vencidos' ? 'rgba(239,68,68,.25)' : '#e5e7eb'"
+              (click)="activarTabVencidosAdmin()">Vencidos</button>
+          </div>
+
+          @if (tabDocAdmin() === 'activos') {
           @if (tabJerarquia() === 'empresa') { <app-status-banner [status]="service.uploadStatus().empresa"></app-status-banner> }
           @if (tabJerarquia() === 'centro')  { <app-status-banner [status]="service.uploadStatus().centro"></app-status-banner> }
           @if (tabJerarquia() === 'proyecto'){ <app-status-banner [status]="service.uploadStatus().proyecto"></app-status-banner> }
@@ -311,35 +317,82 @@
           @if (puedeGestionarDocumento) {
             <!-- Panel subir -->
             @if (panels[docTipo].showUpload) {
-              <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:.5rem;padding:1rem;margin-bottom:.75rem">
-                <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:.75rem;align-items:end">
-                  <label class="field" style="margin:0"><span>Archivo</span><input type="file" (change)="onFileSelected($event, docTipo)" style="padding:.3rem" /></label>
-                  <label class="field" style="margin:0"><span>Nombre</span><input type="text" [(ngModel)]="panels[docTipo].nombreInput" placeholder="Nombre del documento" /></label>
-                  <label class="field" style="margin:0"><span>Tipo</span>
-                    <select [(ngModel)]="panels[docTipo].categoriaInput">
+              <div style="border:1.5px dashed #bfdbfe;border-radius:10px;padding:1.25rem;margin-bottom:1rem;background:#f0f9ff">
+                <!-- Zona drop -->
+                <div style="position:relative;border:1.5px dashed #93c5fd;border-radius:8px;background:#fff;padding:2rem 1rem;text-align:center;cursor:pointer"
+                     (dragover)="$event.preventDefault()"
+                     (drop)="onDrop($event, docTipo)">
+                  <input #fi type="file" style="display:none" (change)="onFileSelected($event, docTipo)" />
+                  <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#0095d6" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin:0 auto .75rem;display:block">
+                    <polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/>
+                    <path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/>
+                  </svg>
+                  <p style="margin:0 0 .25rem;font-size:.9rem;color:#374151">
+                    Arrastra tu archivo aquí o
+                    <span style="color:#0095d6;font-weight:600;cursor:pointer;text-decoration:underline" (click)="fi.click()">selecciona uno</span>
+                  </p>
+                  @if (panels[docTipo].selectedFile) {
+                    <p style="margin:.35rem 0 0;font-size:.8rem;color:#6b7280;font-style:italic">{{ panels[docTipo].selectedFile!.name }}</p>
+                  }
+                </div>
+                <!-- Campos nombre + tipo -->
+                <div style="display:grid;grid-template-columns:1fr auto;gap:.75rem;margin-top:1rem;align-items:end">
+                  <label style="display:flex;flex-direction:column;gap:.3rem">
+                    <span style="font-size:.7rem;font-weight:700;color:#6b7280;letter-spacing:.06em;text-transform:uppercase">Nombre del archivo</span>
+                    <input type="text" [(ngModel)]="panels[docTipo].nombreInput" placeholder="Nombre del documento"
+                           style="padding:.55rem .75rem;border:1px solid #d1d5db;border-radius:7px;font-size:.875rem;font-family:inherit;outline:none" />
+                  </label>
+                  <label style="display:flex;flex-direction:column;gap:.3rem">
+                    <span style="font-size:.7rem;font-weight:700;color:#6b7280;letter-spacing:.06em;text-transform:uppercase">Tipo de documento</span>
+                    <select [(ngModel)]="panels[docTipo].categoriaInput"
+                            style="padding:.55rem .75rem;border:1px solid #d1d5db;border-radius:7px;font-size:.875rem;font-family:inherit;outline:none;background:#fff;min-width:200px">
                       @for (cat of categorias; track cat) { <option [value]="cat">{{ cat }}</option> }
                     </select>
                   </label>
                 </div>
-                <div style="display:flex;gap:.5rem;margin-top:.75rem">
-                  <button class="btn-primary" style="font-size:.8rem;padding:.45rem .9rem" (click)="confirmarSubida(docTipo)" [disabled]="!panels[docTipo].selectedFile">Confirmar subida</button>
-                  <button class="btn-ghost"   style="font-size:.8rem;padding:.45rem .9rem" (click)="toggleUpload(docTipo)">Cancelar</button>
+                <!-- Botones -->
+                <div style="display:flex;gap:.5rem;margin-top:1rem">
+                  <button class="btn-primary" style="display:flex;align-items:center;gap:.4rem;font-size:.85rem;padding:.5rem 1.1rem"
+                          (click)="confirmarSubida(docTipo)" [disabled]="!panels[docTipo].selectedFile">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                    Confirmar subida
+                  </button>
+                  <button class="btn-ghost" style="font-size:.85rem;padding:.5rem 1rem" (click)="toggleUpload(docTipo)">Cancelar</button>
                 </div>
               </div>
             }
 
+            <!-- Lista documentos -->
             @if (docsFiltrados(docTipo).length === 0) { <p class="empty">Sin documentos.</p> }
-            @for (d of docsFiltrados(docTipo); track d._id) {
-              <div style="display:flex;align-items:center;justify-content:space-between;padding:.6rem 0;border-bottom:1px solid rgba(34,33,33,.07)">
-                <div style="display:flex;align-items:center;gap:.5rem">
-                  <span style="font-size:.7rem;font-weight:600;padding:.2rem .5rem;border-radius:999px;background:#e0e7ff;color:#3730a3">{{ d.categoria }}</span>
-                  <span style="font-size:.875rem">{{ d.nombre_display }}</span>
+            @else {
+              <div style="border:1px solid #e5e7eb;border-radius:8px;overflow:hidden">
+                <div style="display:flex;justify-content:space-between;padding:.5rem 1rem;background:#f9fafb;border-bottom:1px solid #e5e7eb">
+                  <span style="font-size:.7rem;font-weight:700;color:#9ca3af;letter-spacing:.07em;text-transform:uppercase">Documento</span>
+                  <span style="font-size:.7rem;font-weight:700;color:#9ca3af;letter-spacing:.07em;text-transform:uppercase">Acciones</span>
                 </div>
-                <div style="display:flex;gap:.5rem">
-                  <button class="btn-ghost"  style="font-size:.78rem;padding:.35rem .7rem" (click)="service.descargar(d.url, d.nombre_display)">Descargar</button>
-                  <button style="font-size:.78rem;padding:.35rem .7rem;border-radius:.375rem;border:1px solid rgba(239,68,68,.3);background:rgba(239,68,68,.06);color:#dc2626;cursor:pointer" (click)="marcarVencidoAdmin(d.url)">Vencer</button>
-                  <button class="btn-danger" style="font-size:.78rem;padding:.35rem .7rem" (click)="eliminar(d.url, docTipo)">Eliminar</button>
-                </div>
+                @for (d of docsFiltrados(docTipo); track d._id) {
+                  <div style="display:flex;align-items:center;justify-content:space-between;padding:.6rem 1rem;border-bottom:1px solid #f3f4f6">
+                    <div style="display:flex;align-items:center;gap:.6rem;min-width:0">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                      <span style="font-size:.7rem;font-weight:600;padding:.2rem .55rem;border-radius:999px;background:#e0e7ff;color:#3730a3;white-space:nowrap;flex-shrink:0">{{ d.categoria }}</span>
+                      <span style="font-size:.875rem;color:#1f2937;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ d.nombre_display }}</span>
+                    </div>
+                    <div style="display:flex;gap:.35rem;flex-shrink:0">
+                      <button title="Descargar" (click)="service.descargar(d.url, d.nombre_display)"
+                              style="width:32px;height:32px;border-radius:7px;border:none;background:#eff6ff;color:#0095d6;cursor:pointer;display:flex;align-items:center;justify-content:center">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                      </button>
+                      <button title="Marcar vencido" (click)="marcarVencidoAdmin(d.url)"
+                              style="width:32px;height:32px;border-radius:7px;border:none;background:#fffbeb;color:#d97706;cursor:pointer;display:flex;align-items:center;justify-content:center">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                      </button>
+                      <button title="Eliminar" (click)="eliminar(d.url, docTipo)"
+                              style="width:32px;height:32px;border-radius:7px;border:none;background:#fef2f2;color:#dc2626;cursor:pointer;display:flex;align-items:center;justify-content:center">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                      </button>
+                    </div>
+                  </div>
+                }
               </div>
             }
           }
@@ -352,15 +405,25 @@
             @for (item of filteredDocsPorCentro(); track item.nombre) {
               <div style="margin-bottom:1rem">
                 <p style="margin:0 0 .5rem;font-size:.875rem;font-weight:700;color:#374151">{{ item.nombre }}</p>
-                @for (d of item.docs; track d._id) {
-                  <div style="display:flex;align-items:center;justify-content:space-between;padding:.6rem 0;border-bottom:1px solid rgba(34,33,33,.07)">
-                    <div style="display:flex;align-items:center;gap:.5rem">
-                      <span style="font-size:.7rem;font-weight:600;padding:.2rem .5rem;border-radius:999px;background:#e0e7ff;color:#3730a3">{{ d.categoria }}</span>
-                      <span style="font-size:.875rem">{{ d.nombre_display }}</span>
-                    </div>
-                    <button class="btn-ghost" style="font-size:.78rem;padding:.35rem .7rem" (click)="service.descargar(d.url, d.nombre_display)">Descargar</button>
+                <div style="border:1px solid #e5e7eb;border-radius:8px;overflow:hidden">
+                  <div style="display:flex;justify-content:space-between;padding:.5rem 1rem;background:#f9fafb;border-bottom:1px solid #e5e7eb">
+                    <span style="font-size:.7rem;font-weight:700;color:#9ca3af;letter-spacing:.07em;text-transform:uppercase">Documento</span>
+                    <span style="font-size:.7rem;font-weight:700;color:#9ca3af;letter-spacing:.07em;text-transform:uppercase">Acciones</span>
                   </div>
-                }
+                  @for (d of item.docs; track d._id) {
+                    <div style="display:flex;align-items:center;justify-content:space-between;padding:.6rem 1rem;border-bottom:1px solid #f3f4f6">
+                      <div style="display:flex;align-items:center;gap:.6rem;min-width:0">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                        <span style="font-size:.7rem;font-weight:600;padding:.2rem .55rem;border-radius:999px;background:#e0e7ff;color:#3730a3;white-space:nowrap;flex-shrink:0">{{ d.categoria }}</span>
+                        <span style="font-size:.875rem;color:#1f2937;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ d.nombre_display }}</span>
+                      </div>
+                      <button title="Descargar" (click)="service.descargar(d.url, d.nombre_display)"
+                              style="width:32px;height:32px;border-radius:7px;border:none;background:#eff6ff;color:#0095d6;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                      </button>
+                    </div>
+                  }
+                </div>
               </div>
             }
           }
@@ -376,44 +439,69 @@
                 @if (item.centroNombre) {
                   <p style="margin:0 0 .5rem;font-size:.75rem;color:#9ca3af">Centro: {{ item.centroNombre }}</p>
                 }
-                @for (d of item.docs; track d._id) {
-                  <div style="display:flex;align-items:center;justify-content:space-between;padding:.6rem 0;border-bottom:1px solid rgba(34,33,33,.07)">
-                    <div style="display:flex;align-items:center;gap:.5rem">
-                      <span style="font-size:.7rem;font-weight:600;padding:.2rem .5rem;border-radius:999px;background:#e0e7ff;color:#3730a3">{{ d.categoria }}</span>
-                      <span style="font-size:.875rem">{{ d.nombre_display }}</span>
-                    </div>
-                    <button class="btn-ghost" style="font-size:.78rem;padding:.35rem .7rem" (click)="service.descargar(d.url, d.nombre_display)">Descargar</button>
+                <div style="border:1px solid #e5e7eb;border-radius:8px;overflow:hidden">
+                  <div style="display:flex;justify-content:space-between;padding:.5rem 1rem;background:#f9fafb;border-bottom:1px solid #e5e7eb">
+                    <span style="font-size:.7rem;font-weight:700;color:#9ca3af;letter-spacing:.07em;text-transform:uppercase">Documento</span>
+                    <span style="font-size:.7rem;font-weight:700;color:#9ca3af;letter-spacing:.07em;text-transform:uppercase">Acciones</span>
                   </div>
-                }
+                  @for (d of item.docs; track d._id) {
+                    <div style="display:flex;align-items:center;justify-content:space-between;padding:.6rem 1rem;border-bottom:1px solid #f3f4f6">
+                      <div style="display:flex;align-items:center;gap:.6rem;min-width:0">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                        <span style="font-size:.7rem;font-weight:600;padding:.2rem .55rem;border-radius:999px;background:#e0e7ff;color:#3730a3;white-space:nowrap;flex-shrink:0">{{ d.categoria }}</span>
+                        <span style="font-size:.875rem;color:#1f2937;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ d.nombre_display }}</span>
+                      </div>
+                      <button title="Descargar" (click)="service.descargar(d.url, d.nombre_display)"
+                              style="width:32px;height:32px;border-radius:7px;border:none;background:#eff6ff;color:#0095d6;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                      </button>
+                    </div>
+                  }
+                </div>
               </div>
             }
           }
 
-        } <!-- fin documentacion -->
+          } <!-- fin activos -->
 
-        <!-- ── VENCIDOS ──────────────────────────────────────────── -->
-        @if (tabAdminActiva() === 'vencidos') {
-          <p style="margin:0 0 .75rem;font-size:.8rem;color:#6b7280">Mostrando los últimos 20 documentos vencidos de este contexto.</p>
-          @if (service.documentosVencidos().length === 0) {
-            <p class="empty">Sin documentos vencidos.</p>
-          }
-          @for (v of service.documentosVencidos(); track v._id) {
-            <div style="display:flex;align-items:center;justify-content:space-between;padding:.6rem 0;border-bottom:1px solid rgba(34,33,33,.07)">
-              <div style="display:flex;align-items:center;gap:.5rem;flex:1;min-width:0">
-                @if (v.categoria) {
-                  <span style="font-size:.7rem;font-weight:600;padding:.2rem .5rem;border-radius:999px;background:#fee2e2;color:#991b1b;white-space:nowrap">{{ v.categoria }}</span>
+          <!-- Sub-vista vencidos -->
+          @if (tabDocAdmin() === 'vencidos') {
+            <p style="margin:0 0 .75rem;font-size:.8rem;color:#6b7280">Mostrando los últimos 20 documentos vencidos de este contexto.</p>
+            @if (service.documentosVencidos().length === 0) {
+              <p class="empty">Sin documentos vencidos.</p>
+            } @else {
+              <div style="border:1px solid #e5e7eb;border-radius:8px;overflow:hidden">
+                <div style="display:grid;grid-template-columns:1fr auto auto;padding:.5rem 1rem;background:#f9fafb;border-bottom:1px solid #e5e7eb;gap:1rem">
+                  <span style="font-size:.7rem;font-weight:700;color:#9ca3af;letter-spacing:.07em;text-transform:uppercase">Documento</span>
+                  <span style="font-size:.7rem;font-weight:700;color:#9ca3af;letter-spacing:.07em;text-transform:uppercase">Fechas</span>
+                  <span style="font-size:.7rem;font-weight:700;color:#9ca3af;letter-spacing:.07em;text-transform:uppercase">Acciones</span>
+                </div>
+                @for (v of service.documentosVencidos(); track v._id) {
+                  <div style="display:grid;grid-template-columns:1fr auto auto;align-items:center;padding:.6rem 1rem;border-bottom:1px solid #f3f4f6;gap:1rem">
+                    <div style="display:flex;align-items:center;gap:.6rem;min-width:0">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                      @if (v.categoria) {
+                        <span style="font-size:.7rem;font-weight:600;padding:.2rem .55rem;border-radius:999px;background:#fee2e2;color:#991b1b;white-space:nowrap;flex-shrink:0">{{ v.categoria }}</span>
+                      }
+                      <span style="font-size:.875rem;color:#1f2937;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ v.nombre_display }}</span>
+                    </div>
+                    <div style="display:flex;flex-direction:column;gap:.15rem;flex-shrink:0;text-align:right">
+                      @if (v.subido_en) {
+                        <span style="font-size:.72rem;color:#9ca3af">Subido: {{ formatFecha(v.subido_en) }}</span>
+                      }
+                      <span style="font-size:.72rem;color:#dc2626;font-weight:600">Vencido: {{ formatFecha(v.vencido_en) }}</span>
+                    </div>
+                    <button title="Descargar" (click)="service.descargar(v.url, v.nombre_display)"
+                            style="width:32px;height:32px;border-radius:7px;border:none;background:#eff6ff;color:#0095d6;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                    </button>
+                  </div>
                 }
-                <span style="font-size:.875rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ v.nombre_display }}</span>
               </div>
-              <div style="display:flex;gap:.75rem;align-items:center;flex-shrink:0;margin-left:.75rem">
-                @if (v.subido_en) {
-                  <span style="font-size:.75rem;color:#9ca3af">Subido: {{ formatFecha(v.subido_en) }}</span>
-                }
-                <span style="font-size:.75rem;color:#dc2626">Vencido: {{ formatFecha(v.vencido_en) }}</span>
-              </div>
-            </div>
-          }
-        } <!-- fin vencidos -->
+            }
+          } <!-- fin vencidos -->
+
+        } <!-- fin documentacion -->
 
         <!-- ── SOLICITUDES (admin) ────────────────────────────────── -->
         @if (tabAdminActiva() === 'solicitudes') {
