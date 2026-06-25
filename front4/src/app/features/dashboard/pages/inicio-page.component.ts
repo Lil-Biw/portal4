@@ -5,6 +5,7 @@ import { ConsumidorContextService } from '../../../profile/consumidor-context.se
 import { CentrosService } from '../../centros/centros.service';
 import { ProyectosService } from '../../proyectos/proyectos.service';
 import { SolicitudesService } from '../../solicitudes/solicitudes.service';
+import { DocumentosService } from '../../documentos/documentos.service';
 import { ActividadesService } from '../../actividades/actividades.service';
 import { TiposActividadService } from '../../actividades/tipos-actividad.service';
 import { NoticiasService } from '../../noticias/noticias.service';
@@ -32,6 +33,7 @@ export class InicioPageComponent implements OnInit {
   protected readonly centrosService      = inject(CentrosService);
   protected readonly proyectosService    = inject(ProyectosService);
   protected readonly solicitudesService  = inject(SolicitudesService);
+  private readonly documentosService     = inject(DocumentosService);
   protected readonly actividadesService  = inject(ActividadesService);
   protected readonly tiposActividadService = inject(TiposActividadService);
   protected readonly noticiasService     = inject(NoticiasService);
@@ -73,9 +75,14 @@ export class InicioPageComponent implements OnInit {
       .slice(0, 5);
   });
 
-  protected scoreDocumental = computed(() =>
-    calcularScoreDocumental(this.solicitudesService.solicitudes())
-  );
+  protected scoreDocumental = computed(() => {
+    const docsActivos =
+      this.documentosService.documentosEmpresa().length +
+      this.documentosService.documentosPorCentro().reduce((s, g) => s + g.docs.length, 0) +
+      this.documentosService.documentosPorProyecto().reduce((s, g) => s + g.docs.length, 0);
+    const docsVencidos = this.documentosService.documentosVencidos().length;
+    return calcularScoreDocumental(this.solicitudesService.solicitudes(), docsActivos, docsVencidos);
+  });
 
   protected scoreChipVariant = computed((): ChipVariant => scoreChipVariantFn(this.scoreDocumental().pct));
 
@@ -94,6 +101,20 @@ export class InicioPageComponent implements OnInit {
       } else {
         untracked(() => this.solicitudesService.cargar(''));
       }
+    });
+
+    effect(() => {
+      const empresa   = this.consumidorContext.empresaSeleccionada();
+      const centros   = this.centrosDeEmpresa();
+      const proyectos = this.proyectosService.proyectos()
+        .filter(p => asId(p.cliente_id) === asId(empresa?._id ?? ''));
+      if (!empresa) return;
+      untracked(() => {
+        this.documentosService.cargarEmpresa(empresa._id);
+        this.documentosService.cargarVencidos(empresa._id);
+        this.documentosService.cargarTodosCentros(empresa._id, centros);
+        this.documentosService.cargarTodosProyectos(empresa._id, proyectos, centros);
+      });
     });
   }
 
