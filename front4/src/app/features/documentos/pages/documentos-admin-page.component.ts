@@ -6,6 +6,7 @@ import { CentrosService } from '../../centros/centros.service';
 import { ProyectosService } from '../../proyectos/proyectos.service';
 import { SolicitudesService, CreateSolicitudDto, UpdateSolicitudDto, EstadoSolicitud, Solicitud } from '../../solicitudes/solicitudes.service';
 import { UsuariosService } from '../../usuarios/usuarios.service';
+import { AuthService } from '../../auth/auth.service';
 import { StatusBannerComponent } from '../../../shared/components/status-banner/status-banner.component';
 import { asId, detectarCategoriaDocumento } from '../../../shared/utils';
 
@@ -39,6 +40,12 @@ export class DocumentosAdminPageComponent implements OnInit {
   protected readonly proyectosService   = inject(ProyectosService);
   protected readonly solicitudesService = inject(SolicitudesService);
   protected readonly usuariosService    = inject(UsuariosService);
+  private  readonly authService         = inject(AuthService);
+
+  protected readonly puedeVencer = computed(() => {
+    const rol = this.authService.usuarioActual()?.rol ?? '';
+    return rol === 'super_admin' || rol === 'admin_smartclarity';
+  });
 
   protected readonly categorias = CATEGORIAS_DOCUMENTO;
 

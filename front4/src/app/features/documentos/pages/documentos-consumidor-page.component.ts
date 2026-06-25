@@ -7,6 +7,7 @@ import { CentrosService } from '../../centros/centros.service';
 import { ProyectosService } from '../../proyectos/proyectos.service';
 import { ConsumidorContextService } from '../../../profile/consumidor-context.service';
 import { SolicitudesService, EstadoSolicitud, Solicitud } from '../../solicitudes/solicitudes.service';
+import { AuthService } from '../../auth/auth.service';
 import { StatusBannerComponent } from '../../../shared/components/status-banner/status-banner.component';
 import { asId, detectarCategoriaDocumento } from '../../../shared/utils';
 
@@ -33,6 +34,12 @@ export class DocumentosConsumidorPageComponent implements OnInit {
   protected readonly consumidorContext  = inject(ConsumidorContextService);
   protected readonly solicitudesService = inject(SolicitudesService);
   private  readonly route               = inject(ActivatedRoute);
+  private  readonly authService         = inject(AuthService);
+
+  protected readonly puedeVencer = computed(() => {
+    const rol = this.authService.usuarioActual()?.rol ?? '';
+    return rol === 'super_admin' || rol === 'admin_smartclarity';
+  });
 
   private _pendingCentroId:   string | null = null;
   private _pendingProyectoId: string | null = null;

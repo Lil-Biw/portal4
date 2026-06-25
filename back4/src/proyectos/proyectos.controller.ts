@@ -92,7 +92,7 @@ export class ProyectosController {
   }
 
   @Patch(':proyectoId/documentos/:docId/vencer')
-  @Roles('super_admin', 'admin_smartclarity', 'usuario')
+  @Roles('super_admin', 'admin_smartclarity')
   vencerDocumento(
     @Param('empresaId')  empresaId:  string,
     @Param('centroId')   centroId:   string,
