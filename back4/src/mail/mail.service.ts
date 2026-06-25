@@ -7,6 +7,7 @@ import { nuevaActividadHtml } from './templates/nueva-actividad.template';
 import { nuevaSolicitudHtml } from './templates/nueva-solicitud.template';
 import { solicitudRechazadaHtml } from './templates/solicitud-rechazada.template';
 import { nuevaNoticiaHtml } from './templates/nueva-noticia.template';
+import { documentoVencidoHtml } from './templates/documento-vencido.template';
 import { SC_LOGO_PATH, SC_LOGO_CID } from './templates/logo';
 
 const LOGO_ATTACHMENT = { filename: 'image.png', path: SC_LOGO_PATH, cid: SC_LOGO_CID };
@@ -181,5 +182,24 @@ export class MailService {
       const mensaje = err instanceof Error ? err.message : String(err);
       this.logger.error(`Error al enviar correo a ${params.email}: ${mensaje}`);
     }
+  }
+
+  async notificarDocumentoVencido(params: {
+    destinatarios: { nombre: string; email: string }[];
+    documento: { nombre: string; categoria: string; contexto: string };
+  }): Promise<void> {
+    const portalUrl = this.config.get<string>('PORTAL_URL') ?? 'http://localhost:4200';
+    await this.enviarATodos(
+      params.destinatarios,
+      `Documento vencido — ${params.documento.nombre}`,
+      dest => documentoVencidoHtml({
+        destinatario: dest.nombre,
+        nombre:       params.documento.nombre,
+        categoria:    params.documento.categoria,
+        contexto:     params.documento.contexto,
+        portalUrl,
+      }),
+      'vencimiento',
+    );
   }
 }
