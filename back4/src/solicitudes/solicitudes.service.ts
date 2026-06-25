@@ -280,7 +280,7 @@ export class SolicitudesService {
   async adjuntarArchivo(id: string, archivo: { originalname: string; buffer: Buffer; mimetype: string }) {
     const solicitud = await this.solicitudModel.findById(id).lean();
     if (!solicitud) throw new NotFoundException(`Solicitud ${id} no encontrada`);
-    if (!['pendiente', 'rechazado', 'vencido'].includes(solicitud.estado)) {
+    if (!['pendiente', 'rechazado'].includes(solicitud.estado)) {
       throw new BadRequestException(`No se puede adjuntar un archivo a una solicitud en estado "${solicitud.estado}"`);
     }
     const TIPOS_PERMITIDOS = [

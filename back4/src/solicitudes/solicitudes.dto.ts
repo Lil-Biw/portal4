@@ -19,7 +19,7 @@ export class UpdateSolicitudDto {
 }
 
 export class CambiarEstadoDto {
-  @IsEnum(['pendiente', 'revision', 'aprobado', 'rechazado', 'vencido']) estado: string;
+  @IsEnum(['pendiente', 'revision', 'aprobado', 'rechazado']) estado: string;
   @IsString() @IsOptional() motivo_rechazo?: string;
   @IsOptional() @ValidateNested() @Type(() => NotificacionOpcionesDto) notificacion?: NotificacionOpcionesDto;
 }

@@ -11,7 +11,7 @@ export class Solicitud {
   @Prop({ type: Types.ObjectId, ref: 'Cliente', required: true }) empresa_id: Types.ObjectId;
   @Prop({ type: Types.ObjectId, ref: 'CentroCosto' }) centro_costo_id?: Types.ObjectId;
   @Prop({ type: Types.ObjectId, ref: 'Proyecto' }) proyecto_id?: Types.ObjectId;
-  @Prop({ enum: ['pendiente', 'revision', 'aprobado', 'rechazado', 'vencido'], default: 'pendiente' }) estado: string;
+  @Prop({ enum: ['pendiente', 'revision', 'aprobado', 'rechazado'], default: 'pendiente' }) estado: string;
   @Prop({ trim: true }) motivo_rechazo?: string;
   @Prop({
     type: {
