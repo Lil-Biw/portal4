@@ -30,18 +30,21 @@ export interface ScoreDocumental {
   vencido: number; rechazado: number; pendiente: number; total: number;
 }
 
-export function calcularScoreDocumental(solicitudes: { estado: string }[]): ScoreDocumental {
-  if (solicitudes.length === 0)
+export function calcularScoreDocumental(
+  solicitudes: { estado: string }[],
+  docsActivos = 0,
+  docsVencidos = 0,
+): ScoreDocumental {
+  if (solicitudes.length === 0 && docsActivos === 0 && docsVencidos === 0)
     return { pct: 50, aprobados: 0, revision: 0, vencido: 0, rechazado: 0, pendiente: 0, total: 0 };
-  const aprobados = solicitudes.filter(s => s.estado === 'aprobado').length;
+  const aprobados = solicitudes.filter(s => s.estado === 'aprobado').length + docsActivos;
   const revision  = solicitudes.filter(s => s.estado === 'revision').length;
-  const vencido   = solicitudes.filter(s => s.estado === 'vencido').length;
   const rechazado = solicitudes.filter(s => s.estado === 'rechazado').length;
   const pendiente = solicitudes.filter(s => s.estado === 'pendiente').length;
+  const total     = solicitudes.length + docsActivos + docsVencidos;
   return {
-    pct: Math.round((aprobados / solicitudes.length) * 100),
-    aprobados, revision, vencido, rechazado, pendiente,
-    total: solicitudes.length,
+    pct: total > 0 ? Math.round(aprobados / total * 100) : 50,
+    aprobados, revision, vencido: docsVencidos, rechazado, pendiente, total,
   };
 }
 
