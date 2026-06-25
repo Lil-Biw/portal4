@@ -382,7 +382,7 @@
                               style="width:32px;height:32px;border-radius:7px;border:none;background:#eff6ff;color:#0095d6;cursor:pointer;display:flex;align-items:center;justify-content:center">
                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                       </button>
-                      <button title="Marcar vencido" (click)="marcarVencidoAdmin(d.url)"
+                      <button title="Marcar vencido" (click)="abrirModalVencer(d)"
                               style="width:32px;height:32px;border-radius:7px;border:none;background:#fffbeb;color:#d97706;cursor:pointer;display:flex;align-items:center;justify-content:center">
                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                       </button>
@@ -717,6 +717,121 @@
     <p style="margin:0;font-size:.9rem">Selecciona una empresa para ver los documentos.</p>
   </div>
 } <!-- fin @if selectedEmpresaId -->
+
+<!-- ── Modal vencer documento ──────────────────────────────────────────── -->
+@if (modalVencer() !== null) {
+  <div style="position:fixed;inset:0;background:rgba(15,23,42,.45);display:flex;align-items:center;justify-content:center;z-index:200;padding:1rem"
+       (click)="cerrarModalVencer()">
+    <div style="background:#fff;border-radius:16px;box-shadow:0 20px 60px rgba(15,23,42,.18);width:100%;max-width:480px;max-height:85vh;overflow-y:auto;padding:1.5rem"
+         (click)="$event.stopPropagation()">
+
+      <!-- Header -->
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.1rem">
+        <h3 style="margin:0;font-size:1.05rem;font-weight:700;color:#111827">Marcar documento como vencido</h3>
+        <button (click)="cerrarModalVencer()" style="background:none;border:none;font-size:1.4rem;line-height:1;cursor:pointer;color:#6b7280;padding:0 .25rem">&#x2715;</button>
+      </div>
+
+      <!-- Advertencia -->
+      <div style="display:flex;gap:.75rem;align-items:flex-start;padding:.75rem 1rem;background:#fffbeb;border:1px solid #fde68a;border-radius:10px;margin-bottom:1.1rem">
+        <span style="font-size:1.15rem;flex-shrink:0">⏱</span>
+        <div>
+          <p style="margin:0 0 .2rem;font-size:.875rem;font-weight:600;color:#92400e">¿Marcar como vencido?</p>
+          <p style="margin:0;font-size:.82rem;color:#78350f;line-height:1.4">
+            <strong>{{ modalVencer()!.nombre_display }}</strong> se moverá al historial de vencidos. Esta acción no se puede deshacer.
+          </p>
+        </div>
+      </div>
+
+      <!-- Opciones de notificación -->
+      <div style="margin-bottom:1rem">
+        <label style="display:flex;align-items:center;gap:.5rem;cursor:pointer;font-size:.875rem;font-weight:600;color:#374151">
+          <input type="checkbox" [checked]="notifVencerNotificar()" (change)="toggleNotifVencerNotificar()" style="accent-color:#0095d6;width:15px;height:15px" />
+          Notificar por correo
+        </label>
+
+        @if (notifVencerNotificar()) {
+          <div style="display:flex;gap:0;margin-top:.5rem;border-bottom:2px solid #e5e7eb">
+            <button type="button"
+              [style.border-bottom]="notifVencerTab() === 'usuarios' ? '2px solid #0095d6' : '2px solid transparent'"
+              [style.color]="notifVencerTab() === 'usuarios' ? '#0095d6' : '#6b7280'"
+              style="background:none;border:none;padding:.3rem .7rem;font-size:.78rem;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:.35rem"
+              (click)="notifVencerTab.set('usuarios')">
+              <input type="checkbox" [checked]="notifVencerTodosUsuariosSeleccionados()" (change)="toggleSeleccionarTodosUsuariosVencer()" (click)="$event.stopPropagation()" style="accent-color:#0095d6;width:12px;height:12px;cursor:pointer;flex-shrink:0" />
+              Usuarios ({{ notifVencerUsuariosIds().length }}/{{ usuariosParaVencer().length }})
+            </button>
+            <button type="button"
+              [style.border-bottom]="notifVencerTab() === 'admins' ? '2px solid #0095d6' : '2px solid transparent'"
+              [style.color]="notifVencerTab() === 'admins' ? '#0095d6' : '#6b7280'"
+              style="background:none;border:none;padding:.3rem .7rem;font-size:.78rem;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:.35rem"
+              (click)="notifVencerTab.set('admins')">
+              <input type="checkbox" [checked]="notifVencerTodosAdminsSeleccionados()" (change)="toggleSeleccionarTodosAdminsVencer()" (click)="$event.stopPropagation()" style="accent-color:#0095d6;width:12px;height:12px;cursor:pointer;flex-shrink:0" />
+              Admins ({{ notifVencerAdminsIds().length }}/{{ adminsParaVencer().length }})
+            </button>
+            <button type="button"
+              [style.border-bottom]="notifVencerTab() === 'super-admins' ? '2px solid #0095d6' : '2px solid transparent'"
+              [style.color]="notifVencerTab() === 'super-admins' ? '#0095d6' : '#6b7280'"
+              style="background:none;border:none;padding:.3rem .7rem;font-size:.78rem;font-weight:600;cursor:pointer"
+              (click)="notifVencerTab.set('super-admins')">
+              Super Admins ({{ notifVencerSuperAdmins() ? superAdminsParaVencer().length : 0 }}/{{ superAdminsParaVencer().length }})
+            </button>
+          </div>
+
+          @if (notifVencerTab() === 'usuarios') {
+            @if (usuariosParaVencer().length > 0) {
+              <div style="display:flex;flex-direction:column;gap:.3rem;max-height:120px;overflow-y:auto;border:1px solid rgba(34,33,33,.2);border-top:none;border-radius:0 0 8px 8px;padding:.4rem .6rem">
+                @for (u of usuariosParaVencer(); track u._id) {
+                  <label style="display:flex;align-items:center;gap:.5rem;cursor:pointer;font-size:.82rem;color:#374151">
+                    <input type="checkbox" [checked]="notifVencerUsuariosIds().includes(u._id)" (change)="toggleNotifVencerUsuario(u._id)" style="accent-color:#0095d6;width:14px;height:14px" />
+                    {{ u.nombre }}
+                  </label>
+                }
+              </div>
+            } @else {
+              <p style="margin:.3rem 0 0;font-size:.78rem;color:#9ca3af">No hay usuarios para esta empresa.</p>
+            }
+          }
+          @if (notifVencerTab() === 'admins') {
+            @if (adminsParaVencer().length > 0) {
+              <div style="display:flex;flex-direction:column;gap:.3rem;max-height:120px;overflow-y:auto;border:1px solid rgba(34,33,33,.2);border-top:none;border-radius:0 0 8px 8px;padding:.4rem .6rem">
+                @for (u of adminsParaVencer(); track u._id) {
+                  <label style="display:flex;align-items:center;gap:.5rem;cursor:pointer;font-size:.82rem;color:#374151">
+                    <input type="checkbox" [checked]="notifVencerAdminsIds().includes(u._id)" (change)="toggleNotifVencerAdmin(u._id)" style="accent-color:#0095d6;width:14px;height:14px" />
+                    {{ u.nombre }}
+                  </label>
+                }
+              </div>
+            } @else {
+              <p style="margin:.3rem 0 0;font-size:.78rem;color:#9ca3af">No hay administradores disponibles.</p>
+            }
+          }
+          @if (notifVencerTab() === 'super-admins') {
+            <div style="display:flex;flex-direction:column;gap:.5rem;border:1px solid rgba(34,33,33,.2);border-top:none;border-radius:0 0 8px 8px;padding:.5rem .75rem">
+              <label style="display:flex;align-items:center;gap:.5rem;cursor:pointer;font-size:.82rem;color:#374151;font-weight:600">
+                <input type="checkbox" [checked]="notifVencerSuperAdmins()" (change)="notifVencerSuperAdmins.update(v => !v)" style="accent-color:#0095d6;width:15px;height:15px" />
+                <span>Notificar a todos los Super Admins</span>
+              </label>
+            </div>
+          }
+        }
+      </div>
+
+      <!-- Botones de acción -->
+      <div style="display:flex;gap:.6rem;margin-top:.5rem">
+        <button
+          (click)="confirmarVencer()"
+          style="padding:.45rem 1.1rem;background:#d97706;color:#fff;border:none;border-radius:8px;font-size:.84rem;font-weight:600;cursor:pointer;font-family:inherit">
+          Confirmar vencimiento
+        </button>
+        <button
+          (click)="cerrarModalVencer()"
+          style="padding:.45rem 1.1rem;background:none;border:1.5px solid #d1d5db;border-radius:8px;font-size:.84rem;font-weight:600;cursor:pointer;color:#374151;font-family:inherit">
+          Cancelar
+        </button>
+      </div>
+
+    </div>
+  </div>
+}
 
 <!-- Modal motivo de rechazo -->
 @if (rechazandoId()) {

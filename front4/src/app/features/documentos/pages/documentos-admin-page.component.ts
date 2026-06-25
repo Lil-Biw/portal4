@@ -102,6 +102,26 @@ export class DocumentosAdminPageComponent implements OnInit {
     return a.length > 0 && a.every(x => this.notifRechazoAdminsIds().includes(x._id));
   });
 
+  // modal vencer documento
+  protected modalVencer = signal<{ url: string; nombre_display: string; categoria: string } | null>(null);
+
+  // notificación — vencer documento
+  protected notifVencerNotificar   = signal(false);
+  protected notifVencerTab         = signal<'usuarios' | 'admins' | 'super-admins'>('usuarios');
+  protected notifVencerUsuariosIds = signal<string[]>([]);
+  protected notifVencerAdminsIds   = signal<string[]>([]);
+  protected notifVencerSuperAdmins = signal(false);
+
+  protected notifVencerTodosUsuariosSeleccionados = computed(() => {
+    const u = this.usuariosParaVencer();
+    return u.length > 0 && u.every(x => this.notifVencerUsuariosIds().includes(x._id));
+  });
+
+  protected notifVencerTodosAdminsSeleccionados = computed(() => {
+    const a = this.adminsParaVencer();
+    return a.length > 0 && a.every(x => this.notifVencerAdminsIds().includes(x._id));
+  });
+
   protected panels: Record<DocTipo, PanelState> = {
     empresa:  this.emptyPanel(),
     centro:   this.emptyPanel(),
@@ -189,6 +209,23 @@ export class DocumentosAdminPageComponent implements OnInit {
   });
 
   protected superAdminsParaRechazo = computed(() =>
+    this.usuariosService.usuarios().filter(u => u.rol === 'super_admin')
+  );
+
+  protected usuariosParaVencer = computed(() => {
+    const empresaId = this.selectedEmpresaId;
+    if (!empresaId) return [];
+    return this.usuariosService.usuarios().filter(u =>
+      u.rol === 'usuario' && asId(u.cliente_id) === empresaId
+    );
+  });
+
+  protected adminsParaVencer = computed(() => {
+    if (!this.selectedEmpresaId) return [];
+    return this.usuariosService.usuarios().filter(u => u.rol === 'admin_smartclarity');
+  });
+
+  protected superAdminsParaVencer = computed(() =>
     this.usuariosService.usuarios().filter(u => u.rol === 'super_admin')
   );
 
@@ -727,6 +764,76 @@ export class DocumentosAdminPageComponent implements OnInit {
     this.service.marcarVencido(
       docUrl, tipo, empresaId, centroId, proyectoId,
       this.empresaNombre, this.centroNombre, this.proyectoNombre,
+    );
+  }
+
+  abrirModalVencer(doc: { url: string; nombre_display: string; categoria?: string }): void {
+    this.modalVencer.set({ url: doc.url, nombre_display: doc.nombre_display, categoria: doc.categoria ?? '' });
+    this.notifVencerNotificar.set(false);
+    this.notifVencerTab.set('usuarios');
+    this.notifVencerUsuariosIds.set([]);
+    this.notifVencerAdminsIds.set([]);
+    this.notifVencerSuperAdmins.set(false);
+  }
+
+  cerrarModalVencer(): void {
+    this.modalVencer.set(null);
+  }
+
+  confirmarVencer(): void {
+    const m = this.modalVencer();
+    if (!m) return;
+
+    const notif       = this.notifVencerNotificar();
+    const selIds      = [...this.notifVencerUsuariosIds(), ...this.notifVencerAdminsIds()];
+    const superAdmins = this.notifVencerSuperAdmins();
+
+    const notificacion = !notif
+      ? { notificar: false as const }
+      : selIds.length === 0
+        ? { notificar: true as const, audiencia: 'todos' as const, notificar_super_admins: superAdmins }
+        : { notificar: true as const, audiencia: 'especificos' as const, destinatarios_ids: selIds, notificar_super_admins: superAdmins };
+
+    const tipo       = this.docTipoActual;
+    const empresaId  = this.selectedEmpresaId;
+    const centroId   = (this.selectedCentroId   && this.selectedCentroId   !== 'todos') ? this.selectedCentroId   : undefined;
+    const proyectoId = (this.selectedProyectoId && this.selectedProyectoId !== 'todos') ? this.selectedProyectoId : undefined;
+
+    this.service.marcarVencido(
+      m.url, tipo, empresaId, centroId, proyectoId,
+      this.empresaNombre, this.centroNombre, this.proyectoNombre,
+      notificacion,
+    );
+    this.cerrarModalVencer();
+  }
+
+  toggleNotifVencerNotificar(): void { this.notifVencerNotificar.update(v => !v); }
+
+  toggleSeleccionarTodosUsuariosVencer(): void {
+    if (this.notifVencerTodosUsuariosSeleccionados()) {
+      this.notifVencerUsuariosIds.set([]);
+    } else {
+      this.notifVencerUsuariosIds.set(this.usuariosParaVencer().map(u => u._id));
+    }
+  }
+
+  toggleSeleccionarTodosAdminsVencer(): void {
+    if (this.notifVencerTodosAdminsSeleccionados()) {
+      this.notifVencerAdminsIds.set([]);
+    } else {
+      this.notifVencerAdminsIds.set(this.adminsParaVencer().map(u => u._id));
+    }
+  }
+
+  toggleNotifVencerUsuario(id: string): void {
+    this.notifVencerUsuariosIds.update(ids =>
+      ids.includes(id) ? ids.filter(x => x !== id) : [...ids, id]
+    );
+  }
+
+  toggleNotifVencerAdmin(id: string): void {
+    this.notifVencerAdminsIds.update(ids =>
+      ids.includes(id) ? ids.filter(x => x !== id) : [...ids, id]
     );
   }
 

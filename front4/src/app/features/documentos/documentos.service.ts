@@ -265,11 +265,13 @@ export class DocumentosService {
     empresaNombre?: string,
     centroNombre?: string,
     proyectoNombre?: string,
+    notificacion?: { notificar: boolean; audiencia?: 'todos' | 'especificos'; destinatarios_ids?: string[]; notificar_super_admins?: boolean },
   ): void {
-    const body: Record<string, string> = {};
+    const body: Record<string, unknown> = {};
     if (empresaNombre)  body['empresa_nombre']  = empresaNombre;
     if (centroNombre)   body['centro_nombre']   = centroNombre;
     if (proyectoNombre) body['proyecto_nombre'] = proyectoNombre;
+    if (notificacion)   body['notificacion']    = notificacion;
 
     this.http.patch(docUrl + '/vencer', body).subscribe({
       next: () => {
