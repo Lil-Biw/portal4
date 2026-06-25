@@ -118,8 +118,24 @@ export class ProyectosService {
     return { message: 'Proyecto cerrado', id };
   }
 
-  agregarDocumento(id: string, archivo: ArchivoInput, nombreDisplay?: string, categoria?: string, usuarioId?: string) {
-    return this.docsHelper.agregar(id, archivo, nombreDisplay, categoria, usuarioId);
+  async agregarDocumento(id: string, archivo: ArchivoInput, nombreDisplay?: string, categoria?: string, usuarioId?: string) {
+    const result = await this.docsHelper.agregar(id, archivo, nombreDisplay, categoria, usuarioId);
+    this.notificarSubidaDocumento(id, result.nombre_display, result.categoria).catch(() => {});
+    return result;
+  }
+
+  private async notificarSubidaDocumento(proyectoId: string, nombre: string, categoria?: string): Promise<void> {
+    const proyecto = await this.proyectoModel.findById(proyectoId).select('nombre').lean() as any;
+    const contexto = proyecto ? `Proyecto: ${proyecto.nombre}` : 'Proyecto';
+    const admins = await this.usuarioModel
+      .find({ rol: { $in: ['admin_smartclarity', 'super_admin'] }, activo: true })
+      .select('nombre email')
+      .lean();
+    if (!admins.length) return;
+    await this.mailService.notificarNuevoDocumento({
+      destinatarios: admins.map(a => ({ nombre: a.nombre, email: a.email })),
+      documento: { nombre, categoria: categoria ?? 'Sin categoría', contexto },
+    });
   }
 
   listarDocumentos(id: string) {
