@@ -2,9 +2,11 @@ import {
   IsString, IsOptional, IsBoolean,
   IsMongoId, MinLength,
   IsArray, ArrayMinSize, ArrayMaxSize, IsInt, Min, Max,
-  IsNumber,
+  IsNumber, ValidateNested,
 } from 'class-validator';
+import { Type } from 'class-transformer';
 import { PartialType } from '@nestjs/mapped-types';
+import { NotificacionOpcionesDto } from '../common/dto/notificacion-opciones.dto';
 
 export class CreateCentroCostoDto {
   @IsMongoId() @IsOptional() cliente_id?: string;
@@ -36,4 +38,5 @@ export class UpdateScoreSmartclarityDto {
 export class VencerDocumentoCentroDto {
   @IsString() @IsOptional() empresa_nombre?: string;
   @IsString() @IsOptional() centro_nombre?: string;
+  @IsOptional() @ValidateNested() @Type(() => NotificacionOpcionesDto) notificacion?: NotificacionOpcionesDto;
 }

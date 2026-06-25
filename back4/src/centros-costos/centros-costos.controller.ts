@@ -102,7 +102,7 @@ export class CentrosCostosController {
     @Param('docId') docId: string,
     @Body() dto: VencerDocumentoCentroDto,
   ) {
-    return this.centrosCostosService.vencerDocumento(centroId, docId, empresaId, dto.empresa_nombre, dto.centro_nombre);
+    return this.centrosCostosService.vencerDocumento(centroId, docId, empresaId, dto.empresa_nombre, dto.centro_nombre, dto.notificacion);
   }
 }
 
