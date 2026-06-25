@@ -1,8 +1,11 @@
 import {
   IsString, IsOptional,
   IsMongoId, IsEnum, IsDateString, MinLength,
+  ValidateNested,
 } from 'class-validator';
 import { PartialType } from '@nestjs/mapped-types';
+import { Type } from 'class-transformer';
+import { NotificacionOpcionesDto } from '../common/dto/notificacion-opciones.dto';
 
 export class CreateProyectoDto {
   @IsMongoId() @IsOptional() cliente_id?: string;
@@ -21,4 +24,5 @@ export class VencerDocumentoProyectoDto {
   @IsString() @IsOptional() empresa_nombre?: string;
   @IsString() @IsOptional() centro_nombre?: string;
   @IsString() @IsOptional() proyecto_nombre?: string;
+  @IsOptional() @ValidateNested() @Type(() => NotificacionOpcionesDto) notificacion?: NotificacionOpcionesDto;
 }

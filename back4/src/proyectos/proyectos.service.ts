@@ -1,19 +1,24 @@
-import { Injectable, NotFoundException, ConflictException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException, BadRequestException, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { ProyectoDocument } from './proyectos.schema';
 import { CreateProyectoDto, UpdateProyectoDto } from './proyectos.dto';
 import { DocumentosHelper, ArchivoInput } from '../common/helpers/documentos.helper';
 import { DocumentosVencidosService } from '../documentos-vencidos/documentos-vencidos.service';
+import { MailService } from '../mail/mail.service';
+import { NotificacionOpcionesDto } from '../common/dto/notificacion-opciones.dto';
 
 @Injectable()
 export class ProyectosService {
   private readonly docsHelper: DocumentosHelper;
+  private readonly logger = new Logger(ProyectosService.name);
 
   constructor(
     @InjectModel('Proyecto') private proyectoModel: Model<ProyectoDocument>,
     @InjectModel('CentroCosto') private centroCostoModel: Model<any>,
+    @InjectModel('Usuario') private readonly usuarioModel: Model<{ nombre: string; email: string; rol: string; cliente_id: Types.ObjectId; centros_asignados: Types.ObjectId[]; activo: boolean }>,
     private readonly documentosVencidosService: DocumentosVencidosService,
+    private readonly mailService: MailService,
   ) {
     this.docsHelper = new DocumentosHelper(proyectoModel, 'Proyecto');
   }
@@ -133,6 +138,7 @@ export class ProyectosService {
     proyectoId: string, docId: string,
     empresaId: string, centroId: string,
     empresaNombre?: string, centroNombre?: string, proyectoNombre?: string,
+    notificacion?: NotificacionOpcionesDto,
   ) {
     const proyecto = await this.proyectoModel.findById(proyectoId);
     if (!proyecto) throw new NotFoundException(`Proyecto ${proyectoId} no encontrado`);
@@ -160,6 +166,77 @@ export class ProyectosService {
       subido_en:       doc.subido_en,
     });
 
+    void this.notificarVencimiento(
+      empresaId,
+      centroId,
+      doc.nombre_display as string,
+      doc.categoria as string,
+      proyectoNombre ?? centroNombre ?? 'proyecto',
+      notificacion,
+    );
+
     return { message: 'Documento marcado como vencido', docId };
+  }
+
+  private async notificarVencimiento(
+    empresaIdStr: string,
+    centroId: string,
+    nombreDoc: string,
+    categoria: string,
+    contextoLabel: string,
+    notificacion?: NotificacionOpcionesDto,
+  ): Promise<void> {
+    if (!notificacion?.notificar) return;
+
+    try {
+      const empresaId  = new Types.ObjectId(empresaIdStr);
+      const centroObjId = new Types.ObjectId(centroId);
+
+      let usuariosDestino: { nombre: string; email: string }[] = [];
+
+      if (notificacion.audiencia === 'especificos') {
+        usuariosDestino = await this.usuarioModel
+          .find({
+            _id: { $in: (notificacion.destinatarios_ids ?? []).map(id => new Types.ObjectId(id)) },
+            activo: true,
+            $or: [{ cliente_id: empresaId }, { rol: 'admin_smartclarity' }],
+          })
+          .select('nombre email')
+          .lean();
+      } else {
+        usuariosDestino = await this.usuarioModel
+          .find({
+            activo: true,
+            $or: [
+              { rol: 'admin_smartclarity' },
+              { cliente_id: empresaId, centros_asignados: centroObjId },
+            ],
+          })
+          .select('nombre email')
+          .lean();
+      }
+
+      const superAdmins = notificacion.notificar_super_admins
+        ? await this.usuarioModel.find({ rol: 'super_admin', activo: true }).select('nombre email').lean()
+        : [];
+
+      const vistos = new Set<string>();
+      const destinatarios: { nombre: string; email: string }[] = [];
+      for (const u of [...usuariosDestino, ...superAdmins]) {
+        if (u.email && !vistos.has(u.email)) {
+          vistos.add(u.email);
+          destinatarios.push({ nombre: u.nombre, email: u.email });
+        }
+      }
+
+      if (destinatarios.length === 0) return;
+
+      await this.mailService.notificarDocumentoVencido({
+        destinatarios,
+        documento: { nombre: nombreDoc, categoria, contexto: contextoLabel },
+      });
+    } catch (err: unknown) {
+      this.logger.error('Error al notificar vencimiento de documento:', err);
+    }
   }
 }

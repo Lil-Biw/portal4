@@ -101,6 +101,7 @@ export class ProyectosController {
     return this.proyectosService.vencerDocumento(
       proyectoId, docId, empresaId, centroId,
       dto.empresa_nombre, dto.centro_nombre, dto.proyecto_nombre,
+      dto.notificacion,
     );
   }
 }
