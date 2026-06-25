@@ -51,7 +51,9 @@ export class MiProyectoDetallePageComponent implements OnInit, OnDestroy {
     const sols = this.solicitudesService.solicitudes().filter(s =>
       p ? asId(s.proyecto_id) === asId(p._id) : false
     );
-    return calcularScoreDocumental(sols);
+    const docsActivos  = this.documentosService.documentosProyecto().length;
+    const docsVencidos = this.documentosService.documentosVencidos().length;
+    return calcularScoreDocumental(sols, docsActivos, docsVencidos);
   });
 
   protected scoreChipVariant = computed((): ChipVariant => scoreChipVariantFn(this.scoreDoc().pct));
@@ -65,13 +67,15 @@ export class MiProyectoDetallePageComponent implements OnInit, OnDestroy {
   });
 
   constructor() {
-    // Carga documentos cuando el proyecto está disponible (puede llegar async via cargarUno)
     effect(() => {
       const p   = this.proyecto();
       const emp = this.empresa();
       const c   = this.centro();
       if (!p || !emp) return;
-      untracked(() => this.documentosService.cargar('proyecto', emp._id, c?._id, p._id));
+      untracked(() => {
+        this.documentosService.cargar('proyecto', emp._id, c?._id, p._id);
+        this.documentosService.cargarVencidos(emp._id, c?._id, asId(p._id));
+      });
     });
   }
 
