@@ -3,6 +3,7 @@ import { Router } from '@angular/router';
 import { ProyectosService } from '../proyectos.service';
 import { CentrosService } from '../../centros/centros.service';
 import { SolicitudesService } from '../../solicitudes/solicitudes.service';
+import { DocumentosService } from '../../documentos/documentos.service';
 import { ConsumidorContextService } from '../../../profile/consumidor-context.service';
 import { DonutArcComponent } from '../../../shared/components/donut-arc/donut-arc.component';
 import { Proyecto } from '../../../shared/models/proyecto.model';
@@ -31,6 +32,7 @@ export class MisProyectosPageComponent {
   protected readonly proyectosService   = inject(ProyectosService);
   protected readonly centrosService     = inject(CentrosService);
   protected readonly solicitudesService = inject(SolicitudesService);
+  private  readonly documentosService   = inject(DocumentosService);
 
   protected mostrarBuscar = signal(false);
   protected busqueda      = signal('');
@@ -87,13 +89,25 @@ export class MisProyectosPageComponent {
         this.solicitudesService.cargar(emp._id);
       }
     });
+
+    effect(() => {
+      const emp      = this.consumidorContext.empresaSeleccionada();
+      const centros  = this.centrosService.centros()
+        .filter(c => asId(c.cliente_id) === asId(emp?._id ?? ''));
+      const proyectos = this.proyectos();
+      if (!emp) return;
+      this.documentosService.cargarTodosProyectos(emp._id, proyectos, centros);
+    });
   }
 
 
   scoreDeProyecto(proyectoId: string) {
     const sols = this.solicitudesService.solicitudes()
-      .filter(s => s.proyecto_id === proyectoId);
-    return calcularScoreDocumental(sols);
+      .filter(s => asId(s.proyecto_id) === proyectoId);
+    const grupo = this.documentosService.documentosPorProyecto()
+      .find(g => g.proyectoId === proyectoId);
+    const docsActivos = grupo?.docs.length ?? 0;
+    return calcularScoreDocumental(sols, docsActivos, 0);
   }
 
   verDetalle(proyecto: Proyecto): void {
