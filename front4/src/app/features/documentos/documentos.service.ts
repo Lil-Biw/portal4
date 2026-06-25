@@ -61,7 +61,7 @@ export class DocumentosService {
   readonly documentosEmpresa     = signal<DocumentoItem[]>([]);
   readonly documentosCentro      = signal<DocumentoItem[]>([]);
   readonly documentosProyecto    = signal<DocumentoItem[]>([]);
-  readonly documentosPorCentro   = signal<{ nombre: string; docs: DocumentoItem[] }[]>([]);
+  readonly documentosPorCentro   = signal<{ nombre: string; centroId: string; docs: DocumentoItem[] }[]>([]);
   readonly documentosPorProyecto = signal<{ nombre: string; proyectoId: string; centroNombre: string; docs: DocumentoItem[] }[]>([]);
   readonly uploadStatus = signal<Record<DocTipo, Status | null>>({
     empresa: null, centro: null, proyecto: null,
@@ -114,7 +114,8 @@ export class DocumentosService {
     forkJoin(calls).subscribe({
       next: results => this.documentosPorCentro.set(
         centros.map((c, i) => ({
-          nombre: c.nombre,
+          nombre:    c.nombre,
+          centroId:  asId(c._id),
           docs: results[i].map(d => this.addUrl(d, `/empresas/${empresaId}/centros/${c._id}/documentos/${d._id}`)),
         })).filter(x => x.docs.length > 0)
       ),

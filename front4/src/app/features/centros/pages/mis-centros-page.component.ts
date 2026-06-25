@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, inject, computed, signal } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, computed, signal, effect, untracked } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
@@ -93,7 +93,9 @@ export class MisCentrosPageComponent implements OnInit, OnDestroy {
     if (!centro) return calcularScoreDocumental([]);
     const sols = this.solicitudesService.solicitudes()
       .filter(s => s.centro_costo_id === asId(centro._id));
-    return calcularScoreDocumental(sols);
+    const docsActivos  = this.documentosService.documentosCentro().length;
+    const docsVencidos = this.documentosService.documentosVencidos().length;
+    return calcularScoreDocumental(sols, docsActivos, docsVencidos);
   });
 
   protected solicitudesDelCentro = computed(() => {
@@ -106,7 +108,10 @@ export class MisCentrosPageComponent implements OnInit, OnDestroy {
   scoreDeCentro(centroId: string) {
     const sols = this.solicitudesService.solicitudes()
       .filter(s => s.centro_costo_id === centroId);
-    return calcularScoreDocumental(sols);
+    const grupo = this.documentosService.documentosPorCentro()
+      .find(g => g.centroId === centroId);
+    const docsActivos = grupo?.docs.length ?? 0;
+    return calcularScoreDocumental(sols, docsActivos, 0);
   }
 
   protected readonly estadoStyle = estadoStyleFn;
@@ -132,6 +137,15 @@ export class MisCentrosPageComponent implements OnInit, OnDestroy {
     );
   });
 
+  constructor() {
+    effect(() => {
+      const emp     = this.consumidorContext.empresaSeleccionada();
+      const centros = this.centros();
+      if (!emp || !centros.length) return;
+      untracked(() => this.documentosService.cargarTodosCentros(emp._id, centros));
+    });
+  }
+
   ngOnInit(): void {
     const emp = this.empresa;
     if (emp) {
@@ -150,6 +164,7 @@ export class MisCentrosPageComponent implements OnInit, OnDestroy {
     const emp = this.empresa;
     if (emp) {
       this.documentosService.cargar('centro', emp._id, asId(centro._id));
+      this.documentosService.cargarVencidos(emp._id, asId(centro._id));
       this.activosService.cargarParaConsumidor(emp._id, asId(centro._id));
     }
   }
