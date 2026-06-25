@@ -3,7 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { ApiService } from '../../core/services/api.service';
 import { CategoriaDocumento } from '../documentos/documentos.service';
 
-export type EstadoSolicitud = 'pendiente' | 'revision' | 'aprobado' | 'rechazado';
+export type EstadoSolicitud = 'pendiente' | 'revision' | 'aprobado' | 'rechazado' | 'vencido';
 
 export interface Solicitud {
   _id: string;
@@ -197,6 +197,7 @@ export class SolicitudesService {
     const map: Record<EstadoSolicitud, string> = {
       pendiente: 'Pendiente', revision: 'En revisión',
       aprobado: 'Aprobado',   rechazado: 'Rechazado',
+      vencido:  'Vencido',
     };
     return map[estado];
   }
