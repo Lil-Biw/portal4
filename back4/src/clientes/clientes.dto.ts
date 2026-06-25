@@ -4,6 +4,7 @@ import {
   IsArray, ArrayMinSize, ArrayMaxSize, IsInt, Min, Max,
 } from 'class-validator';
 import { Type } from 'class-transformer';
+import { NotificacionOpcionesDto } from '../common/dto/notificacion-opciones.dto';
 import { PartialType } from '@nestjs/mapped-types';
 
 class DireccionDto {
@@ -43,4 +44,5 @@ export class UpdateConfigGraficoDto {
 
 export class VencerDocumentoEmpresaDto {
   @IsString() @IsOptional() empresa_nombre?: string;
+  @IsOptional() @ValidateNested() @Type(() => NotificacionOpcionesDto) notificacion?: NotificacionOpcionesDto;
 }
