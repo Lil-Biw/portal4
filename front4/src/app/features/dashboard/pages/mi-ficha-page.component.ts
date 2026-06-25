@@ -2,6 +2,7 @@ import { Component, inject, computed, effect, untracked, signal } from '@angular
 import { Router } from '@angular/router';
 import { ConsumidorContextService } from '../../../profile/consumidor-context.service';
 import { SolicitudesService } from '../../solicitudes/solicitudes.service';
+import { DocumentosService } from '../../documentos/documentos.service';
 import { CentrosService } from '../../centros/centros.service';
 import { ProyectosService } from '../../proyectos/proyectos.service';
 import { ActividadesService } from '../../actividades/actividades.service';
@@ -22,6 +23,7 @@ import { asId, calcularScoreDocumental, scoreChipVariantFn, scoreChipLabelFn, es
 export class MiFichaPageComponent {
   private readonly consumidorContext   = inject(ConsumidorContextService);
   private readonly solicitudesService  = inject(SolicitudesService);
+  private readonly documentosService   = inject(DocumentosService);
   private readonly centrosService      = inject(CentrosService);
 
   constructor() {
@@ -29,10 +31,24 @@ export class MiFichaPageComponent {
       const emp = this.consumidorContext.empresaSeleccionada();
       if (emp) {
         untracked(() => {
+          this.centrosService.cargarPorEmpresa(emp._id);
           this.proyectosService.cargarPorEmpresa(emp._id);
           this.solicitudesService.cargar(emp._id);
         });
       }
+    });
+
+    effect(() => {
+      const emp       = this.consumidorContext.empresaSeleccionada();
+      const centros   = this.centrosDeEmpresa();
+      const proyectos = this.proyectosDeEmpresa();
+      if (!emp) return;
+      untracked(() => {
+        this.documentosService.cargarEmpresa(emp._id);
+        this.documentosService.cargarVencidos(emp._id);
+        this.documentosService.cargarTodosCentros(emp._id, centros);
+        this.documentosService.cargarTodosProyectos(emp._id, proyectos, centros);
+      });
     });
   }
   private readonly proyectosService    = inject(ProyectosService);
@@ -76,9 +92,14 @@ export class MiFichaPageComponent {
     return this.proyectosService.proyectos().filter(p => asId(p.cliente_id) === asId(emp._id));
   });
 
-  protected scoreDocumental = computed(() =>
-    calcularScoreDocumental(this.solicitudesService.solicitudes())
-  );
+  protected scoreDocumental = computed(() => {
+    const docsActivos =
+      this.documentosService.documentosEmpresa().length +
+      this.documentosService.documentosPorCentro().reduce((s, g) => s + g.docs.length, 0) +
+      this.documentosService.documentosPorProyecto().reduce((s, g) => s + g.docs.length, 0);
+    const docsVencidos = this.documentosService.documentosVencidos().length;
+    return calcularScoreDocumental(this.solicitudesService.solicitudes(), docsActivos, docsVencidos);
+  });
 
   protected solicitudesEmpresa = computed(() =>
     this.solicitudesService.solicitudes()
