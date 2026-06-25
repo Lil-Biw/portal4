@@ -19,7 +19,6 @@ interface ResumenSolicitudes {
   revision: number;
   aprobado: number;
   rechazado: number;
-  vencido: number;
 }
 
 @Component({
@@ -59,7 +58,7 @@ export class InicioPageComponent implements OnInit {
 
   protected tareasReales = computed(() =>
     this.solicitudesService.solicitudes()
-      .filter(s => s.estado === 'pendiente' || s.estado === 'rechazado' || s.estado === 'vencido')
+      .filter(s => s.estado === 'pendiente' || s.estado === 'rechazado')
   );
 
   protected proxActividades = computed(() => {
@@ -104,14 +103,13 @@ export class InicioPageComponent implements OnInit {
   }
 
   protected tareaColor(estado: string): string {
-    if (estado === 'vencido')   return '#f59e0b';
     if (estado === 'rechazado') return '#ef4444';
     return '#0095d6';
   }
 
   protected tareaLabel(estado: string): string {
     const map: Record<string, string> = {
-      pendiente: 'Pendiente', rechazado: 'Rechazado', vencido: 'Vencido',
+      pendiente: 'Pendiente', rechazado: 'Rechazado',
     };
     return map[estado] ?? estado;
   }
@@ -148,7 +146,6 @@ export class InicioPageComponent implements OnInit {
         revision:  sols.filter(s => s.estado === 'revision').length,
         aprobado,
         rechazado: sols.filter(s => s.estado === 'rechazado').length,
-        vencido:   sols.filter(s => s.estado === 'vencido').length,
       });
     }
     return result;
@@ -156,7 +153,7 @@ export class InicioPageComponent implements OnInit {
 
   resumenCentro(centroId: string): ResumenSolicitudes {
     return this.resumenPorCentro().get(centroId)
-      ?? { total: 0, pct: 50, pendiente: 0, revision: 0, aprobado: 0, rechazado: 0, vencido: 0 };
+      ?? { total: 0, pct: 50, pendiente: 0, revision: 0, aprobado: 0, rechazado: 0 };
   }
 
   protected nombreCentroById(id: string | undefined): string {

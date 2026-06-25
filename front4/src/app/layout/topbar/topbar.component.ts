@@ -304,13 +304,12 @@ export class TopbarComponent implements OnInit {
 
     // Solicitudes pendientes, vencidas o rechazadas
     this.solicitudesService.solicitudes()
-      .filter(s => s.estado === 'pendiente' || s.estado === 'vencido' || s.estado === 'rechazado')
+      .filter(s => s.estado === 'pendiente' || s.estado === 'rechazado')
       .forEach(s => {
         const centro = s.centro_costo_id ? this.centroPorId(s.centro_costo_id) : null;
         const scope  = centro ?? (s.proyecto_id ? 'Proyecto' : 'Empresa');
         const estadoTexto: Record<string, string> = {
           pendiente: 'Pendiente de entrega',
-          vencido:   'Vencida',
           rechazado: 'Rechazada',
         };
         let estadoStr = estadoTexto[s.estado] ?? s.estado;
@@ -325,7 +324,7 @@ export class TopbarComponent implements OnInit {
           tipo:        'solicitud',
           titulo:      s.nombre,
           detalle:     partes.join(' · '),
-          color:       s.estado === 'vencido' ? '#f59e0b' : s.estado === 'rechazado' ? '#ef4444' : '#0095d6',
+          color:       s.estado === 'rechazado' ? '#ef4444' : '#0095d6',
           urgente:     s.estado !== 'pendiente',
           icono:       'file',
           ruta:        '/documentos',

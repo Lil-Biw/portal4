@@ -84,7 +84,6 @@ export class MiProyectoDetallePageComponent implements OnInit, OnDestroy {
   protected estadoSolStyle(estado: string): string {
     if (estado === 'aprobado')  return 'background:rgba(34,197,94,.1);color:#16a34a';
     if (estado === 'revision')  return 'background:rgba(245,158,11,.1);color:#d97706';
-    if (estado === 'vencido')   return 'background:rgba(239,68,68,.1);color:#ef4444';
     if (estado === 'rechazado') return 'background:rgba(239,68,68,.1);color:#ef4444';
     return 'background:rgba(34,33,33,.07);color:#6b7280';
   }

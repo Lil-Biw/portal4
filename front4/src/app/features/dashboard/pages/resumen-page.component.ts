@@ -257,15 +257,14 @@ export class ResumenPageComponent implements OnInit {
     const centros  = this.centrosService.centros();
     const clientes = this.clientesService.clientes();
 
-    const PRIORIDAD: Record<string, number> = { vencido: 0, pendiente: 1, revision: 2 };
+    const PRIORIDAD: Record<string, number> = { pendiente: 0, revision: 1 };
     const BADGE: Record<string, { label: string; cls: string; color: string }> = {
-      vencido:  { label: 'Vencida',      cls: 'badge-red',    color: '#ef4444' },
-      pendiente:{ label: 'Pendiente',    cls: 'badge-orange',  color: '#f59e0b' },
-      revision: { label: 'En revisión',  cls: 'badge-gray',    color: '#6b7280' },
+      pendiente: { label: 'Pendiente',   cls: 'badge-orange', color: '#f59e0b' },
+      revision:  { label: 'En revisión', cls: 'badge-gray',   color: '#6b7280' },
     };
 
     return this.todasSolicitudes()
-      .filter(s => s.estado === 'vencido' || s.estado === 'pendiente' || s.estado === 'revision')
+      .filter(s => s.estado === 'pendiente' || s.estado === 'revision')
       .sort((a, b) => (PRIORIDAD[a.estado] ?? 9) - (PRIORIDAD[b.estado] ?? 9))
       .slice(0, 4)
       .map(s => {

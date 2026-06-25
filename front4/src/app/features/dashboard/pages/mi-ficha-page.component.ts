@@ -143,10 +143,8 @@ export class MiFichaPageComponent {
     const sols = this.solicitudesService.solicitudes()
       .filter(s => s.centro_costo_id === centroId);
     if (sols.length === 0) return 'Sin solicitudes';
-    const vencido  = sols.filter(s => s.estado === 'vencido').length;
     const revision = sols.filter(s => s.estado === 'revision').length;
     const base = `${sols.length} doc${sols.length !== 1 ? 's' : ''}`;
-    if (vencido > 0)  return `${base} · ${vencido} vencido${vencido !== 1 ? 's' : ''}`;
     if (revision > 0) return `${base} · ${revision} en revisión`;
     return `${base} · al día`;
   }
@@ -156,10 +154,8 @@ export class MiFichaPageComponent {
     const sols = this.solicitudesService.solicitudes()
       .filter(s => s.proyecto_id === proyectoId);
     if (sols.length === 0) return 'Sin solicitudes';
-    const vencido  = sols.filter(s => s.estado === 'vencido').length;
     const revision = sols.filter(s => s.estado === 'revision').length;
     const base = `${sols.length} doc${sols.length !== 1 ? 's' : ''}`;
-    if (vencido > 0)  return `${base} · ${vencido} vencido${vencido !== 1 ? 's' : ''}`;
     if (revision > 0) return `${base} · ${revision} en revisión`;
     return `${base} · al día`;
   }
