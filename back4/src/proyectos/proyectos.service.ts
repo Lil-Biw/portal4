@@ -4,6 +4,7 @@ import { Model, Types } from 'mongoose';
 import { ProyectoDocument } from './proyectos.schema';
 import { CreateProyectoDto, UpdateProyectoDto } from './proyectos.dto';
 import { DocumentosHelper, ArchivoInput } from '../common/helpers/documentos.helper';
+import { notificarDocumentoSubido } from '../common/helpers/notificar-documento.helper';
 import { DocumentosVencidosService } from '../documentos-vencidos/documentos-vencidos.service';
 import { MailService } from '../mail/mail.service';
 import { NotificacionOpcionesDto } from '../common/dto/notificacion-opciones.dto';
@@ -118,23 +119,25 @@ export class ProyectosService {
     return { message: 'Proyecto cerrado', id };
   }
 
-  async agregarDocumento(id: string, archivo: ArchivoInput, nombreDisplay?: string, categoria?: string, usuarioId?: string) {
+  async agregarDocumento(id: string, archivo: ArchivoInput, nombreDisplay?: string, categoria?: string, usuarioId?: string, rolUploader?: string) {
     const result = await this.docsHelper.agregar(id, archivo, nombreDisplay, categoria, usuarioId);
-    this.notificarSubidaDocumento(id, result.nombre_display, result.categoria).catch(() => {});
+    if (rolUploader === 'usuario') {
+      this.notificarSubidaDocumento(id, result.nombre_display, result.categoria)
+        .catch((err: unknown) => this.logger.error('Error al notificar subida de documento (proyecto):', err));
+    }
     return result;
   }
 
   private async notificarSubidaDocumento(proyectoId: string, nombre: string, categoria?: string): Promise<void> {
     const proyecto = await this.proyectoModel.findById(proyectoId).select('nombre').lean() as any;
     const contexto = proyecto ? `Proyecto: ${proyecto.nombre}` : 'Proyecto';
-    const admins = await this.usuarioModel
-      .find({ rol: { $in: ['admin_smartclarity', 'super_admin'] }, activo: true })
-      .select('nombre email')
-      .lean();
-    if (!admins.length) return;
-    await this.mailService.notificarNuevoDocumento({
-      destinatarios: admins.map(a => ({ nombre: a.nombre, email: a.email })),
-      documento: { nombre, categoria: categoria ?? 'Sin categoría', contexto },
+    await notificarDocumentoSubido({
+      contexto,
+      nombre,
+      categoria: categoria ?? 'Sin categoría',
+      usuarioModel: this.usuarioModel as any,
+      mailService: this.mailService,
+      logger: this.logger,
     });
   }
 

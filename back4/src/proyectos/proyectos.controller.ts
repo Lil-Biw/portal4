@@ -1,9 +1,9 @@
 import {
   Controller, Get, Post, Put, Delete, Patch,
-  Param, Body, Query, UseGuards, Res,
+  Param, Body, Query, UseGuards, Res, Req,
   UseInterceptors, UploadedFile, BadRequestException,
 } from '@nestjs/common';
-import { Response } from 'express';
+import { Request, Response } from 'express';
 import { sendFile } from '../common/helpers/send-file.helper';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
@@ -60,9 +60,11 @@ export class ProyectosController {
     @UploadedFile() archivo: Express.Multer.File & { buffer: Buffer },
     @Body('nombre_display') nombreDisplay?: string,
     @Body('categoria') categoria?: string,
+    @Req() req?: Request,
   ) {
     if (!archivo) throw new BadRequestException('No se proporcionó archivo');
-    return this.proyectosService.agregarDocumento(proyectoId, archivo, nombreDisplay, categoria);
+    const rolUploader = (req as any)?.user?.rol as string | undefined;
+    return this.proyectosService.agregarDocumento(proyectoId, archivo, nombreDisplay, categoria, undefined, rolUploader);
   }
 
   @Get(':proyectoId/documentos')
