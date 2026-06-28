@@ -212,11 +212,12 @@ export class DocumentosService {
     });
   }
 
-  eliminar(docUrl: string, tipo: DocTipo, empresaId: string, centroId?: string, proyectoId?: string): void {
+  eliminar(docUrl: string, tipo: DocTipo, empresaId: string, centroId?: string, proyectoId?: string, onSuccess?: () => void): void {
     if (!docUrl) { this.setUploadStatus(tipo, { type: 'error', text: 'URL de documento no disponible' }); return; }
     this.http.delete(docUrl).subscribe({
       next: () => {
         this.setUploadStatus(tipo, { type: 'ok', text: 'Documento eliminado' });
+        if (onSuccess) { onSuccess(); return; }
         if (tipo === 'empresa') this.cargarEmpresa(empresaId);
         else if (tipo === 'centro' && centroId) this.cargarCentro(empresaId, centroId);
         else if (tipo === 'proyecto' && centroId && proyectoId) this.cargarProyecto(empresaId, centroId, proyectoId);
@@ -245,10 +246,11 @@ export class DocumentosService {
     });
   }
 
-  cargarVencidos(empresaId: string, centroId?: string, proyectoId?: string): void {
+  cargarVencidos(empresaId: string, centroId?: string, proyectoId?: string, tipo?: 'empresa' | 'centro' | 'proyecto'): void {
     const params: Record<string, string> = { empresaId };
     if (centroId)   params['centroId']   = centroId;
     if (proyectoId) params['proyectoId'] = proyectoId;
+    if (tipo)       params['tipo']       = tipo;
     const qs = new URLSearchParams(params).toString();
     this.http.get<DocumentoVencidoItem[]>(this.api.url(`/documentos-vencidos?${qs}`)).subscribe({
       next:  (v) => this.documentosVencidos.set(
@@ -268,6 +270,7 @@ export class DocumentosService {
     centroNombre?: string,
     proyectoNombre?: string,
     notificacion?: { notificar: boolean; audiencia?: 'todos' | 'especificos'; destinatarios_ids?: string[]; notificar_super_admins?: boolean },
+    onSuccess?: () => void,
   ): void {
     const body: Record<string, unknown> = {};
     if (empresaNombre)  body['empresa_nombre']  = empresaNombre;
@@ -278,6 +281,7 @@ export class DocumentosService {
     this.http.patch(docUrl + '/vencer', body).subscribe({
       next: () => {
         this.setUploadStatus(tipo, { type: 'ok', text: 'Documento marcado como vencido' });
+        if (onSuccess) { onSuccess(); return; }
         if (tipo === 'empresa') this.cargarEmpresa(empresaId);
         else if (tipo === 'centro'   && centroId)               this.cargarCentro(empresaId, centroId);
         else if (tipo === 'proyecto' && centroId && proyectoId) this.cargarProyecto(empresaId, centroId, proyectoId);

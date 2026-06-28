@@ -187,7 +187,7 @@ export class MailService {
 
   async notificarNuevoDocumento(params: {
     destinatarios: { nombre: string; email: string }[];
-    documento: { nombre: string; categoria: string; contexto: string };
+    documento: { nombre: string; categoria: string; contexto: string; subioPor?: string };
   }): Promise<void> {
     const portalUrl = this.config.get<string>('PORTAL_URL') ?? 'http://localhost:4200';
     await this.enviarATodos(
@@ -198,6 +198,7 @@ export class MailService {
         nombre:       params.documento.nombre,
         categoria:    params.documento.categoria,
         contexto:     params.documento.contexto,
+        subioPor:     params.documento.subioPor,
         portalUrl,
       }),
       'nuevo-documento',

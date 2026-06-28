@@ -65,7 +65,7 @@
           [style.background]="tabJerarquia() === 'empresa' ? 'rgba(0,149,214,.08)' : 'transparent'"
           [style.color]="tabJerarquia() === 'empresa' ? '#0095d6' : '#6b7280'"
           [style.borderColor]="tabJerarquia() === 'empresa' ? 'rgba(0,149,214,.18)' : 'transparent'"
-          (click)="tabJerarquia.set('empresa'); tabConsumidorActiva.set('documentacion'); filtroTipoSolicitud.set(''); filtroEstado.set('')">
+          (click)="seleccionarTabJerarquiaC('empresa')">
           <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"/>
             <path d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"/>
@@ -79,7 +79,7 @@
           [style.background]="tabJerarquia() === 'centro' ? 'rgba(16,185,129,.08)' : 'transparent'"
           [style.color]="tabJerarquia() === 'centro' ? '#059669' : '#6b7280'"
           [style.borderColor]="tabJerarquia() === 'centro' ? 'rgba(16,185,129,.18)' : 'transparent'"
-          (click)="tabJerarquia.set('centro'); tabConsumidorActiva.set('documentacion'); filtroTipoSolicitud.set(''); filtroEstado.set('')">
+          (click)="seleccionarTabJerarquiaC('centro')">
           <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <polygon points="12 2 2 7 12 12 22 7 12 2"/>
             <polyline points="2 17 12 22 22 17"/>
@@ -94,7 +94,7 @@
           [style.borderColor]="tabJerarquia() === 'proyecto' ? 'rgba(245,158,11,.18)' : 'transparent'"
           [disabled]="!selectedCentroIdC()"
           [style.opacity]="!selectedCentroIdC() ? '0.45' : '1'"
-          (click)="tabJerarquia.set('proyecto'); tabConsumidorActiva.set('documentacion'); filtroTipoSolicitud.set(''); filtroEstado.set('')">
+          (click)="seleccionarTabJerarquiaC('proyecto')">
           <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
           </svg>
@@ -394,21 +394,28 @@
                   <div style="display:flex;align-items:center;justify-content:space-between;padding:.6rem 1rem;border-bottom:1px solid #f3f4f6">
                     <div style="display:flex;align-items:center;gap:.6rem;min-width:0">
                       <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-                      <span style="font-size:.7rem;font-weight:600;padding:.2rem .55rem;border-radius:999px;background:#e0e7ff;color:#3730a3;white-space:nowrap;flex-shrink:0">{{ d.categoria }}</span>
-                      <span style="font-size:.875rem;color:#1f2937;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ d.nombre_display }}</span>
+                      <div style="min-width:0;overflow:hidden">
+                        <div style="display:flex;align-items:center;gap:.4rem;flex-wrap:wrap">
+                          <span style="font-size:.7rem;font-weight:600;padding:.2rem .55rem;border-radius:999px;background:#e0e7ff;color:#3730a3;white-space:nowrap;flex-shrink:0">{{ d.categoria }}</span>
+                          <span style="font-size:.875rem;color:#1f2937;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ d.nombre_display }}</span>
+                        </div>
+                        <div style="margin-top:.2rem">
+                          @if (docTipo === 'empresa') {
+                            <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:#f3f4f6;color:#6b7280">Empresa</span>
+                          } @else if (docTipo === 'centro') {
+                            <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:#eff6ff;color:#1d4ed8">Centro{{ centroNombreC ? ' · ' + centroNombreC : '' }}</span>
+                          } @else if (docTipo === 'proyecto') {
+                            <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:#f5f3ff;color:#6d28d9">Proyecto{{ proyectoNombreC ? ' · ' + proyectoNombreC : '' }}</span>
+                          }
+                        </div>
+                      </div>
                     </div>
                     <div style="display:flex;gap:.35rem;flex-shrink:0">
                       <button title="Descargar" (click)="service.descargar(d.url, d.nombre_display)"
                               style="width:32px;height:32px;border-radius:7px;border:none;background:#eff6ff;color:#0095d6;cursor:pointer;display:flex;align-items:center;justify-content:center">
                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                       </button>
-                      @if (puedeVencer()) {
-                      <button title="Marcar vencido" (click)="marcarVencidoConsumidor(d.url)"
-                              style="width:32px;height:32px;border-radius:7px;border:none;background:#fffbeb;color:#d97706;cursor:pointer;display:flex;align-items:center;justify-content:center">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                      </button>
-                      }
-                      <button title="Eliminar" (click)="eliminar(d.url, docTipo)"
+<button title="Eliminar" (click)="eliminar(d.url, docTipo)"
                               style="width:32px;height:32px;border-radius:7px;border:none;background:#fef2f2;color:#dc2626;cursor:pointer;display:flex;align-items:center;justify-content:center">
                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
                       </button>
@@ -436,8 +443,15 @@
                     <div style="display:flex;align-items:center;justify-content:space-between;padding:.6rem 1rem;border-bottom:1px solid #f3f4f6">
                       <div style="display:flex;align-items:center;gap:.6rem;min-width:0">
                         <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-                        <span style="font-size:.7rem;font-weight:600;padding:.2rem .55rem;border-radius:999px;background:#e0e7ff;color:#3730a3;white-space:nowrap;flex-shrink:0">{{ d.categoria }}</span>
-                        <span style="font-size:.875rem;color:#1f2937;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ d.nombre_display }}</span>
+                        <div style="min-width:0;overflow:hidden">
+                          <div style="display:flex;align-items:center;gap:.4rem;flex-wrap:wrap">
+                            <span style="font-size:.7rem;font-weight:600;padding:.2rem .55rem;border-radius:999px;background:#e0e7ff;color:#3730a3;white-space:nowrap;flex-shrink:0">{{ d.categoria }}</span>
+                            <span style="font-size:.875rem;color:#1f2937;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ d.nombre_display }}</span>
+                          </div>
+                          <div style="margin-top:.2rem">
+                            <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:#eff6ff;color:#1d4ed8">Centro · {{ item.nombre }}</span>
+                          </div>
+                        </div>
                       </div>
                       <button title="Descargar" (click)="service.descargar(d.url, d.nombre_display)"
                               style="width:32px;height:32px;border-radius:7px;border:none;background:#eff6ff;color:#0095d6;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0">
@@ -470,8 +484,15 @@
                     <div style="display:flex;align-items:center;justify-content:space-between;padding:.6rem 1rem;border-bottom:1px solid #f3f4f6">
                       <div style="display:flex;align-items:center;gap:.6rem;min-width:0">
                         <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-                        <span style="font-size:.7rem;font-weight:600;padding:.2rem .55rem;border-radius:999px;background:#e0e7ff;color:#3730a3;white-space:nowrap;flex-shrink:0">{{ d.categoria }}</span>
-                        <span style="font-size:.875rem;color:#1f2937;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ d.nombre_display }}</span>
+                        <div style="min-width:0;overflow:hidden">
+                          <div style="display:flex;align-items:center;gap:.4rem;flex-wrap:wrap">
+                            <span style="font-size:.7rem;font-weight:600;padding:.2rem .55rem;border-radius:999px;background:#e0e7ff;color:#3730a3;white-space:nowrap;flex-shrink:0">{{ d.categoria }}</span>
+                            <span style="font-size:.875rem;color:#1f2937;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ d.nombre_display }}</span>
+                          </div>
+                          <div style="margin-top:.2rem">
+                            <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:#f5f3ff;color:#6d28d9">Proyecto · {{ item.nombre }}</span>
+                          </div>
+                        </div>
                       </div>
                       <button title="Descargar" (click)="service.descargar(d.url, d.nombre_display)"
                               style="width:32px;height:32px;border-radius:7px;border:none;background:#eff6ff;color:#0095d6;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0">
@@ -502,10 +523,23 @@
                   <div style="display:grid;grid-template-columns:1fr auto auto;align-items:center;padding:.6rem 1rem;border-bottom:1px solid #f3f4f6;gap:1rem">
                     <div style="display:flex;align-items:center;gap:.6rem;min-width:0">
                       <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-                      @if (v.categoria) {
-                        <span style="font-size:.7rem;font-weight:600;padding:.2rem .55rem;border-radius:999px;background:#fee2e2;color:#991b1b;white-space:nowrap;flex-shrink:0">{{ v.categoria }}</span>
-                      }
-                      <span style="font-size:.875rem;color:#1f2937;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ v.nombre_display }}</span>
+                      <div style="min-width:0;overflow:hidden">
+                        <div style="display:flex;align-items:center;gap:.4rem;flex-wrap:wrap">
+                          @if (v.categoria) {
+                            <span style="font-size:.7rem;font-weight:600;padding:.2rem .55rem;border-radius:999px;background:#fee2e2;color:#991b1b;white-space:nowrap;flex-shrink:0">{{ v.categoria }}</span>
+                          }
+                          <span style="font-size:.875rem;color:#1f2937;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ v.nombre_display }}</span>
+                        </div>
+                        <div style="margin-top:.2rem">
+                          @if (v.origen_tipo === 'empresa') {
+                            <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:#f3f4f6;color:#6b7280">Empresa</span>
+                          } @else if (v.origen_tipo === 'centro') {
+                            <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:#eff6ff;color:#1d4ed8">Centro{{ v.centro_nombre ? ' · ' + v.centro_nombre : '' }}</span>
+                          } @else if (v.origen_tipo === 'proyecto') {
+                            <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:#f5f3ff;color:#6d28d9">Proyecto{{ v.proyecto_nombre ? ' · ' + v.proyecto_nombre : '' }}</span>
+                          }
+                        </div>
+                      </div>
                     </div>
                     <div style="display:flex;flex-direction:column;gap:.15rem;flex-shrink:0;text-align:right">
                       @if (v.subido_en) {

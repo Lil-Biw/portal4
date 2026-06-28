@@ -109,8 +109,8 @@ export class DocumentosAdminPageComponent implements OnInit {
     return a.length > 0 && a.every(x => this.notifRechazoAdminsIds().includes(x._id));
   });
 
-  // modal vencer documento
-  protected modalVencer = signal<{ url: string; nombre_display: string; categoria: string } | null>(null);
+  // modal vencer documento (centroIdReal/proyectoIdReal solo cuando viene de la vista "todos")
+  protected modalVencer = signal<{ url: string; nombre_display: string; categoria: string; centroIdReal?: string; proyectoIdReal?: string } | null>(null);
 
   // notificación — vencer documento
   protected notifVencerNotificar   = signal(false);
@@ -347,8 +347,9 @@ export class DocumentosAdminPageComponent implements OnInit {
   }
 
   onCentroChange(): void {
+    const estabaEnVencidos = this.tabDocAdmin() === 'vencidos';
     this.selectedProyectoId = '';
-    this.tabDocAdmin.set('activos');
+    if (!estabaEnVencidos) this.tabDocAdmin.set('activos');
     this.service.documentosVencidos.set([]);
     this.service.documentosPorProyecto.set([]);
     if (this.selectedCentroId) this.tabJerarquia.set('centro');
@@ -364,10 +365,12 @@ export class DocumentosAdminPageComponent implements OnInit {
       this.service.documentosCentro.set([]);
     }
     this.solicitudesService.cargar(this.selectedEmpresaId, centroId);
+    if (estabaEnVencidos) this.cargarVencidosAdmin();
   }
 
   onProyectoChange(): void {
-    this.tabDocAdmin.set('activos');
+    const estabaEnVencidos = this.tabDocAdmin() === 'vencidos';
+    if (!estabaEnVencidos) this.tabDocAdmin.set('activos');
     this.service.documentosVencidos.set([]);
     if (this.selectedProyectoId) this.tabJerarquia.set('proyecto');
     const centroId   = (this.selectedCentroId   && this.selectedCentroId   !== 'todos') ? this.selectedCentroId   : undefined;
@@ -390,6 +393,7 @@ export class DocumentosAdminPageComponent implements OnInit {
       this.service.cargar('centro', this.selectedEmpresaId, centroId);
     }
     this.solicitudesService.cargar(this.selectedEmpresaId, centroId, proyectoId);
+    if (estabaEnVencidos) this.cargarVencidosAdmin();
   }
 
   // ─── upload panels ────────────────────────────────────────────────────────
@@ -492,6 +496,19 @@ export class DocumentosAdminPageComponent implements OnInit {
 
   eliminar(docUrl: string, tipo: DocTipo): void {
     this.service.eliminar(docUrl, tipo, this.selectedEmpresaId, this.selectedCentroId || undefined, this.selectedProyectoId || undefined);
+  }
+
+  eliminarEnTodosCentros(docUrl: string): void {
+    const empresaId = this.selectedEmpresaId;
+    this.service.eliminar(docUrl, 'centro', empresaId, undefined, undefined,
+      () => this.service.cargarTodosCentros(empresaId, this.centrosFiltrados));
+  }
+
+  eliminarEnTodosProyectos(docUrl: string): void {
+    const empresaId = this.selectedEmpresaId;
+    const todos = this.proyectosService.proyectos().filter(p => asId(p.cliente_id) === empresaId);
+    this.service.eliminar(docUrl, 'proyecto', empresaId, undefined, undefined,
+      () => this.service.cargarTodosProyectos(empresaId, todos, this.centrosFiltrados));
   }
 
   // ─── solicitudes (admin) ─────────────────────────────────────────────────
@@ -693,21 +710,16 @@ export class DocumentosAdminPageComponent implements OnInit {
         { valor: 'revision',  label: 'Poner en revisión', colorBg: '#dbeafe', colorText: '#1e40af' },
         { valor: 'aprobado',  label: 'Aprobar',           colorBg: '#dcfce7', colorText: '#14532d' },
         { valor: 'rechazado', label: 'Rechazar',          colorBg: '#fee2e2', colorText: '#7f1d1d' },
-        { valor: 'vencido',   label: 'Marcar vencido',    colorBg: '#f3f4f6', colorText: '#374151' },
       ],
       revision: [
         { valor: 'aprobado',  label: 'Aprobar',           colorBg: '#dcfce7', colorText: '#14532d' },
         { valor: 'rechazado', label: 'Rechazar',          colorBg: '#fee2e2', colorText: '#7f1d1d' },
         { valor: 'pendiente', label: 'Devolver',          colorBg: '#fef3c7', colorText: '#92400e' },
-        { valor: 'vencido',   label: 'Marcar vencido',    colorBg: '#f3f4f6', colorText: '#374151' },
       ],
-      aprobado: [
-        { valor: 'vencido',   label: 'Marcar vencido',    colorBg: '#f3f4f6', colorText: '#374151' },
-      ],
+      aprobado: [],
       rechazado: [
         { valor: 'pendiente', label: 'Reabrir',           colorBg: '#fef3c7', colorText: '#92400e' },
         { valor: 'aprobado',  label: 'Aprobar',           colorBg: '#dcfce7', colorText: '#14532d' },
-        { valor: 'vencido',   label: 'Marcar vencido',    colorBg: '#f3f4f6', colorText: '#374151' },
       ],
       vencido: [
         { valor: 'revision',  label: 'Poner en revisión', colorBg: '#dbeafe', colorText: '#1e40af' },
@@ -755,12 +767,20 @@ export class DocumentosAdminPageComponent implements OnInit {
     this.cargarVencidosAdmin();
   }
 
+  seleccionarTabJerarquia(tab: 'empresa' | 'centro' | 'proyecto'): void {
+    this.tabJerarquia.set(tab);
+    this.tabAdminActiva.set('documentacion');
+    if (this.tabDocAdmin() === 'vencidos') this.cargarVencidosAdmin();
+  }
+
   cargarVencidosAdmin(): void {
-    const empresaId  = this.selectedEmpresaId;
-    const centroId   = (this.selectedCentroId   && this.selectedCentroId   !== 'todos') ? this.selectedCentroId   : undefined;
-    const proyectoId = (this.selectedProyectoId && this.selectedProyectoId !== 'todos') ? this.selectedProyectoId : undefined;
+    const empresaId = this.selectedEmpresaId;
     if (!empresaId) return;
-    this.service.cargarVencidos(empresaId, centroId, proyectoId);
+    const tab = this.tabJerarquia();
+    const centroId   = tab !== 'empresa' && this.selectedCentroId   && this.selectedCentroId   !== 'todos' ? this.selectedCentroId   : undefined;
+    const proyectoId = tab === 'proyecto' && this.selectedProyectoId && this.selectedProyectoId !== 'todos' ? this.selectedProyectoId : undefined;
+    const tipo: 'empresa' | 'centro' | 'proyecto' = tab === 'centro' || tab === 'proyecto' ? tab : 'empresa';
+    this.service.cargarVencidos(empresaId, centroId, proyectoId, tipo);
   }
 
   marcarVencidoAdmin(docUrl: string): void {
@@ -774,12 +794,12 @@ export class DocumentosAdminPageComponent implements OnInit {
     );
   }
 
-  abrirModalVencer(doc: { url: string; nombre_display: string; categoria?: string }): void {
-    this.modalVencer.set({ url: doc.url, nombre_display: doc.nombre_display, categoria: doc.categoria ?? '' });
-    this.notifVencerNotificar.set(false);
+  abrirModalVencer(doc: { url: string; nombre_display: string; categoria?: string }, centroIdReal?: string, proyectoIdReal?: string): void {
+    this.modalVencer.set({ url: doc.url, nombre_display: doc.nombre_display, categoria: doc.categoria ?? '', centroIdReal, proyectoIdReal });
+    this.notifVencerNotificar.set(true);
     this.notifVencerTab.set('usuarios');
-    this.notifVencerUsuariosIds.set([]);
-    this.notifVencerAdminsIds.set([]);
+    this.notifVencerUsuariosIds.set(this.usuariosParaVencer().map(u => u._id));
+    this.notifVencerAdminsIds.set(this.adminsParaVencer().map(u => u._id));
     this.notifVencerSuperAdmins.set(false);
   }
 
@@ -803,13 +823,27 @@ export class DocumentosAdminPageComponent implements OnInit {
 
     const tipo       = this.docTipoActual;
     const empresaId  = this.selectedEmpresaId;
-    const centroId   = (this.selectedCentroId   && this.selectedCentroId   !== 'todos') ? this.selectedCentroId   : undefined;
-    const proyectoId = (this.selectedProyectoId && this.selectedProyectoId !== 'todos') ? this.selectedProyectoId : undefined;
+    const centroId   = m.centroIdReal ?? ((this.selectedCentroId   !== 'todos') ? this.selectedCentroId   : undefined);
+    const proyectoId = m.proyectoIdReal ?? ((this.selectedProyectoId !== 'todos') ? this.selectedProyectoId : undefined);
+
+    const centroNombreReal   = centroId   ? (this.centrosService.centros().find(c => asId(c._id) === centroId)?.nombre   ?? this.centroNombre)   : this.centroNombre;
+    const proyectoNombreReal = proyectoId ? (this.proyectosService.proyectos().find(p => asId(p._id) === proyectoId)?.nombre ?? this.proyectoNombre) : this.proyectoNombre;
+
+    let onSuccess: (() => void) | undefined;
+    if (this.selectedCentroId === 'todos' && m.centroIdReal) {
+      onSuccess = () => this.service.cargarTodosCentros(empresaId, this.centrosFiltrados);
+    } else if (this.selectedProyectoId === 'todos' && m.proyectoIdReal) {
+      onSuccess = () => {
+        const todos = this.proyectosService.proyectos().filter(p => asId(p.cliente_id) === empresaId);
+        this.service.cargarTodosProyectos(empresaId, todos, this.centrosFiltrados);
+      };
+    }
 
     this.service.marcarVencido(
       m.url, tipo, empresaId, centroId, proyectoId,
-      this.empresaNombre, this.centroNombre, this.proyectoNombre,
+      this.empresaNombre, centroNombreReal, proyectoNombreReal,
       notificacion,
+      onSuccess,
     );
     this.cerrarModalVencer();
   }

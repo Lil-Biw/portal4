@@ -10,11 +10,12 @@ export class DocumentosVencidosController {
   @Get()
   @Roles('super_admin', 'admin_smartclarity', 'usuario')
   listar(
-    @Query('empresaId') empresaId: string,
+    @Query('empresaId')  empresaId: string,
     @Query('centroId')   centroId?: string,
     @Query('proyectoId') proyectoId?: string,
+    @Query('tipo')       tipo?: string,
   ) {
-    return this.service.listarUltimos20(empresaId, centroId, proyectoId);
+    return this.service.listarUltimos20(empresaId, centroId, proyectoId, tipo);
   }
 
   @Get(':id')

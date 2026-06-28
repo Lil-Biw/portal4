@@ -108,19 +108,20 @@ export class CentrosCostosService {
   async agregarDocumento(id: string, archivo: ArchivoInput, nombreDisplay?: string, categoria?: string, usuarioId?: string, rolUploader?: string) {
     const result = await this.docsHelper.agregar(id, archivo, nombreDisplay, categoria, usuarioId);
     if (rolUploader === 'usuario') {
-      this.notificarSubidaDocumento(id, result.nombre_display, result.categoria)
+      this.notificarSubidaDocumento(id, result.nombre_display, result.categoria, usuarioId)
         .catch((err: unknown) => this.logger.error('Error al notificar subida de documento (centro):', err));
     }
     return result;
   }
 
-  private async notificarSubidaDocumento(centroId: string, nombre: string, categoria?: string): Promise<void> {
+  private async notificarSubidaDocumento(centroId: string, nombre: string, categoria?: string, usuarioId?: string): Promise<void> {
     const centro = await this.centroCostoModel.findById(centroId).select('nombre').lean() as any;
     const contexto = centro ? `Centro: ${centro.nombre}` : 'Centro de costos';
     await notificarDocumentoSubido({
       contexto,
       nombre,
       categoria: categoria ?? 'Sin categoría',
+      usuarioId,
       usuarioModel: this.usuarioModel as any,
       mailService: this.mailService,
       logger: this.logger,

@@ -7,7 +7,6 @@ import { CentrosService } from '../../centros/centros.service';
 import { ProyectosService } from '../../proyectos/proyectos.service';
 import { ConsumidorContextService } from '../../../profile/consumidor-context.service';
 import { SolicitudesService, EstadoSolicitud, Solicitud } from '../../solicitudes/solicitudes.service';
-import { AuthService } from '../../auth/auth.service';
 import { StatusBannerComponent } from '../../../shared/components/status-banner/status-banner.component';
 import { asId, detectarCategoriaDocumento } from '../../../shared/utils';
 
@@ -34,12 +33,7 @@ export class DocumentosConsumidorPageComponent implements OnInit {
   protected readonly consumidorContext  = inject(ConsumidorContextService);
   protected readonly solicitudesService = inject(SolicitudesService);
   private  readonly route               = inject(ActivatedRoute);
-  private  readonly authService         = inject(AuthService);
 
-  protected readonly puedeVencer = computed(() => {
-    const rol = this.authService.usuarioActual()?.rol ?? '';
-    return rol === 'super_admin' || rol === 'admin_smartclarity';
-  });
 
   private _pendingCentroId:   string | null = null;
   private _pendingProyectoId: string | null = null;
@@ -233,10 +227,12 @@ export class DocumentosConsumidorPageComponent implements OnInit {
   // ─── consumidor handlers ──────────────────────────────────────────────────
 
   onCentroChangeC(id: string): void {
+    const estabaEnVencidos = this.tabDocConsumidor() === 'vencidos';
     this.selectedCentroIdC.set(id);
     this.selectedProyectoIdC.set('');
-    this.tabDocConsumidor.set('activos');
+    if (!estabaEnVencidos) this.tabDocConsumidor.set('activos');
     this.service.documentosVencidos.set([]);
+    if (id) this.tabJerarquia.set('centro');
     const empresa = this.consumidorContext.empresaSeleccionada();
     const empresaId = empresa?._id ?? '';
     this.service.documentosPorProyecto.set([]);
@@ -251,12 +247,15 @@ export class DocumentosConsumidorPageComponent implements OnInit {
       this.service.documentosCentro.set([]);
     }
     if (empresa) this.solicitudesService.cargar(empresa._id);
+    if (estabaEnVencidos) this.cargarVencidosConsumidor();
   }
 
   onProyectoChangeC(id: string): void {
-    this.tabDocConsumidor.set('activos');
+    const estabaEnVencidos = this.tabDocConsumidor() === 'vencidos';
+    if (!estabaEnVencidos) this.tabDocConsumidor.set('activos');
     this.service.documentosVencidos.set([]);
     this.selectedProyectoIdC.set(id);
+    if (id) this.tabJerarquia.set('proyecto');
     const empresa = this.consumidorContext.empresaSeleccionada();
     const empresaId = empresa?._id ?? '';
     const centroId = this.selectedCentroIdC();
@@ -283,6 +282,15 @@ export class DocumentosConsumidorPageComponent implements OnInit {
       this.service.documentosCentro.set([]);
     }
     if (empresa) this.solicitudesService.cargar(empresa._id);
+    if (estabaEnVencidos) this.cargarVencidosConsumidor();
+  }
+
+  seleccionarTabJerarquiaC(tab: 'empresa' | 'centro' | 'proyecto'): void {
+    this.tabJerarquia.set(tab);
+    this.tabConsumidorActiva.set('documentacion');
+    this.filtroTipoSolicitud.set('');
+    this.filtroEstado.set('');
+    if (this.tabDocConsumidor() === 'vencidos') this.cargarVencidosConsumidor();
   }
 
   // ─── upload panels ────────────────────────────────────────────────────────
@@ -456,21 +464,11 @@ export class DocumentosConsumidorPageComponent implements OnInit {
   cargarVencidosConsumidor(): void {
     const empresa = this.consumidorContext.empresaSeleccionada();
     if (!empresa) return;
-    const centroId   = (this.selectedCentroIdC()   && this.selectedCentroIdC()   !== 'todos') ? this.selectedCentroIdC()   : undefined;
-    const proyectoId = (this.selectedProyectoIdC() && this.selectedProyectoIdC() !== 'todos') ? this.selectedProyectoIdC() : undefined;
-    this.service.cargarVencidos(empresa._id, centroId, proyectoId);
-  }
-
-  marcarVencidoConsumidor(docUrl: string): void {
-    const empresa = this.consumidorContext.empresaSeleccionada();
-    if (!empresa) return;
-    const tipo       = this.docTipoActual;
-    const centroId   = (this.selectedCentroIdC()   && this.selectedCentroIdC()   !== 'todos') ? this.selectedCentroIdC()   : undefined;
-    const proyectoId = (this.selectedProyectoIdC() && this.selectedProyectoIdC() !== 'todos') ? this.selectedProyectoIdC() : undefined;
-    this.service.marcarVencido(
-      docUrl, tipo, empresa._id, centroId, proyectoId,
-      this.empresaNombreC, this.centroNombreC, this.proyectoNombreC,
-    );
+    const tab = this.tabJerarquia();
+    const centroId   = tab !== 'empresa' && this.selectedCentroIdC()   && this.selectedCentroIdC()   !== 'todos' ? this.selectedCentroIdC()   : undefined;
+    const proyectoId = tab === 'proyecto' && this.selectedProyectoIdC() && this.selectedProyectoIdC() !== 'todos' ? this.selectedProyectoIdC() : undefined;
+    const tipo: 'empresa' | 'centro' | 'proyecto' = tab === 'centro' || tab === 'proyecto' ? tab : 'empresa';
+    this.service.cargarVencidos(empresa._id, centroId, proyectoId, tipo);
   }
 
   // ─── private helpers ─────────────────────────────────────────────────────

@@ -6,6 +6,7 @@ export function nuevoDocumentoHtml(params: {
   nombre: string;
   categoria: string;
   contexto: string;
+  subioPor?: string;
   portalUrl: string;
 }): string {
   return `
@@ -34,16 +35,25 @@ export function nuevoDocumentoHtml(params: {
 
       <div style="border-top:1px solid #e5e7eb"></div>
 
-      <div style="display:flex">
-        <div style="flex:1;padding:12px 16px;border-bottom:1px solid #e5e7eb;border-right:1px solid #e5e7eb">
-          <p style="font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:.5px;margin:0 0 3px">Documento</p>
-          <p style="font-size:14px;font-weight:500;color:#111827;margin:0;line-height:1.4">${e(params.nombre)}</p>
-        </div>
-        <div style="flex:1;padding:12px 16px;border-bottom:1px solid #e5e7eb">
-          <p style="font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:.5px;margin:0 0 3px">Categoría</p>
-          <p style="font-size:14px;font-weight:500;color:#111827;margin:0">${e(params.categoria)}</p>
-        </div>
-      </div>
+      <table width="100%" cellpadding="0" cellspacing="0">
+        <tr>
+          <td width="50%" style="padding:12px 16px;border-bottom:1px solid #e5e7eb;border-right:1px solid #e5e7eb;vertical-align:top">
+            <p style="font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:.5px;margin:0 0 3px">Documento</p>
+            <p style="font-size:14px;font-weight:500;color:#111827;margin:0;line-height:1.4">${e(params.nombre)}</p>
+          </td>
+          <td width="50%" style="padding:12px 16px;border-bottom:1px solid #e5e7eb;vertical-align:top">
+            <p style="font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:.5px;margin:0 0 3px">Categoría</p>
+            <p style="font-size:14px;font-weight:500;color:#111827;margin:0">${e(params.categoria)}</p>
+          </td>
+        </tr>
+        ${params.subioPor ? `
+        <tr>
+          <td colspan="2" style="padding:12px 16px;border-bottom:1px solid #e5e7eb;vertical-align:top">
+            <p style="font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:.5px;margin:0 0 3px">Subido por</p>
+            <p style="font-size:14px;font-weight:500;color:#111827;margin:0">${e(params.subioPor)}</p>
+          </td>
+        </tr>` : ''}
+      </table>
 
       <div style="padding:18px 24px">
         <a href="${e(params.portalUrl)}/documentos"

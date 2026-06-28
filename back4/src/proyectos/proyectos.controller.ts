@@ -64,7 +64,8 @@ export class ProyectosController {
   ) {
     if (!archivo) throw new BadRequestException('No se proporcionó archivo');
     const rolUploader = (req as any)?.user?.rol as string | undefined;
-    return this.proyectosService.agregarDocumento(proyectoId, archivo, nombreDisplay, categoria, undefined, rolUploader);
+    const usuarioId  = (req as any)?.user?.sub as string | undefined;
+    return this.proyectosService.agregarDocumento(proyectoId, archivo, nombreDisplay, categoria, usuarioId, rolUploader);
   }
 
   @Get(':proyectoId/documentos')

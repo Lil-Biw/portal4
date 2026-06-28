@@ -119,7 +119,7 @@ export class ClientesController {
   }
 
   @Post(':id/documentos')
-  @Roles('super_admin', 'admin_smartclarity')
+  @Roles('super_admin', 'admin_smartclarity', 'usuario')
   @UseInterceptors(FileInterceptor('archivo', { storage: memoryStorage() }))
   subirDocumento(
     @Param('id') id: string,
@@ -128,13 +128,16 @@ export class ClientesController {
     @Body('categoria') categoria?: string,
     @Req() req?: Request,
   ) {
-    this.assertEmpresaPermitida((req as any).user as JwtUser, id);
+    const user = (req as any).user as JwtUser;
+    this.assertEmpresaPermitida(user, id);
     if (!archivo) throw new BadRequestException('No se proporcionó archivo');
     return this.clientesService.agregarDocumento(
       id,
       archivo,
       nombreDisplay,
       categoria,
+      user?.rol,
+      user?.sub,
     );
   }
 
@@ -177,6 +180,6 @@ export class ClientesController {
     @Req() req: Request,
   ) {
     this.assertEmpresaPermitida((req as any).user as JwtUser, id);
-    return this.clientesService.vencerDocumento(id, docId, dto.empresa_nombre);
+    return this.clientesService.vencerDocumento(id, docId, dto.empresa_nombre, dto.notificacion);
   }
 }

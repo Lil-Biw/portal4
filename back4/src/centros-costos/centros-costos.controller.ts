@@ -70,7 +70,8 @@ export class CentrosCostosController {
   ) {
     if (!archivo) throw new BadRequestException('No se proporcionó archivo');
     const rolUploader = (req as any)?.user?.rol as string | undefined;
-    return this.centrosCostosService.agregarDocumento(centroId, archivo, nombreDisplay, categoria, undefined, rolUploader);
+    const usuarioId  = (req as any)?.user?.sub as string | undefined;
+    return this.centrosCostosService.agregarDocumento(centroId, archivo, nombreDisplay, categoria, usuarioId, rolUploader);
   }
 
   @Get(':centroId/documentos')

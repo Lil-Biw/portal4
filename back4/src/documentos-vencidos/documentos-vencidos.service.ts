@@ -20,15 +20,17 @@ export class DocumentosVencidosService {
     return doc.save();
   }
 
-  listarUltimos20(empresaId: string, centroId?: string, proyectoId?: string) {
+  listarUltimos20(empresaId: string, centroId?: string, proyectoId?: string, tipo?: string) {
     if (!empresaId || !Types.ObjectId.isValid(empresaId)) return Promise.resolve([]);
     const filter: Record<string, unknown> = { empresa_id: new Types.ObjectId(empresaId) };
-    if (proyectoId) {
+    if (proyectoId && Types.ObjectId.isValid(proyectoId)) {
       filter['proyecto_id'] = new Types.ObjectId(proyectoId);
       filter['origen_tipo'] = 'proyecto';
-    } else if (centroId) {
+    } else if (centroId && Types.ObjectId.isValid(centroId)) {
       filter['centro_id'] = new Types.ObjectId(centroId);
-      filter['origen_tipo'] = 'centro';
+      filter['origen_tipo'] = tipo === 'proyecto' ? 'proyecto' : 'centro';
+    } else if (tipo === 'proyecto' || tipo === 'centro') {
+      filter['origen_tipo'] = tipo;
     } else {
       filter['origen_tipo'] = 'empresa';
     }

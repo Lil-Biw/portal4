@@ -122,19 +122,20 @@ export class ProyectosService {
   async agregarDocumento(id: string, archivo: ArchivoInput, nombreDisplay?: string, categoria?: string, usuarioId?: string, rolUploader?: string) {
     const result = await this.docsHelper.agregar(id, archivo, nombreDisplay, categoria, usuarioId);
     if (rolUploader === 'usuario') {
-      this.notificarSubidaDocumento(id, result.nombre_display, result.categoria)
+      this.notificarSubidaDocumento(id, result.nombre_display, result.categoria, usuarioId)
         .catch((err: unknown) => this.logger.error('Error al notificar subida de documento (proyecto):', err));
     }
     return result;
   }
 
-  private async notificarSubidaDocumento(proyectoId: string, nombre: string, categoria?: string): Promise<void> {
+  private async notificarSubidaDocumento(proyectoId: string, nombre: string, categoria?: string, usuarioId?: string): Promise<void> {
     const proyecto = await this.proyectoModel.findById(proyectoId).select('nombre').lean() as any;
     const contexto = proyecto ? `Proyecto: ${proyecto.nombre}` : 'Proyecto';
     await notificarDocumentoSubido({
       contexto,
       nombre,
       categoria: categoria ?? 'Sin categoría',
+      usuarioId,
       usuarioModel: this.usuarioModel as any,
       mailService: this.mailService,
       logger: this.logger,

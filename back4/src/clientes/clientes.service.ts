@@ -1,18 +1,24 @@
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { Cliente, ClienteDocument } from './clientes.schema';
 import { CreateClienteDto, UpdateClienteDto } from './clientes.dto';
 import { DocumentosHelper, ArchivoInput } from '../common/helpers/documentos.helper';
 import { DocumentosVencidosService } from '../documentos-vencidos/documentos-vencidos.service';
+import { notificarDocumentoSubido } from '../common/helpers/notificar-documento.helper';
+import { MailService } from '../mail/mail.service';
+import { NotificacionOpcionesDto } from '../common/dto/notificacion-opciones.dto';
 
 @Injectable()
 export class ClientesService {
   private readonly docsHelper: DocumentosHelper;
+  private readonly logger = new Logger(ClientesService.name);
 
   constructor(
     @InjectModel('Cliente') private clienteModel: Model<ClienteDocument>,
+    @InjectModel('Usuario') private readonly usuarioModel: Model<{ nombre: string; email: string; rol: string; activo: boolean }>,
     private readonly documentosVencidosService: DocumentosVencidosService,
+    private readonly mailService: MailService,
   ) {
     this.docsHelper = new DocumentosHelper(clienteModel, 'Cliente', '-logo.contenido -documentos.contenido');
   }
@@ -104,8 +110,22 @@ export class ClientesService {
     return { buffer, tipo_mime: cliente.logo.tipo_mime, nombre: cliente.logo.nombre };
   }
 
-  agregarDocumento(id: string, archivo: ArchivoInput, nombreDisplay?: string, categoria?: string) {
-    return this.docsHelper.agregar(id, archivo, nombreDisplay, categoria);
+  async agregarDocumento(id: string, archivo: ArchivoInput, nombreDisplay?: string, categoria?: string, rolUploader?: string, usuarioId?: string) {
+    const result = await this.docsHelper.agregar(id, archivo, nombreDisplay, categoria);
+    if (rolUploader === 'usuario') {
+      const cliente = await this.clienteModel.findById(id).select('razon_social').lean() as any;
+      const contexto = cliente ? `Empresa: ${cliente.razon_social}` : 'Empresa';
+      notificarDocumentoSubido({
+        contexto,
+        nombre: result.nombre_display,
+        categoria: result.categoria ?? 'Sin categoría',
+        usuarioId,
+        usuarioModel: this.usuarioModel as any,
+        mailService: this.mailService,
+        logger: this.logger,
+      }).catch((err: unknown) => this.logger.error('Error al notificar subida de documento (empresa):', err));
+    }
+    return result;
   }
 
   listarDocumentos(id: string) {
@@ -120,7 +140,7 @@ export class ClientesService {
     return this.docsHelper.eliminar(clienteId, docId);
   }
 
-  async vencerDocumento(clienteId: string, docId: string, empresaNombre?: string) {
+  async vencerDocumento(clienteId: string, docId: string, empresaNombre?: string, notificacion?: NotificacionOpcionesDto) {
     const cliente = await this.clienteModel.findById(clienteId);
     if (!cliente) throw new NotFoundException(`Cliente ${clienteId} no encontrado`);
     const doc = cliente.documentos.find((d: any) => String(d._id) === docId);
@@ -143,6 +163,73 @@ export class ClientesService {
       subido_en:      doc.subido_en,
     });
 
+    void this.notificarVencimiento(
+      clienteId,
+      doc.nombre_display as string,
+      doc.categoria as string,
+      empresaNombre ?? 'empresa',
+      notificacion,
+    );
+
     return { message: 'Documento marcado como vencido', docId };
+  }
+
+  private async notificarVencimiento(
+    clienteId: string,
+    nombreDoc: string,
+    categoria: string,
+    contextoLabel: string,
+    notificacion?: NotificacionOpcionesDto,
+  ): Promise<void> {
+    if (!notificacion?.notificar) return;
+
+    try {
+      const empresaId = new Types.ObjectId(clienteId);
+      let usuariosDestino: { nombre: string; email: string }[] = [];
+
+      if (notificacion.audiencia === 'especificos') {
+        usuariosDestino = await this.usuarioModel
+          .find({
+            _id: { $in: (notificacion.destinatarios_ids ?? []).map(id => new Types.ObjectId(id)) },
+            activo: true,
+            $or: [{ cliente_id: empresaId }, { rol: 'admin_smartclarity' }],
+          })
+          .select('nombre email')
+          .lean();
+      } else {
+        usuariosDestino = await this.usuarioModel
+          .find({
+            activo: true,
+            $or: [
+              { rol: 'admin_smartclarity' },
+              { cliente_id: empresaId },
+            ],
+          })
+          .select('nombre email')
+          .lean();
+      }
+
+      const superAdmins = notificacion.notificar_super_admins
+        ? await this.usuarioModel.find({ rol: 'super_admin', activo: true }).select('nombre email').lean()
+        : [];
+
+      const vistos = new Set<string>();
+      const destinatarios: { nombre: string; email: string }[] = [];
+      for (const u of [...usuariosDestino, ...superAdmins]) {
+        if ((u as any).email && !vistos.has((u as any).email)) {
+          vistos.add((u as any).email);
+          destinatarios.push({ nombre: (u as any).nombre, email: (u as any).email });
+        }
+      }
+
+      if (destinatarios.length === 0) return;
+
+      await this.mailService.notificarDocumentoVencido({
+        destinatarios,
+        documento: { nombre: nombreDoc, categoria, contexto: contextoLabel },
+      });
+    } catch (err: unknown) {
+      this.logger.error('Error al notificar vencimiento de documento (empresa):', err);
+    }
   }
 }
