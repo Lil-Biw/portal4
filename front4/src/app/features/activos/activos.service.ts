@@ -3,7 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Subscription, forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { ApiService } from '../../core/services/api.service';
-import { Activo, ActividadHistorialItem, CreateActivoDto, UpdateActivoDto } from '../../shared/models/activo.model';
+import { Activo, ActividadHistorialItem, CreateActivoDto, DocActivo, UpdateActivoDto } from '../../shared/models/activo.model';
 import { Status } from '../../shared/models/status.model';
 import { CentrosService } from '../centros/centros.service';
 import { asId } from '../../shared/utils';
@@ -14,13 +14,14 @@ export class ActivosService {
   private readonly api  = inject(ApiService);
   private readonly centrosService = inject(CentrosService);
 
-  readonly activos          = signal<Activo[]>([]);
-  readonly seleccionado     = signal<Activo | null>(null);
-  readonly status           = signal<Status | null>(null);
-  readonly loading          = signal(false);
-  readonly saving           = signal(false);
-  readonly historialActivo  = signal<ActividadHistorialItem[]>([]);
-  readonly loadingHistorial = signal(false);
+  readonly activos           = signal<Activo[]>([]);
+  readonly seleccionado      = signal<Activo | null>(null);
+  readonly status            = signal<Status | null>(null);
+  readonly loading           = signal(false);
+  readonly saving            = signal(false);
+  readonly historialActivo   = signal<ActividadHistorialItem[]>([]);
+  readonly loadingHistorial  = signal(false);
+  readonly documentosActivo  = signal<DocActivo[]>([]);
   private historialSub: Subscription | null = null;
 
   cargar(centroCostoId?: string): void {
@@ -106,6 +107,17 @@ export class ActivosService {
     });
   }
 
+  listarDocumentos(activoId: string, centroId: string): void {
+    const { empresaId } = this.resolverIds(centroId);
+    if (!empresaId) return;
+    this.http.get<DocActivo[]>(
+      this.api.url(`/empresas/${empresaId}/centros/${centroId}/activos/${activoId}/documentos`)
+    ).subscribe({
+      next: (docs) => this.documentosActivo.set(docs),
+      error: () => this.documentosActivo.set([]),
+    });
+  }
+
   subirDocumento(
     activoId: string,
     centroId: string,
@@ -119,43 +131,40 @@ export class ActivosService {
     const form = new FormData();
     form.append('archivo', archivo);
     if (nombreDisplay) form.append('nombre_display', nombreDisplay);
-    this.http.post<Activo>(
+    this.http.post(
       this.api.url(`/empresas/${empresaId}/centros/${centroId}/activos/${activoId}/documentos`),
       form
     ).subscribe({
-      next: (updated) => {
-        this.activos.update(list => list.map(a => a._id === activoId ? updated : a));
-        if (this.seleccionado()?._id === activoId) this.seleccionado.set(updated);
+      next: () => {
         this.status.set({ type: 'ok', text: 'Documento adjuntado correctamente' });
+        this.listarDocumentos(activoId, centroId);
         onSuccess?.();
       },
       error: (err) => { this.setError(err); onError?.(); },
     });
   }
 
-  eliminarDocumento(activoId: string, centroId: string, nombre: string): void {
+  eliminarDocumento(activoId: string, centroId: string, docId: string): void {
     const { empresaId } = this.resolverIds(centroId);
     if (!empresaId) { this.setError({ error: { message: 'Centro no encontrado' } }); return; }
-    const encoded = encodeURIComponent(nombre);
-    this.http.delete<Activo>(
-      this.api.url(`/empresas/${empresaId}/centros/${centroId}/activos/${activoId}/documentos/${encoded}`)
+    this.http.delete(
+      this.api.url(`/empresas/${empresaId}/centros/${centroId}/activos/${activoId}/documentos/${docId}`)
     ).subscribe({
-      next: (updated) => {
-        this.activos.update(list => list.map(a => a._id === activoId ? updated : a));
-        if (this.seleccionado()?._id === activoId) this.seleccionado.set(updated);
+      next: () => {
         this.status.set({ type: 'ok', text: 'Documento eliminado' });
+        this.listarDocumentos(activoId, centroId);
       },
       error: (err) => this.setError(err),
     });
   }
 
-  descargarDocumento(activoId: string, centroId: string, nombre: string, nombreDisplay?: string): void {
+  descargarDocumento(activoId: string, centroId: string, docId: string, nombreDisplay?: string): void {
     const { empresaId } = this.resolverIds(centroId);
     if (!empresaId) { this.status.set({ type: 'error', text: 'Centro no encontrado' }); return; }
     const url = this.api.url(
-      `/empresas/${empresaId}/centros/${centroId}/activos/${activoId}/documentos/${encodeURIComponent(nombre)}`
+      `/empresas/${empresaId}/centros/${centroId}/activos/${activoId}/documentos/${docId}`
     );
-    this.triggerDownload(url, nombreDisplay || nombre);
+    this.triggerDownload(url, nombreDisplay || docId);
   }
 
   descargarDocumentoActividad(actividadId: string, centroId: string, nombre: string, nombreDisplay?: string): void {

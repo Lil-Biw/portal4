@@ -8,6 +8,7 @@ export interface TipoActividad {
 }
 
 export interface DocActividad {
+  _id: string;
   nombre: string;
   nombre_display: string;
   tamano_bytes: number;

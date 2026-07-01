@@ -240,7 +240,7 @@ export class ActivosPageComponent implements OnInit {
   }
 
   protected get docsExistentes(): DocActivo[] {
-    return this.activoEditando?.documentos ?? [];
+    return this.service.documentosActivo();
   }
 
   constructor() {
@@ -307,6 +307,7 @@ export class ActivosPageComponent implements OnInit {
   protected abrirEditar(activo: Activo): void {
     this.editingId.set(activo._id);
     this.service.seleccionar(activo);
+    this.service.listarDocumentos(activo._id, activo.centro_costo_id);
     this.modal.set('editar');
   }
 
@@ -379,16 +380,16 @@ export class ActivosPageComponent implements OnInit {
     this.service.subirDocumento(activo._id, activo.centro_costo_id, doc.file, doc.nombre);
   }
 
-  protected onDocEliminado(nombre: string): void {
+  protected onDocEliminado(docId: string): void {
     const activo = this.activoEditando;
     if (!activo) return;
-    this.service.eliminarDocumento(activo._id, activo.centro_costo_id, nombre);
+    this.service.eliminarDocumento(activo._id, activo.centro_costo_id, docId);
   }
 
-  protected onDocDescargado(ev: { nombre: string; nombreDisplay?: string }): void {
+  protected onDocDescargado(ev: { docId: string; nombreDisplay?: string }): void {
     const activo = this.activoEditando;
     if (!activo) return;
-    this.service.descargarDocumento(activo._id, activo.centro_costo_id, ev.nombre, ev.nombreDisplay);
+    this.service.descargarDocumento(activo._id, activo.centro_costo_id, ev.docId, ev.nombreDisplay);
   }
 
   private subirDocsPendientesSecuencial(activoId: string, centroId: string, index: number): void {

@@ -1,4 +1,5 @@
 export interface DocActivo {
+  _id: string;
   nombre: string;
   nombre_display: string;
   tamano_bytes: number;
@@ -25,7 +26,6 @@ export interface Activo {
   centro_costo_id: string;
   descripcion?: string;
   activo: boolean;
-  documentos?: DocActivo[];
   creado_en?: string;
   actualizado_en?: string;
 }
@@ -46,6 +46,7 @@ export interface TipoActividad {
 }
 
 export interface DocActividad {
+  _id: string;
   nombre: string;
   nombre_display: string;
   tamano_bytes: number;
@@ -59,6 +60,5 @@ export interface ActividadHistorialItem {
   tipo_id: TipoActividad | string;
   centro_costo_id: string;
   fecha: string;
-  documentos?: DocActividad[];
   creado_en?: string;
 }

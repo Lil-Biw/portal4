@@ -185,7 +185,7 @@ export class ActividadesPageComponent implements OnInit {
 
   get resumenDocumentosTexto(): string {
     if (this.editingId()) {
-      const docs = this.actividadEditando?.documentos ?? [];
+      const docs = this.service.documentosActividad();
       return docs.length > 0 ? `${docs.length} archivo${docs.length > 1 ? 's' : ''}` : 'Sin documentos';
     }
     return this.docsPendientes.length > 0
@@ -350,16 +350,16 @@ export class ActividadesPageComponent implements OnInit {
     setTimeout(() => this.docInputVisible.set(true), 0);
   }
 
-  eliminarDocActividad(nombre: string): void {
+  eliminarDocActividad(docId: string): void {
     const id = this.editingId();
     if (!id) return;
-    this.service.eliminarDocumento(id, nombre);
+    this.service.eliminarDocumento(id, docId);
   }
 
-  descargarDocActividad(nombre: string, nombreDisplay?: string): void {
+  descargarDocActividad(docId: string, nombreDisplay?: string): void {
     const id = this.editingId();
     if (!id) return;
-    this.service.descargarDocumento(id, nombre, nombreDisplay);
+    this.service.descargarDocumento(id, docId, nombreDisplay);
   }
 
   get actividadEditando() {
@@ -482,6 +482,7 @@ export class ActividadesPageComponent implements OnInit {
     this.showResumenNotif.set(false);
     this.showModal.set(true);
     this.service.clearStatus();
+    this.service.listarDocumentos(a._id);
   }
 
   cerrarModal(): void {

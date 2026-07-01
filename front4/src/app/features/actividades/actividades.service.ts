@@ -1,10 +1,11 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { ApiService } from '../../core/services/api.service';
-import { Actividad, CreateActividadDto, UpdateActividadDto } from '../../shared/models/actividad.model';
+import { Actividad, CreateActividadDto, DocActividad, UpdateActividadDto } from '../../shared/models/actividad.model';
 import { Status } from '../../shared/models/status.model';
 import { CentrosService } from '../centros/centros.service';
 import { AuthService } from '../auth/auth.service';
+import { asId } from '../../shared/utils';
 
 @Injectable({ providedIn: 'root' })
 export class ActividadesService {
@@ -13,10 +14,11 @@ export class ActividadesService {
   private readonly centrosService = inject(CentrosService);
   private readonly auth = inject(AuthService);
 
-  readonly actividades = signal<Actividad[]>([]);
-  readonly loading     = signal(false);
-  readonly saving      = signal(false);
-  readonly status      = signal<Status | null>(null);
+  readonly actividades         = signal<Actividad[]>([]);
+  readonly loading             = signal(false);
+  readonly saving              = signal(false);
+  readonly status              = signal<Status | null>(null);
+  readonly documentosActividad = signal<DocActividad[]>([]);
 
   clearStatus(): void { this.status.set(null); }
 
@@ -103,6 +105,20 @@ export class ActividadesService {
     });
   }
 
+  listarDocumentos(actividadId: string): void {
+    const actividad = this.actividades().find(a => a._id === actividadId);
+    if (!actividad) { this.documentosActividad.set([]); return; }
+    const centroId = asId(actividad.centro_costo_id);
+    const empresaId = this.getEmpresaId(centroId);
+    if (!empresaId) { this.documentosActividad.set([]); return; }
+    this.http.get<DocActividad[]>(
+      this.api.url(`/empresas/${empresaId}/centros/${centroId}/actividades/${actividadId}/documentos`)
+    ).subscribe({
+      next: (docs) => this.documentosActividad.set(docs),
+      error: () => this.documentosActividad.set([]),
+    });
+  }
+
   subirDocumento(id: string, archivo: File, nombreDisplay?: string, onSuccess?: () => void, onError?: () => void): void {
     const centroId = this.actividades().find(a => a._id === id)?.centro_costo_id;
     const empresaId = centroId ? this.getEmpresaId(centroId) : undefined;
@@ -110,48 +126,47 @@ export class ActividadesService {
     const form = new FormData();
     form.append('archivo', archivo);
     if (nombreDisplay) form.append('nombre_display', nombreDisplay);
-    this.http.post<Actividad>(
+    this.http.post(
       this.api.url(`/empresas/${empresaId}/centros/${centroId}/actividades/${id}/documentos`),
       form
     ).subscribe({
-      next: updated => {
-        this.actividades.update(list => list.map(a => a._id === id ? updated : a));
+      next: () => {
         this.status.set({ type: 'ok', text: 'Documento adjuntado correctamente' });
+        this.listarDocumentos(id);
         onSuccess?.();
       },
       error: err => { this.setError(err); onError?.(); },
     });
   }
 
-  eliminarDocumento(actividadId: string, nombreArchivo: string): void {
+  eliminarDocumento(actividadId: string, docId: string): void {
     const centroId = this.actividades().find(a => a._id === actividadId)?.centro_costo_id;
     const empresaId = centroId ? this.getEmpresaId(centroId) : undefined;
     if (!empresaId || !centroId) { this.setError({ error: { message: 'Centro no encontrado' } }); return; }
-    const encoded = encodeURIComponent(nombreArchivo);
-    this.http.delete<Actividad>(
-      this.api.url(`/empresas/${empresaId}/centros/${centroId}/actividades/${actividadId}/documentos/${encoded}`)
+    this.http.delete(
+      this.api.url(`/empresas/${empresaId}/centros/${centroId}/actividades/${actividadId}/documentos/${docId}`)
     ).subscribe({
-      next: updated => {
-        this.actividades.update(list => list.map(a => a._id === actividadId ? updated : a));
+      next: () => {
         this.status.set({ type: 'ok', text: 'Documento eliminado' });
+        this.listarDocumentos(actividadId);
       },
       error: err => this.setError(err),
     });
   }
 
-  descargarDocumento(actividadId: string, nombreArchivo: string, nombreDisplay?: string): void {
+  descargarDocumento(actividadId: string, docId: string, nombreDisplay?: string): void {
     const centroId = this.actividades().find(a => a._id === actividadId)?.centro_costo_id;
     const empresaId = centroId ? this.getEmpresaId(centroId) : undefined;
     if (!empresaId || !centroId) { this.status.set({ type: 'error', text: 'Centro no encontrado' }); return; }
     const url = this.api.url(
-      `/empresas/${empresaId}/centros/${centroId}/actividades/${actividadId}/documentos/${encodeURIComponent(nombreArchivo)}`
+      `/empresas/${empresaId}/centros/${centroId}/actividades/${actividadId}/documentos/${docId}`
     );
     this.http.get(url, { responseType: 'blob' }).subscribe({
       next: (blob) => {
         const objectUrl = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = objectUrl;
-        a.download = nombreDisplay || nombreArchivo;
+        a.download = nombreDisplay || docId;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);

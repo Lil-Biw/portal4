@@ -1,6 +1,6 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { DatePipe } from '@angular/common';
-import { Activo, ActividadHistorialItem, DocActivo, DocActividad, TipoActivo, TipoActividad } from '../../../../shared/models/activo.model';
+import { Activo, ActividadHistorialItem, TipoActivo, TipoActividad } from '../../../../shared/models/activo.model';
 import { ActivoIconoComponent } from '../activo-icono/activo-icono.component';
 
 export interface DescargarActivoDocEvt  { nombre: string; nombreDisplay?: string; }
@@ -39,33 +39,6 @@ export interface DescargarActividadDocEvt {
       </div>
     }
 
-    <!-- Documentos del activo -->
-    <div class="seccion">
-      <p class="sec-label">Documentos del activo ({{ activo?.documentos?.length ?? 0 }})</p>
-      @if (!activo?.documentos?.length) {
-        <p class="empty-text">Sin documentos adjuntos.</p>
-      } @else {
-        <div class="docs-list">
-          @for (doc of activo!.documentos!; track doc.nombre) {
-            <div class="doc-row">
-              <svg class="doc-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                <polyline points="14 2 14 8 20 8"/>
-              </svg>
-              <div class="doc-info">
-                <span class="doc-nombre">{{ doc.nombre_display }}</span>
-                <span class="doc-meta">{{ formatBytes(doc.tamano_bytes) }}</span>
-              </div>
-              <button class="btn-ghost btn-sm"
-                (click)="descargarActivoDoc.emit({ nombre: doc.nombre, nombreDisplay: doc.nombre_display })">
-                Descargar
-              </button>
-            </div>
-          }
-        </div>
-      }
-    </div>
-
     <!-- Historial de actividades -->
     <div class="seccion">
       <p class="sec-label">Historial de actividades</p>
@@ -92,42 +65,7 @@ export interface DescargarActividadDocEvt {
                   {{ tipoActividadNombre(item) }}
                 </span>
 
-                @if (item.documentos?.length) {
-                  <button class="hist-docs-toggle" (click)="toggleDocs(item._id)"
-                    [title]="expandidos.has(item._id) ? 'Ocultar documentos' : 'Ver documentos adjuntos'">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="13" height="13">
-                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                      <polyline points="14 2 14 8 20 8"/>
-                    </svg>
-                    {{ item.documentos!.length }}
-                    <svg class="toggle-chevron" [class.open]="expandidos.has(item._id)"
-                      viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
-                      stroke-linecap="round" stroke-linejoin="round" width="11" height="11">
-                      <polyline points="6 9 12 15 18 9"/>
-                    </svg>
-                  </button>
-                }
               </div>
-
-              @if (item.documentos?.length && expandidos.has(item._id)) {
-                <div class="hist-docs">
-                  @for (doc of item.documentos!; track doc.nombre) {
-                    <div class="hist-doc-row">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
-                        width="13" height="13" style="flex-shrink:0;color:#9ca3af">
-                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                        <polyline points="14 2 14 8 20 8"/>
-                      </svg>
-                      <span class="hist-doc-nombre">{{ doc.nombre_display }}</span>
-                      <span class="hist-doc-meta">{{ formatBytes(doc.tamano_bytes) }}</span>
-                      <button class="btn-ghost btn-sm"
-                        (click)="emitDescargarActividadDoc(item._id, doc)">
-                        Descargar
-                      </button>
-                    </div>
-                  }
-                </div>
-              }
 
             </div>
           }
@@ -234,17 +172,10 @@ export class ActivoRevisarModalComponent {
   @Output() descargarActivoDoc = new EventEmitter<DescargarActivoDocEvt>();
   @Output() descargarActividadDoc = new EventEmitter<DescargarActividadDocEvt>();
 
-  // plain Set — no signal needed, Angular re-renders on click
-  protected expandidos = new Set<string>();
-
   get tipoActivo(): TipoActivo | null {
     if (!this.activo) return null;
     if (typeof this.activo.tipo_activo_id === 'object') return this.activo.tipo_activo_id as TipoActivo;
     return null;
-  }
-
-  protected toggleDocs(id: string): void {
-    this.expandidos.has(id) ? this.expandidos.delete(id) : this.expandidos.add(id);
   }
 
   protected tipoActividadNombre(item: ActividadHistorialItem): string {
@@ -255,17 +186,6 @@ export class ActivoRevisarModalComponent {
   protected tipoActividadColor(item: ActividadHistorialItem): string {
     if (typeof item.tipo_id === 'object') return (item.tipo_id as TipoActividad).color ?? '#6b7280';
     return '#6b7280';
-  }
-
-  protected emitDescargarActividadDoc(actividadId: string, doc: DocActividad): void {
-    // Usamos el centro del ACTIVO (no el de la actividad) porque resolverIds solo conoce
-    // los centros del contexto actual, y el backend no valida la coincidencia centro↔actividad.
-    this.descargarActividadDoc.emit({
-      actividadId,
-      centroId: this.activo!.centro_costo_id,
-      nombre: doc.nombre,
-      nombreDisplay: doc.nombre_display,
-    });
   }
 
   protected formatBytes(bytes: number): string {

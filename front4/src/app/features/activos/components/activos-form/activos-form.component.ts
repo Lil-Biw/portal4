@@ -216,12 +216,12 @@ export interface DocPendiente { file: File; nombre: string; }
             <!-- Modo edición: lista existentes -->
             @if (docsExistentes.length > 0) {
               <div class="doc-lista">
-                @for (doc of docsExistentes; track doc.nombre) {
+                @for (doc of docsExistentes; track doc._id) {
                   <div class="doc-item">
                     <span class="doc-nombre" [title]="doc.nombre_display">{{ doc.nombre_display }}</span>
                     <div class="doc-acciones">
-                      <button type="button" class="btn-ghost btn-sm" (click)="onDescargarDoc(doc.nombre, doc.nombre_display)">↓</button>
-                      <button type="button" class="btn-danger btn-sm" (click)="onEliminarDoc(doc.nombre)">✕</button>
+                      <button type="button" class="btn-ghost btn-sm" (click)="onDescargarDoc(doc._id, doc.nombre_display)">↓</button>
+                      <button type="button" class="btn-danger btn-sm" (click)="onEliminarDoc(doc._id)">✕</button>
                     </div>
                   </div>
                 }
@@ -283,7 +283,7 @@ export class ActivosFormComponent implements OnChanges {
   @Output() docQuitado      = new EventEmitter<number>();
   @Output() docSubido       = new EventEmitter<DocPendiente>();
   @Output() docEliminado    = new EventEmitter<string>();
-  @Output() docDescargado   = new EventEmitter<{ nombre: string; nombreDisplay?: string }>();
+  @Output() docDescargado   = new EventEmitter<{ docId: string; nombreDisplay?: string }>();
 
   empresaId = signal('');
   form: CreateActivoDto = { nombre: '', tipo_activo_id: '', centro_costo_id: '', descripcion: '' };
@@ -410,9 +410,9 @@ export class ActivosFormComponent implements OnChanges {
   }
 
   onQuitarDoc(index: number): void    { this.docQuitado.emit(index); }
-  onEliminarDoc(nombre: string): void { this.docEliminado.emit(nombre); }
-  onDescargarDoc(nombre: string, nombreDisplay: string): void {
-    this.docDescargado.emit({ nombre, nombreDisplay });
+  onEliminarDoc(docId: string): void  { this.docEliminado.emit(docId); }
+  onDescargarDoc(docId: string, nombreDisplay: string): void {
+    this.docDescargado.emit({ docId, nombreDisplay });
   }
 
   enviar(): void {
