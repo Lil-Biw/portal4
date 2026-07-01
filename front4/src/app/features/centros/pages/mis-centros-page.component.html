@@ -245,7 +245,7 @@
         <p style="color:#9ca3af;font-size:.85rem;margin:0">Sin documentos cargados para este centro.</p>
       } @else {
         <div style="display:flex;flex-direction:column;gap:.4rem">
-          @for (d of documentosService.documentosCentro(); track d.nombre) {
+          @for (d of documentosService.documentosCentro(); track d._id) {
             @let info = docTipoInfo(d.tipo_mime);
             <div style="display:flex;align-items:center;gap:.7rem;padding:.5rem .65rem;border-radius:8px;border:1px solid rgba(34,33,33,.08)">
               <!-- Ícono de archivo -->
@@ -333,25 +333,57 @@
 
   </div>
 
-  <!-- Activos del centro -->
-  <div class="card" style="margin-top:1rem">
-    <h3 style="margin:0 0 .75rem;font-size:.95rem;font-weight:700;color:#1f2937">Activos del centro</h3>
-    @if (activosService.loading()) {
-      <p style="color:#9ca3af;font-size:.85rem;margin:0">Cargando activos...</p>
-    } @else if (activosService.activos().length === 0) {
-      <p style="color:#9ca3af;font-size:.85rem;margin:0">Sin activos registrados para este centro.</p>
-    } @else {
-      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:.75rem">
-        @for (a of activosService.activos(); track a._id) {
-          <div style="display:flex;align-items:center;gap:.65rem;padding:.55rem .75rem;border-radius:10px;border:1px solid rgba(34,33,33,.08)">
-            <app-activo-icono [color]="tipoActivoColor(a)" [size]="20"></app-activo-icono>
-            <div style="min-width:0">
-              <span style="display:block;font-size:.84rem;font-weight:600;color:#1f2937;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ a.nombre }}</span>
-              <span style="font-size:.73rem;font-weight:600;white-space:nowrap" [style.color]="tipoActivoColor(a)">{{ tipoActivoNombre(a) }}</span>
+  <!-- Activos y Proyectos lado a lado -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-top:1rem">
+
+    <!-- Activos del centro -->
+    <div class="card">
+      <h3 style="margin:0 0 .75rem;font-size:.95rem;font-weight:700;color:#1f2937">Activos del centro</h3>
+      @if (activosService.loading()) {
+        <p style="color:#9ca3af;font-size:.85rem;margin:0">Cargando activos...</p>
+      } @else if (activosService.activos().length === 0) {
+        <p style="color:#9ca3af;font-size:.85rem;margin:0">Sin activos registrados para este centro.</p>
+      } @else {
+        <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:.75rem">
+          @for (a of activosService.activos(); track a._id) {
+            <div style="display:flex;align-items:center;gap:.65rem;padding:.55rem .75rem;border-radius:10px;border:1px solid rgba(34,33,33,.08)">
+              <app-activo-icono [color]="tipoActivoColor(a)" [size]="20"></app-activo-icono>
+              <div style="min-width:0">
+                <span style="display:block;font-size:.84rem;font-weight:600;color:#1f2937;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ a.nombre }}</span>
+                <span style="font-size:.73rem;font-weight:600;white-space:nowrap" [style.color]="tipoActivoColor(a)">{{ tipoActivoNombre(a) }}</span>
+              </div>
             </div>
-          </div>
-        }
-      </div>
-    }
+          }
+        </div>
+      }
+    </div>
+
+    <!-- Proyectos del centro -->
+    <div class="card">
+      <h3 style="margin:0 0 .75rem;font-size:.95rem;font-weight:700;color:#1f2937">Proyectos del centro</h3>
+      @if (proyectosService.loading()) {
+        <p style="color:#9ca3af;font-size:.85rem;margin:0">Cargando proyectos...</p>
+      } @else if (proyectosService.proyectos().length === 0) {
+        <p style="color:#9ca3af;font-size:.85rem;margin:0">Sin proyectos registrados para este centro.</p>
+      } @else {
+        <div style="display:flex;flex-direction:column;gap:.4rem">
+          @for (p of proyectosService.proyectos(); track p._id) {
+            <div
+              (click)="irAProyecto(p)"
+              style="display:flex;align-items:center;justify-content:space-between;gap:.65rem;padding:.55rem .75rem;border-radius:10px;border:1px solid rgba(34,33,33,.08);cursor:pointer">
+              <div style="min-width:0">
+                <span style="display:block;font-size:.84rem;font-weight:600;color:#1f2937;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ p.nombre }}</span>
+                <span style="font-size:.73rem;color:#6b7280">{{ p.codigo }}</span>
+              </div>
+              <span style="font-size:.7rem;font-weight:700;padding:.2rem .55rem;border-radius:999px;white-space:nowrap;flex-shrink:0"
+                    [style]="estadoBadgeStyle(p.estado)">
+                {{ p.estado }}
+              </span>
+            </div>
+          }
+        </div>
+      }
+    </div>
+
   </div>
 }

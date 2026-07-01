@@ -12,19 +12,8 @@ export interface CentroCosto {
   ubicacion_longitud?: number;
   activo: boolean;
   score_smartclarity?: number[];
-  documentos?: DocumentoRef[];
   creado_en?: string;
   actualizado_en?: string;
-}
-
-export interface DocumentoRef {
-  _id?: string;
-  nombre: string;
-  nombre_display?: string;
-  url?: string;
-  tipo_mime: string;
-  tamano_bytes?: number;
-  subido_en?: string;
 }
 
 export interface CreateCentroDto {

@@ -143,7 +143,7 @@
         <p style="font-size:.82rem;color:#9ca3af;margin:0">Sin documentos cargados.</p>
       } @else {
         <div style="display:flex;flex-direction:column;gap:.4rem">
-          @for (d of documentosService.documentosProyecto(); track d.nombre) {
+          @for (d of documentosService.documentosProyecto(); track d._id) {
             @let info = docTipoInfo(d.tipo_mime);
             <div style="display:flex;align-items:center;gap:.7rem;padding:.5rem .65rem;border-radius:8px;border:1px solid rgba(34,33,33,.08)">
               <!-- Ícono de archivo -->
