@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException, ConflictException, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { Cliente, ClienteDocument } from './clientes.schema';
+import { ClienteDocument } from './clientes.schema';
 import { CreateClienteDto, UpdateClienteDto } from './clientes.dto';
 import { DocumentosHelper, ArchivoInput } from '../common/helpers/documentos.helper';
 import { DocumentosVencidosService } from '../documentos-vencidos/documentos-vencidos.service';
@@ -16,11 +16,20 @@ export class ClientesService {
 
   constructor(
     @InjectModel('Cliente') private clienteModel: Model<ClienteDocument>,
+    @InjectModel('DocCliente') private docClienteModel: Model<any>,
+    @InjectModel('DocEliminado') private docEliminadoModel: Model<any>,
     @InjectModel('Usuario') private readonly usuarioModel: Model<{ nombre: string; email: string; rol: string; activo: boolean }>,
     private readonly documentosVencidosService: DocumentosVencidosService,
     private readonly mailService: MailService,
   ) {
-    this.docsHelper = new DocumentosHelper(clienteModel, 'Cliente', '-logo.contenido -documentos.contenido');
+    this.docsHelper = new DocumentosHelper(
+      clienteModel,
+      docClienteModel,
+      'cliente_id',
+      docEliminadoModel,
+      'empresa',
+      'Cliente',
+    );
   }
 
   async create(dto: CreateClienteDto) {
@@ -65,7 +74,7 @@ export class ClientesService {
   async updateScoreSmartclarity(id: string, valores: number[]) {
     const cliente = await this.clienteModel
       .findByIdAndUpdate(id, { score_smartclarity: valores }, { new: true, runValidators: true })
-      .select('-logo.contenido -documentos.contenido')
+      .select('-logo.contenido')
       .lean();
     if (!cliente) throw new NotFoundException(`Cliente ${id} no encontrado`);
     return cliente;
@@ -74,7 +83,7 @@ export class ClientesService {
   async updateConfigGrafico(id: string, mostrarPromedio: boolean) {
     const cliente = await this.clienteModel
       .findByIdAndUpdate(id, { mostrar_grafico_promedio: mostrarPromedio }, { new: true, runValidators: true })
-      .select('-logo.contenido -documentos.contenido')
+      .select('-logo.contenido')
       .lean();
     if (!cliente) throw new NotFoundException(`Cliente ${id} no encontrado`);
     return cliente;
@@ -117,8 +126,8 @@ export class ClientesService {
       const contexto = cliente ? `Empresa: ${cliente.razon_social}` : 'Empresa';
       notificarDocumentoSubido({
         contexto,
-        nombre: result.nombre_display,
-        categoria: result.categoria ?? 'Sin categoría',
+        nombre: result['nombre_display'] as string,
+        categoria: (result['categoria'] as string) ?? 'Sin categoría',
         usuarioId,
         usuarioModel: this.usuarioModel as any,
         mailService: this.mailService,
@@ -141,15 +150,14 @@ export class ClientesService {
   }
 
   async vencerDocumento(clienteId: string, docId: string, empresaNombre?: string, notificacion?: NotificacionOpcionesDto) {
-    const cliente = await this.clienteModel.findById(clienteId);
+    const cliente = await this.clienteModel.findById(clienteId).lean();
     if (!cliente) throw new NotFoundException(`Cliente ${clienteId} no encontrado`);
-    const doc = cliente.documentos.find((d: any) => String(d._id) === docId);
-    if (!doc) throw new NotFoundException(`Documento ${docId} no encontrado`);
 
-    await this.clienteModel.findByIdAndUpdate(
-      clienteId,
-      { $pull: { documentos: { _id: (doc as any)._id } } },
-    );
+    const doc = await this.docClienteModel.findOne({
+      _id: new Types.ObjectId(docId),
+      cliente_id: new Types.ObjectId(clienteId),
+    });
+    if (!doc) throw new NotFoundException(`Documento ${docId} no encontrado`);
 
     await this.documentosVencidosService.crear({
       nombre_display: doc.nombre_display,
@@ -162,6 +170,8 @@ export class ClientesService {
       empresa_nombre: empresaNombre,
       subido_en:      doc.subido_en,
     });
+
+    await this.docClienteModel.deleteOne({ _id: doc._id });
 
     void this.notificarVencimiento(
       clienteId,

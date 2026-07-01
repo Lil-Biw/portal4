@@ -3,17 +3,6 @@ import { Document, Types } from 'mongoose';
 
 export type CentroCostoDocument = CentroCosto & Document;
 
-class Documento {
-  @Prop({ required: true }) nombre: string;
-  @Prop({ required: true }) nombre_display: string;
-  @Prop({ required: true }) tipo_mime: string;
-  @Prop({ required: true }) tamano_bytes: number;
-  @Prop({ type: Buffer, required: true }) contenido: Buffer;
-  @Prop({ trim: true }) categoria?: string;
-  @Prop({ type: Types.ObjectId, ref: 'Usuario' }) subido_por?: Types.ObjectId;
-  @Prop({ default: Date.now }) subido_en: Date;
-}
-
 @Schema({ collection: 'centros_costos', timestamps: { createdAt: 'creado_en', updatedAt: 'actualizado_en' } })
 export class CentroCosto {
   @Prop({ type: Types.ObjectId, ref: 'Cliente', required: true }) cliente_id: Types.ObjectId;
@@ -27,7 +16,6 @@ export class CentroCosto {
   @Prop() ubicacion_latitud?: number;
   @Prop() ubicacion_longitud?: number;
   @Prop({ default: true }) activo: boolean;
-  @Prop({ type: [Documento], default: [] }) documentos: Documento[];
   @Prop({ type: [Number], default: [5, 5, 5, 5, 5] }) score_smartclarity: number[];
 }
 

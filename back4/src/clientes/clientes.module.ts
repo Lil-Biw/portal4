@@ -1,6 +1,8 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ClienteSchema } from './clientes.schema';
+import { DocClienteSchema } from './doc-cliente.schema';
+import { DocEliminadoSchema } from '../common/schemas/doc-eliminado.schema';
 import { ClientesController } from './clientes.controller';
 import { ClientesService } from './clientes.service';
 import { DocumentosVencidosModule } from '../documentos-vencidos/documentos-vencidos.module';
@@ -11,6 +13,8 @@ import { MailModule } from '../mail/mail.module';
   imports: [
     MongooseModule.forFeature([
       { name: 'Cliente', schema: ClienteSchema },
+      { name: 'DocCliente', schema: DocClienteSchema },
+      { name: 'DocEliminado', schema: DocEliminadoSchema },
       { name: 'Usuario', schema: UsuarioSchema },
     ]),
     DocumentosVencidosModule,

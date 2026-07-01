@@ -3,17 +3,6 @@ import { Document, Types } from 'mongoose';
 
 export type ProyectoDocument = Proyecto & Document;
 
-class Documento {
-  @Prop({ required: true }) nombre: string;
-  @Prop({ required: true }) nombre_display: string;
-  @Prop({ required: true }) tipo_mime: string;
-  @Prop() tamano_bytes?: number;
-  @Prop({ type: Buffer, required: true }) contenido: Buffer;
-  @Prop({ trim: true }) categoria?: string;
-  @Prop({ type: Types.ObjectId, ref: 'Usuario' }) subido_por?: Types.ObjectId;
-  @Prop({ default: Date.now }) subido_en: Date;
-}
-
 @Schema({ collection: 'proyectos', timestamps: { createdAt: 'creado_en', updatedAt: 'actualizado_en' } })
 export class Proyecto {
   @Prop({ type: Types.ObjectId, ref: 'CentroCosto', required: true }) centro_costo_id: Types.ObjectId;
@@ -24,7 +13,6 @@ export class Proyecto {
   @Prop({ enum: ['borrador', 'activo', 'cerrado'], default: 'borrador' }) estado: string;
   @Prop() fecha_inicio?: Date;
   @Prop() fecha_fin?: Date;
-  @Prop({ type: [Documento], default: [] }) documentos: Documento[];
   @Prop({ type: Types.ObjectId, ref: 'Usuario' }) creado_por?: Types.ObjectId;
 }
 

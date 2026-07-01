@@ -3,16 +3,6 @@ import { Document } from 'mongoose';
 
 export type ClienteDocument = Cliente & Document;
 
-class DocumentoEmpresa {
-  @Prop({ required: true }) nombre: string;
-  @Prop({ required: true }) nombre_display: string;
-  @Prop({ required: true }) tipo_mime: string;
-  @Prop({ required: true }) tamano_bytes: number;
-  @Prop({ type: Buffer, required: true }) contenido: Buffer;
-  @Prop({ trim: true }) categoria?: string;
-  @Prop({ default: Date.now }) subido_en: Date;
-}
-
 @Schema({ collection: 'clientes', timestamps: { createdAt: 'creado_en', updatedAt: 'actualizado_en' } })
 export class Cliente {
   @Prop({ required: true, trim: true }) razon_social: string;
@@ -42,7 +32,6 @@ export class Cliente {
     },
   })
   logo?: { contenido: Buffer; tipo_mime: string; nombre: string };
-  @Prop({ type: [DocumentoEmpresa], default: [] }) documentos: DocumentoEmpresa[];
   @Prop({ type: [Number], default: [5, 5, 5, 5, 5] }) score_smartclarity: number[];
   @Prop({ default: false }) mostrar_grafico_promedio: boolean;
 }

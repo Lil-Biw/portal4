@@ -8,15 +8,14 @@ export interface ArchivoInput {
   size: number;
 }
 
-/**
- * Centraliza el CRUD de subdocumentos `documentos[]` embebidos en cualquier
- * entidad (Cliente, CentroCosto, Proyecto). Instanciar en el servicio que lo use.
- */
 export class DocumentosHelper {
   constructor(
-    private readonly model: Model<any>,
+    private readonly entidadModel: Model<any>,
+    private readonly docModel: Model<any>,
+    private readonly fkField: string,
+    private readonly docEliminadoModel: Model<any>,
+    private readonly origenTipo: 'empresa' | 'centro' | 'activo' | 'proyecto' | 'actividad',
     private readonly entidad: string,
-    private readonly baseSelect = '-documentos.contenido',
   ) {}
 
   async agregar(
@@ -25,12 +24,14 @@ export class DocumentosHelper {
     nombreDisplay?: string,
     categoria?: string,
     usuarioId?: string,
-  ) {
+  ): Promise<Record<string, unknown>> {
+    const existe = await this.entidadModel.findById(id).lean();
+    if (!existe) throw new NotFoundException(`${this.entidad} ${id} no encontrado`);
+
     const timestamp = Date.now();
     const rand = Math.random().toString(36).substring(7);
     const nombre = `${timestamp}_${rand}_${archivo.originalname}`;
 
-    // Always preserve the original file extension so downloads open correctly
     const dotIdx = archivo.originalname.lastIndexOf('.');
     const originalExt = dotIdx > 0 ? archivo.originalname.slice(dotIdx) : '';
     const rawBase = nombreDisplay?.trim() || archivo.originalname;
@@ -39,51 +40,62 @@ export class DocumentosHelper {
       : rawBase;
 
     const nuevoDoc: Record<string, unknown> = {
-      _id: new Types.ObjectId(),
+      [this.fkField]: new Types.ObjectId(id),
       nombre,
       nombre_display,
-      tipo_mime:      archivo.mimetype,
-      tamano_bytes:   archivo.size,
-      contenido:      archivo.buffer,
-      subido_en:      new Date(),
+      tipo_mime:    archivo.mimetype,
+      tamano_bytes: archivo.size,
+      contenido:    archivo.buffer,
+      subido_en:    new Date(),
     };
     if (categoria) nuevoDoc['categoria'] = categoria;
     if (usuarioId) nuevoDoc['subido_por'] = new Types.ObjectId(usuarioId);
-    const doc = await this.model
-      .findByIdAndUpdate(id, { $push: { documentos: nuevoDoc } }, { new: true })
-      .select(this.baseSelect)
-      .lean() as any;
-    if (!doc) throw new NotFoundException(`${this.entidad} ${id} no encontrado`);
-    return doc.documentos[doc.documentos.length - 1];
+
+    const doc = await this.docModel.create(nuevoDoc);
+    const obj = doc.toObject() as Record<string, unknown>;
+    delete obj['contenido'];
+    return obj;
   }
 
-  async listar(id: string) {
-    const doc = await this.model.findById(id).select(this.baseSelect).lean() as any;
-    if (!doc) throw new NotFoundException(`${this.entidad} ${id} no encontrado`);
-    return doc.documentos ?? [];
+  async listar(id: string): Promise<Record<string, unknown>[]> {
+    return this.docModel
+      .find({ [this.fkField]: new Types.ObjectId(id) })
+      .select('-contenido')
+      .lean();
   }
 
-  async servir(entityId: string, docId: string): Promise<{ buffer: Buffer; tipo_mime: string; nombre_display: string }> {
-    const entity = await this.model.findById(entityId);
-    if (!entity) throw new NotFoundException(`${this.entidad} ${entityId} no encontrado`);
-    const doc = entity.documentos.find((d: any) => String(d._id) === docId);
+  async servir(entidadId: string, docId: string): Promise<{ buffer: Buffer; tipo_mime: string; nombre_display: string }> {
+    const doc = await this.docModel.findOne({
+      _id: new Types.ObjectId(docId),
+      [this.fkField]: new Types.ObjectId(entidadId),
+    });
     if (!doc) throw new NotFoundException(`Documento ${docId} no encontrado`);
     const raw = doc.contenido as unknown;
     const buffer = Buffer.isBuffer(raw)
       ? raw
       : Buffer.from((raw as { buffer: ArrayBuffer }).buffer);
-    return { buffer, tipo_mime: doc.tipo_mime, nombre_display: doc.nombre_display };
+    return { buffer, tipo_mime: doc.tipo_mime as string, nombre_display: doc.nombre_display as string };
   }
 
-  async eliminar(entityId: string, docId: string) {
-    const doc = await this.model
-      .findByIdAndUpdate(
-        entityId,
-        { $pull: { documentos: { _id: new Types.ObjectId(docId) } } },
-        { new: true },
-      )
-      .lean();
-    if (!doc) throw new NotFoundException(`${this.entidad} ${entityId} no encontrado`);
+  async eliminar(entidadId: string, docId: string): Promise<{ message: string; docId: string }> {
+    const doc = await this.docModel.findOne({
+      _id: new Types.ObjectId(docId),
+      [this.fkField]: new Types.ObjectId(entidadId),
+    });
+    if (!doc) throw new NotFoundException(`Documento ${docId} no encontrado`);
+
+    await this.docEliminadoModel.create({
+      origen_tipo:    this.origenTipo,
+      entidad_id:     new Types.ObjectId(entidadId),
+      nombre_display: doc.nombre_display,
+      categoria:      doc.categoria,
+      tipo_mime:      doc.tipo_mime,
+      tamano_bytes:   doc.tamano_bytes,
+      contenido:      doc.contenido,
+      subido_en:      doc.subido_en,
+    });
+
+    await this.docModel.deleteOne({ _id: doc._id });
     return { message: 'Documento eliminado', docId };
   }
 }

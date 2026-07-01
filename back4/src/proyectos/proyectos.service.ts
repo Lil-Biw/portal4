@@ -16,12 +16,21 @@ export class ProyectosService {
 
   constructor(
     @InjectModel('Proyecto') private proyectoModel: Model<ProyectoDocument>,
+    @InjectModel('DocProyecto') private docProyectoModel: Model<any>,
+    @InjectModel('DocEliminado') private docEliminadoModel: Model<any>,
     @InjectModel('CentroCosto') private centroCostoModel: Model<any>,
     @InjectModel('Usuario') private readonly usuarioModel: Model<{ nombre: string; email: string; rol: string; cliente_id: Types.ObjectId; centros_asignados: Types.ObjectId[]; activo: boolean }>,
     private readonly documentosVencidosService: DocumentosVencidosService,
     private readonly mailService: MailService,
   ) {
-    this.docsHelper = new DocumentosHelper(proyectoModel, 'Proyecto');
+    this.docsHelper = new DocumentosHelper(
+      proyectoModel,
+      docProyectoModel,
+      'proyecto_id',
+      docEliminadoModel,
+      'proyecto',
+      'Proyecto',
+    );
   }
 
   private toObjectId(value: string) {
@@ -58,7 +67,7 @@ export class ProyectosService {
   async findAll(page = 1, limit = 20) {
     const filter = { estado: { $ne: 'cerrado' } };
     const [data, total] = await Promise.all([
-      this.proyectoModel.find(filter).select('-documentos.contenido').skip((page - 1) * limit).limit(limit).lean(),
+      this.proyectoModel.find(filter).skip((page - 1) * limit).limit(limit).lean(),
       this.proyectoModel.countDocuments(filter),
     ]);
     return { data, total, page, pages: Math.ceil(total / limit) };
@@ -70,7 +79,7 @@ export class ProyectosService {
       estado: { $ne: 'cerrado' },
     };
     const [data, total] = await Promise.all([
-      this.proyectoModel.find(filter).select('-documentos.contenido').skip((page - 1) * limit).limit(limit).lean(),
+      this.proyectoModel.find(filter).skip((page - 1) * limit).limit(limit).lean(),
       this.proyectoModel.countDocuments(filter),
     ]);
     return { data, total, page, pages: Math.ceil(total / limit) };
@@ -82,14 +91,14 @@ export class ProyectosService {
       estado: { $ne: 'cerrado' },
     };
     const [data, total] = await Promise.all([
-      this.proyectoModel.find(filter).select('-documentos.contenido').skip((page - 1) * limit).limit(limit).lean(),
+      this.proyectoModel.find(filter).skip((page - 1) * limit).limit(limit).lean(),
       this.proyectoModel.countDocuments(filter),
     ]);
     return { data, total, page, pages: Math.ceil(total / limit) };
   }
 
   async findOne(id: string) {
-    const proyecto = await this.proyectoModel.findById(id).select('-documentos.contenido').lean();
+    const proyecto = await this.proyectoModel.findById(id).lean();
     if (!proyecto) throw new NotFoundException(`Proyecto ${id} no encontrado`);
     return proyecto;
   }
@@ -105,7 +114,6 @@ export class ProyectosService {
     if (dto.centro_costo_id) payload['centro_costo_id'] = this.toObjectId(dto.centro_costo_id);
     const proyecto = await this.proyectoModel
       .findByIdAndUpdate(id, payload, { new: true, runValidators: true })
-      .select('-documentos.contenido')
       .lean();
     if (!proyecto) throw new NotFoundException(`Proyecto ${id} no encontrado`);
     return proyecto;
@@ -122,7 +130,7 @@ export class ProyectosService {
   async agregarDocumento(id: string, archivo: ArchivoInput, nombreDisplay?: string, categoria?: string, usuarioId?: string, rolUploader?: string) {
     const result = await this.docsHelper.agregar(id, archivo, nombreDisplay, categoria, usuarioId);
     if (rolUploader === 'usuario') {
-      this.notificarSubidaDocumento(id, result.nombre_display, result.categoria, usuarioId)
+      this.notificarSubidaDocumento(id, result['nombre_display'] as string, result['categoria'] as string | undefined, usuarioId)
         .catch((err: unknown) => this.logger.error('Error al notificar subida de documento (proyecto):', err));
     }
     return result;
@@ -160,15 +168,14 @@ export class ProyectosService {
     empresaNombre?: string, centroNombre?: string, proyectoNombre?: string,
     notificacion?: NotificacionOpcionesDto,
   ) {
-    const proyecto = await this.proyectoModel.findById(proyectoId);
+    const proyecto = await this.proyectoModel.findById(proyectoId).lean();
     if (!proyecto) throw new NotFoundException(`Proyecto ${proyectoId} no encontrado`);
-    const doc = proyecto.documentos.find((d: any) => String(d._id) === docId);
-    if (!doc) throw new NotFoundException(`Documento ${docId} no encontrado`);
 
-    await this.proyectoModel.findByIdAndUpdate(
-      proyectoId,
-      { $pull: { documentos: { _id: (doc as any)._id } } },
-    );
+    const doc = await this.docProyectoModel.findOne({
+      _id: new Types.ObjectId(docId),
+      proyecto_id: new Types.ObjectId(proyectoId),
+    });
+    if (!doc) throw new NotFoundException(`Documento ${docId} no encontrado`);
 
     await this.documentosVencidosService.crear({
       nombre_display:  doc.nombre_display,
@@ -185,6 +192,8 @@ export class ProyectosService {
       proyecto_nombre: proyectoNombre,
       subido_en:       doc.subido_en,
     });
+
+    await this.docProyectoModel.deleteOne({ _id: doc._id });
 
     void this.notificarVencimiento(
       empresaId,

@@ -6,6 +6,10 @@ import { SolicitudesService } from './solicitudes.service';
 import { CentroCostoSchema } from '../centros-costos/centros-costos.schema';
 import { ClienteSchema } from '../clientes/clientes.schema';
 import { ProyectoSchema } from '../proyectos/proyectos.schema';
+import { DocCentroCostoSchema } from '../centros-costos/doc-centro-costo.schema';
+import { DocClienteSchema } from '../clientes/doc-cliente.schema';
+import { DocProyectoSchema } from '../proyectos/doc-proyecto.schema';
+import { DocEliminadoSchema } from '../common/schemas/doc-eliminado.schema';
 import { UsuarioSchema } from '../usuarios/usuarios.schema';
 import { PermisoSchema } from '../permisos/permisos.schema';
 import { MailModule } from '../mail/mail.module';
@@ -17,6 +21,10 @@ import { MailModule } from '../mail/mail.module';
       { name: 'CentroCosto', schema: CentroCostoSchema },
       { name: 'Cliente', schema: ClienteSchema },
       { name: 'Proyecto', schema: ProyectoSchema },
+      { name: 'DocCentroCosto', schema: DocCentroCostoSchema },
+      { name: 'DocCliente', schema: DocClienteSchema },
+      { name: 'DocProyecto', schema: DocProyectoSchema },
+      { name: 'DocEliminado', schema: DocEliminadoSchema },
       { name: 'Usuario', schema: UsuarioSchema },
       { name: 'Permiso', schema: PermisoSchema },
     ]),

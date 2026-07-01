@@ -23,12 +23,16 @@ export class SolicitudesService {
     @InjectModel('CentroCosto') private centroCostoModel: Model<CentroCostoDocument>,
     @InjectModel('Cliente') private clienteModel: Model<ClienteDocument>,
     @InjectModel('Proyecto') private proyectoModel: Model<ProyectoDocument>,
+    @InjectModel('DocCentroCosto') private docCentroCostoModel: Model<any>,
+    @InjectModel('DocCliente') private docClienteModel: Model<any>,
+    @InjectModel('DocProyecto') private docProyectoModel: Model<any>,
+    @InjectModel('DocEliminado') private docEliminadoModel: Model<any>,
     @InjectModel('Usuario') private usuarioModel: Model<{ nombre: string; email: string; rol: string; cliente_id: Types.ObjectId; centros_asignados: Types.ObjectId[]; activo: boolean }>,
     private mailService: MailService,
   ) {
-    this.docsEmpresa  = new DocumentosHelper(this.clienteModel  as unknown as Model<any>, 'Cliente');
-    this.docsCentro   = new DocumentosHelper(this.centroCostoModel as unknown as Model<any>, 'CentroCosto');
-    this.docsProyecto = new DocumentosHelper(this.proyectoModel as unknown as Model<any>, 'Proyecto');
+    this.docsEmpresa  = new DocumentosHelper(this.clienteModel as unknown as Model<any>, this.docClienteModel, 'cliente_id', this.docEliminadoModel, 'empresa', 'Cliente');
+    this.docsCentro   = new DocumentosHelper(this.centroCostoModel as unknown as Model<any>, this.docCentroCostoModel, 'centro_costo_id', this.docEliminadoModel, 'centro', 'CentroCosto');
+    this.docsProyecto = new DocumentosHelper(this.proyectoModel as unknown as Model<any>, this.docProyectoModel, 'proyecto_id', this.docEliminadoModel, 'proyecto', 'Proyecto');
   }
 
   async create(dto: CreateSolicitudDto) {

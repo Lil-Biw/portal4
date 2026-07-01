@@ -16,11 +16,20 @@ export class CentrosCostosService {
 
   constructor(
     @InjectModel('CentroCosto') private centroCostoModel: Model<CentroCostoDocument>,
+    @InjectModel('DocCentroCosto') private docCentroCostoModel: Model<any>,
+    @InjectModel('DocEliminado') private docEliminadoModel: Model<any>,
     @InjectModel('Usuario') private readonly usuarioModel: Model<{ nombre: string; email: string; rol: string; cliente_id: Types.ObjectId; centros_asignados: Types.ObjectId[]; activo: boolean }>,
     private readonly documentosVencidosService: DocumentosVencidosService,
     private readonly mailService: MailService,
   ) {
-    this.docsHelper = new DocumentosHelper(centroCostoModel, 'Centro de costos');
+    this.docsHelper = new DocumentosHelper(
+      centroCostoModel,
+      docCentroCostoModel,
+      'centro_costo_id',
+      docEliminadoModel,
+      'centro',
+      'Centro de costos',
+    );
   }
 
   private toObjectId(value: string) {
@@ -49,7 +58,7 @@ export class CentrosCostosService {
   async findAll(page = 1, limit = 20) {
     const filter = { activo: true };
     const [data, total] = await Promise.all([
-      this.centroCostoModel.find(filter).select('-documentos.contenido').skip((page - 1) * limit).limit(limit).lean(),
+      this.centroCostoModel.find(filter).skip((page - 1) * limit).limit(limit).lean(),
       this.centroCostoModel.countDocuments(filter),
     ]);
     return { data, total, page, pages: Math.ceil(total / limit) };
@@ -58,7 +67,7 @@ export class CentrosCostosService {
   async findAllByCliente(cliente_id: string, page = 1, limit = 20) {
     const filter = { cliente_id: new Types.ObjectId(cliente_id), activo: true };
     const [data, total] = await Promise.all([
-      this.centroCostoModel.find(filter).select('-documentos.contenido').skip((page - 1) * limit).limit(limit).lean(),
+      this.centroCostoModel.find(filter).skip((page - 1) * limit).limit(limit).lean(),
       this.centroCostoModel.countDocuments(filter),
     ]);
     return { data, total, page, pages: Math.ceil(total / limit) };
@@ -67,12 +76,11 @@ export class CentrosCostosService {
   async findByIds(ids: string[]) {
     return this.centroCostoModel
       .find({ _id: { $in: ids.map(id => new Types.ObjectId(id)) }, activo: true })
-      .select('-documentos.contenido')
       .lean();
   }
 
   async findOne(id: string) {
-    const centro = await this.centroCostoModel.findById(id).select('-documentos.contenido').lean();
+    const centro = await this.centroCostoModel.findById(id).lean();
     if (!centro) throw new NotFoundException(`Centro de costos ${id} no encontrado`);
     return centro;
   }
@@ -82,7 +90,6 @@ export class CentrosCostosService {
     if (dto.cliente_id) payload['cliente_id'] = this.toObjectId(dto.cliente_id);
     const centro = await this.centroCostoModel
       .findByIdAndUpdate(id, payload, { new: true })
-      .select('-documentos.contenido')
       .lean();
     if (!centro) throw new NotFoundException(`Centro de costos ${id} no encontrado`);
     return centro;
@@ -99,7 +106,6 @@ export class CentrosCostosService {
   async updateScoreSmartclarity(centroId: string, valores: number[]) {
     const centro = await this.centroCostoModel
       .findByIdAndUpdate(centroId, { score_smartclarity: valores }, { new: true, runValidators: true })
-      .select('-documentos.contenido')
       .lean();
     if (!centro) throw new NotFoundException(`Centro ${centroId} no encontrado`);
     return centro;
@@ -108,7 +114,7 @@ export class CentrosCostosService {
   async agregarDocumento(id: string, archivo: ArchivoInput, nombreDisplay?: string, categoria?: string, usuarioId?: string, rolUploader?: string) {
     const result = await this.docsHelper.agregar(id, archivo, nombreDisplay, categoria, usuarioId);
     if (rolUploader === 'usuario') {
-      this.notificarSubidaDocumento(id, result.nombre_display, result.categoria, usuarioId)
+      this.notificarSubidaDocumento(id, result['nombre_display'] as string, result['categoria'] as string | undefined, usuarioId)
         .catch((err: unknown) => this.logger.error('Error al notificar subida de documento (centro):', err));
     }
     return result;
@@ -145,17 +151,16 @@ export class CentrosCostosService {
     empresaId?: string, empresaNombre?: string, centroNombre?: string,
     notificacion?: NotificacionOpcionesDto,
   ) {
-    const centro = await this.centroCostoModel.findById(centroId);
+    const centro = await this.centroCostoModel.findById(centroId).lean();
     if (!centro) throw new NotFoundException(`Centro ${centroId} no encontrado`);
-    const doc = centro.documentos.find((d: any) => String(d._id) === docId);
+
+    const doc = await this.docCentroCostoModel.findOne({
+      _id: new Types.ObjectId(docId),
+      centro_costo_id: new Types.ObjectId(centroId),
+    });
     if (!doc) throw new NotFoundException(`Documento ${docId} no encontrado`);
 
     const resolvedEmpresaId = empresaId ?? String(centro.cliente_id);
-
-    await this.centroCostoModel.findByIdAndUpdate(
-      centroId,
-      { $pull: { documentos: { _id: (doc as any)._id } } },
-    );
 
     await this.documentosVencidosService.crear({
       nombre_display: doc.nombre_display,
@@ -170,6 +175,8 @@ export class CentrosCostosService {
       centro_nombre:  centroNombre,
       subido_en:      doc.subido_en,
     });
+
+    await this.docCentroCostoModel.deleteOne({ _id: doc._id });
 
     void this.notificarVencimiento(
       resolvedEmpresaId,
