@@ -3,11 +3,11 @@ import { DatePipe } from '@angular/common';
 import { Activo, ActividadHistorialItem, TipoActivo, TipoActividad } from '../../../../shared/models/activo.model';
 import { ActivoIconoComponent } from '../activo-icono/activo-icono.component';
 
-export interface DescargarActivoDocEvt  { nombre: string; nombreDisplay?: string; }
+export interface DescargarActivoDocEvt  { docId: string; nombreDisplay?: string; }
 export interface DescargarActividadDocEvt {
   actividadId: string;
   centroId: string;     // siempre el centro del ACTIVO, no el de la actividad
-  nombre: string;
+  docId: string;
   nombreDisplay?: string;
 }
 
@@ -169,7 +169,9 @@ export class ActivoRevisarModalComponent {
   @Input() loadingHistorial = false;
 
   @Output() cerrar             = new EventEmitter<void>();
+  // TODO: re-implement after doc-list modal is redesigned for new separate-collections API
   @Output() descargarActivoDoc = new EventEmitter<DescargarActivoDocEvt>();
+  // TODO: re-implement after doc-list modal is redesigned for new separate-collections API
   @Output() descargarActividadDoc = new EventEmitter<DescargarActividadDocEvt>();
 
   get tipoActivo(): TipoActivo | null {

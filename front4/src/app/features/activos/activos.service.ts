@@ -167,13 +167,13 @@ export class ActivosService {
     this.triggerDownload(url, nombreDisplay || docId);
   }
 
-  descargarDocumentoActividad(actividadId: string, centroId: string, nombre: string, nombreDisplay?: string): void {
+  descargarDocumentoActividad(actividadId: string, centroId: string, docId: string, nombreDisplay?: string): void {
     const { empresaId } = this.resolverIds(centroId);
     if (!empresaId) { this.status.set({ type: 'error', text: 'Centro no encontrado' }); return; }
     const url = this.api.url(
-      `/empresas/${empresaId}/centros/${centroId}/actividades/${actividadId}/documentos/${encodeURIComponent(nombre)}`
+      `/empresas/${empresaId}/centros/${centroId}/actividades/${actividadId}/documentos/${docId}`
     );
-    this.triggerDownload(url, nombreDisplay || nombre);
+    this.triggerDownload(url, nombreDisplay || docId);
   }
 
   cargarHistorial(activoId: string, centroId: string): void {

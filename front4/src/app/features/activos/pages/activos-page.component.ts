@@ -330,14 +330,14 @@ export class ActivosPageComponent implements OnInit {
     this.editingTipoId.set(null);
   }
 
-  protected onDescargarActivoDoc(ev: { nombre: string; nombreDisplay?: string }): void {
+  protected onDescargarActivoDoc(ev: { docId: string; nombreDisplay?: string }): void {
     const activo = this.activoRevisando();
     if (!activo) return;
-    this.service.descargarDocumento(activo._id, activo.centro_costo_id, ev.nombre, ev.nombreDisplay);
+    this.service.descargarDocumento(activo._id, activo.centro_costo_id, ev.docId, ev.nombreDisplay);
   }
 
-  protected onDescargarActividadDoc(ev: { actividadId: string; centroId: string; nombre: string; nombreDisplay?: string }): void {
-    this.service.descargarDocumentoActividad(ev.actividadId, ev.centroId, ev.nombre, ev.nombreDisplay);
+  protected onDescargarActividadDoc(ev: { actividadId: string; centroId: string; docId: string; nombreDisplay?: string }): void {
+    this.service.descargarDocumentoActividad(ev.actividadId, ev.centroId, ev.docId, ev.nombreDisplay);
   }
 
   protected crear(dto: CreateActivoDto): void {
