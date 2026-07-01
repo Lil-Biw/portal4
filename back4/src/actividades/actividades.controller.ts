@@ -48,6 +48,11 @@ export class ActividadesController {
     return this.service.remove(actividadId);
   }
 
+  @Get(':actividadId/documentos')
+  listarDocumentos(@Param('actividadId') actividadId: string) {
+    return this.service.listarDocumentos(actividadId);
+  }
+
   @Post(':actividadId/documentos')
   @Roles('super_admin', 'admin_smartclarity')
   @UseInterceptors(FileInterceptor('archivo', { storage: memoryStorage() }))
@@ -60,22 +65,22 @@ export class ActividadesController {
     return this.service.subirDocumento(actividadId, archivo, nombreDisplay);
   }
 
-  @Delete(':actividadId/documentos/:nombre')
+  @Delete(':actividadId/documentos/:docId')
   @Roles('super_admin', 'admin_smartclarity')
   eliminarDocumento(
     @Param('actividadId') actividadId: string,
-    @Param('nombre') nombre: string,
+    @Param('docId') docId: string,
   ) {
-    return this.service.eliminarDocumento(actividadId, nombre);
+    return this.service.eliminarDocumento(actividadId, docId);
   }
 
-  @Get(':actividadId/documentos/:nombre')
+  @Get(':actividadId/documentos/:docId')
   async descargarDocumento(
     @Param('actividadId') actividadId: string,
-    @Param('nombre') nombre: string,
+    @Param('docId') docId: string,
     @Res() res: Response,
   ) {
-    const { buffer, tipo_mime, nombre_display } = await this.service.servirDocumento(actividadId, nombre);
+    const { buffer, tipo_mime, nombre_display } = await this.service.servirDocumento(actividadId, docId);
     sendFile(res, buffer, tipo_mime, nombre_display);
   }
 }

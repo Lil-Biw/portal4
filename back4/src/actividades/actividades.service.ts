@@ -6,18 +6,31 @@ import { CentroCostoDocument } from '../centros-costos/centros-costos.schema';
 import { CreateActividadDto, UpdateActividadDto } from './actividades.dto';
 import { MailService } from '../mail/mail.service';
 import { NotificacionOpcionesDto } from '../common/dto/notificacion-opciones.dto';
+import { DocumentosHelper, ArchivoInput } from '../common/helpers/documentos.helper';
 
 @Injectable()
 export class ActividadesService {
   private readonly logger = new Logger(ActividadesService.name);
+  private readonly docsHelper: DocumentosHelper;
 
   constructor(
     @InjectModel('Actividad') private actividadModel: Model<ActividadDocument>,
     @InjectModel('CentroCosto') private centroCostoModel: Model<CentroCostoDocument>,
     @InjectModel('Usuario') private usuarioModel: Model<{ nombre: string; email: string; rol: string; cliente_id: Types.ObjectId; centros_asignados: Types.ObjectId[]; activo: boolean }>,
     @InjectModel('Activo') private activoModel: Model<{ nombre: string }>,
+    @InjectModel('DocActividad') private docActividadModel: Model<any>,
+    @InjectModel('DocEliminado') private docEliminadoModel: Model<any>,
     private mailService: MailService,
-  ) {}
+  ) {
+    this.docsHelper = new DocumentosHelper(
+      actividadModel,
+      docActividadModel,
+      'actividad_id',
+      docEliminadoModel,
+      'actividad',
+      'Actividad',
+    );
+  }
 
   async findAllByEmpresa(empresaId: string, centroCostoId?: string, desde?: string, hasta?: string) {
     const centros = await this.centroCostoModel
@@ -42,7 +55,7 @@ export class ActividadesService {
     }
     return this.actividadModel
       .find(filter)
-      .select('-documentos.contenido')
+
       .populate('tipo_id')
       .populate('activo_ids')
       .sort({ fecha: 1 })
@@ -59,7 +72,7 @@ export class ActividadesService {
     }
     return this.actividadModel
       .find(filter)
-      .select('-documentos.contenido')
+
       .populate('tipo_id')
       .populate('activo_ids')
       .sort({ fecha: 1 })
@@ -67,7 +80,7 @@ export class ActividadesService {
   }
 
   async findOne(id: string) {
-    const a = await this.actividadModel.findById(id).select('-documentos.contenido').populate('tipo_id').lean();
+    const a = await this.actividadModel.findById(id).populate('tipo_id').lean();
     if (!a) throw new NotFoundException(`Actividad ${id} no encontrada`);
     return a;
   }
@@ -81,7 +94,7 @@ export class ActividadesService {
     }
     return this.actividadModel
       .find({ activo_ids: oid })
-      .select('-documentos.contenido')
+
       .populate('tipo_id')
       .sort({ fecha: -1 })
       .lean();
@@ -101,7 +114,7 @@ export class ActividadesService {
     const centroIds = centros.map(c => c._id);
     return this.actividadModel
       .find({ activo_ids: oid, centro_costo_id: { $in: centroIds } })
-      .select('-documentos.contenido')
+
       .populate('tipo_id')
       .sort({ fecha: -1 })
       .lean();
@@ -239,58 +252,19 @@ export class ActividadesService {
     return { message: 'Actividad eliminada', id };
   }
 
-  async subirDocumento(
-    id: string,
-    archivo: { originalname: string; buffer: Buffer; mimetype: string; size: number },
-    nombreDisplay?: string,
-  ) {
-    const a = await this.actividadModel.findById(id).lean();
-    if (!a) throw new NotFoundException(`Actividad ${id} no encontrada`);
-
-    const timestamp = Date.now();
-    const rand = Math.random().toString(36).substring(7);
-    const nombre = `${timestamp}_${rand}_${archivo.originalname}`;
-
-    const docEntry = {
-      nombre,
-      nombre_display: nombreDisplay?.trim() || archivo.originalname,
-      tamano_bytes:   archivo.size,
-      tipo_mime:      archivo.mimetype,
-      contenido:      archivo.buffer,
-    };
-
-    return this.actividadModel
-      .findByIdAndUpdate(id, { $push: { documentos: docEntry } }, { new: true })
-      .select('-documentos.contenido')
-      .populate('tipo_id')
-      .lean();
+  listarDocumentos(actividadId: string) {
+    return this.docsHelper.listar(actividadId);
   }
 
-  async eliminarDocumento(id: string, nombre: string) {
-    const a = await this.actividadModel.findById(id).lean();
-    if (!a) throw new NotFoundException(`Actividad ${id} no encontrada`);
-
-    return this.actividadModel
-      .findByIdAndUpdate(id, { $pull: { documentos: { nombre } } }, { new: true })
-      .select('-documentos.contenido')
-      .populate('tipo_id')
-      .lean();
+  subirDocumento(actividadId: string, archivo: ArchivoInput, nombreDisplay?: string) {
+    return this.docsHelper.agregar(actividadId, archivo, nombreDisplay);
   }
 
-  async servirDocumento(id: string, nombre: string): Promise<{ buffer: Buffer; tipo_mime: string; nombre_display: string }> {
-    // No usar .lean() aquí — los campos Buffer de MongoDB se deserializan como
-    // BSON Binary con .lean(), pero como Buffer nativo sin él.
-    const a = await this.actividadModel.findById(id);
-    if (!a) throw new NotFoundException(`Actividad ${id} no encontrada`);
+  servirDocumento(actividadId: string, docId: string) {
+    return this.docsHelper.servir(actividadId, docId);
+  }
 
-    const doc = a.documentos.find(d => d.nombre === nombre);
-    if (!doc) throw new NotFoundException(`Documento ${nombre} no encontrado`);
-
-    const raw = doc.contenido as unknown;
-    const buffer = Buffer.isBuffer(raw)
-      ? raw
-      : Buffer.from(raw as ArrayBuffer);
-
-    return { buffer, tipo_mime: doc.tipo_mime, nombre_display: doc.nombre_display };
+  eliminarDocumento(actividadId: string, docId: string) {
+    return this.docsHelper.eliminar(actividadId, docId);
   }
 }
