@@ -16,10 +16,13 @@ export class ProyectosService {
   readonly status = signal<Status | null>(null);
   readonly loading = signal(false);
 
-  // Admin: carga todos los proyectos (endpoint plano admin)
-  cargar(): void {
+  // Admin: carga todos los proyectos (endpoint plano admin).
+  // Sin `estado`, el backend excluye los cerrados por defecto; pasar un
+  // estado explícito (ej. 'cerrado') para verlos.
+  cargar(estado?: string): void {
     this.loading.set(true);
-    this.http.get<{ data: Proyecto[] } | Proyecto[]>(this.api.url('/proyectos')).subscribe({
+    const url = estado ? this.api.url(`/proyectos?estado=${estado}`) : this.api.url('/proyectos');
+    this.http.get<{ data: Proyecto[] } | Proyecto[]>(url).subscribe({
       next: (res) => { this.proyectos.set(Array.isArray(res) ? res : res.data); this.loading.set(false); },
       error: (err) => { this.setError(err); this.loading.set(false); },
     });
@@ -37,6 +40,17 @@ export class ProyectosService {
   cargarPorEmpresa(empresaId: string): void {
     this.loading.set(true);
     this.http.get<{ data: Proyecto[] } | Proyecto[]>(this.api.url(`/empresas/${empresaId}/proyectos`)).subscribe({
+      next: (res) => { this.proyectos.set(Array.isArray(res) ? res : res.data); this.loading.set(false); },
+      error: (err) => { this.setError(err); this.loading.set(false); },
+    });
+  }
+
+  // Consumidor: carga los proyectos vinculados a un centro de costo
+  cargarParaConsumidor(empresaId: string, centroId: string): void {
+    this.loading.set(true);
+    this.http.get<{ data: Proyecto[] } | Proyecto[]>(
+      this.api.url(`/empresas/${empresaId}/centros/${centroId}/proyectos`)
+    ).subscribe({
       next: (res) => { this.proyectos.set(Array.isArray(res) ? res : res.data); this.loading.set(false); },
       error: (err) => { this.setError(err); this.loading.set(false); },
     });

@@ -9,6 +9,7 @@ import { CentroCostoSchema } from '../centros-costos/centros-costos.schema';
 import { DocumentosVencidosModule } from '../documentos-vencidos/documentos-vencidos.module';
 import { UsuarioSchema } from '../usuarios/usuarios.schema';
 import { MailModule } from '../mail/mail.module';
+import { TipoProyectoSchema } from '../tipos-proyecto/tipos-proyecto.schema';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { MailModule } from '../mail/mail.module';
       { name: 'DocEliminado', schema: DocEliminadoSchema },
       { name: 'CentroCosto', schema: CentroCostoSchema },
       { name: 'Usuario', schema: UsuarioSchema },
+      { name: 'TipoProyecto', schema: TipoProyectoSchema },
     ]),
     DocumentosVencidosModule,
     MailModule,

@@ -57,17 +57,19 @@ export class ProyectosService {
       ...dto,
       cliente_id: this.toObjectId(dto.cliente_id!),
       centro_costo_id: this.toObjectId(dto.centro_costo_id!),
+      tipo_proyecto_id: dto.tipo_proyecto_id ? this.toObjectId(dto.tipo_proyecto_id) : undefined,
       fecha_inicio: dto.fecha_inicio ? new Date(dto.fecha_inicio) : undefined,
       fecha_fin: dto.fecha_fin ? new Date(dto.fecha_fin) : undefined,
     };
     if (creadoPor) doc['creado_por'] = new Types.ObjectId(creadoPor);
-    return new this.proyectoModel(doc).save();
+    const proyecto = await new this.proyectoModel(doc).save();
+    return proyecto.populate('tipo_proyecto_id');
   }
 
-  async findAll(page = 1, limit = 20) {
-    const filter = { estado: { $ne: 'cerrado' } };
+  async findAll(page = 1, limit = 20, estado?: string) {
+    const filter = estado ? { estado } : { estado: { $ne: 'cerrado' } };
     const [data, total] = await Promise.all([
-      this.proyectoModel.find(filter).skip((page - 1) * limit).limit(limit).lean(),
+      this.proyectoModel.find(filter).populate('tipo_proyecto_id').skip((page - 1) * limit).limit(limit).lean(),
       this.proyectoModel.countDocuments(filter),
     ]);
     return { data, total, page, pages: Math.ceil(total / limit) };
@@ -79,7 +81,7 @@ export class ProyectosService {
       estado: { $ne: 'cerrado' },
     };
     const [data, total] = await Promise.all([
-      this.proyectoModel.find(filter).skip((page - 1) * limit).limit(limit).lean(),
+      this.proyectoModel.find(filter).populate('tipo_proyecto_id').skip((page - 1) * limit).limit(limit).lean(),
       this.proyectoModel.countDocuments(filter),
     ]);
     return { data, total, page, pages: Math.ceil(total / limit) };
@@ -91,14 +93,14 @@ export class ProyectosService {
       estado: { $ne: 'cerrado' },
     };
     const [data, total] = await Promise.all([
-      this.proyectoModel.find(filter).skip((page - 1) * limit).limit(limit).lean(),
+      this.proyectoModel.find(filter).populate('tipo_proyecto_id').skip((page - 1) * limit).limit(limit).lean(),
       this.proyectoModel.countDocuments(filter),
     ]);
     return { data, total, page, pages: Math.ceil(total / limit) };
   }
 
   async findOne(id: string) {
-    const proyecto = await this.proyectoModel.findById(id).lean();
+    const proyecto = await this.proyectoModel.findById(id).populate('tipo_proyecto_id').lean();
     if (!proyecto) throw new NotFoundException(`Proyecto ${id} no encontrado`);
     return proyecto;
   }
@@ -112,8 +114,10 @@ export class ProyectosService {
     const payload: Record<string, unknown> = { ...dto };
     if (dto.cliente_id) payload['cliente_id'] = this.toObjectId(dto.cliente_id);
     if (dto.centro_costo_id) payload['centro_costo_id'] = this.toObjectId(dto.centro_costo_id);
+    if (dto.tipo_proyecto_id) payload['tipo_proyecto_id'] = this.toObjectId(dto.tipo_proyecto_id);
     const proyecto = await this.proyectoModel
       .findByIdAndUpdate(id, payload, { new: true, runValidators: true })
+      .populate('tipo_proyecto_id')
       .lean();
     if (!proyecto) throw new NotFoundException(`Proyecto ${id} no encontrado`);
     return proyecto;

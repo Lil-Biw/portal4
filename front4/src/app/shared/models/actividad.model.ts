@@ -25,7 +25,6 @@ export interface Actividad {
   centro_costo_id: string;
   activo_ids?: (Activo | string)[];
   fecha: string;
-  documentos?: DocActividad[];
   creado_en?: string;
   actualizado_en?: string;
 }

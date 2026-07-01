@@ -115,8 +115,8 @@ export class ProyectosAdminController {
   constructor(private readonly svc: ProyectosService) {}
 
   @Get()
-  findAll(@Query('page') page = '1', @Query('limit') limit = '20') {
-    return this.svc.findAll(+page, +limit);
+  findAll(@Query('page') page = '1', @Query('limit') limit = '20', @Query('estado') estado?: string) {
+    return this.svc.findAll(+page, +limit, estado);
   }
 
   @Get(':id')

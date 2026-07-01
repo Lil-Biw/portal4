@@ -7,10 +7,14 @@ export type ProyectoDocument = Proyecto & Document;
 export class Proyecto {
   @Prop({ type: Types.ObjectId, ref: 'CentroCosto', required: true }) centro_costo_id: Types.ObjectId;
   @Prop({ type: Types.ObjectId, ref: 'Cliente', required: true }) cliente_id: Types.ObjectId;
+  @Prop({ type: Types.ObjectId, ref: 'TipoProyecto' }) tipo_proyecto_id?: Types.ObjectId;
   @Prop({ required: true, trim: true }) codigo: string;
   @Prop({ required: true, trim: true }) nombre: string;
   @Prop({ trim: true }) descripcion?: string;
-  @Prop({ enum: ['borrador', 'activo', 'cerrado'], default: 'borrador' }) estado: string;
+  @Prop({
+    enum: ['borrador', 'planificacion', 'activo', 'en_pausa', 'en_revision', 'cerrado', 'cancelado'],
+    default: 'borrador',
+  }) estado: string;
   @Prop() fecha_inicio?: Date;
   @Prop() fecha_fin?: Date;
   @Prop({ type: Types.ObjectId, ref: 'Usuario' }) creado_por?: Types.ObjectId;
@@ -20,3 +24,4 @@ export const ProyectoSchema = SchemaFactory.createForClass(Proyecto);
 ProyectoSchema.index({ centro_costo_id: 1, estado: 1 });
 ProyectoSchema.index({ cliente_id: 1, estado: 1 });
 ProyectoSchema.index({ centro_costo_id: 1, codigo: 1 }, { unique: true });
+ProyectoSchema.index({ tipo_proyecto_id: 1 });

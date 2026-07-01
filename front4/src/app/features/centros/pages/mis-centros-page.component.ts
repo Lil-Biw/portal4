@@ -7,12 +7,14 @@ import { ConsumidorContextService } from '../../../profile/consumidor-context.se
 import { SolicitudesService } from '../../solicitudes/solicitudes.service';
 import { DocumentosService } from '../../documentos/documentos.service';
 import { ActivosService } from '../../activos/activos.service';
+import { ProyectosService } from '../../proyectos/proyectos.service';
 import { SpiderChartComponent } from '../../../shared/components/spider-chart/spider-chart.component';
 import { StatChipComponent, ChipVariant } from '../../../shared/components/stat-chip/stat-chip.component';
 import { DonutArcComponent } from '../../../shared/components/donut-arc/donut-arc.component';
 import { ActivoIconoComponent } from '../../activos/components/activo-icono/activo-icono.component';
 import { CentroCosto } from '../../../shared/models/centro.model';
 import { Activo, TipoActivo } from '../../../shared/models/activo.model';
+import { Proyecto } from '../../../shared/models/proyecto.model';
 import { asId, calcularScoreDocumental, scoreChipVariantFn, scoreChipLabelFn, colorEstadoSolicitud, estadoStyleFn } from '../../../shared/utils';
 
 @Component({
@@ -39,6 +41,7 @@ export class MisCentrosPageComponent implements OnInit, OnDestroy {
   protected readonly solicitudesService = inject(SolicitudesService);
   protected readonly documentosService  = inject(DocumentosService);
   protected readonly activosService     = inject(ActivosService);
+  protected readonly proyectosService    = inject(ProyectosService);
   private  readonly sanitizer          = inject(DomSanitizer);
 
   get empresa()        { return this.consumidorContext.empresaSeleccionada(); }
@@ -166,7 +169,28 @@ export class MisCentrosPageComponent implements OnInit, OnDestroy {
       this.documentosService.cargar('centro', emp._id, asId(centro._id));
       this.documentosService.cargarVencidos(emp._id, asId(centro._id));
       this.activosService.cargarParaConsumidor(emp._id, asId(centro._id));
+      this.proyectosService.cargarParaConsumidor(emp._id, asId(centro._id));
     }
+  }
+
+  irAProyecto(proyecto: Proyecto): void {
+    this.consumidorContext.seleccionarProyecto(proyecto);
+    this.router.navigate(['/mis-proyectos', proyecto._id]);
+  }
+
+  private static readonly ESTADO_BADGE_STYLE: Record<string, string> = {
+    borrador:      'background:rgba(107,114,128,.12);color:#6b7280',
+    planificacion: 'background:rgba(100,116,139,.12);color:#64748b',
+    activo:        'background:rgba(22,163,74,.12);color:#16a34a',
+    en_pausa:      'background:rgba(217,119,6,.12);color:#d97706',
+    en_revision:   'background:rgba(124,58,237,.12);color:#7c3aed',
+    cerrado:       'background:rgba(156,163,175,.12);color:#9ca3af',
+    cancelado:     'background:rgba(220,38,38,.12);color:#dc2626',
+  };
+
+  protected estadoBadgeStyle(estado: string): string {
+    return MisCentrosPageComponent.ESTADO_BADGE_STYLE[estado]
+      ?? 'background:rgba(107,114,128,.1);color:#6b7280';
   }
 
   irADocumentos(tab: 'documentacion' | 'solicitudes'): void {

@@ -21,7 +21,12 @@
           <div class="proyecto-card">
 
             <div class="proyecto-card-top">
-              <span class="proyecto-nombre">{{ p.nombre }}</span>
+              <span class="proyecto-nombre-wrap">
+                @if (tipoDeProyecto(p); as tipo) {
+                  <app-proyecto-icono [color]="tipo.color" [size]="16"></app-proyecto-icono>
+                }
+                <span class="proyecto-nombre">{{ p.nombre }}</span>
+              </span>
               <span class="estado-badge"
                 [style.background]="estadoChip(p.estado).bg"
                 [style.color]="estadoChip(p.estado).color">

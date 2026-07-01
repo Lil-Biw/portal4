@@ -1,4 +1,11 @@
-export type EstadoProyecto = 'borrador' | 'activo' | 'cerrado';
+export type EstadoProyecto =
+  | 'borrador'
+  | 'planificacion'
+  | 'activo'
+  | 'en_pausa'
+  | 'en_revision'
+  | 'cerrado'
+  | 'cancelado';
 
 export interface Proyecto {
   _id: string;

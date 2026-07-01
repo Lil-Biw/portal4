@@ -22,6 +22,37 @@
     <input [(ngModel)]="form.nombre" name="nombre" required />
   </label>
   <label class="field">
+    <span>Tipo de proyecto</span>
+    <div class="tipo-combo">
+      <input
+        class="tipo-combo-input"
+        type="text"
+        placeholder="Sin tipo asignado"
+        [ngModel]="tipoQuery()"
+        name="tipo_query"
+        (ngModelChange)="onTipoInput($event)"
+        (focus)="tipoDropdownOpen.set(true)"
+        (blur)="onTipoBlur()"
+        autocomplete="off" />
+      <span class="tipo-combo-arrow">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="6 9 12 15 18 9"/>
+        </svg>
+      </span>
+      <div class="tipo-combo-dropdown" *ngIf="tipoDropdownOpen()">
+        <div class="tipo-combo-option" (mousedown)="selectTipo(null)">Sin tipo</div>
+        <div class="tipo-combo-option"
+          *ngFor="let t of tiposFiltrados()"
+          [class.tipo-combo-option--active]="form.tipo_proyecto_id === t._id"
+          (mousedown)="selectTipo(t)">
+          <app-proyecto-icono [color]="t.color" [size]="14"></app-proyecto-icono>
+          {{ t.nombre }}
+        </div>
+        <div class="tipo-combo-empty" *ngIf="tiposFiltrados().length === 0">Sin resultados para "{{ tipoQuery() }}"</div>
+      </div>
+    </div>
+  </label>
+  <label class="field">
     <span>Estado</span>
     <select [(ngModel)]="form.estado" name="estado">
       <option *ngFor="let e of estados" [value]="e.value">{{ e.label }}</option>

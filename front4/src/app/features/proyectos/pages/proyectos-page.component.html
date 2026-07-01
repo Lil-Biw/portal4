@@ -10,7 +10,75 @@
         <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
       </svg>
       Buscar</button>
+    <button class="btn-ghost" *ngIf="puedeGestionarTipos()" (click)="abrirTiposModal()">Gestionar tipos</button>
     <button class="btn-primary" (click)="abrirCrear()">+ Crear proyecto</button>
+  </div>
+</div>
+
+<!-- Recuadro de contexto -->
+<div class="card" style="margin-bottom:1rem">
+  <p style="margin:0 0 .75rem;font-size:.85rem;font-weight:600;color:#374151">Selecciona el contexto</p>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:.75rem">
+    <label class="field">
+      <span>Empresa</span>
+      <select [(ngModel)]="selectedEmpresaId" (ngModelChange)="onEmpresaContextoChange()">
+        <option value="">Todas</option>
+        <option *ngFor="let c of clientesService.clientes()" [value]="c._id">{{ c.razon_social }}</option>
+      </select>
+    </label>
+    <label class="field">
+      <span>Centro de costos</span>
+      <select [(ngModel)]="selectedCentroId" [disabled]="!selectedEmpresaId">
+        <option value="">Todos</option>
+        <option *ngFor="let c of centrosFiltrados()" [value]="c._id">{{ c.nombre }}</option>
+      </select>
+    </label>
+    <div class="field">
+      <span>Tipo de proyecto</span>
+      <div class="tipo-combo">
+        <input
+          class="tipo-combo-input"
+          type="text"
+          placeholder="Todos los tipos..."
+          [ngModel]="tipoComboQuery()"
+          name="tipo_combo_ctx"
+          (ngModelChange)="onTipoComboInput($event)"
+          (focus)="tipoComboOpen.set(true)"
+          (blur)="onTipoComboBlur()"
+          autocomplete="off" />
+        <span class="tipo-combo-arrow">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="6 9 12 15 18 9"/>
+          </svg>
+        </span>
+        <div class="tipo-combo-dropdown" *ngIf="tipoComboOpen()">
+          <div class="tipo-combo-option" [class.tipo-combo-option--active]="!_selectedTipoId()"
+               (mousedown)="selectTipoCombo(null)">Todos</div>
+          <div class="tipo-combo-option" *ngFor="let t of tipoComboFiltrados()"
+               [class.tipo-combo-option--active]="_selectedTipoId() === t._id"
+               (mousedown)="selectTipoCombo(t)">
+            <app-proyecto-icono [color]="t.color" [size]="14"></app-proyecto-icono>
+            {{ t.nombre }}
+          </div>
+          <div class="tipo-combo-empty" *ngIf="tipoComboFiltrados().length === 0">Sin resultados</div>
+        </div>
+      </div>
+    </div>
+    <label class="field">
+      <span>Estado</span>
+      <select [(ngModel)]="selectedEstado" (ngModelChange)="onEstadoContextoChange()">
+        <option value="">Todos (sin cerrados)</option>
+        <option *ngFor="let e of estadosFiltro" [value]="e.value">{{ e.label }}</option>
+      </select>
+    </label>
+    <label class="field">
+      <span>Buscar</span>
+      <input
+        type="text"
+        placeholder="Nombre o código..."
+        [ngModel]="filtroContexto()"
+        (ngModelChange)="filtroContexto.set($event)" />
+    </label>
   </div>
 </div>
 
@@ -18,9 +86,10 @@
 
 <!-- Lista principal -->
 <app-proyectos-list
-  [proyectos]="service.proyectos()"
+  [proyectos]="proyectosContexto()"
   [clientes]="clientesService.clientes()"
   [centros]="centrosService.centros()"
+  [tipos]="tiposService.tipos()"
   (editado)="abrirEditar($event)"
   (eliminado)="eliminar($event)">
 </app-proyectos-list>
@@ -40,6 +109,7 @@
         submitLabel="Crear proyecto"
         [clientes]="clientesService.clientes()"
         [centros]="centrosService.centros()"
+        [tipos]="tiposService.tipos()"
         (submitted)="crear($event)">
       </app-proyecto-form>
     </ng-container>
@@ -55,6 +125,7 @@
         [initial]="service.seleccionado()"
         [clientes]="clientesService.clientes()"
         [centros]="centrosService.centros()"
+        [tipos]="tiposService.tipos()"
         submitLabel="Guardar cambios"
         (submitted)="actualizar($event)">
       </app-proyecto-form>
@@ -77,9 +148,73 @@
         [proyectos]="proyectosFiltrados()"
         [clientes]="clientesService.clientes()"
         [centros]="centrosService.centros()"
+        [tipos]="tiposService.tipos()"
         (editado)="editarDesdeBuscar($event)"
         (eliminado)="eliminar($event)">
       </app-proyectos-list>
+    </ng-container>
+
+    <!-- Tipos de proyecto -->
+    <ng-container *ngIf="modal() === 'tipos'">
+      <div class="modal-header">
+        <h3>Tipos de proyecto</h3>
+        <button class="modal-close" (click)="cerrar()">&#x2715;</button>
+      </div>
+      <app-status-banner [status]="tiposService.status()"></app-status-banner>
+
+      <div class="tipos-modal">
+
+        <!-- Columna 1: formulario -->
+        <div>
+          <p class="tipos-col-title">{{ editingTipoId() ? 'Editar tipo' : 'Nuevo tipo' }}</p>
+          <input
+            class="tipo-input"
+            type="text"
+            placeholder="Nombre del tipo *"
+            [ngModel]="tipoForm().nombre"
+            (ngModelChange)="patchTipoForm('nombre', $event)" />
+          <p style="font-size:.78rem;color:#6b7280;margin:0 0 .4rem">Selecciona un ícono</p>
+          <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:.75rem">
+            <button type="button" *ngFor="let c of coloresProyecto"
+              [title]="c.label"
+              (click)="patchTipoForm('color', c.valor)"
+              [style.box-shadow]="tipoForm().color === c.valor ? '0 0 0 3px ' + c.valor : 'none'"
+              [style.transform]="tipoForm().color === c.valor ? 'scale(1.12)' : 'scale(1)'"
+              style="padding:0;border:none;background:none;cursor:pointer;
+                     border-radius:12px;transition:transform .12s,box-shadow .12s;">
+              <app-proyecto-icono [color]="c.valor" [size]="22"></app-proyecto-icono>
+            </button>
+          </div>
+          <div style="display:flex;gap:.5rem">
+            <button class="btn-primary btn-sm" (click)="guardarTipo()"
+              [disabled]="!tipoForm().nombre.trim()">
+              {{ editingTipoId() ? 'Guardar cambios' : 'Crear tipo' }}
+            </button>
+            <ng-container *ngIf="editingTipoId()">
+              <button class="btn-ghost btn-sm" (click)="abrirNuevoTipo()">Cancelar</button>
+            </ng-container>
+          </div>
+        </div>
+
+        <!-- Columna 2: lista de tipos -->
+        <div>
+          <p class="tipos-col-title">Tipos creados ({{ tiposService.tipos().length }})</p>
+          <p class="tipos-empty" *ngIf="tiposService.tipos().length === 0">Aún no hay tipos creados.</p>
+          <div class="tipos-list" *ngIf="tiposService.tipos().length > 0">
+            <div class="tipo-item" *ngFor="let t of tiposService.tipos()">
+              <app-proyecto-icono [color]="t.color" [size]="16"></app-proyecto-icono>
+              <div class="tipo-texto">
+                <span class="tipo-nombre">{{ t.nombre }}</span>
+              </div>
+              <div class="tipo-actions">
+                <button class="btn-ghost" (click)="abrirEditarTipo(t)">Editar</button>
+                <button class="btn-danger" (click)="eliminarTipo(t._id)">Eliminar</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
     </ng-container>
 
   </div>

@@ -79,10 +79,19 @@ export class MiProyectoDetallePageComponent implements OnInit, OnDestroy {
     });
   }
 
+  private static readonly ESTADO_BADGE_STYLE: Record<string, string> = {
+    borrador:      'background:rgba(107,114,128,.12);color:#6b7280',
+    planificacion: 'background:rgba(100,116,139,.12);color:#64748b',
+    activo:        'background:rgba(22,163,74,.12);color:#16a34a',
+    en_pausa:      'background:rgba(217,119,6,.12);color:#d97706',
+    en_revision:   'background:rgba(124,58,237,.12);color:#7c3aed',
+    cerrado:       'background:rgba(156,163,175,.12);color:#9ca3af',
+    cancelado:     'background:rgba(220,38,38,.12);color:#dc2626',
+  };
+
   protected estadoBadgeStyle(estado: string): string {
-    if (estado === 'activo')   return 'background:rgba(0,149,214,.1);color:#0095d6';
-    if (estado === 'cerrado')  return 'background:rgba(239,68,68,.1);color:#ef4444';
-    return 'background:rgba(34,33,33,.07);color:#6b7280';
+    return MiProyectoDetallePageComponent.ESTADO_BADGE_STYLE[estado]
+      ?? 'background:rgba(34,33,33,.07);color:#6b7280';
   }
 
   protected estadoSolStyle(estado: string): string {

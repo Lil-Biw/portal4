@@ -1,14 +1,18 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { Proyecto } from '../../../../shared/models/proyecto.model';
+import { Proyecto, TipoProyecto } from '../../../../shared/models/proyecto.model';
 import { Cliente } from '../../../../shared/models/cliente.model';
 import { CentroCosto } from '../../../../shared/models/centro.model';
 import { asId } from '../../../../shared/utils';
+import { ProyectoIconoComponent } from '../proyecto-icono/proyecto-icono.component';
 
 const ESTADO_CHIP: Record<string, { label: string; color: string; bg: string }> = {
-  borrador:  { label: 'Borrador', color: '#6b7280', bg: 'rgba(107,114,128,.12)' },
-  activo:    { label: 'Activo',   color: '#16a34a', bg: 'rgba(22,163,74,.12)'   },
-  cerrado:   { label: 'Cerrado',  color: '#9ca3af', bg: 'rgba(156,163,175,.12)' },
-  en_pausa:  { label: 'En pausa', color: '#d97706', bg: 'rgba(217,119,6,.12)'   },
+  borrador:      { label: 'Borrador',      color: '#6b7280', bg: 'rgba(107,114,128,.12)' },
+  planificacion: { label: 'Planificación', color: '#64748b', bg: 'rgba(100,116,139,.12)' },
+  activo:        { label: 'Activo',        color: '#16a34a', bg: 'rgba(22,163,74,.12)'   },
+  en_pausa:      { label: 'En pausa',      color: '#d97706', bg: 'rgba(217,119,6,.12)'   },
+  en_revision:   { label: 'En revisión',   color: '#7c3aed', bg: 'rgba(124,58,237,.12)'  },
+  cerrado:       { label: 'Cerrado',       color: '#9ca3af', bg: 'rgba(156,163,175,.12)' },
+  cancelado:     { label: 'Cancelado',     color: '#dc2626', bg: 'rgba(220,38,38,.12)'   },
 };
 
 const MESES = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
@@ -18,7 +22,7 @@ interface GrupoEmpresa { empresa: Cliente; proyectos: Proyecto[]; }
 @Component({
   selector: 'app-proyectos-list',
   standalone: true,
-  imports: [],
+  imports: [ProyectoIconoComponent],
   templateUrl: './proyectos-list.component.html',
   styles: [`
     .grupos { display: flex; flex-direction: column; gap: 1.5rem; }
@@ -81,6 +85,7 @@ interface GrupoEmpresa { empresa: Cliente; proyectos: Proyecto[]; }
       justify-content: space-between;
       gap: .5rem;
     }
+    .proyecto-nombre-wrap { display: flex; align-items: center; gap: .4rem; min-width: 0; }
     .proyecto-nombre {
       font-weight: 700;
       font-size: .95rem;
@@ -138,6 +143,7 @@ export class ProyectosListComponent {
   @Input() proyectos: Proyecto[]    = [];
   @Input() clientes:  Cliente[]     = [];
   @Input() centros:   CentroCosto[] = [];
+  @Input() tipos:     TipoProyecto[] = [];
   @Input() seleccionadoId: string | null = null;
   @Output() editado   = new EventEmitter<Proyecto>();
   @Output() eliminado = new EventEmitter<string>();
@@ -160,6 +166,12 @@ export class ProyectosListComponent {
 
   centroPorId(id: string): string {
     return this.centros.find(c => asId(c._id) === id)?.nombre ?? '';
+  }
+
+  tipoDeProyecto(p: Proyecto): TipoProyecto | null {
+    if (!p.tipo_proyecto_id) return null;
+    if (typeof p.tipo_proyecto_id === 'object') return p.tipo_proyecto_id as TipoProyecto;
+    return this.tipos.find(t => t._id === p.tipo_proyecto_id) ?? null;
   }
 
   estadoChip(estado: string) { return ESTADO_CHIP[estado] ?? ESTADO_CHIP['borrador']; }

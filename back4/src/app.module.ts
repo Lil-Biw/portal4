@@ -12,6 +12,7 @@ import { PermisosModule } from './permisos/permisos.module';
 import { SolicitudesModule } from './solicitudes/solicitudes.module';
 import { TiposActividadModule } from './tipos-actividad/tipos-actividad.module';
 import { TiposActivoModule } from './tipos-activo/tipos-activo.module';
+import { TiposProyectoModule } from './tipos-proyecto/tipos-proyecto.module';
 import { ActividadesModule } from './actividades/actividades.module';
 import { ActivosModule } from './activos/activos.module';
 import { NoticiasModule } from './noticias/noticias.module';
@@ -30,6 +31,7 @@ import { DocumentosVencidosModule } from './documentos-vencidos/documentos-venci
     SolicitudesModule,
     TiposActividadModule,
     TiposActivoModule,
+    TiposProyectoModule,
     ActividadesModule,
     ActivosModule,
     NoticiasModule,

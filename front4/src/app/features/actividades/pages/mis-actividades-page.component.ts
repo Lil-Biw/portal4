@@ -70,15 +70,19 @@ export class MisActividadesPageComponent implements OnInit {
     }).filter((x): x is import('../../../shared/models/activo.model').Activo => x !== null);
   });
 
+  private tipoIdDe(a: Actividad): string {
+    return asId(typeof a.tipo_id === 'object' ? (a.tipo_id as TipoActividad)._id : a.tipo_id as string);
+  }
+
   protected historialDetalle = computed(() => {
     const a = this.actividadDetalle();
     if (!a) return [];
-    const tipoId   = asId(typeof a.tipo_id === 'object' ? (a.tipo_id as TipoActividad)._id : a.tipo_id as string);
+    const tipoId   = this.tipoIdDe(a);
     const centroId = asId(a.centro_costo_id);
     return this.service.actividades()
       .filter(x =>
         x._id !== a._id &&
-        asId(typeof x.tipo_id === 'object' ? (x.tipo_id as TipoActividad)._id : x.tipo_id as string) === tipoId &&
+        this.tipoIdDe(x) === tipoId &&
         asId(x.centro_costo_id) === centroId
       )
       .sort((x, y) => y.fecha.localeCompare(x.fecha))
@@ -94,7 +98,7 @@ export class MisActividadesPageComponent implements OnInit {
       list = list.filter(a => ids.has(asId(a.centro_costo_id)));
     }
     if (tipoId) {
-      list = list.filter(a => asId(typeof a.tipo_id === 'object' ? (a.tipo_id as TipoActividad)._id : a.tipo_id as string) === tipoId);
+      list = list.filter(a => this.tipoIdDe(a) === tipoId);
     }
     return list;
   });
@@ -124,6 +128,7 @@ export class MisActividadesPageComponent implements OnInit {
     this.actividadSeleccionadaDia.set(a);
     this.actividadDetalle.set(a);
     this.lupaActivosDia.set(false);
+    this.service.listarDocumentos(a._id);
   }
 
   protected centroNombre(a: Actividad): string {
@@ -132,10 +137,13 @@ export class MisActividadesPageComponent implements OnInit {
 
   protected tipoDeActividad(a: Actividad): TipoActividad | null {
     if (typeof a.tipo_id === 'object') return a.tipo_id as TipoActividad;
-    return this.tiposService.tipos().find(t => t._id === asId(a.tipo_id as string)) ?? null;
+    return this.tiposService.tipos().find(t => t._id === this.tipoIdDe(a)) ?? null;
   }
 
-  abrirDetalle(a: Actividad): void { this.actividadDetalle.set(a); }
+  abrirDetalle(a: Actividad): void {
+    this.actividadDetalle.set(a);
+    this.service.listarDocumentos(a._id);
+  }
   cerrarDetalle(): void { this.actividadDetalle.set(null); }
 
   descargarDocActividad(actividadId: string, nombre: string, nombreDisplay?: string): void {
@@ -149,7 +157,7 @@ export class MisActividadesPageComponent implements OnInit {
 
   colorDeActividad(a: Actividad): string {
     if (typeof a.tipo_id === 'object') return (a.tipo_id as TipoActividad).color ?? '#9ca3af';
-    return this.tiposService.tipos().find(t => t._id === asId(a.tipo_id as string))?.color ?? '#9ca3af';
+    return this.tiposService.tipos().find(t => t._id === this.tipoIdDe(a))?.color ?? '#9ca3af';
   }
 
   ngOnInit(): void {

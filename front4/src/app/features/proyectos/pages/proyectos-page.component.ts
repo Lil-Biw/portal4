@@ -1,22 +1,28 @@
 import { Component, OnInit, inject, signal, computed } from '@angular/core';
-import { NgIf } from '@angular/common';
+import { NgIf, NgFor } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ProyectosService } from '../proyectos.service';
+import { TiposProyectoService } from '../tipos-proyecto.service';
 import { ClientesService } from '../../clientes/clientes.service';
 import { CentrosService } from '../../centros/centros.service';
 import { StatusBannerComponent } from '../../../shared/components/status-banner/status-banner.component';
 import { ProyectoFormComponent } from '../components/proyecto-form/proyecto-form.component';
 import { ProyectosListComponent } from '../components/proyectos-list/proyectos-list.component';
-import { Proyecto, CreateProyectoDto } from '../../../shared/models/proyecto.model';
+import { ProyectoIconoComponent } from '../components/proyecto-icono/proyecto-icono.component';
+import { Proyecto, CreateProyectoDto, TipoProyecto } from '../../../shared/models/proyecto.model';
 import { asId } from '../../../shared/utils';
 import { AuthService } from '../../auth/auth.service';
+import { COLORES_PROYECTO, ColorProyecto } from '../proyectos-icons';
 
-type ModalMode = 'crear' | 'editar' | 'buscar' | null;
+type ModalMode = 'crear' | 'editar' | 'buscar' | 'tipos' | null;
+
+interface TipoForm { nombre: string; color: string; }
+function emptyTipoForm(): TipoForm { return { nombre: '', color: '#0095d6' }; }
 
 @Component({
   selector: 'app-proyectos-page',
   standalone: true,
-  imports: [NgIf, FormsModule, StatusBannerComponent, ProyectoFormComponent, ProyectosListComponent],
+  imports: [NgIf, NgFor, FormsModule, StatusBannerComponent, ProyectoFormComponent, ProyectosListComponent, ProyectoIconoComponent],
   templateUrl: './proyectos-page.component.html',
   styles: [`
     .page-header {
@@ -78,13 +84,86 @@ type ModalMode = 'crear' | 'editar' | 'buscar' | null;
       box-sizing: border-box;
     }
     .search-input:focus { outline: none; border-color: #0095d6; }
+    .tipos-modal {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+      align-items: start;
+    }
+    .tipos-col-title {
+      font-size: .9rem;
+      font-weight: 700;
+      color: #374151;
+      margin: 0 0 .75rem;
+    }
+    .tipos-empty { color: #9ca3af; font-size: .85rem; margin: .5rem 0; }
+    .tipos-list { display: flex; flex-direction: column; gap: 0; max-height: 320px; overflow-y: auto; padding-right: .25rem; }
+    .tipo-item {
+      display: flex;
+      align-items: center;
+      gap: .6rem;
+      padding: .5rem 0;
+      border-bottom: 1px solid rgba(34,33,33,.06);
+    }
+    .tipo-item:last-child { border-bottom: none; }
+    .tipo-texto { flex: 1; min-width: 0; }
+    .tipo-nombre { font-size: .85rem; font-weight: 600; color: #1f2937; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .tipo-actions { display: flex; gap: .35rem; flex-shrink: 0; }
+    .tipo-input {
+      width: 100%;
+      padding: .5rem .7rem;
+      border: 1px solid rgba(34,33,33,.2);
+      border-radius: 8px;
+      font-size: .85rem;
+      font-family: inherit;
+      box-sizing: border-box;
+      margin-bottom: .5rem;
+    }
+    .tipo-input:focus { outline: 2px solid #0095d6; border-color: transparent; }
+
+    /* ── Tipo-combo (context card) ───────────────────────────── */
+    .tipo-combo { position: relative; }
+    .tipo-combo-input {
+      width: 100%; box-sizing: border-box;
+      padding: .55rem .75rem; padding-right: 2rem;
+      border: 1px solid rgba(34,33,33,.15); border-radius: 8px;
+      font-size: .875rem; color: #1f2937; font-family: inherit;
+      background: #fff; cursor: text; outline: none;
+      transition: border-color .15s;
+    }
+    .tipo-combo-input:focus { border-color: #0095d6; }
+    .tipo-combo-input::placeholder { color: #9ca3af; }
+    .tipo-combo-arrow {
+      position: absolute; right: .65rem; top: 50%; transform: translateY(-50%);
+      pointer-events: none; color: #9ca3af; display: flex; align-items: center;
+    }
+    .tipo-combo-dropdown {
+      position: absolute; top: calc(100% + 4px); left: 0; right: 0;
+      background: #fff; border: 1px solid rgba(34,33,33,.15); border-radius: 8px;
+      box-shadow: 0 8px 24px rgba(15,23,42,.12); z-index: 200;
+      max-height: 200px; overflow-y: auto;
+    }
+    .tipo-combo-option {
+      padding: .5rem .75rem; font-size: .875rem; color: #374151;
+      cursor: pointer; display: flex; align-items: center; gap: .5rem;
+      transition: background .1s;
+    }
+    .tipo-combo-option:hover, .tipo-combo-option--active { background: #f0f9ff; color: #0095d6; }
+    .tipo-combo-empty { padding: .5rem .75rem; font-size: .83rem; color: #9ca3af; }
   `],
 })
 export class ProyectosPageComponent implements OnInit {
   protected readonly service         = inject(ProyectosService);
+  protected readonly tiposService     = inject(TiposProyectoService);
   protected readonly clientesService  = inject(ClientesService);
   protected readonly centrosService   = inject(CentrosService);
   private readonly authService        = inject(AuthService);
+
+  protected readonly coloresProyecto: ColorProyecto[] = COLORES_PROYECTO;
+
+  protected puedeGestionarTipos = computed(() =>
+    this.authService.usuarioActual()?.rol === 'super_admin'
+  );
 
   protected modal    = signal<ModalMode>(null);
   protected busqueda = signal('');
@@ -104,10 +183,110 @@ export class ProyectosPageComponent implements OnInit {
     });
   });
 
+  // ── Contexto ─────────────────────────────────────────────────────────────
+  private _selectedEmpresaId = signal('');
+  private _selectedCentroId  = signal('');
+  protected _selectedTipoId  = signal('');
+  private _selectedEstado   = signal('');
+
+  get selectedEmpresaId()          { return this._selectedEmpresaId(); }
+  set selectedEmpresaId(v: string) { this._selectedEmpresaId.set(v); }
+  get selectedCentroId()           { return this._selectedCentroId(); }
+  set selectedCentroId(v: string)  { this._selectedCentroId.set(v); }
+  get selectedTipoId()             { return this._selectedTipoId(); }
+  set selectedTipoId(v: string)    { this._selectedTipoId.set(v); }
+  get selectedEstado()             { return this._selectedEstado(); }
+  set selectedEstado(v: string)    { this._selectedEstado.set(v); }
+
+  protected readonly estadosFiltro: { value: string; label: string }[] = [
+    { value: 'borrador',      label: 'Borrador'      },
+    { value: 'planificacion', label: 'Planificación' },
+    { value: 'activo',        label: 'Activo'        },
+    { value: 'en_pausa',      label: 'En pausa'      },
+    { value: 'en_revision',   label: 'En revisión'   },
+    { value: 'cerrado',       label: 'Cerrado'       },
+    { value: 'cancelado',     label: 'Cancelado'     },
+  ];
+
+  protected filtroContexto  = signal('');
+  protected tipoComboQuery  = signal('');
+  protected tipoComboOpen   = signal(false);
+
+  protected tipoComboFiltrados = computed(() => {
+    const q = this.tipoComboQuery().toLowerCase().trim();
+    const tipos = this.tiposService.tipos();
+    return q ? tipos.filter(t => t.nombre.toLowerCase().includes(q)) : tipos;
+  });
+
+  protected onTipoComboInput(q: string): void {
+    this.tipoComboQuery.set(q);
+    this._selectedTipoId.set('');
+    this.tipoComboOpen.set(true);
+  }
+
+  protected selectTipoCombo(t: { _id: string; nombre: string } | null): void {
+    this._selectedTipoId.set(t?._id ?? '');
+    this.tipoComboQuery.set(t?.nombre ?? '');
+    this.tipoComboOpen.set(false);
+  }
+
+  protected onTipoComboBlur(): void {
+    setTimeout(() => {
+      this.tipoComboOpen.set(false);
+      if (!this._selectedTipoId()) this.tipoComboQuery.set('');
+    }, 150);
+  }
+
+  protected centrosFiltrados = computed(() => {
+    if (!this._selectedEmpresaId()) return [];
+    return this.centrosService.centros().filter(c => asId(c.cliente_id) === this._selectedEmpresaId());
+  });
+
+  protected tipoDeProyecto(p: Proyecto): TipoProyecto | null {
+    if (!p.tipo_proyecto_id) return null;
+    if (typeof p.tipo_proyecto_id === 'object') return p.tipo_proyecto_id as TipoProyecto;
+    return this.tiposService.tipos().find(t => t._id === p.tipo_proyecto_id) ?? null;
+  }
+
+  protected proyectosContexto = computed(() => {
+    const empresaId = this._selectedEmpresaId();
+    const centroId  = this._selectedCentroId();
+    const tipoId    = this._selectedTipoId();
+    const estado    = this._selectedEstado();
+    const tipoQ     = this.tipoComboQuery().toLowerCase().trim();
+    const q         = this.filtroContexto().toLowerCase().trim();
+
+    let list = this.service.proyectos();
+    if (empresaId) list = list.filter(p => asId(p.cliente_id) === empresaId);
+    if (centroId)  list = list.filter(p => asId(p.centro_costo_id) === centroId);
+    if (estado)    list = list.filter(p => p.estado === estado);
+    if (tipoId) {
+      list = list.filter(p => this.tipoDeProyecto(p)?._id === tipoId);
+    } else if (tipoQ) {
+      list = list.filter(p => (this.tipoDeProyecto(p)?.nombre ?? '').toLowerCase().includes(tipoQ));
+    }
+    if (q) {
+      list = list.filter(p =>
+        p.nombre.toLowerCase().includes(q) || p.codigo.toLowerCase().includes(q));
+    }
+    return list;
+  });
+
+  protected onEmpresaContextoChange(): void {
+    this._selectedCentroId.set('');
+  }
+
+  // El backend excluye 'cerrado' del listado por defecto; hay que
+  // volver a pedir cuando el filtro pide explícitamente un estado (o lo limpia).
+  protected onEstadoContextoChange(): void {
+    this.service.cargar(this._selectedEstado());
+  }
+
   ngOnInit(): void {
     this.service.cargar();
     this.centrosService.cargar();
     this.clientesService.cargar();
+    this.tiposService.cargar();
   }
 
   protected abrirCrear(): void {
@@ -131,6 +310,8 @@ export class ProyectosPageComponent implements OnInit {
     this.modal.set(null);
     this.service.seleccionado.set(null);
     this.service.clearStatus();
+    this.showTipoForm.set(false);
+    this.editingTipoId.set(null);
   }
 
   protected crear(dto: CreateProyectoDto): void   { this.service.crear(dto); }
@@ -150,4 +331,52 @@ export class ProyectosPageComponent implements OnInit {
     this.service.seleccionar(proyecto);
     this.modal.set('editar');
   }
+
+  // ── Gestión de tipos ──────────────────────────────────────────────
+  protected showTipoForm  = signal(false);
+  protected editingTipoId = signal<string | null>(null);
+  protected tipoForm      = signal<TipoForm>(emptyTipoForm());
+
+  protected abrirTiposModal(): void {
+    this.editingTipoId.set(null);
+    this.tipoForm.set(emptyTipoForm());
+    this.showTipoForm.set(false);
+    this.tiposService.clearStatus();
+    this.modal.set('tipos');
+  }
+
+  protected abrirNuevoTipo(): void {
+    this.editingTipoId.set(null);
+    this.tipoForm.set(emptyTipoForm());
+    this.showTipoForm.set(true);
+    this.tiposService.clearStatus();
+  }
+
+  protected abrirEditarTipo(t: TipoProyecto): void {
+    this.editingTipoId.set(t._id);
+    this.tipoForm.set({ nombre: t.nombre, color: t.color });
+    this.showTipoForm.set(true);
+    this.tiposService.clearStatus();
+  }
+
+  protected cerrarTipoForm(): void {
+    this.showTipoForm.set(false);
+    this.editingTipoId.set(null);
+  }
+
+  protected patchTipoForm(field: keyof TipoForm, value: string): void {
+    this.tipoForm.update(f => ({ ...f, [field]: value }));
+  }
+
+  protected guardarTipo(): void {
+    const f = this.tipoForm();
+    if (!f.nombre.trim()) return;
+    const dto = { nombre: f.nombre.trim(), color: f.color };
+    const id = this.editingTipoId();
+    if (id) this.tiposService.actualizar(id, dto);
+    else     this.tiposService.crear(dto);
+    this.cerrarTipoForm();
+  }
+
+  protected eliminarTipo(id: string): void { this.tiposService.eliminar(id); }
 }

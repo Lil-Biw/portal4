@@ -120,9 +120,11 @@ export class ActividadesService {
   }
 
   subirDocumento(id: string, archivo: File, nombreDisplay?: string, onSuccess?: () => void, onError?: () => void): void {
+    if (this.saving()) return;
     const centroId = this.actividades().find(a => a._id === id)?.centro_costo_id;
     const empresaId = centroId ? this.getEmpresaId(centroId) : undefined;
     if (!empresaId || !centroId) { this.setError({ error: { message: 'Centro no encontrado' } }); return; }
+    this.saving.set(true);
     const form = new FormData();
     form.append('archivo', archivo);
     if (nombreDisplay) form.append('nombre_display', nombreDisplay);
@@ -131,6 +133,7 @@ export class ActividadesService {
       form
     ).subscribe({
       next: () => {
+        this.saving.set(false);
         this.status.set({ type: 'ok', text: 'Documento adjuntado correctamente' });
         this.listarDocumentos(id);
         onSuccess?.();
