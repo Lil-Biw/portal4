@@ -1,0 +1,18 @@
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { Document, Types } from 'mongoose';
+
+export type DocActivoDocument = DocActivo & Document;
+
+@Schema({ collection: 'doc_activo', timestamps: { createdAt: 'creado_en' } })
+export class DocActivo {
+  @Prop({ type: Types.ObjectId, ref: 'Activo', required: true }) activo_id: Types.ObjectId;
+  @Prop({ required: true }) nombre: string;
+  @Prop({ required: true }) nombre_display: string;
+  @Prop({ required: true }) tipo_mime: string;
+  @Prop({ required: true }) tamano_bytes: number;
+  @Prop({ type: Buffer, required: true }) contenido: Buffer;
+  @Prop({ default: Date.now }) subido_en: Date;
+}
+
+export const DocActivoSchema = SchemaFactory.createForClass(DocActivo);
+DocActivoSchema.index({ activo_id: 1 });

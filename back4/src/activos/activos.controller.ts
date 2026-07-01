@@ -48,6 +48,11 @@ export class ActivosController {
     return this.activosService.remove(activoId);
   }
 
+  @Get(':activoId/documentos')
+  listarDocumentos(@Param('activoId') activoId: string) {
+    return this.activosService.listarDocumentos(activoId);
+  }
+
   @Post(':activoId/documentos')
   @Roles('super_admin', 'admin_smartclarity')
   @UseInterceptors(FileInterceptor('archivo', { storage: memoryStorage() }))
@@ -60,22 +65,22 @@ export class ActivosController {
     return this.activosService.subirDocumento(activoId, archivo, nombreDisplay);
   }
 
-  @Delete(':activoId/documentos/:nombre')
+  @Delete(':activoId/documentos/:docId')
   @Roles('super_admin', 'admin_smartclarity')
   eliminarDocumento(
     @Param('activoId') activoId: string,
-    @Param('nombre') nombre: string,
+    @Param('docId') docId: string,
   ) {
-    return this.activosService.eliminarDocumento(activoId, nombre);
+    return this.activosService.eliminarDocumento(activoId, docId);
   }
 
-  @Get(':activoId/documentos/:nombre')
+  @Get(':activoId/documentos/:docId')
   async descargarDocumento(
     @Param('activoId') activoId: string,
-    @Param('nombre') nombre: string,
+    @Param('docId') docId: string,
     @Res() res: Response,
   ) {
-    const { buffer, tipo_mime, nombre_display } = await this.activosService.servirDocumento(activoId, nombre);
+    const { buffer, tipo_mime, nombre_display } = await this.activosService.servirDocumento(activoId, docId);
     sendFile(res, buffer, tipo_mime, nombre_display);
   }
 

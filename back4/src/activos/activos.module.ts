@@ -1,6 +1,8 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ActivoSchema } from './activos.schema';
+import { DocActivoSchema } from './doc-activo.schema';
+import { DocEliminadoSchema } from '../common/schemas/doc-eliminado.schema';
 import { ActivosController, ActivosAdminController } from './activos.controller';
 import { ActivosService } from './activos.service';
 import { CentroCostoSchema } from '../centros-costos/centros-costos.schema';
@@ -11,6 +13,8 @@ import { ActividadesModule } from '../actividades/actividades.module';
   imports: [
     MongooseModule.forFeature([
       { name: 'Activo', schema: ActivoSchema },
+      { name: 'DocActivo', schema: DocActivoSchema },
+      { name: 'DocEliminado', schema: DocEliminadoSchema },
       { name: 'CentroCosto', schema: CentroCostoSchema },
       { name: 'TipoActivo', schema: TipoActivoSchema },
     ]),
