@@ -4,7 +4,7 @@ import { Observable, forkJoin, of, throwError } from 'rxjs';
 import { catchError, tap } from 'rxjs/operators';
 import { ApiService } from '../../core/services/api.service';
 import { Status } from '../../shared/models/status.model';
-import { asId, NOTIFY_COOLDOWN_MS } from '../../shared/utils';
+import { asId } from '../../shared/utils';
 
 export const CATEGORIAS_DOCUMENTO = [
   '[AGUA] Boleta/Factura',
@@ -57,7 +57,6 @@ export interface DocumentoVencidoItem {
 export class DocumentosService {
   private readonly http = inject(HttpClient);
   private readonly api = inject(ApiService);
-  private readonly uploadStatusTimers: Partial<Record<DocTipo, ReturnType<typeof setTimeout>>> = {};
 
   readonly documentosEmpresa     = signal<DocumentoItem[]>([]);
   readonly documentosCentro      = signal<DocumentoItem[]>([]);
@@ -319,12 +318,6 @@ export class DocumentosService {
   }
 
   private setUploadStatus(tipo: DocTipo, status: Status): void {
-    const existing = this.uploadStatusTimers[tipo];
-    if (existing) clearTimeout(existing);
     this.uploadStatus.update(prev => ({ ...prev, [tipo]: status }));
-    this.uploadStatusTimers[tipo] = setTimeout(() => {
-      this.uploadStatus.update(prev => ({ ...prev, [tipo]: null }));
-      delete this.uploadStatusTimers[tipo];
-    }, NOTIFY_COOLDOWN_MS);
   }
 }
