@@ -654,3 +654,9 @@
   </ng-template>
 
 }
+
+<app-upload-bubble
+  [items]="uploadQueue.items()"
+  (cerrar)="cerrarUploadBubble()"
+  (reintentar)="reintentarSubida($event)">
+</app-upload-bubble>

@@ -2,12 +2,15 @@ import { Component, OnInit, inject, signal, computed, effect, untracked } from '
 import { NgTemplateOutlet } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
+import { HttpEvent, HttpEventType } from '@angular/common/http';
 import { DocumentosService, DocTipo, CATEGORIAS_DOCUMENTO, DocumentoItem } from '../documentos.service';
 import { CentrosService } from '../../centros/centros.service';
 import { ProyectosService } from '../../proyectos/proyectos.service';
 import { ConsumidorContextService } from '../../../profile/consumidor-context.service';
 import { SolicitudesService, EstadoSolicitud, Solicitud } from '../../solicitudes/solicitudes.service';
 import { StatusBannerComponent } from '../../../shared/components/status-banner/status-banner.component';
+import { UploadBubbleComponent } from '../../../shared/components/upload-bubble/upload-bubble.component';
+import { createUploadQueue } from '../../../shared/upload-queue-state';
 import { asId, detectarCategoriaDocumento } from '../../../shared/utils';
 
 interface PanelState {
@@ -23,7 +26,7 @@ interface PanelState {
 @Component({
   selector: 'app-documentos-consumidor-page',
   standalone: true,
-  imports: [NgTemplateOutlet, FormsModule, StatusBannerComponent],
+  imports: [NgTemplateOutlet, FormsModule, StatusBannerComponent, UploadBubbleComponent],
   templateUrl: './documentos-consumidor-page.component.html',
 })
 export class DocumentosConsumidorPageComponent implements OnInit {
@@ -62,6 +65,12 @@ export class DocumentosConsumidorPageComponent implements OnInit {
     centro:   this.emptyPanel(),
     proyecto: this.emptyPanel(),
   };
+
+  protected readonly uploadQueue = createUploadQueue();
+  private readonly retryContext = new Map<string, {
+    file: File; tipo: DocTipo; empresaId: string; centroId?: string; proyectoId?: string;
+    nombreDisplay?: string; categoria?: string;
+  }>();
 
   // ─── computed ─────────────────────────────────────────────────────────────
 
@@ -330,18 +339,55 @@ export class DocumentosConsumidorPageComponent implements OnInit {
   confirmarSubida(tipo: DocTipo): void {
     const p = this.panels[tipo];
     if (!p.selectedFile) return;
-    const empresaId = this.consumidorContext.empresaSeleccionada()?._id ?? '';
-    this.service.subir(
-      p.selectedFile, tipo,
-      empresaId,
-      this.selectedCentroIdC() || undefined,
-      this.selectedProyectoIdC() || undefined,
-      p.nombreInput || undefined,
-      p.categoriaInput || undefined,
-    );
+    const ctx = {
+      file: p.selectedFile,
+      tipo,
+      empresaId: this.consumidorContext.empresaSeleccionada()?._id ?? '',
+      centroId: this.selectedCentroIdC() || undefined,
+      proyectoId: this.selectedProyectoIdC() || undefined,
+      nombreDisplay: p.nombreInput || undefined,
+      categoria: p.categoriaInput || undefined,
+    };
+    const id = this.uploadQueue.agregar(ctx.nombreDisplay || ctx.file.name);
+    this.retryContext.set(id, ctx);
+    this.ejecutarSubida(id, ctx);
+
     p.selectedFile = null;
     p.nombreInput = '';
     p.showUpload = false;
+  }
+
+  reintentarSubida(id: string): void {
+    const ctx = this.retryContext.get(id);
+    if (!ctx) return;
+    this.uploadQueue.reiniciar(id);
+    this.ejecutarSubida(id, ctx);
+  }
+
+  cerrarUploadBubble(): void {
+    this.uploadQueue.limpiar();
+    this.retryContext.clear();
+  }
+
+  private ejecutarSubida(id: string, ctx: {
+    file: File; tipo: DocTipo; empresaId: string; centroId?: string; proyectoId?: string;
+    nombreDisplay?: string; categoria?: string;
+  }): void {
+    this.service.subir(ctx.file, ctx.tipo, ctx.empresaId, ctx.centroId, ctx.proyectoId, ctx.nombreDisplay, ctx.categoria)
+      .subscribe({
+        next: (event: HttpEvent<DocumentoItem>) => {
+          if (event.type === HttpEventType.UploadProgress && event.total) {
+            this.uploadQueue.actualizarProgreso(id, Math.round((100 * event.loaded) / event.total));
+          } else if (event.type === HttpEventType.Response) {
+            this.uploadQueue.marcarListo(id);
+          }
+        },
+        error: (err) => {
+          const raw = err?.error?.message;
+          const text = Array.isArray(raw) ? raw.join('. ') : (raw ?? err?.message ?? 'Error al cargar');
+          this.uploadQueue.marcarError(id, text);
+        },
+      });
   }
 
   filteredDocsPorCentro() {
