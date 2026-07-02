@@ -1,10 +1,10 @@
 import { Injectable, inject, signal } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { forkJoin, of } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { HttpClient, HttpEvent, HttpEventType } from '@angular/common/http';
+import { Observable, forkJoin, of, throwError } from 'rxjs';
+import { catchError, tap } from 'rxjs/operators';
 import { ApiService } from '../../core/services/api.service';
 import { Status } from '../../shared/models/status.model';
-import { asId } from '../../shared/utils';
+import { asId, NOTIFY_COOLDOWN_MS } from '../../shared/utils';
 
 export const CATEGORIAS_DOCUMENTO = [
   '[AGUA] Boleta/Factura',
@@ -57,6 +57,7 @@ export interface DocumentoVencidoItem {
 export class DocumentosService {
   private readonly http = inject(HttpClient);
   private readonly api = inject(ApiService);
+  private readonly uploadStatusTimers: Partial<Record<DocTipo, ReturnType<typeof setTimeout>>> = {};
 
   readonly documentosEmpresa     = signal<DocumentoItem[]>([]);
   readonly documentosCentro      = signal<DocumentoItem[]>([]);
@@ -175,10 +176,10 @@ export class DocumentosService {
     proyectoId?: string,
     nombreDisplay?: string,
     categoria?: string,
-  ): void {
-    if (!empresaId) { this.setUploadStatus(tipo, { type: 'error', text: 'Empresa no seleccionada' }); return; }
-    if (tipo === 'centro' && !centroId) { this.setUploadStatus(tipo, { type: 'error', text: 'Selecciona un centro de costos primero.' }); return; }
-    if (tipo === 'proyecto' && (!centroId || !proyectoId)) { this.setUploadStatus(tipo, { type: 'error', text: 'Selecciona un proyecto primero.' }); return; }
+  ): Observable<HttpEvent<DocumentoItem>> {
+    if (!empresaId) return throwError(() => new Error('Empresa no seleccionada'));
+    if (tipo === 'centro' && !centroId) return throwError(() => new Error('Selecciona un centro de costos primero.'));
+    if (tipo === 'proyecto' && (!centroId || !proyectoId)) return throwError(() => new Error('Selecciona un proyecto primero.'));
 
     const form = new FormData();
     form.append('archivo', file);
@@ -193,23 +194,18 @@ export class DocumentosService {
     } else if (tipo === 'centro' && centroId) {
       url = this.api.url(`/empresas/${empresaId}/centros/${centroId}/documentos`);
     } else {
-      this.setUploadStatus(tipo, { type: 'error', text: 'Contexto insuficiente para subir documento' });
-      return;
+      return throwError(() => new Error('Contexto insuficiente para subir documento'));
     }
 
-    this.http.post(url, form).subscribe({
-      next: () => {
-        this.setUploadStatus(tipo, { type: 'ok', text: `${nombreDisplay || file.name} cargado exitosamente` });
-        if (tipo === 'empresa') this.cargarEmpresa(empresaId);
-        else if (tipo === 'centro' && centroId) this.cargarCentro(empresaId, centroId);
-        else if (tipo === 'proyecto' && centroId && proyectoId) this.cargarProyecto(empresaId, centroId, proyectoId);
-      },
-      error: (err) => {
-        const raw = err?.error?.message;
-        const text = Array.isArray(raw) ? raw.join('. ') : (raw ?? 'Error al cargar');
-        this.setUploadStatus(tipo, { type: 'error', text });
-      },
-    });
+    return this.http.post<DocumentoItem>(url, form, { reportProgress: true, observe: 'events' }).pipe(
+      tap(event => {
+        if (event.type === HttpEventType.Response) {
+          if (tipo === 'empresa') this.cargarEmpresa(empresaId);
+          else if (tipo === 'centro' && centroId) this.cargarCentro(empresaId, centroId);
+          else if (tipo === 'proyecto' && centroId && proyectoId) this.cargarProyecto(empresaId, centroId, proyectoId);
+        }
+      }),
+    );
   }
 
   eliminar(docUrl: string, tipo: DocTipo, empresaId: string, centroId?: string, proyectoId?: string, onSuccess?: () => void): void {
@@ -323,6 +319,12 @@ export class DocumentosService {
   }
 
   private setUploadStatus(tipo: DocTipo, status: Status): void {
+    const existing = this.uploadStatusTimers[tipo];
+    if (existing) clearTimeout(existing);
     this.uploadStatus.update(prev => ({ ...prev, [tipo]: status }));
+    this.uploadStatusTimers[tipo] = setTimeout(() => {
+      this.uploadStatus.update(prev => ({ ...prev, [tipo]: null }));
+      delete this.uploadStatusTimers[tipo];
+    }, NOTIFY_COOLDOWN_MS);
   }
 }
