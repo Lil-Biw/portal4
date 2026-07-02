@@ -1,5 +1,6 @@
 import { Component, OnInit, inject, signal, computed, effect } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { HttpEvent, HttpEventType } from '@angular/common/http';
 import { DocumentosService, DocTipo, CATEGORIAS_DOCUMENTO, DocumentoItem } from '../documentos.service';
 import { ClientesService } from '../../clientes/clientes.service';
 import { CentrosService } from '../../centros/centros.service';
@@ -8,6 +9,8 @@ import { SolicitudesService, CreateSolicitudDto, UpdateSolicitudDto, EstadoSolic
 import { UsuariosService } from '../../usuarios/usuarios.service';
 import { AuthService } from '../../auth/auth.service';
 import { StatusBannerComponent } from '../../../shared/components/status-banner/status-banner.component';
+import { UploadBubbleComponent } from '../../../shared/components/upload-bubble/upload-bubble.component';
+import { createUploadQueue } from '../../../shared/upload-queue-state';
 import { asId, detectarCategoriaDocumento } from '../../../shared/utils';
 
 interface PanelState {
@@ -30,7 +33,7 @@ export interface EstadoDestino {
 @Component({
   selector: 'app-documentos-admin-page',
   standalone: true,
-  imports: [FormsModule, StatusBannerComponent],
+  imports: [FormsModule, StatusBannerComponent, UploadBubbleComponent],
   templateUrl: './documentos-admin-page.component.html',
 })
 export class DocumentosAdminPageComponent implements OnInit {
@@ -134,6 +137,12 @@ export class DocumentosAdminPageComponent implements OnInit {
     centro:   this.emptyPanel(),
     proyecto: this.emptyPanel(),
   };
+
+  protected readonly uploadQueue = createUploadQueue();
+  private readonly retryContext = new Map<string, {
+    file: File; tipo: DocTipo; empresaId: string; centroId?: string; proyectoId?: string;
+    nombreDisplay?: string; categoria?: string;
+  }>();
 
   constructor() {
     effect(() => {
@@ -433,17 +442,55 @@ export class DocumentosAdminPageComponent implements OnInit {
   confirmarSubida(tipo: DocTipo): void {
     const p = this.panels[tipo];
     if (!p.selectedFile) return;
-    this.service.subir(
-      p.selectedFile, tipo,
-      this.selectedEmpresaId,
-      (this.selectedCentroId   && this.selectedCentroId   !== 'todos') ? this.selectedCentroId   : undefined,
-      (this.selectedProyectoId && this.selectedProyectoId !== 'todos') ? this.selectedProyectoId : undefined,
-      p.nombreInput || undefined,
-      p.categoriaInput || undefined,
-    );
+    const ctx = {
+      file: p.selectedFile,
+      tipo,
+      empresaId: this.selectedEmpresaId,
+      centroId: (this.selectedCentroId && this.selectedCentroId !== 'todos') ? this.selectedCentroId : undefined,
+      proyectoId: (this.selectedProyectoId && this.selectedProyectoId !== 'todos') ? this.selectedProyectoId : undefined,
+      nombreDisplay: p.nombreInput || undefined,
+      categoria: p.categoriaInput || undefined,
+    };
+    const id = this.uploadQueue.agregar(ctx.nombreDisplay || ctx.file.name);
+    this.retryContext.set(id, ctx);
+    this.ejecutarSubida(id, ctx);
+
     p.selectedFile = null;
     p.nombreInput = '';
     p.showUpload = false;
+  }
+
+  reintentarSubida(id: string): void {
+    const ctx = this.retryContext.get(id);
+    if (!ctx) return;
+    this.uploadQueue.reiniciar(id);
+    this.ejecutarSubida(id, ctx);
+  }
+
+  cerrarUploadBubble(): void {
+    this.uploadQueue.limpiar();
+    this.retryContext.clear();
+  }
+
+  private ejecutarSubida(id: string, ctx: {
+    file: File; tipo: DocTipo; empresaId: string; centroId?: string; proyectoId?: string;
+    nombreDisplay?: string; categoria?: string;
+  }): void {
+    this.service.subir(ctx.file, ctx.tipo, ctx.empresaId, ctx.centroId, ctx.proyectoId, ctx.nombreDisplay, ctx.categoria)
+      .subscribe({
+        next: (event: HttpEvent<DocumentoItem>) => {
+          if (event.type === HttpEventType.UploadProgress && event.total) {
+            this.uploadQueue.actualizarProgreso(id, Math.round((100 * event.loaded) / event.total));
+          } else if (event.type === HttpEventType.Response) {
+            this.uploadQueue.marcarListo(id);
+          }
+        },
+        error: (err) => {
+          const raw = err?.error?.message;
+          const text = Array.isArray(raw) ? raw.join('. ') : (raw ?? err?.message ?? 'Error al cargar');
+          this.uploadQueue.marcarError(id, text);
+        },
+      });
   }
 
   toggleFiltroCategoria(tipo: DocTipo, cat: string): void {
