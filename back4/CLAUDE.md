@@ -20,6 +20,10 @@ CORS_ORIGIN=http://localhost:4200
 MAIL_USER=<cuenta gmail>
 MAIL_PASS=<contraseña de app gmail>
 NODE_ENV=development
+AWS_REGION=us-east-2
+S3_BUCKET_NAME=sc-portal-clientes-archivos-390866253693-us-east-2-an
+AWS_ACCESS_KEY_ID=<access key de IAM con permisos sobre el bucket>
+AWS_SECRET_ACCESS_KEY=<secret key de IAM con permisos sobre el bucket>
 ```
 
 > NUNCA commitear `.env`. JWT_SECRET debe ser un secreto de al menos 64 caracteres
@@ -30,20 +34,35 @@ NODE_ENV=development
 
 - **Motor:** MongoDB local en `portal_clientes`
 - **ORM:** Mongoose con decoradores `@Schema`, `@Prop`
-- **Colecciones activas:** `clientes`, `centros_costos`, `proyectos`, `solicitudes`, `mantenciones`, `tipos_mantencion`, `usuarios`, `permisos`
+- **Colecciones activas:** `clientes`, `centros_costos`, `proyectos`, `solicitudes`, `actividades`, `tipos_actividad`, `usuarios`, `permisos`
 - **Timestamps personalizados:** todos los schemas usan `{ createdAt: 'creado_en', updatedAt: 'actualizado_en' }`
 
 ## Almacenamiento de archivos
 
-Todo bajo `back4/uploads/` (filesystem local, efímero en producción):
+Los documentos (activos, centros de costo, proyectos, clientes, actividades y
+adjuntos de solicitudes) se suben a Amazon S3, bucket
+`sc-portal-clientes-archivos-390866253693-us-east-2-an` (región `us-east-2`).
+Mongo solo guarda metadata + la key de S3 (`s3_key`) en cada colección `doc_*`.
 
-| Ruta | Contenido |
-|------|-----------|
-| `uploads/logos/{clienteId}/logo.*` | Logos de empresas (organizados por ObjectId) |
-| `uploads/solicitudes/{solicitudId}/adjunto.*` | Adjuntos de solicitudes (organizados por ObjectId) |
-| `uploads/{empresa}/{tipo}/{centro}/documentos/` | Documentos organizados por nombre (frágil si se renombra) |
+Estructura de keys: `documentos/{origenTipo}/{entidadId}/{timestamp}_{rand}_{nombre}`,
+donde `origenTipo` es `empresa | centro | activo | proyecto | actividad`. Para
+adjuntos de solicitudes: `solicitudes/{solicitudId}/{timestamp}_{rand}_{nombre}`.
 
-Los archivos se sirven estáticamente como `/uploads/...` solo en `NODE_ENV !== 'production'`.
+`clientes.logo` es la única excepción: sigue guardándose como `Buffer` en Mongo, no
+pasa por S3.
+
+**Documentos legacy:** los documentos subidos antes de esta migración no se
+movieron a S3 — siguen teniendo `contenido: Buffer` en Mongo y sin `s3_key`.
+`DocumentosHelper.servir()` sirve desde S3 si el doc tiene `s3_key`, o desde el
+Buffer si no lo tiene. No hay migración automática de lo viejo.
+
+**Borrado:** al eliminar un documento (papelera `doc_eliminados`) o marcarlo como
+vencido (`documentos_vencidos`), solo se copia la referencia `s3_key` — el objeto en
+S3 no se duplica ni se borra. Limitación conocida: no hay purga automática de
+objetos huérfanos en S3 todavía.
+
+**Config:** `AWS_REGION`, `S3_BUCKET_NAME`, `AWS_ACCESS_KEY_ID`,
+`AWS_SECRET_ACCESS_KEY` en `.env` (ver `.env.example`).
 
 ## Estructura de carpetas
 
@@ -62,8 +81,8 @@ src/
 ├── permisos/
 ├── solicitudes/
 ├── documentos/
-├── mantenciones/
-└── tipos-mantencion/
+├── actividades/
+└── tipos-actividad/
 ```
 
 ## Patrón de módulo (seguir clientes/ como referencia)
@@ -122,7 +141,7 @@ async findAll(page = 1, limit = 20) {
 - **`NotFoundException`** cuando `findById` retorna `null`.
 - **`ConflictException`** para duplicados (RUT único, código único por centro, etc.).
 - **`runValidators: true`** en `findByIdAndUpdate` cuando se actualiza (clientes, proyectos).
-- Los `create()` de la mayoría de módulos retornan el documento Mongoose sin `.lean()`. Excepción: mantenciones hace re-query con `findById(...).populate('tipo_id').lean()`.
+- Los `create()` de la mayoría de módulos retornan el documento Mongoose sin `.lean()`. Excepción: actividades hace re-query con `findById(...).populate('tipo_id').lean()`.
 
 ### Controller
 
@@ -160,7 +179,7 @@ export class EntidadController {
 | Módulo | `findAll` devuelve |
 |--------|-------------------|
 | clientes, centros-costos, proyectos, usuarios | `{ data, total, page, pages }` |
-| solicitudes, mantenciones, tipos-mantencion, permisos | `array plano` |
+| solicitudes, actividades, tipos-actividad, permisos | `array plano` |
 
 El frontend de `CentrosService.cargar()` maneja ambos formatos:
 ```ts
@@ -169,7 +188,7 @@ this.centros.set(Array.isArray(res) ? res : res.data);
 
 ## Populate
 
-Solo `mantenciones` hace populate. `findAll`, `findOne`, `update` y `create` populan `tipo_id` con el documento completo de `TipoMantencion`. El resto de módulos no popula — devuelve ObjectIds tal cual.
+Solo `actividades` hace populate. `findAll`, `findOne`, `update` y `create` populan `tipo_id` (y `activo_ids`) con el documento completo de `TipoActividad`/`Activo`. El resto de módulos no popula — devuelve ObjectIds tal cual.
 
 ## Soft delete vs. Hard delete
 
@@ -177,7 +196,7 @@ Solo `mantenciones` hace populate. `findAll`, `findOne`, `update` y `create` pop
 |--------|-----------|
 | clientes, centros-costos, usuarios | Soft delete (`activo: false`) |
 | proyectos | Soft delete (cambio de `estado` a `'cerrado'`) |
-| solicitudes, mantenciones, tipos-mantencion | Hard delete (`findByIdAndDelete`) |
+| solicitudes, actividades, tipos-actividad | Hard delete (`findByIdAndDelete`) |
 
 ## Módulo solicitudes — diferencias intencionales
 
@@ -204,7 +223,7 @@ Endpoints (no siguen convención REST estándar):
 
 **Problemas de seguridad conocidos (ver `PORTAL4_problemas.md` en la raíz del repo):**
 - ✅ ~~`GET /usuarios` sin `@Roles()`~~ — **SOLUCIONADO**: ahora filtra por `cliente_id` cuando no es super_admin
-- ⚠️ **Cross-tenant leak** en documentos de centros/proyectos/mantenciones — `centroId` no se valida contra `empresaId` en el servicio (ver §1.1)
+- ⚠️ **Cross-tenant leak** en documentos de centros/proyectos/actividades — `centroId` no se valida contra `empresaId` en el servicio (ver §1.1). En `actividades` es más amplio: `findOne`, `listarDocumentos` y `descargarDocumento` (`actividades.service.ts`) ignoran `centroId`/`empresaId` por completo, y los dos últimos endpoints tampoco tienen `@Roles()` — cualquier usuario autenticado puede leer/descargar actividades y documentos de otra empresa si conoce el ObjectId. Pendiente de corregir.
 - ⚠️ Sin rate limiting en `POST /auth/login` (ver §1.3)
 - ✅ ~~Path traversal en módulo documentos~~ — **OBSOLETO**: módulo filesystem eliminado, documentos en MongoDB
 - ✅ ~~`getImagen()` en noticias sin `@Public()`~~ — **SOLUCIONADO**: endpoint marcado como público; las imágenes ya cargan sin JWT
@@ -224,7 +243,9 @@ Endpoints (no siguen convención REST estándar):
 DocumentosModule  → CentrosCostosModule, ProyectosModule
 ProyectosModule   → CentrosCostosModule (schema directo, no el módulo)
 UsuariosModule    → PermisosModule
-MantencionesModule → TiposMantencionModule (solo schema en mismo módulo)
+ActividadesModule → CentrosCostosModule, UsuariosModule, ActivosModule (schemas directos) + MailModule.
+  No importa TiposActividadModule: requiere que esté registrado en app.module.ts para que
+  el `.populate('tipo_id')` funcione (el modelo 'TipoActividad' se registra ahí).
 ```
 
 ## Guía para el agente IA
