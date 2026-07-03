@@ -9,6 +9,7 @@ import { CreateSolicitudDto, UpdateSolicitudDto, CambiarEstadoDto } from './soli
 import { MailService } from '../mail/mail.service';
 import { NotificacionOpcionesDto } from '../common/dto/notificacion-opciones.dto';
 import { DocumentosHelper, ArchivoInput } from '../common/helpers/documentos.helper';
+import { S3Service } from '../common/s3/s3.service';
 
 @Injectable()
 export class SolicitudesService {
@@ -29,10 +30,11 @@ export class SolicitudesService {
     @InjectModel('DocEliminado') private docEliminadoModel: Model<any>,
     @InjectModel('Usuario') private usuarioModel: Model<{ nombre: string; email: string; rol: string; cliente_id: Types.ObjectId; centros_asignados: Types.ObjectId[]; activo: boolean }>,
     private mailService: MailService,
+    private readonly s3Service: S3Service,
   ) {
-    this.docsEmpresa  = new DocumentosHelper(this.clienteModel as unknown as Model<any>, this.docClienteModel, 'cliente_id', this.docEliminadoModel, 'empresa', 'Cliente');
-    this.docsCentro   = new DocumentosHelper(this.centroCostoModel as unknown as Model<any>, this.docCentroCostoModel, 'centro_costo_id', this.docEliminadoModel, 'centro', 'CentroCosto');
-    this.docsProyecto = new DocumentosHelper(this.proyectoModel as unknown as Model<any>, this.docProyectoModel, 'proyecto_id', this.docEliminadoModel, 'proyecto', 'Proyecto');
+    this.docsEmpresa  = new DocumentosHelper(this.clienteModel as unknown as Model<any>, this.docClienteModel, 'cliente_id', this.docEliminadoModel, 'empresa', 'Cliente', s3Service);
+    this.docsCentro   = new DocumentosHelper(this.centroCostoModel as unknown as Model<any>, this.docCentroCostoModel, 'centro_costo_id', this.docEliminadoModel, 'centro', 'CentroCosto', s3Service);
+    this.docsProyecto = new DocumentosHelper(this.proyectoModel as unknown as Model<any>, this.docProyectoModel, 'proyecto_id', this.docEliminadoModel, 'proyecto', 'Proyecto', s3Service);
   }
 
   async create(dto: CreateSolicitudDto) {
@@ -181,7 +183,7 @@ export class SolicitudesService {
     }
     if (dto.estado === 'aprobado' && estadoPrevio.estado !== 'aprobado') {
       const solFull = await this.solicitudModel.findById(id);
-      if (solFull?.adjunto?.contenido) {
+      if (solFull?.adjunto?.s3_key || solFull?.adjunto?.contenido) {
         await this.crearDocumentoDesde(solFull).catch(err =>
           this.logger.error('Error al crear documento desde solicitud aprobada:', err)
         );
@@ -191,9 +193,16 @@ export class SolicitudesService {
   }
 
   private async crearDocumentoDesde(sol: SolicitudDocument): Promise<void> {
-    if (!sol.adjunto?.contenido) return;
-    const raw = sol.adjunto.contenido as unknown;
-    const buffer = Buffer.isBuffer(raw) ? raw : Buffer.from(raw as ArrayBuffer);
+    if (!sol.adjunto?.s3_key && !sol.adjunto?.contenido) return;
+
+    let buffer: Buffer;
+    if (sol.adjunto.s3_key) {
+      buffer = await this.s3Service.descargar(sol.adjunto.s3_key);
+    } else {
+      const raw = sol.adjunto.contenido as unknown;
+      buffer = Buffer.isBuffer(raw) ? raw : Buffer.from(raw as ArrayBuffer);
+    }
+
     const archivo: ArchivoInput = {
       originalname: sol.adjunto.nombre,
       buffer,
@@ -297,11 +306,17 @@ export class SolicitudesService {
     if (!TIPOS_PERMITIDOS.includes(archivo.mimetype)) {
       throw new BadRequestException('Tipo de archivo no permitido. Se aceptan PDF, imágenes, Word y Excel.');
     }
+
+    const timestamp = Date.now();
+    const rand = Math.random().toString(36).substring(7);
+    const s3Key = `solicitudes/${id}/${timestamp}_${rand}_${archivo.originalname}`;
+    await this.s3Service.subir(s3Key, archivo.buffer, archivo.mimetype);
+
     return this.solicitudModel
       .findByIdAndUpdate(
         id,
         {
-          adjunto: { contenido: archivo.buffer, tipo_mime: archivo.mimetype, nombre: archivo.originalname },
+          adjunto: { s3_key: s3Key, tipo_mime: archivo.mimetype, nombre: archivo.originalname },
           estado: 'revision',
         },
         { new: true },
@@ -313,7 +328,13 @@ export class SolicitudesService {
   async servirAdjunto(id: string): Promise<{ buffer: Buffer; tipo_mime: string; nombre: string }> {
     const solicitud = await this.solicitudModel.findById(id);
     if (!solicitud) throw new NotFoundException(`Solicitud ${id} no encontrada`);
-    if (!solicitud.adjunto?.contenido) throw new NotFoundException('Esta solicitud no tiene adjunto');
+    if (!solicitud.adjunto?.s3_key && !solicitud.adjunto?.contenido) {
+      throw new NotFoundException('Esta solicitud no tiene adjunto');
+    }
+    if (solicitud.adjunto.s3_key) {
+      const buffer = await this.s3Service.descargar(solicitud.adjunto.s3_key);
+      return { buffer, tipo_mime: solicitud.adjunto.tipo_mime, nombre: solicitud.adjunto.nombre };
+    }
     const raw = solicitud.adjunto.contenido as unknown;
     const buffer = Buffer.isBuffer(raw) ? raw : Buffer.from(raw as ArrayBuffer);
     return { buffer, tipo_mime: solicitud.adjunto.tipo_mime, nombre: solicitud.adjunto.nombre };
