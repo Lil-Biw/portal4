@@ -10,7 +10,8 @@ export class DocCentroCosto {
   @Prop({ required: true }) nombre_display: string;
   @Prop({ required: true }) tipo_mime: string;
   @Prop({ required: true }) tamano_bytes: number;
-  @Prop({ type: Buffer, required: true }) contenido: Buffer;
+  @Prop({ type: Buffer }) contenido?: Buffer;
+  @Prop() s3_key?: string;
   @Prop() categoria?: string;
   @Prop({ type: Types.ObjectId, ref: 'Usuario' }) subido_por?: Types.ObjectId;
   @Prop({ default: Date.now }) subido_en: Date;

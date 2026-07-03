@@ -15,7 +15,8 @@ export class DocEliminado {
   @Prop() categoria?: string;
   @Prop({ required: true }) tipo_mime: string;
   @Prop({ required: true }) tamano_bytes: number;
-  @Prop({ type: Buffer, required: true }) contenido: Buffer;
+  @Prop({ type: Buffer }) contenido?: Buffer;
+  @Prop() s3_key?: string;
   @Prop() subido_en?: Date;
   @Prop({ type: Types.ObjectId, ref: 'Usuario' }) eliminado_por?: Types.ObjectId;
 }

@@ -16,11 +16,12 @@ export class Solicitud {
   @Prop({
     type: {
       contenido: Buffer,
+      s3_key: String,
       tipo_mime: String,
       nombre: String,
     },
   })
-  adjunto?: { contenido: Buffer; tipo_mime: string; nombre: string };
+  adjunto?: { contenido?: Buffer; s3_key?: string; tipo_mime: string; nombre: string };
 }
 
 export const SolicitudSchema = SchemaFactory.createForClass(Solicitud);
