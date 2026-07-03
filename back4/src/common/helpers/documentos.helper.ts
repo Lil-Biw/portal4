@@ -1,5 +1,6 @@
 import { NotFoundException } from '@nestjs/common';
 import { Model, Types } from 'mongoose';
+import { S3Service } from '../s3/s3.service';
 
 export interface ArchivoInput {
   originalname: string;
@@ -16,7 +17,12 @@ export class DocumentosHelper {
     private readonly docEliminadoModel: Model<any>,
     private readonly origenTipo: 'empresa' | 'centro' | 'activo' | 'proyecto' | 'actividad',
     private readonly entidad: string,
+    private readonly s3: S3Service,
   ) {}
+
+  private buildKey(entidadId: string, nombre: string): string {
+    return `documentos/${this.origenTipo}/${entidadId}/${nombre}`;
+  }
 
   async agregar(
     id: string,
@@ -39,13 +45,16 @@ export class DocumentosHelper {
       ? rawBase + originalExt
       : rawBase;
 
+    const s3Key = this.buildKey(id, nombre);
+    await this.s3.subir(s3Key, archivo.buffer, archivo.mimetype);
+
     const nuevoDoc: Record<string, unknown> = {
       [this.fkField]: new Types.ObjectId(id),
       nombre,
       nombre_display,
       tipo_mime:    archivo.mimetype,
       tamano_bytes: archivo.size,
-      contenido:    archivo.buffer,
+      s3_key:       s3Key,
       subido_en:    new Date(),
     };
     if (categoria) nuevoDoc['categoria'] = categoria;
@@ -61,6 +70,7 @@ export class DocumentosHelper {
     return this.docModel
       .find({ [this.fkField]: new Types.ObjectId(id) })
       .select('-contenido')
+      .sort({ nombre_display: 1 })
       .lean();
   }
 
@@ -70,6 +80,12 @@ export class DocumentosHelper {
       [this.fkField]: new Types.ObjectId(entidadId),
     });
     if (!doc) throw new NotFoundException(`Documento ${docId} no encontrado`);
+
+    if (doc.s3_key) {
+      const buffer = await this.s3.descargar(doc.s3_key as string);
+      return { buffer, tipo_mime: doc.tipo_mime as string, nombre_display: doc.nombre_display as string };
+    }
+
     const raw = doc.contenido as unknown;
     const buffer = Buffer.isBuffer(raw)
       ? raw
@@ -92,6 +108,7 @@ export class DocumentosHelper {
       tipo_mime:      doc.tipo_mime,
       tamano_bytes:   doc.tamano_bytes,
       contenido:      doc.contenido,
+      s3_key:         doc.s3_key,
       subido_en:      doc.subido_en,
     });
 
