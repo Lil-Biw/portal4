@@ -67,7 +67,7 @@ export class MisProyectosPageComponent {
       }
       grupos.get(cId)!.proyectos.push(p);
     }
-    return Array.from(grupos.values());
+    return Array.from(grupos.values()).sort((a, b) => a.nombre.localeCompare(b.nombre));
   });
 
   private static readonly ESTADO_BADGE_STYLE: Record<string, string> = {

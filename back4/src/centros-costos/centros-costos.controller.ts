@@ -7,7 +7,7 @@ import { Request } from 'express';
 import { Response } from 'express';
 import { sendFile } from '../common/helpers/send-file.helper';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { memoryStorage } from 'multer';
+import { OPCIONES_SUBIDA } from '../common/constants/upload.constants';
 import { CentrosCostosService } from './centros-costos.service';
 import { CreateCentroCostoDto, UpdateCentroCostoDto, UpdateScoreSmartclarityDto, VencerDocumentoCentroDto } from './centros-costos.dto';
 import { EmpresaAccessGuard, Roles } from '../common/guards/guards';
@@ -60,7 +60,7 @@ export class CentrosCostosController {
 
   @Post(':centroId/documentos')
   @Roles('super_admin', 'admin_smartclarity', 'usuario')
-  @UseInterceptors(FileInterceptor('archivo', { storage: memoryStorage() }))
+  @UseInterceptors(FileInterceptor('archivo', OPCIONES_SUBIDA))
   subirDocumento(
     @Param('centroId') centroId: string,
     @UploadedFile() archivo: Express.Multer.File & { buffer: Buffer },

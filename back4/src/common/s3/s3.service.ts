@@ -13,10 +13,15 @@ export class S3Service {
   private readonly bucket: string;
 
   constructor(private readonly configService: ConfigService) {
-    this.bucket = this.configService.get<string>('S3_BUCKET_NAME') ?? '';
-    this.client = new S3Client({
-      region: this.configService.get<string>('AWS_REGION'),
-    });
+    const bucket = this.configService.get<string>('S3_BUCKET_NAME');
+    const region = this.configService.get<string>('AWS_REGION');
+    if (!bucket || !region) {
+      throw new Error(
+        'Faltan variables de entorno S3_BUCKET_NAME y/o AWS_REGION — requeridas para el almacenamiento de archivos en S3',
+      );
+    }
+    this.bucket = bucket;
+    this.client = new S3Client({ region });
   }
 
   async subir(key: string, buffer: Buffer, mimetype: string): Promise<void> {

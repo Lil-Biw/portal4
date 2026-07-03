@@ -9,6 +9,17 @@ export interface ArchivoInput {
   size: number;
 }
 
+// Normaliza el nombre para usarlo en la key de S3: translitera acentos (á→a, ñ→n)
+// y reemplaza cualquier otro carácter fuera de [a-zA-Z0-9._-] por "_".
+// El nombre original se conserva en nombre_display.
+export function sanitizarNombreArchivo(nombre: string): string {
+  const limpio = nombre
+    .normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^\w.-]+/g, '_');
+  return limpio.replace(/^[_.]+$/, '') || 'archivo';
+}
+
 export class DocumentosHelper {
   constructor(
     private readonly entidadModel: Model<any>,
@@ -36,7 +47,7 @@ export class DocumentosHelper {
 
     const timestamp = Date.now();
     const rand = Math.random().toString(36).substring(7);
-    const nombre = `${timestamp}_${rand}_${archivo.originalname}`;
+    const nombre = `${timestamp}_${rand}_${sanitizarNombreArchivo(archivo.originalname)}`;
 
     const dotIdx = archivo.originalname.lastIndexOf('.');
     const originalExt = dotIdx > 0 ? archivo.originalname.slice(dotIdx) : '';
@@ -60,7 +71,14 @@ export class DocumentosHelper {
     if (categoria) nuevoDoc['categoria'] = categoria;
     if (usuarioId) nuevoDoc['subido_por'] = new Types.ObjectId(usuarioId);
 
-    const doc = await this.docModel.create(nuevoDoc);
+    let doc;
+    try {
+      doc = await this.docModel.create(nuevoDoc);
+    } catch (err) {
+      // Si la metadata no se pudo guardar, el objeto ya subido quedaría huérfano en S3
+      await this.s3.eliminar(s3Key).catch(() => undefined);
+      throw err;
+    }
     const obj = doc.toObject() as Record<string, unknown>;
     delete obj['contenido'];
     return obj;

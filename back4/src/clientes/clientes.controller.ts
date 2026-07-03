@@ -18,7 +18,7 @@ import {
 import { Request, Response } from 'express';
 import { sendFile } from '../common/helpers/send-file.helper';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { memoryStorage } from 'multer';
+import { OPCIONES_SUBIDA } from '../common/constants/upload.constants';
 import { ClientesService } from './clientes.service';
 import { CreateClienteDto, UpdateClienteDto, UpdateScoreSmartclarityDto, UpdateConfigGraficoDto, VencerDocumentoEmpresaDto } from './clientes.dto';
 import { Roles, Public } from '../common/guards/guards';
@@ -101,7 +101,7 @@ export class ClientesController {
 
   @Post(':id/logo')
   @Roles('super_admin', 'admin_smartclarity')
-  @UseInterceptors(FileInterceptor('archivo', { storage: memoryStorage() }))
+  @UseInterceptors(FileInterceptor('archivo', OPCIONES_SUBIDA))
   subirLogo(
     @Param('id') id: string,
     @UploadedFile() archivo: Express.Multer.File & { buffer: Buffer },
@@ -120,7 +120,7 @@ export class ClientesController {
 
   @Post(':id/documentos')
   @Roles('super_admin', 'admin_smartclarity', 'usuario')
-  @UseInterceptors(FileInterceptor('archivo', { storage: memoryStorage() }))
+  @UseInterceptors(FileInterceptor('archivo', OPCIONES_SUBIDA))
   subirDocumento(
     @Param('id') id: string,
     @UploadedFile() archivo: Express.Multer.File & { buffer: Buffer },

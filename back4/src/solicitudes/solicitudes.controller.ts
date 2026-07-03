@@ -6,7 +6,7 @@ import {
 import { Response } from 'express';
 import { sendFile } from '../common/helpers/send-file.helper';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { memoryStorage } from 'multer';
+import { OPCIONES_SUBIDA } from '../common/constants/upload.constants';
 import { SolicitudesService } from './solicitudes.service';
 import { CreateSolicitudDto, UpdateSolicitudDto, CambiarEstadoDto } from './solicitudes.dto';
 import { EmpresaAccessGuard } from '../common/guards/guards';
@@ -47,7 +47,7 @@ export class SolicitudesController {
   }
 
   @Post(':solicitudId/adjuntar')
-  @UseInterceptors(FileInterceptor('archivo', { storage: memoryStorage() }))
+  @UseInterceptors(FileInterceptor('archivo', OPCIONES_SUBIDA))
   adjuntar(
     @Param('solicitudId') solicitudId: string,
     @UploadedFile() archivo: Express.Multer.File & { buffer: Buffer },

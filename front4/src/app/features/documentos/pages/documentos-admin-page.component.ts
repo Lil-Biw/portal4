@@ -483,9 +483,14 @@ export class DocumentosAdminPageComponent implements OnInit {
             this.uploadQueue.actualizarProgreso(id, Math.round((100 * event.loaded) / event.total));
           } else if (event.type === HttpEventType.Response) {
             this.uploadQueue.marcarListo(id);
+            this.retryContext.delete(id);
           }
         },
         error: (err) => {
+          if (err?.status === 413) {
+            this.uploadQueue.marcarError(id, 'El archivo supera el límite de 20MB.');
+            return;
+          }
           const raw = err?.error?.message;
           const text = Array.isArray(raw) ? raw.join('. ') : (raw ?? err?.message ?? 'Error al cargar');
           this.uploadQueue.marcarError(id, text);

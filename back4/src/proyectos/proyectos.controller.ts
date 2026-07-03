@@ -6,7 +6,7 @@ import {
 import { Request, Response } from 'express';
 import { sendFile } from '../common/helpers/send-file.helper';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { memoryStorage } from 'multer';
+import { OPCIONES_SUBIDA } from '../common/constants/upload.constants';
 import { ProyectosService } from './proyectos.service';
 import { CreateProyectoDto, UpdateProyectoDto, VencerDocumentoProyectoDto } from './proyectos.dto';
 import { EmpresaAccessGuard, Roles } from '../common/guards/guards';
@@ -54,7 +54,7 @@ export class ProyectosController {
 
   @Post(':proyectoId/documentos')
   @Roles('super_admin', 'admin_smartclarity', 'usuario')
-  @UseInterceptors(FileInterceptor('archivo', { storage: memoryStorage() }))
+  @UseInterceptors(FileInterceptor('archivo', OPCIONES_SUBIDA))
   subirDocumento(
     @Param('proyectoId') proyectoId: string,
     @UploadedFile() archivo: Express.Multer.File & { buffer: Buffer },

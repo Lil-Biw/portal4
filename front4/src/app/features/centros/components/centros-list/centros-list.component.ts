@@ -117,6 +117,8 @@ export class CentrosListComponent implements OnChanges {
       }
       map.get(key)!.centros.push(centro);
     }
-    return Array.from(map.values());
+    return Array.from(map.values()).sort((a, b) =>
+      a.empresa.razon_social.localeCompare(b.empresa.razon_social)
+    );
   });
 }

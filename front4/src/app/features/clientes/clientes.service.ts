@@ -3,11 +3,13 @@ import { HttpClient } from '@angular/common/http';
 import { ApiService } from '../../core/services/api.service';
 import { Cliente, CreateClienteDto, UpdateClienteDto } from '../../shared/models/cliente.model';
 import { Status } from '../../shared/models/status.model';
+import { NOTIFY_COOLDOWN_MS } from '../../shared/utils';
 
 @Injectable({ providedIn: 'root' })
 export class ClientesService {
   private readonly http = inject(HttpClient);
   private readonly api = inject(ApiService);
+  private statusTimer: ReturnType<typeof setTimeout> | null = null;
 
   readonly clientes = signal<Cliente[]>([]);
   readonly seleccionado = signal<Cliente | null>(null);
@@ -33,7 +35,7 @@ export class ClientesService {
     this.saving.set(true);
     this.http.post<Cliente>(this.api.url('/empresas'), dto).subscribe({
       next: (cliente) => {
-        this.status.set({ type: 'ok', text: 'Empresa creada correctamente' });
+        this.setStatus({ type: 'ok', text: 'Empresa creada correctamente' });
         this.saving.set(false);
         if (logoFile) {
           this.subirLogo(cliente._id, logoFile, () => this.cargar());
@@ -49,7 +51,7 @@ export class ClientesService {
     this.saving.set(true);
     this.http.put<Cliente>(this.api.url(`/empresas/${id}`), dto).subscribe({
       next: () => {
-        this.status.set({ type: 'ok', text: 'Empresa actualizada' });
+        this.setStatus({ type: 'ok', text: 'Empresa actualizada' });
         this.saving.set(false);
         this.seleccionado.set(null);
         if (logoFile) {
@@ -74,7 +76,7 @@ export class ClientesService {
   eliminar(id: string): void {
     this.http.delete(this.api.url(`/empresas/${id}`)).subscribe({
       next: () => {
-        this.status.set({ type: 'ok', text: 'Empresa eliminada' });
+        this.setStatus({ type: 'ok', text: 'Empresa eliminada' });
         this.seleccionado.set(null);
         this.cargar();
       },
@@ -89,7 +91,7 @@ export class ClientesService {
     ).subscribe({
       next: (empresa) => {
         this.clientes.update(list => list.map(c => c._id === id ? { ...c, score_smartclarity: empresa.score_smartclarity } : c));
-        this.status.set({ type: 'ok', text: 'Score actualizado' });
+        this.setStatus({ type: 'ok', text: 'Score actualizado' });
         if (onComplete) onComplete(true);
       },
       error: (err) => { this.setError(err); if (onComplete) onComplete(false); },
@@ -111,7 +113,7 @@ export class ClientesService {
     this.http.get<Cliente>(this.api.url(`/empresas/${id}`)).subscribe({
       next: (res) => {
         this.seleccionado.set(res);
-        this.status.set({ type: 'ok', text: 'Empresa encontrada' });
+        this.setStatus({ type: 'ok', text: 'Empresa encontrada' });
       },
       error: (err) => this.setError(err),
     });
@@ -123,10 +125,17 @@ export class ClientesService {
   }
 
   clearStatus(): void {
+    if (this.statusTimer) { clearTimeout(this.statusTimer); this.statusTimer = null; }
     this.status.set(null);
   }
 
+  private setStatus(status: Status): void {
+    if (this.statusTimer) clearTimeout(this.statusTimer);
+    this.status.set(status);
+    this.statusTimer = setTimeout(() => { this.status.set(null); this.statusTimer = null; }, NOTIFY_COOLDOWN_MS);
+  }
+
   private setError(err: { error?: { message?: string } }): void {
-    this.status.set({ type: 'error', text: err?.error?.message ?? 'Error inesperado' });
+    this.setStatus({ type: 'error', text: err?.error?.message ?? 'Error inesperado' });
   }
 }

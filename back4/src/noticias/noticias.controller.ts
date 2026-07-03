@@ -3,7 +3,7 @@ import {
   UseInterceptors, UploadedFile, Res,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { memoryStorage } from 'multer';
+import { OPCIONES_SUBIDA } from '../common/constants/upload.constants';
 import { Response } from 'express';
 import { NoticiasService } from './noticias.service';
 import { CreateNoticiaDto } from './noticias.dto';
@@ -39,7 +39,7 @@ export class NoticiasController {
 
   @Post(':id/imagen')
   @Roles('super_admin')
-  @UseInterceptors(FileInterceptor('imagen', { storage: memoryStorage() }))
+  @UseInterceptors(FileInterceptor('imagen', OPCIONES_SUBIDA))
   subirImagen(
     @Param('id') id: string,
     @UploadedFile() file: Express.Multer.File,

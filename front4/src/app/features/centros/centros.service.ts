@@ -4,12 +4,14 @@ import { ApiService } from '../../core/services/api.service';
 import { CentroCosto, CreateCentroDto, UpdateCentroDto } from '../../shared/models/centro.model';
 import { Status } from '../../shared/models/status.model';
 import { AuthService } from '../auth/auth.service';
+import { NOTIFY_COOLDOWN_MS } from '../../shared/utils';
 
 @Injectable({ providedIn: 'root' })
 export class CentrosService {
   private readonly http = inject(HttpClient);
   private readonly api = inject(ApiService);
   private readonly auth = inject(AuthService);
+  private statusTimer: ReturnType<typeof setTimeout> | null = null;
 
   readonly centros = signal<CentroCosto[]>([]);
   readonly seleccionado = signal<CentroCosto | null>(null);
@@ -45,11 +47,11 @@ export class CentrosService {
   crear(dto: CreateCentroDto): void {
     const { cliente_id, ...body } = dto;
     if (!cliente_id) {
-      this.status.set({ type: 'error', text: 'Debes seleccionar una empresa.' });
+      this.setStatus({ type: 'error', text: 'Debes seleccionar una empresa.' });
       return;
     }
     this.http.post<CentroCosto>(this.api.url(`/empresas/${cliente_id}/centros`), body).subscribe({
-      next: () => { this.status.set({ type: 'ok', text: 'Centro creado correctamente' }); this.cargar(); },
+      next: () => { this.setStatus({ type: 'ok', text: 'Centro creado correctamente' }); this.cargar(); },
       error: (err) => this.setError(err),
     });
   }
@@ -60,7 +62,7 @@ export class CentrosService {
     const { cliente_id, ...body } = dto as CreateCentroDto;
     this.http.put<CentroCosto>(this.api.url(`/empresas/${empresaId}/centros/${id}`), body).subscribe({
       next: () => {
-        this.status.set({ type: 'ok', text: 'Centro actualizado' });
+        this.setStatus({ type: 'ok', text: 'Centro actualizado' });
         this.seleccionado.set(null);
         this.cargar();
       },
@@ -73,7 +75,7 @@ export class CentrosService {
     if (!empresaId) { this.setError({ error: { message: 'No se pudo determinar la empresa del centro' } }); return; }
     this.http.delete(this.api.url(`/empresas/${empresaId}/centros/${id}`)).subscribe({
       next: () => {
-        this.status.set({ type: 'ok', text: 'Centro eliminado' });
+        this.setStatus({ type: 'ok', text: 'Centro eliminado' });
         this.seleccionado.set(null);
         this.cargar();
       },
@@ -99,9 +101,18 @@ export class CentrosService {
     this.clearStatus();
   }
 
-  clearStatus(): void { this.status.set(null); }
+  clearStatus(): void {
+    if (this.statusTimer) { clearTimeout(this.statusTimer); this.statusTimer = null; }
+    this.status.set(null);
+  }
+
+  private setStatus(status: Status): void {
+    if (this.statusTimer) clearTimeout(this.statusTimer);
+    this.status.set(status);
+    this.statusTimer = setTimeout(() => { this.status.set(null); this.statusTimer = null; }, NOTIFY_COOLDOWN_MS);
+  }
 
   private setError(err: { error?: { message?: string } }): void {
-    this.status.set({ type: 'error', text: err?.error?.message ?? 'Error inesperado' });
+    this.setStatus({ type: 'error', text: err?.error?.message ?? 'Error inesperado' });
   }
 }

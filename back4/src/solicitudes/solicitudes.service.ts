@@ -8,7 +8,7 @@ import { ProyectoDocument } from '../proyectos/proyectos.schema';
 import { CreateSolicitudDto, UpdateSolicitudDto, CambiarEstadoDto } from './solicitudes.dto';
 import { MailService } from '../mail/mail.service';
 import { NotificacionOpcionesDto } from '../common/dto/notificacion-opciones.dto';
-import { DocumentosHelper, ArchivoInput } from '../common/helpers/documentos.helper';
+import { DocumentosHelper, ArchivoInput, sanitizarNombreArchivo } from '../common/helpers/documentos.helper';
 import { S3Service } from '../common/s3/s3.service';
 
 @Injectable()
@@ -309,10 +309,11 @@ export class SolicitudesService {
 
     const timestamp = Date.now();
     const rand = Math.random().toString(36).substring(7);
-    const s3Key = `solicitudes/${id}/${timestamp}_${rand}_${archivo.originalname}`;
+    const s3Key = `solicitudes/${id}/${timestamp}_${rand}_${sanitizarNombreArchivo(archivo.originalname)}`;
     await this.s3Service.subir(s3Key, archivo.buffer, archivo.mimetype);
 
-    return this.solicitudModel
+    const keyAnterior = solicitud.adjunto?.s3_key;
+    const actualizada = await this.solicitudModel
       .findByIdAndUpdate(
         id,
         {
@@ -323,6 +324,15 @@ export class SolicitudesService {
       )
       .select('-adjunto.contenido')
       .lean();
+
+    // El adjunto reemplazado ya no lo referencia nadie: al aprobar una solicitud
+    // el documento se crea como copia bajo documentos/, nunca apunta a esta key.
+    if (actualizada && keyAnterior && keyAnterior !== s3Key) {
+      await this.s3Service.eliminar(keyAnterior).catch((err: unknown) =>
+        this.logger.error(`No se pudo eliminar el adjunto anterior en S3 (${keyAnterior}):`, err),
+      );
+    }
+    return actualizada;
   }
 
   async servirAdjunto(id: string): Promise<{ buffer: Buffer; tipo_mime: string; nombre: string }> {

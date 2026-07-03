@@ -125,7 +125,11 @@ export class ActivosListComponent implements OnChanges {
       gc.activos.push(activo);
     }
 
-    return Array.from(map.values());
+    const grupos = Array.from(map.values());
+    for (const ge of grupos) {
+      ge.centros.sort((a, b) => a.centro.nombre.localeCompare(b.centro.nombre));
+    }
+    return grupos.sort((a, b) => a.empresa.razon_social.localeCompare(b.empresa.razon_social));
   });
 
   totalActivos(ge: GrupoEmpresa): number {

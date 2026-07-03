@@ -61,7 +61,7 @@ export class CentrosCostosService {
   async findAll(page = 1, limit = 20) {
     const filter = { activo: true };
     const [data, total] = await Promise.all([
-      this.centroCostoModel.find(filter).skip((page - 1) * limit).limit(limit).lean(),
+      this.centroCostoModel.find(filter).sort({ nombre: 1 }).skip((page - 1) * limit).limit(limit).lean(),
       this.centroCostoModel.countDocuments(filter),
     ]);
     return { data, total, page, pages: Math.ceil(total / limit) };
@@ -70,7 +70,7 @@ export class CentrosCostosService {
   async findAllByCliente(cliente_id: string, page = 1, limit = 20) {
     const filter = { cliente_id: new Types.ObjectId(cliente_id), activo: true };
     const [data, total] = await Promise.all([
-      this.centroCostoModel.find(filter).skip((page - 1) * limit).limit(limit).lean(),
+      this.centroCostoModel.find(filter).sort({ nombre: 1 }).skip((page - 1) * limit).limit(limit).lean(),
       this.centroCostoModel.countDocuments(filter),
     ]);
     return { data, total, page, pages: Math.ceil(total / limit) };

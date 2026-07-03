@@ -23,6 +23,12 @@ export function encodeQuery(params: Record<string, unknown>): string {
     .join('&');
 }
 
+// ── Auto-cierre de notificaciones ────────────────────────────────────────────
+// Los banners de status (éxito/error) deben desaparecer solos tras un tiempo
+// en vez de quedar pegados en pantalla hasta la próxima acción del usuario.
+
+export const NOTIFY_COOLDOWN_MS = 10_000;
+
 // ── Score documental ─────────────────────────────────────────────────────────
 
 export interface ScoreDocumental {

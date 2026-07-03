@@ -96,7 +96,7 @@
 
 <!-- ── Modal ──────────────────────────────────────────── -->
 <div class="modal-backdrop" *ngIf="modal() !== null" (click)="cerrar()">
-  <div class="modal" (click)="$event.stopPropagation()">
+  <div class="modal" [class.modal--tipos]="modal() === 'tipos'" (click)="$event.stopPropagation()">
 
     <!-- Crear -->
     <ng-container *ngIf="modal() === 'crear'">

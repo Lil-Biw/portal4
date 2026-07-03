@@ -37,7 +37,7 @@ export class ActivosService {
         $in: [centroCostoId, new Types.ObjectId(centroCostoId)],
       };
     }
-    return this.activoModel.find(filter).populate('tipo_activo_id').lean();
+    return this.activoModel.find(filter).populate('tipo_activo_id').sort({ nombre: 1 }).lean();
   }
 
   async findAllByEmpresa(empresaId: string, centroCostoId?: string) {
@@ -59,7 +59,7 @@ export class ActivosService {
         ],
       };
     }
-    return this.activoModel.find(filter).populate('tipo_activo_id').lean();
+    return this.activoModel.find(filter).populate('tipo_activo_id').sort({ nombre: 1 }).lean();
   }
 
   async findOne(id: string) {

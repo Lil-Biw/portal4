@@ -39,9 +39,16 @@ export class DocumentosVencidosService {
     return this.model.find(filter).sort({ vencido_en: -1 }).limit(20).select('-contenido').lean();
   }
 
-  async descargar(id: string): Promise<{ buffer: Buffer; tipo_mime: string; nombre_display: string }> {
+  async descargar(
+    id: string,
+    empresaIdPermitida?: string,
+  ): Promise<{ buffer: Buffer; tipo_mime: string; nombre_display: string }> {
     const doc = await this.model.findById(id);
     if (!doc) throw new NotFoundException('Documento vencido no encontrado');
+    // NotFound (y no Forbidden) para no revelar la existencia de documentos de otras empresas
+    if (empresaIdPermitida && String(doc.empresa_id) !== empresaIdPermitida) {
+      throw new NotFoundException('Documento vencido no encontrado');
+    }
     if (doc.s3_key) {
       const buffer = await this.s3Service.descargar(doc.s3_key);
       return { buffer, tipo_mime: doc.tipo_mime, nombre_display: doc.nombre_display };

@@ -161,7 +161,9 @@ export class ProyectosListComponent {
       empresaMap.get(empKey)!.proyectos.push(p);
     }
 
-    return Array.from(empresaMap.values());
+    return Array.from(empresaMap.values()).sort((a, b) =>
+      a.empresa.razon_social.localeCompare(b.empresa.razon_social)
+    );
   }
 
   centroPorId(id: string): string {

@@ -73,6 +73,7 @@ function emptyTipoForm(): TipoForm { return { nombre: '', color: '#0095d6' }; }
       padding: 0 .25rem;
     }
     .modal-close:hover { color: #1f2937; }
+    .modal--tipos { max-width: 840px; }
     .search-input {
       width: 100%;
       padding: .65rem .9rem;
@@ -86,7 +87,9 @@ function emptyTipoForm(): TipoForm { return { nombre: '', color: '#0095d6' }; }
     .search-input:focus { outline: none; border-color: #0095d6; }
     .tipos-modal {
       display: grid;
-      grid-template-columns: 1fr 1fr;
+      /* minmax(0,…): sin esto los nombres largos (nowrap implícito del
+         min-content) desbordan la columna y empujan los botones fuera del modal */
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
       gap: 1.5rem;
       align-items: start;
     }
@@ -97,7 +100,7 @@ function emptyTipoForm(): TipoForm { return { nombre: '', color: '#0095d6' }; }
       margin: 0 0 .75rem;
     }
     .tipos-empty { color: #9ca3af; font-size: .85rem; margin: .5rem 0; }
-    .tipos-list { display: flex; flex-direction: column; gap: 0; max-height: 320px; overflow-y: auto; padding-right: .25rem; }
+    .tipos-list { display: flex; flex-direction: column; gap: 0; max-height: min(55vh, 480px); overflow-y: auto; padding-right: .25rem; }
     .tipo-item {
       display: flex;
       align-items: center;
@@ -107,7 +110,7 @@ function emptyTipoForm(): TipoForm { return { nombre: '', color: '#0095d6' }; }
     }
     .tipo-item:last-child { border-bottom: none; }
     .tipo-texto { flex: 1; min-width: 0; }
-    .tipo-nombre { font-size: .85rem; font-weight: 600; color: #1f2937; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .tipo-nombre { font-size: .85rem; font-weight: 600; color: #1f2937; word-break: break-word; }
     .tipo-actions { display: flex; gap: .35rem; flex-shrink: 0; }
     .tipo-input {
       width: 100%;

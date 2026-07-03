@@ -6,7 +6,7 @@ import {
 import { Request, Response } from 'express';
 import { sendFile } from '../common/helpers/send-file.helper';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { memoryStorage } from 'multer';
+import { OPCIONES_SUBIDA } from '../common/constants/upload.constants';
 import { ActividadesService } from './actividades.service';
 import { CreateActividadDto, UpdateActividadDto } from './actividades.dto';
 import { EmpresaAccessGuard, Roles } from '../common/guards/guards';
@@ -55,7 +55,7 @@ export class ActividadesController {
 
   @Post(':actividadId/documentos')
   @Roles('super_admin', 'admin_smartclarity')
-  @UseInterceptors(FileInterceptor('archivo', { storage: memoryStorage() }))
+  @UseInterceptors(FileInterceptor('archivo', OPCIONES_SUBIDA))
   subirDocumento(
     @Param('actividadId') actividadId: string,
     @UploadedFile() archivo: Express.Multer.File & { buffer: Buffer },
