@@ -3,6 +3,7 @@ import { APP_GUARD } from '@nestjs/core';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ConfigModule } from '@nestjs/config';
 import { JwtAuthGuard, RolesGuard, PermisosGuard } from './common/guards/guards';
+import { S3Module } from './common/s3/s3.module';
 import { AuthModule } from './auth/auth.module';
 import { ClientesModule } from './clientes/clientes.module';
 import { UsuariosModule } from './usuarios/usuarios.module';
@@ -22,6 +23,7 @@ import { DocumentosVencidosModule } from './documentos-vencidos/documentos-venci
   imports: [
     ConfigModule.forRoot({ isGlobal: true, envFilePath: '.env' }),
     MongooseModule.forRoot(process.env.MONGODB_URI || 'mongodb://localhost:27017/portal_clientes'),
+    S3Module,
     AuthModule,
     ClientesModule,
     UsuariosModule,
