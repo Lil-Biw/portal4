@@ -45,7 +45,7 @@ export class ClientesService {
   async findAll(page = 1, limit = 20, soloActivos = true) {
     const filter = soloActivos ? { activo: true } : {};
     const [data, total] = await Promise.all([
-      this.clienteModel.find(filter).select('-logo.contenido').sort({ razon_social: 1 }).skip((page - 1) * limit).limit(limit).lean(),
+      this.clienteModel.find(filter).select('-logo.contenido').skip((page - 1) * limit).limit(limit).lean(),
       this.clienteModel.countDocuments(filter),
     ]);
     return { data, total, page, pages: Math.ceil(total / limit) };
