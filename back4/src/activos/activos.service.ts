@@ -5,6 +5,7 @@ import { Activo, ActivoDocument } from './activos.schema';
 import { CreateActivoDto, UpdateActivoDto } from './activos.dto';
 import { CentroCostoDocument } from '../centros-costos/centros-costos.schema';
 import { DocumentosHelper, ArchivoInput } from '../common/helpers/documentos.helper';
+import { S3Service } from '../common/s3/s3.service';
 
 @Injectable()
 export class ActivosService {
@@ -16,6 +17,7 @@ export class ActivosService {
     @InjectModel('DocEliminado') private docEliminadoModel: Model<any>,
     @InjectModel('CentroCosto') private centroCostoModel: Model<CentroCostoDocument>,
     @InjectModel('TipoActivo') private tipoActivoModel: Model<any>,
+    private readonly s3Service: S3Service,
   ) {
     this.docsHelper = new DocumentosHelper(
       activoModel,
@@ -24,6 +26,7 @@ export class ActivosService {
       docEliminadoModel,
       'activo',
       'Activo',
+      s3Service,
     );
   }
 
@@ -34,7 +37,7 @@ export class ActivosService {
         $in: [centroCostoId, new Types.ObjectId(centroCostoId)],
       };
     }
-    return this.activoModel.find(filter).populate('tipo_activo_id').lean();
+    return this.activoModel.find(filter).populate('tipo_activo_id').sort({ nombre: 1 }).lean();
   }
 
   async findAllByEmpresa(empresaId: string, centroCostoId?: string) {
@@ -56,7 +59,7 @@ export class ActivosService {
         ],
       };
     }
-    return this.activoModel.find(filter).populate('tipo_activo_id').lean();
+    return this.activoModel.find(filter).populate('tipo_activo_id').sort({ nombre: 1 }).lean();
   }
 
   async findOne(id: string) {

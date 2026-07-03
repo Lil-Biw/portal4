@@ -8,6 +8,7 @@ import { notificarDocumentoSubido } from '../common/helpers/notificar-documento.
 import { DocumentosVencidosService } from '../documentos-vencidos/documentos-vencidos.service';
 import { MailService } from '../mail/mail.service';
 import { NotificacionOpcionesDto } from '../common/dto/notificacion-opciones.dto';
+import { S3Service } from '../common/s3/s3.service';
 
 @Injectable()
 export class CentrosCostosService {
@@ -21,6 +22,7 @@ export class CentrosCostosService {
     @InjectModel('Usuario') private readonly usuarioModel: Model<{ nombre: string; email: string; rol: string; cliente_id: Types.ObjectId; centros_asignados: Types.ObjectId[]; activo: boolean }>,
     private readonly documentosVencidosService: DocumentosVencidosService,
     private readonly mailService: MailService,
+    private readonly s3Service: S3Service,
   ) {
     this.docsHelper = new DocumentosHelper(
       centroCostoModel,
@@ -29,6 +31,7 @@ export class CentrosCostosService {
       docEliminadoModel,
       'centro',
       'Centro de costos',
+      s3Service,
     );
   }
 
@@ -58,7 +61,7 @@ export class CentrosCostosService {
   async findAll(page = 1, limit = 20) {
     const filter = { activo: true };
     const [data, total] = await Promise.all([
-      this.centroCostoModel.find(filter).skip((page - 1) * limit).limit(limit).lean(),
+      this.centroCostoModel.find(filter).sort({ nombre: 1 }).skip((page - 1) * limit).limit(limit).lean(),
       this.centroCostoModel.countDocuments(filter),
     ]);
     return { data, total, page, pages: Math.ceil(total / limit) };
@@ -67,7 +70,7 @@ export class CentrosCostosService {
   async findAllByCliente(cliente_id: string, page = 1, limit = 20) {
     const filter = { cliente_id: new Types.ObjectId(cliente_id), activo: true };
     const [data, total] = await Promise.all([
-      this.centroCostoModel.find(filter).skip((page - 1) * limit).limit(limit).lean(),
+      this.centroCostoModel.find(filter).sort({ nombre: 1 }).skip((page - 1) * limit).limit(limit).lean(),
       this.centroCostoModel.countDocuments(filter),
     ]);
     return { data, total, page, pages: Math.ceil(total / limit) };

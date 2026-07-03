@@ -8,6 +8,7 @@ import { notificarDocumentoSubido } from '../common/helpers/notificar-documento.
 import { DocumentosVencidosService } from '../documentos-vencidos/documentos-vencidos.service';
 import { MailService } from '../mail/mail.service';
 import { NotificacionOpcionesDto } from '../common/dto/notificacion-opciones.dto';
+import { S3Service } from '../common/s3/s3.service';
 
 @Injectable()
 export class ProyectosService {
@@ -22,6 +23,7 @@ export class ProyectosService {
     @InjectModel('Usuario') private readonly usuarioModel: Model<{ nombre: string; email: string; rol: string; cliente_id: Types.ObjectId; centros_asignados: Types.ObjectId[]; activo: boolean }>,
     private readonly documentosVencidosService: DocumentosVencidosService,
     private readonly mailService: MailService,
+    private readonly s3Service: S3Service,
   ) {
     this.docsHelper = new DocumentosHelper(
       proyectoModel,
@@ -30,6 +32,7 @@ export class ProyectosService {
       docEliminadoModel,
       'proyecto',
       'Proyecto',
+      s3Service,
     );
   }
 
@@ -69,7 +72,7 @@ export class ProyectosService {
   async findAll(page = 1, limit = 20, estado?: string) {
     const filter = estado ? { estado } : { estado: { $ne: 'cerrado' } };
     const [data, total] = await Promise.all([
-      this.proyectoModel.find(filter).populate('tipo_proyecto_id').skip((page - 1) * limit).limit(limit).lean(),
+      this.proyectoModel.find(filter).populate('tipo_proyecto_id').sort({ nombre: 1 }).skip((page - 1) * limit).limit(limit).lean(),
       this.proyectoModel.countDocuments(filter),
     ]);
     return { data, total, page, pages: Math.ceil(total / limit) };
@@ -81,7 +84,7 @@ export class ProyectosService {
       estado: { $ne: 'cerrado' },
     };
     const [data, total] = await Promise.all([
-      this.proyectoModel.find(filter).populate('tipo_proyecto_id').skip((page - 1) * limit).limit(limit).lean(),
+      this.proyectoModel.find(filter).populate('tipo_proyecto_id').sort({ nombre: 1 }).skip((page - 1) * limit).limit(limit).lean(),
       this.proyectoModel.countDocuments(filter),
     ]);
     return { data, total, page, pages: Math.ceil(total / limit) };
@@ -93,7 +96,7 @@ export class ProyectosService {
       estado: { $ne: 'cerrado' },
     };
     const [data, total] = await Promise.all([
-      this.proyectoModel.find(filter).populate('tipo_proyecto_id').skip((page - 1) * limit).limit(limit).lean(),
+      this.proyectoModel.find(filter).populate('tipo_proyecto_id').sort({ nombre: 1 }).skip((page - 1) * limit).limit(limit).lean(),
       this.proyectoModel.countDocuments(filter),
     ]);
     return { data, total, page, pages: Math.ceil(total / limit) };

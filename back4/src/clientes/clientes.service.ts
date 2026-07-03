@@ -8,6 +8,7 @@ import { DocumentosVencidosService } from '../documentos-vencidos/documentos-ven
 import { notificarDocumentoSubido } from '../common/helpers/notificar-documento.helper';
 import { MailService } from '../mail/mail.service';
 import { NotificacionOpcionesDto } from '../common/dto/notificacion-opciones.dto';
+import { S3Service } from '../common/s3/s3.service';
 
 @Injectable()
 export class ClientesService {
@@ -21,6 +22,7 @@ export class ClientesService {
     @InjectModel('Usuario') private readonly usuarioModel: Model<{ nombre: string; email: string; rol: string; activo: boolean }>,
     private readonly documentosVencidosService: DocumentosVencidosService,
     private readonly mailService: MailService,
+    private readonly s3Service: S3Service,
   ) {
     this.docsHelper = new DocumentosHelper(
       clienteModel,
@@ -29,6 +31,7 @@ export class ClientesService {
       docEliminadoModel,
       'empresa',
       'Cliente',
+      s3Service,
     );
   }
 
@@ -42,7 +45,7 @@ export class ClientesService {
   async findAll(page = 1, limit = 20, soloActivos = true) {
     const filter = soloActivos ? { activo: true } : {};
     const [data, total] = await Promise.all([
-      this.clienteModel.find(filter).select('-logo.contenido').skip((page - 1) * limit).limit(limit).lean(),
+      this.clienteModel.find(filter).select('-logo.contenido').sort({ razon_social: 1 }).skip((page - 1) * limit).limit(limit).lean(),
       this.clienteModel.countDocuments(filter),
     ]);
     return { data, total, page, pages: Math.ceil(total / limit) };

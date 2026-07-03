@@ -7,6 +7,7 @@ import { CreateActividadDto, UpdateActividadDto } from './actividades.dto';
 import { MailService } from '../mail/mail.service';
 import { NotificacionOpcionesDto } from '../common/dto/notificacion-opciones.dto';
 import { DocumentosHelper, ArchivoInput } from '../common/helpers/documentos.helper';
+import { S3Service } from '../common/s3/s3.service';
 
 @Injectable()
 export class ActividadesService {
@@ -21,6 +22,7 @@ export class ActividadesService {
     @InjectModel('DocActividad') private docActividadModel: Model<any>,
     @InjectModel('DocEliminado') private docEliminadoModel: Model<any>,
     private mailService: MailService,
+    private readonly s3Service: S3Service,
   ) {
     this.docsHelper = new DocumentosHelper(
       actividadModel,
@@ -29,6 +31,7 @@ export class ActividadesService {
       docEliminadoModel,
       'actividad',
       'Actividad',
+      s3Service,
     );
   }
 
