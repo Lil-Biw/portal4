@@ -190,6 +190,7 @@ export class ProyectosService {
       tipo_mime:       doc.tipo_mime,
       tamano_bytes:    doc.tamano_bytes,
       contenido:       doc.contenido,
+      s3_key:          doc.s3_key,
       origen_tipo:     'proyecto',
       empresa_id:      empresaId,
       centro_id:       centroId,

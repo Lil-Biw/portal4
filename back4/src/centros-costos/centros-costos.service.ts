@@ -171,6 +171,7 @@ export class CentrosCostosService {
       tipo_mime:      doc.tipo_mime,
       tamano_bytes:   doc.tamano_bytes,
       contenido:      doc.contenido,
+      s3_key:         doc.s3_key,
       origen_tipo:    'centro',
       empresa_id:     resolvedEmpresaId,
       centro_id:      centroId,
