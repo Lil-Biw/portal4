@@ -6,7 +6,8 @@ import { CentroCostoDocument } from '../centros-costos/centros-costos.schema';
 import { CreateActividadDto, UpdateActividadDto } from './actividades.dto';
 import { MailService } from '../mail/mail.service';
 import { NotificacionOpcionesDto } from '../common/dto/notificacion-opciones.dto';
-import { DocumentosHelper, ArchivoInput } from '../common/helpers/documentos.helper';
+import { DocumentosHelper, DocumentoInput } from '../common/helpers/documentos.helper';
+import { hoyUtcChile } from '../common/helpers/fechas.helper';
 import { S3Service } from '../common/s3/s3.service';
 
 @Injectable()
@@ -124,19 +125,20 @@ export class ActividadesService {
   }
 
   async create(dto: CreateActividadDto) {
-    const { notificacion, ...actividadData } = dto;
+    const { notificacion, documentos_nombres, ...actividadData } = dto;
     const a = await new this.actividadModel({
       ...actividadData,
       tipo_id: new Types.ObjectId(actividadData.tipo_id),
       centro_costo_id: new Types.ObjectId(actividadData.centro_costo_id),
       activo_ids: (actividadData.activo_ids ?? []).map(id => new Types.ObjectId(id)),
       fecha: new Date(actividadData.fecha),
+      fecha_termino: actividadData.fecha_termino ? new Date(actividadData.fecha_termino) : undefined,
     }).save();
 
     const result = await this.actividadModel.findById(a._id).populate('tipo_id').lean();
 
     if (actividadData.centro_costo_id) {
-      await this.notificarUsuariosCentro(actividadData.centro_costo_id, result!, notificacion);
+      await this.notificarUsuariosCentro(actividadData.centro_costo_id, result!, notificacion, documentos_nombres);
     }
 
     return result;
@@ -146,19 +148,24 @@ export class ActividadesService {
     centroCostoId: string | undefined,
     a: Record<string, unknown>,
     notificacion?: NotificacionOpcionesDto,
+    documentosNombres?: string[],
   ) {
     const opciones = notificacion ?? { notificar: true, audiencia: 'todos' };
     if (!opciones.notificar) return;
 
     try {
-      const centro = await this.centroCostoModel.findById(centroCostoId).lean();
+      const centro = await this.centroCostoModel
+        .findById(centroCostoId)
+        .populate('cliente_id', 'razon_social')
+        .lean() as any;
       if (!centro) {
         this.logger.warn(`notificarUsuariosCentro: centro ${centroCostoId} no encontrado, se omite notificación`);
         return;
       }
 
       const centroObjId = new Types.ObjectId(String(centroCostoId));
-      const empresaId = new Types.ObjectId(String(centro.cliente_id));
+      const empresaId = new Types.ObjectId(String(centro.cliente_id?._id ?? centro.cliente_id));
+      const empresaNombre = centro.cliente_id?.razon_social ?? 'Empresa';
 
       let usuariosCentro: { nombre: string; email: string }[] = [];
 
@@ -220,8 +227,9 @@ export class ActividadesService {
           tipo:        String(tipo?.nombre ?? 'Sin tipo'),
           fecha:       a.fecha as Date,
           descripcion: a.descripcion ? String(a.descripcion) : undefined,
-          centro:      String(centro.nombre),
+          jerarquia:   { empresa: empresaNombre, centro: centro.nombre },
           activos:     activosNombres,
+          documentos:  documentosNombres ?? [],
         },
       });
 
@@ -232,11 +240,14 @@ export class ActividadesService {
   }
 
   async update(id: string, dto: UpdateActividadDto) {
-    const { notificacion: _n, ...updateData } = dto;
+    const { notificacion: _n, documentos_nombres: _d, ...updateData } = dto;
     const payload: Record<string, unknown> = { ...updateData };
     if (dto.tipo_id) payload['tipo_id'] = new Types.ObjectId(dto.tipo_id);
     if (dto.centro_costo_id) payload['centro_costo_id'] = new Types.ObjectId(dto.centro_costo_id);
     if (dto.fecha) payload['fecha'] = new Date(dto.fecha);
+    if (dto.fecha_termino !== undefined) {
+      payload['fecha_termino'] = dto.fecha_termino ? new Date(dto.fecha_termino) : null;
+    }
     if (dto.activo_ids !== undefined) {
       payload['activo_ids'] = dto.activo_ids.map(aid => new Types.ObjectId(aid));
     }
@@ -259,8 +270,8 @@ export class ActividadesService {
     return this.docsHelper.listar(actividadId);
   }
 
-  subirDocumento(actividadId: string, archivo: ArchivoInput, nombreDisplay?: string) {
-    return this.docsHelper.agregar(actividadId, archivo, nombreDisplay);
+  subirDocumento(actividadId: string, input: DocumentoInput, nombreDisplay?: string) {
+    return this.docsHelper.agregar(actividadId, input, nombreDisplay);
   }
 
   servirDocumento(actividadId: string, docId: string) {
@@ -269,5 +280,88 @@ export class ActividadesService {
 
   eliminarDocumento(actividadId: string, docId: string) {
     return this.docsHelper.eliminar(actividadId, docId);
+  }
+
+  async enviarRecordatoriosVencimiento(): Promise<{ evaluados: number; notificados: number }> {
+    const hoyUtc = hoyUtcChile();
+
+    const actividades = await this.actividadModel
+      // Solo actividades con al menos un día de aviso marcado; a diferencia de
+      // proyectos aquí no hay auto-cierre, así que el resto no aporta nada.
+      .find({ fecha: { $ne: null }, dias_recordatorio: { $exists: true, $ne: [] } })
+      .populate({
+        path: 'centro_costo_id',
+        select: 'nombre cliente_id',
+        populate: { path: 'cliente_id', select: 'razon_social' },
+      })
+      .lean() as any[];
+
+    let notificados = 0;
+
+    for (const actividad of actividades) {
+      const fechaRef = actividad.fecha_termino ?? actividad.fecha;
+      if (!fechaRef) continue;
+      const fecha = new Date(fechaRef);
+      const fechaUtc = Date.UTC(fecha.getUTCFullYear(), fecha.getUTCMonth(), fecha.getUTCDate());
+      const diasRestantes = Math.round((fechaUtc - hoyUtc) / 86_400_000);
+      if (diasRestantes < 0) continue;
+
+      // Los días de aviso los define la propia actividad (paso Notificaciones).
+      // Se dispara el umbral más cercano ya cruzado (>= días restantes) que no
+      // se haya notificado aún: si el cron corre dos veces el mismo día no
+      // reenvía, y si un día marcado pasó sin correr (proceso caído) el aviso
+      // se recupera en la siguiente corrida en vez de perderse.
+      const umbralesCruzados = (actividad.dias_recordatorio ?? []).filter((d: number) => d >= diasRestantes);
+      if (!umbralesCruzados.length) continue;
+      const umbral = Math.min(...umbralesCruzados);
+      if (umbral === actividad.ultimo_recordatorio_dias) continue;
+
+      const centro = actividad.centro_costo_id;
+      const centroId = centro?._id ?? actividad.centro_costo_id;
+      const empresaId = centro?.cliente_id?._id ?? centro?.cliente_id;
+      if (!centroId || !empresaId) continue;
+
+      // Solo admins suscritos explícitamente a la empresa o al centro: el
+      // toggle notificar_todas_empresas NO aplica a recordatorios (evita que
+      // todo admin reciba los avisos por el default true del campo).
+      const admins = await (this.usuarioModel as any)
+        .find({
+          rol: { $in: ['admin_smartclarity', 'super_admin'] },
+          activo: true,
+          $or: [
+            { empresas_suscritas: empresaId },
+            { centros_suscritos: centroId },
+          ],
+        })
+        .select('nombre email')
+        .lean();
+      if (!admins.length) continue;
+
+      const empresaNombre = centro?.cliente_id?.razon_social ?? 'Empresa';
+      const centroNombre = centro?.nombre ?? undefined;
+      const fechaTexto = fecha.toLocaleDateString('es-CL', {
+        weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC',
+      });
+
+      const docs = await this.docActividadModel
+        .find({ actividad_id: actividad._id })
+        .select('nombre_display')
+        .lean();
+
+      await this.mailService.notificarActividadPorVencer({
+        destinatarios: admins.map((a: any) => ({ nombre: a.nombre, email: a.email })),
+        actividad: {
+          nombre: actividad.nombre,
+          fecha: fechaTexto,
+          diasRestantes,
+          jerarquia: { empresa: empresaNombre, centro: centroNombre },
+          documentos: docs.map((d: any) => String(d.nombre_display)),
+        },
+      });
+      await this.actividadModel.findByIdAndUpdate(actividad._id, { ultimo_recordatorio_dias: umbral });
+      notificados++;
+    }
+
+    return { evaluados: actividades.length, notificados };
   }
 }

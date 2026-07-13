@@ -60,12 +60,14 @@ export class MisProyectosPageComponent {
     const centros = this.centrosService.centros();
     const grupos = new Map<string, { nombre: string; proyectos: Proyecto[] }>();
     for (const p of ps) {
-      const cId = asId(p.centro_costo_id);
-      if (!grupos.has(cId)) {
-        const c = centros.find(c => asId(c._id) === cId);
-        grupos.set(cId, { nombre: c?.nombre ?? '—', proyectos: [] });
+      for (const rawId of p.centro_costo_ids ?? []) {
+        const cId = asId(rawId);
+        if (!grupos.has(cId)) {
+          const c = centros.find(c => asId(c._id) === cId);
+          grupos.set(cId, { nombre: c?.nombre ?? '—', proyectos: [] });
+        }
+        grupos.get(cId)!.proyectos.push(p);
       }
-      grupos.get(cId)!.proyectos.push(p);
     }
     return Array.from(grupos.values()).sort((a, b) => a.nombre.localeCompare(b.nombre));
   });

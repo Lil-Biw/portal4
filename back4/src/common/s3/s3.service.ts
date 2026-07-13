@@ -11,6 +11,7 @@ import {
 export class S3Service {
   private readonly client: S3Client;
   private readonly bucket: string;
+  private readonly keyPrefix: string;
 
   constructor(private readonly configService: ConfigService) {
     const bucket = this.configService.get<string>('S3_BUCKET_NAME');
@@ -22,13 +23,19 @@ export class S3Service {
     }
     this.bucket = bucket;
     this.client = new S3Client({ region });
+    const prefix = this.configService.get<string>('S3_KEY_PREFIX') ?? '';
+    this.keyPrefix = prefix && !prefix.endsWith('/') ? `${prefix}/` : prefix;
+  }
+
+  private withPrefix(key: string): string {
+    return `${this.keyPrefix}${key}`;
   }
 
   async subir(key: string, buffer: Buffer, mimetype: string): Promise<void> {
     await this.client.send(
       new PutObjectCommand({
         Bucket: this.bucket,
-        Key: key,
+        Key: this.withPrefix(key),
         Body: buffer,
         ContentType: mimetype,
       }),
@@ -39,7 +46,7 @@ export class S3Service {
     let response;
     try {
       response = await this.client.send(
-        new GetObjectCommand({ Bucket: this.bucket, Key: key }),
+        new GetObjectCommand({ Bucket: this.bucket, Key: this.withPrefix(key) }),
       );
     } catch (err: unknown) {
       const name = (err as { name?: string })?.name;
@@ -58,7 +65,7 @@ export class S3Service {
 
   async eliminar(key: string): Promise<void> {
     await this.client.send(
-      new DeleteObjectCommand({ Bucket: this.bucket, Key: key }),
+      new DeleteObjectCommand({ Bucket: this.bucket, Key: this.withPrefix(key) }),
     );
   }
 }

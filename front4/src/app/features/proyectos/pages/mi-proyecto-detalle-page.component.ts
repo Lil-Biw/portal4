@@ -40,11 +40,14 @@ export class MiProyectoDetallePageComponent implements OnInit, OnDestroy {
 
   protected empresa = computed(() => this.consumidorContext.empresaSeleccionada());
 
-  protected centro = computed(() => {
+  protected centros = computed(() => {
     const p = this.proyecto();
-    if (!p) return null;
-    return this.centrosService.centros().find(c => asId(c._id) === asId(p.centro_costo_id)) ?? null;
+    if (!p) return [];
+    const ids = (p.centro_costo_ids ?? []).map(asId);
+    return this.centrosService.centros().filter(c => ids.includes(asId(c._id)));
   });
+
+  protected centrosNombres = computed(() => this.centros().map(c => c.nombre).join(', '));
 
   protected scoreDoc = computed(() => {
     const p = this.proyecto();
@@ -70,7 +73,7 @@ export class MiProyectoDetallePageComponent implements OnInit, OnDestroy {
     effect(() => {
       const p   = this.proyecto();
       const emp = this.empresa();
-      const c   = this.centro();
+      const c   = this.centros()[0];
       if (!p || !emp) return;
       untracked(() => {
         this.documentosService.cargar('proyecto', emp._id, c?._id, p._id);
@@ -124,7 +127,7 @@ export class MiProyectoDetallePageComponent implements OnInit, OnDestroy {
   protected readonly dotColorSolicitud = colorEstadoSolicitud;
 
   protected irADocumentos(tab: 'documentacion' | 'solicitudes'): void {
-    const c = this.centro();
+    const c = this.centros()[0];
     const p = this.proyecto();
     this.router.navigate(['/documentos'], {
       queryParams: {

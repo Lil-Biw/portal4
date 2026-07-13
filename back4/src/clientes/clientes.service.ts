@@ -3,10 +3,11 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { ClienteDocument } from './clientes.schema';
 import { CreateClienteDto, UpdateClienteDto } from './clientes.dto';
-import { DocumentosHelper, ArchivoInput } from '../common/helpers/documentos.helper';
+import { DocumentosHelper, DocumentoInput } from '../common/helpers/documentos.helper';
 import { DocumentosVencidosService } from '../documentos-vencidos/documentos-vencidos.service';
 import { notificarDocumentoSubido } from '../common/helpers/notificar-documento.helper';
 import { MailService } from '../mail/mail.service';
+import { ContextoJerarquico } from '../mail/templates/jerarquia';
 import { NotificacionOpcionesDto } from '../common/dto/notificacion-opciones.dto';
 import { S3Service } from '../common/s3/s3.service';
 
@@ -122,19 +123,19 @@ export class ClientesService {
     return { buffer, tipo_mime: cliente.logo.tipo_mime, nombre: cliente.logo.nombre };
   }
 
-  async agregarDocumento(id: string, archivo: ArchivoInput, nombreDisplay?: string, categoria?: string, rolUploader?: string, usuarioId?: string) {
-    const result = await this.docsHelper.agregar(id, archivo, nombreDisplay, categoria);
+  async agregarDocumento(id: string, input: DocumentoInput, nombreDisplay?: string, categoria?: string, rolUploader?: string, usuarioId?: string) {
+    const result = await this.docsHelper.agregar(id, input, nombreDisplay, categoria, usuarioId);
     if (rolUploader === 'usuario') {
       const cliente = await this.clienteModel.findById(id).select('razon_social').lean() as any;
-      const contexto = cliente ? `Empresa: ${cliente.razon_social}` : 'Empresa';
       notificarDocumentoSubido({
-        contexto,
+        jerarquia: { empresa: cliente ? cliente.razon_social : 'Empresa' },
         nombre: result['nombre_display'] as string,
         categoria: (result['categoria'] as string) ?? 'Sin categoría',
         usuarioId,
         usuarioModel: this.usuarioModel as any,
         mailService: this.mailService,
         logger: this.logger,
+        scope: { tipo: 'empresa', empresaId: id },
       }).catch((err: unknown) => this.logger.error('Error al notificar subida de documento (empresa):', err));
     }
     return result;
@@ -165,9 +166,12 @@ export class ClientesService {
     await this.documentosVencidosService.crear({
       nombre_display: doc.nombre_display,
       categoria:      doc.categoria,
+      tipo_contenido: doc.tipo_contenido as 'archivo' | 'link' | undefined,
+      link_url:       doc.link_url,
       tipo_mime:      doc.tipo_mime,
       tamano_bytes:   doc.tamano_bytes,
       contenido:      doc.contenido,
+      s3_key:         doc.s3_key,
       origen_tipo:    'empresa',
       empresa_id:     clienteId,
       empresa_nombre: empresaNombre,
@@ -180,7 +184,7 @@ export class ClientesService {
       clienteId,
       doc.nombre_display as string,
       doc.categoria as string,
-      empresaNombre ?? 'empresa',
+      { empresa: cliente.razon_social ?? empresaNombre ?? 'Empresa' },
       notificacion,
     );
 
@@ -191,7 +195,7 @@ export class ClientesService {
     clienteId: string,
     nombreDoc: string,
     categoria: string,
-    contextoLabel: string,
+    jerarquia: ContextoJerarquico,
     notificacion?: NotificacionOpcionesDto,
   ): Promise<void> {
     if (!notificacion?.notificar) return;
@@ -239,7 +243,7 @@ export class ClientesService {
 
       await this.mailService.notificarDocumentoVencido({
         destinatarios,
-        documento: { nombre: nombreDoc, categoria, contexto: contextoLabel },
+        documento: { nombre: nombreDoc, categoria, jerarquia },
       });
     } catch (err: unknown) {
       this.logger.error('Error al notificar vencimiento de documento (empresa):', err);

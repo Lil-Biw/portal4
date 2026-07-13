@@ -9,7 +9,7 @@ export type EstadoProyecto =
 
 export interface Proyecto {
   _id: string;
-  centro_costo_id: string;
+  centro_costo_ids: string[];
   cliente_id: string;
   tipo_proyecto_id?: string | TipoProyecto;
   codigo: string;
@@ -18,13 +18,16 @@ export interface Proyecto {
   estado: EstadoProyecto;
   fecha_inicio?: string;
   fecha_fin?: string;
+  // Días de antelación a fecha_fin en que se avisa a los admins suscritos
+  // (subconjunto de [30, 15, 7, 3, 1, 0]; 0 = el día de término)
+  dias_recordatorio?: number[];
   creado_por?: string;
   creado_en?: string;
   actualizado_en?: string;
 }
 
 export interface CreateProyectoDto {
-  centro_costo_id: string;
+  centro_costo_ids: string[];
   cliente_id: string;
   tipo_proyecto_id?: string;
   codigo: string;
@@ -33,6 +36,7 @@ export interface CreateProyectoDto {
   estado?: EstadoProyecto;
   fecha_inicio?: string;
   fecha_fin?: string;
+  dias_recordatorio?: number[];
 }
 
 export type UpdateProyectoDto = Partial<CreateProyectoDto>;

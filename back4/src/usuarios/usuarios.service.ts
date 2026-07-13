@@ -14,6 +14,7 @@ import {
   CreateUsuarioDto,
   UpdateUsuarioDto,
   CambiarPasswordDto,
+  SuscripcionesDto,
 } from './usuarios.dto';
 import { MailService } from '../mail/mail.service';
 import { CentroCostoDocument } from '../centros-costos/centros-costos.schema';
@@ -234,6 +235,23 @@ export class UsuariosService {
     (usuario as any).debe_cambiar_password = false;
     await usuario.save();
     return { message: 'Contraseña actualizada correctamente' };
+  }
+
+  async actualizarSuscripciones(id: string, dto: SuscripcionesDto) {
+    const usuario = await this.usuarioModel
+      .findByIdAndUpdate(
+        id,
+        {
+          notificar_todas_empresas: dto.notificar_todas_empresas,
+          empresas_suscritas: (dto.empresas_suscritas ?? []).map((x) => this.toObjectId(x)),
+          centros_suscritos: (dto.centros_suscritos ?? []).map((x) => this.toObjectId(x)),
+          proyectos_suscritos: (dto.proyectos_suscritos ?? []).map((x) => this.toObjectId(x)),
+        },
+        { new: true, runValidators: true },
+      )
+      .lean();
+    if (!usuario) throw new NotFoundException(`Usuario ${id} no encontrado`);
+    return usuario;
   }
 
   async remove(id: string) {

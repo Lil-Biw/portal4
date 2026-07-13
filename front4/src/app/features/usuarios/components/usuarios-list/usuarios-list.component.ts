@@ -95,8 +95,18 @@ import { Usuario, RolUsuario } from '../../../../shared/models/usuario.model';
 export class UsuariosListComponent {
   @Input() usuarios: Usuario[] = [];
   @Input() seleccionadoId: string | null = null;
-  @Output() editado   = new EventEmitter<Usuario>();
-  @Output() eliminado = new EventEmitter<string>();
+  @Input() usuarioActualId: string | null = null;
+  @Output() editado        = new EventEmitter<Usuario>();
+  @Output() eliminado      = new EventEmitter<string>();
+  @Output() suscripciones  = new EventEmitter<Usuario>();
+
+  esAdmin(u: Usuario): boolean {
+    return u.rol === 'admin_smartclarity' || u.rol === 'super_admin';
+  }
+
+  esPropio(u: Usuario): boolean {
+    return u._id === this.usuarioActualId;
+  }
 
   initials(nombre: string): string {
     const parts = nombre.trim().split(/\s+/);

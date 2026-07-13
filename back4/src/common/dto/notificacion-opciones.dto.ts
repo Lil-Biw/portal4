@@ -1,4 +1,4 @@
-import { IsBoolean, IsEnum, IsArray, IsMongoId, IsOptional, ValidateIf, ArrayMinSize } from 'class-validator';
+import { IsBoolean, IsEnum, IsArray, IsMongoId, IsOptional, ValidateIf } from 'class-validator';
 
 export class NotificacionOpcionesDto {
   @IsBoolean()
@@ -11,7 +11,6 @@ export class NotificacionOpcionesDto {
 
   @IsArray()
   @IsMongoId({ each: true })
-  @ArrayMinSize(1)
   @ValidateIf(o => o.notificar === true && o.audiencia === 'especificos')
   @IsOptional()
   destinatarios_ids?: string[];

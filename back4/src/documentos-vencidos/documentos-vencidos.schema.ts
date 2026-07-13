@@ -7,7 +7,9 @@ export type DocumentoVencidoDocument = DocumentoVencido & Document;
 export class DocumentoVencido {
   @Prop({ required: true }) nombre_display: string;
   @Prop({ trim: true }) categoria?: string;
-  @Prop({ required: true }) tipo_mime: string;
+  @Prop({ enum: ['archivo', 'link'], default: 'archivo' }) tipo_contenido: string;
+  @Prop() link_url?: string;
+  @Prop() tipo_mime?: string;
   @Prop() tamano_bytes?: number;
   @Prop({ type: Buffer }) contenido?: Buffer;
   @Prop() s3_key?: string;

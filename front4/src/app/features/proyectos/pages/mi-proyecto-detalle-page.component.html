@@ -38,10 +38,10 @@
           <span class="dl-value">{{ empresa()!.razon_social }}</span>
         </div>
       }
-      @if (centro()) {
+      @if (centros().length > 0) {
         <div class="dl-row">
-          <span class="dl-label">Centro</span>
-          <span class="dl-value">{{ centro()!.nombre }}</span>
+          <span class="dl-label">{{ centros().length > 1 ? 'Centros' : 'Centro' }}</span>
+          <span class="dl-value">{{ centrosNombres() }}</span>
         </div>
       }
       @if (proyecto()!.descripcion) {

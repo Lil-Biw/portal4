@@ -17,6 +17,13 @@ export class ProyectosService {
   readonly seleccionado = signal<Proyecto | null>(null);
   readonly status = signal<Status | null>(null);
   readonly loading = signal(false);
+  readonly centrosSeleccionados = signal<string[]>([]);
+
+  toggleCentro(centroId: string, checked: boolean): void {
+    const set = new Set(this.centrosSeleccionados());
+    if (checked) set.add(centroId); else set.delete(centroId);
+    this.centrosSeleccionados.set(Array.from(set));
+  }
 
   // Admin: carga todos los proyectos (endpoint plano admin).
   // Sin `estado`, el backend excluye los cerrados por defecto; pasar un
@@ -70,8 +77,10 @@ export class ProyectosService {
   }
 
   crear(dto: CreateProyectoDto): void {
+    const centroId = dto.centro_costo_ids?.[0];
+    if (!centroId) { this.setError({ error: { message: 'Selecciona al menos un centro de costos' } }); return; }
     this.http.post<Proyecto>(
-      this.api.url(`/empresas/${dto.cliente_id}/centros/${dto.centro_costo_id}/proyectos`),
+      this.api.url(`/empresas/${dto.cliente_id}/centros/${centroId}/proyectos`),
       dto
     ).subscribe({
       next: () => { this.setStatus({ type: 'ok', text: 'Proyecto creado correctamente' }); this.cargar(); },
@@ -81,20 +90,20 @@ export class ProyectosService {
 
   actualizar(id: string, dto: UpdateProyectoDto): void {
     const empresaId = dto.cliente_id ?? this.seleccionado()?.cliente_id;
-    const centroId  = dto.centro_costo_id ?? this.seleccionado()?.centro_costo_id;
+    const centroId  = dto.centro_costo_ids?.[0] ?? this.seleccionado()?.centro_costo_ids?.[0];
     if (!empresaId || !centroId) { this.setError({ error: { message: 'Contexto de empresa/centro no disponible' } }); return; }
     this.http.put<Proyecto>(
       this.api.url(`/empresas/${empresaId}/centros/${centroId}/proyectos/${id}`),
       dto
     ).subscribe({
-      next: () => { this.setStatus({ type: 'ok', text: 'Proyecto actualizado' }); this.seleccionado.set(null); this.cargar(); },
+      next: () => { this.setStatus({ type: 'ok', text: 'Proyecto actualizado' }); this.seleccionado.set(null); this.centrosSeleccionados.set([]); this.cargar(); },
       error: (err) => this.setError(err),
     });
   }
 
   eliminar(id: string): void {
     const empresaId = this.seleccionado()?.cliente_id;
-    const centroId  = this.seleccionado()?.centro_costo_id;
+    const centroId  = this.seleccionado()?.centro_costo_ids?.[0];
     if (!empresaId || !centroId) { this.setError({ error: { message: 'Contexto de empresa/centro no disponible' } }); return; }
     this.http.delete(this.api.url(`/empresas/${empresaId}/centros/${centroId}/proyectos/${id}`)).subscribe({
       next: () => { this.setStatus({ type: 'ok', text: 'Proyecto eliminado' }); this.seleccionado.set(null); this.cargar(); },
@@ -102,7 +111,11 @@ export class ProyectosService {
     });
   }
 
-  seleccionar(proyecto: Proyecto): void { this.seleccionado.set(proyecto); this.clearStatus(); }
+  seleccionar(proyecto: Proyecto): void {
+    this.seleccionado.set(proyecto);
+    this.centrosSeleccionados.set([...(proyecto.centro_costo_ids ?? [])]);
+    this.clearStatus();
+  }
   clearStatus(): void {
     if (this.statusTimer) { clearTimeout(this.statusTimer); this.statusTimer = null; }
     this.status.set(null);

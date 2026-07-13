@@ -13,8 +13,10 @@ export class DocEliminado {
 
   @Prop({ required: true }) nombre_display: string;
   @Prop() categoria?: string;
-  @Prop({ required: true }) tipo_mime: string;
-  @Prop({ required: true }) tamano_bytes: number;
+  @Prop({ enum: ['archivo', 'link'], default: 'archivo' }) tipo_contenido: string;
+  @Prop() link_url?: string;
+  @Prop() tipo_mime?: string;
+  @Prop() tamano_bytes?: number;
   @Prop({ type: Buffer }) contenido?: Buffer;
   @Prop() s3_key?: string;
   @Prop() subido_en?: Date;

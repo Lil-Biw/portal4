@@ -92,6 +92,8 @@ export class CentrosListComponent implements OnChanges {
   @Output() agregarActivo = new EventEmitter<CentroCosto>();
   @Output() editarScore   = new EventEmitter<CentroCosto>();
 
+  protected readonly asId = asId;
+
   private _centros  = signal<CentroCosto[]>([]);
   private _clientes = signal<Cliente[]>([]);
 

@@ -9,10 +9,12 @@ import { UsuariosService } from '../../usuarios/usuarios.service';
 import { AuthService } from '../../auth/auth.service';
 
 import { StatusBannerComponent } from '../../../shared/components/status-banner/status-banner.component';
+import { UploadDocumentFormComponent } from '../../../shared/components/upload-document-form/upload-document-form.component';
 import { ActividadIconoComponent } from '../components/actividad-icono/actividad-icono.component';
 import { Actividad, TipoActividad } from '../../../shared/models/actividad.model';
 import { Activo, TipoActivo } from '../../../shared/models/activo.model';
-import { asId, toDateKey } from '../../../shared/utils';
+import { asId, toDateKey, usuarioEstaSuscrito, actividadEnDia, posicionActividadEnDia } from '../../../shared/utils';
+import { Usuario } from '../../../shared/models/usuario.model';
 import { createCalendarState, CalendarView, CALENDAR_DAYS, CALENDAR_MONTHS } from '../../../shared/calendar-state';
 import { COLORES_ACTIVIDAD, ColorActividad } from '../actividades-icons';
 
@@ -24,6 +26,7 @@ interface ActividadForm {
   centro_costo_id: string;
   activo_ids: string[];
   fecha: string;
+  fecha_termino: string;
 }
 
 interface TipoForm {
@@ -33,7 +36,7 @@ interface TipoForm {
 }
 
 function emptyForm(fecha = ''): ActividadForm {
-  return { nombre: '', descripcion: '', tipo_id: '', empresa_id: '', centro_costo_id: '', activo_ids: [], fecha };
+  return { nombre: '', descripcion: '', tipo_id: '', empresa_id: '', centro_costo_id: '', activo_ids: [], fecha, fecha_termino: '' };
 }
 function emptyTipoForm(): TipoForm {
   return { nombre: '', color: '#0095d6', descripcion: '' };
@@ -42,7 +45,7 @@ function emptyTipoForm(): TipoForm {
 @Component({
   selector: 'app-actividades-page',
   standalone: true,
-  imports: [FormsModule, StatusBannerComponent, ActividadIconoComponent],
+  imports: [FormsModule, StatusBannerComponent, ActividadIconoComponent, UploadDocumentFormComponent],
   templateUrl: './actividades-page.component.html',
   styleUrl: './actividades-page.component.css',
 })
@@ -97,6 +100,24 @@ export class ActividadesPageComponent implements OnInit {
   protected notifAdminsIds   = signal<string[]>([]);
   protected notifSuperAdmins = signal(false);
 
+  // Recordatorios: días de antelación a la fecha en que se avisa a los admins
+  // suscritos; se persisten en la actividad (por defecto todos marcados al crear)
+  protected readonly opcionesDiasRecordatorio = [
+    { valor: 30, label: '1 mes antes' },
+    { valor: 15, label: '15 días antes' },
+    { valor: 7,  label: '1 semana antes' },
+    { valor: 3,  label: '3 días antes' },
+    { valor: 1,  label: '1 día antes' },
+    { valor: 0,  label: 'El día de la actividad' },
+  ];
+  protected diasRecordatorio = signal<number[]>([30, 15, 7, 3, 1, 0]);
+
+  toggleDiaRecordatorio(valor: number): void {
+    this.diasRecordatorio.update(dias =>
+      dias.includes(valor) ? dias.filter(d => d !== valor) : [...dias, valor]
+    );
+  }
+
   protected notifTodosUsuariosSeleccionados = computed(() => {
     const u = this.usuariosParaCentro();
     return u.length > 0 && u.every(x => this.notifUsuariosIds().includes(x._id));
@@ -117,6 +138,17 @@ export class ActividadesPageComponent implements OnInit {
 
   protected superAdminsLista = computed(() =>
     this.usuariosService.usuarios().filter(u => u.rol === 'super_admin')
+  );
+
+  protected estaSuscritoAdmin(u: Usuario): boolean {
+    const f = this.form();
+    return usuarioEstaSuscrito(u, f.empresa_id, f.centro_costo_id);
+  }
+
+  // Admins ya suscritos al ámbito de la actividad: siempre reciben la
+  // notificación, no se pueden desmarcar.
+  protected adminsSuscritosIds = computed(() =>
+    this.adminsParaEmpresa().filter(u => this.estaSuscritoAdmin(u)).map(u => u._id)
   );
 
   protected resumenTipoNombre = computed(() =>
@@ -276,7 +308,11 @@ export class ActividadesPageComponent implements OnInit {
 
   actividadesEnDia(date: Date): Actividad[] {
     const key = toDateKey(date);
-    return this.actividadesFiltradas().filter(a => a.fecha.slice(0, 10) === key);
+    return this.actividadesFiltradas().filter(a => actividadEnDia(a, key));
+  }
+
+  posicionEnDia(a: Actividad, date: Date): 'unico' | 'inicio' | 'medio' | 'fin' {
+    return posicionActividadEnDia(a, toDateKey(date));
   }
 
   tipoDeActividad(a: Actividad): TipoActividad | null {
@@ -303,51 +339,89 @@ export class ActividadesPageComponent implements OnInit {
   protected form          = signal<ActividadForm>(emptyForm());
   protected confirmDelete = signal<string | null>(null);
 
-  protected docsPendientes: { file: File; nombre: string }[] = [];
+  protected docsPendientes: { file?: File; linkUrl?: string; nombre: string }[] = [];
   protected docNombreInput   = '';
   protected docFileSelected: File | null = null;
+  protected docLinkInput = '';
+  protected docModo = signal<'archivo' | 'link'>('archivo');
   protected subiendoDocs = false;
 
   protected pendienteFileSelected: File | null = null;
   protected pendienteNombreInput = '';
-  protected pendienteInputVisible = signal(true);
+  protected pendienteLinkInput = '';
+  protected pendienteModo = signal<'archivo' | 'link'>('archivo');
 
-  onPendienteFileSelected(ev: Event): void {
-    const file = (ev.target as HTMLInputElement).files?.[0] ?? null;
+  setPendienteModo(modo: 'archivo' | 'link'): void {
+    if (this.pendienteModo() === modo) return;
+    this.pendienteModo.set(modo);
+    this.pendienteFileSelected = null;
+    this.pendienteLinkInput = '';
+    this.pendienteNombreInput = '';
+  }
+
+  setDocModo(modo: 'archivo' | 'link'): void {
+    if (this.docModo() === modo) return;
+    this.docModo.set(modo);
+    this.docFileSelected = null;
+    this.docLinkInput = '';
+    this.docNombreInput = '';
+  }
+
+  pendienteLinkInvalido(): boolean {
+    const link = this.pendienteLinkInput.trim();
+    if (!link) return false;
+    return !/^https?:\/\/.+/i.test(link);
+  }
+
+  docLinkInvalido(): boolean {
+    const link = this.docLinkInput.trim();
+    if (!link) return false;
+    return !/^https?:\/\/.+/i.test(link);
+  }
+
+  onPendienteArchivoChange(file: File | null): void {
     this.pendienteFileSelected = file;
     if (file && !this.pendienteNombreInput)
       this.pendienteNombreInput = file.name.replace(/\.[^/.]+$/, '');
   }
 
   agregarDocPendiente(): void {
-    if (!this.pendienteFileSelected) return;
-    this.docsPendientes.push({ file: this.pendienteFileSelected, nombre: this.pendienteNombreInput || this.pendienteFileSelected.name });
+    if (this.pendienteModo() === 'link') {
+      const link = this.pendienteLinkInput.trim();
+      if (!link || this.pendienteLinkInvalido()) return;
+      this.docsPendientes.push({ linkUrl: link, nombre: this.pendienteNombreInput || link });
+    } else {
+      if (!this.pendienteFileSelected) return;
+      this.docsPendientes.push({ file: this.pendienteFileSelected, nombre: this.pendienteNombreInput || this.pendienteFileSelected.name });
+    }
     this.pendienteFileSelected = null;
     this.pendienteNombreInput = '';
-    this.pendienteInputVisible.set(false);
-    setTimeout(() => this.pendienteInputVisible.set(true), 0);
+    this.pendienteLinkInput = '';
   }
 
   quitarDocPendiente(index: number): void {
     this.docsPendientes.splice(index, 1);
   }
 
-  protected docInputVisible = signal(true);
-
-  onDocFileSelected(ev: Event): void {
-    const file = (ev.target as HTMLInputElement).files?.[0] ?? null;
+  onDocArchivoChange(file: File | null): void {
     this.docFileSelected = file;
     if (file && !this.docNombreInput) this.docNombreInput = file.name.replace(/\.[^/.]+$/, '');
   }
 
   subirDocActividad(): void {
     const id = this.editingId();
-    if (!id || !this.docFileSelected) return;
-    this.service.subirDocumento(id, this.docFileSelected, this.docNombreInput || undefined);
+    if (!id) return;
+    if (this.docModo() === 'link') {
+      const link = this.docLinkInput.trim();
+      if (!link || this.docLinkInvalido()) return;
+      this.service.subirDocumentoLink(id, link, this.docNombreInput || undefined);
+    } else {
+      if (!this.docFileSelected) return;
+      this.service.subirDocumento(id, this.docFileSelected, this.docNombreInput || undefined);
+    }
     this.docFileSelected = null;
     this.docNombreInput = '';
-    this.docInputVisible.set(false);
-    setTimeout(() => this.docInputVisible.set(true), 0);
+    this.docLinkInput = '';
   }
 
   eliminarDocActividad(docId: string): void {
@@ -362,6 +436,10 @@ export class ActividadesPageComponent implements OnInit {
     this.service.descargarDocumento(id, docId, nombreDisplay);
   }
 
+  abrirDocActividad(linkUrl: string): void {
+    window.open(linkUrl, '_blank');
+  }
+
   get actividadEditando() {
     const id = this.editingId();
     return id ? this.service.actividades().find(a => a._id === id) ?? null : null;
@@ -374,11 +452,14 @@ export class ActividadesPageComponent implements OnInit {
       this.cerrarModal();
       return;
     }
-    const { file, nombre } = this.docsPendientes[index];
-    this.service.subirDocumento(actividadId, file, nombre,
-      () => { this.subirDocsPendientesSecuencial(actividadId, index + 1); },
-      () => { this.subiendoDocs = false; },
-    );
+    const { file, linkUrl, nombre } = this.docsPendientes[index];
+    const onSuccess = () => { this.subirDocsPendientesSecuencial(actividadId, index + 1); };
+    const onError = () => { this.subiendoDocs = false; };
+    if (linkUrl) {
+      this.service.subirDocumentoLink(actividadId, linkUrl, nombre, onSuccess, onError);
+    } else if (file) {
+      this.service.subirDocumento(actividadId, file, nombre, onSuccess, onError);
+    }
   }
 
   toggleNotifNotificar(): void { this.notifNotificar.update(v => !v); }
@@ -391,7 +472,7 @@ export class ActividadesPageComponent implements OnInit {
   }
   toggleSeleccionarTodosAdmins(): void {
     if (this.notifTodosAdminsSeleccionados()) {
-      this.notifAdminsIds.set([]);
+      this.notifAdminsIds.set(this.adminsSuscritosIds());
     } else {
       this.notifAdminsIds.set(this.adminsParaEmpresa().map(u => u._id));
     }
@@ -402,6 +483,7 @@ export class ActividadesPageComponent implements OnInit {
     );
   }
   toggleNotifAdmin(id: string): void {
+    if (this.adminsSuscritosIds().includes(id)) return;
     this.notifAdminsIds.update(ids =>
       ids.includes(id) ? ids.filter(x => x !== id) : [...ids, id]
     );
@@ -413,6 +495,7 @@ export class ActividadesPageComponent implements OnInit {
     this.notifUsuariosIds.set(this.usuariosParaCentro().map(u => u._id));
     this.notifAdminsIds.set(this.adminsParaEmpresa().map(u => u._id));
     this.notifSuperAdmins.set(false);
+    this.diasRecordatorio.set([30, 15, 7, 3, 1, 0]);
   }
 
   private validarPaso1(): boolean {
@@ -420,6 +503,10 @@ export class ActividadesPageComponent implements OnInit {
     if (!f.nombre.trim())   { this.errorPaso1.set('El nombre es requerido.');         return false; }
     if (!f.tipo_id)         { this.errorPaso1.set('Selecciona un tipo.');             return false; }
     if (!f.fecha)           { this.errorPaso1.set('La fecha es requerida.');          return false; }
+    if (f.fecha_termino && f.fecha_termino < f.fecha) {
+      this.errorPaso1.set('La fecha de término no puede ser anterior a la fecha de inicio.');
+      return false;
+    }
     if (!f.centro_costo_id) { this.errorPaso1.set('Selecciona un centro de costos.'); return false; }
     this.errorPaso1.set('');
     return true;
@@ -473,8 +560,10 @@ export class ActividadesPageComponent implements OnInit {
       centro_costo_id: centroId,
       activo_ids:      (a.activo_ids ?? []).map(x => asId(typeof x === 'object' ? (x as { _id: string })._id : x)),
       fecha:           a.fecha.slice(0, 10),
+      fecha_termino:   a.fecha_termino ? a.fecha_termino.slice(0, 10) : '',
     });
     this.resetNotif();
+    this.diasRecordatorio.set([...(a.dias_recordatorio ?? [])]);
     this.paso.set(1);
     this.pasoMaxAlcanzado.set(4);
     this.errorPaso1.set('');
@@ -502,6 +591,7 @@ export class ActividadesPageComponent implements OnInit {
       this.form.update(f => ({ ...f, centro_costo_id: value as string, activo_ids: [] }));
       this.filtroActivo.set('');
       this.notifUsuariosIds.set(this.usuariosParaCentro().map(u => u._id));
+      this.notifAdminsIds.update(ids => [...new Set([...ids, ...this.adminsSuscritosIds()])]);
     } else if (field === 'empresa_id') {
       this.form.update(f => ({ ...f, empresa_id: value as string }));
       this.notifAdminsIds.set(this.adminsParaEmpresa().map(u => u._id));
@@ -537,6 +627,7 @@ export class ActividadesPageComponent implements OnInit {
         : destinatariosAct.length > 0
           ? { notificar: true, audiencia: 'especificos' as const, destinatarios_ids: destinatariosAct, notificar_super_admins: superAdmins }
           : { notificar: false };
+    const id = this.editingId();
     const dto = {
       nombre:          f.nombre.trim(),
       descripcion:     f.descripcion.trim() || undefined,
@@ -544,9 +635,14 @@ export class ActividadesPageComponent implements OnInit {
       centro_costo_id: f.centro_costo_id,
       activo_ids:      f.activo_ids.length > 0 ? f.activo_ids : undefined,
       fecha:           f.fecha,
+      fecha_termino:   f.fecha_termino || null,
+      dias_recordatorio: this.diasRecordatorio(),
+      // Los docs pendientes se suben tras crear; se mandan los nombres para el correo
+      documentos_nombres: !id && this.docsPendientes.length > 0
+        ? this.docsPendientes.map(d => d.nombre)
+        : undefined,
       notificacion,
     };
-    const id = this.editingId();
     if (id) {
       this.service.actualizar(id, dto, () => this.cerrarModal());
     } else {

@@ -23,7 +23,8 @@ export class ProyectosController {
     @Param('centroId') centroId: string,
     @Body() dto: CreateProyectoDto,
   ) {
-    return this.proyectosService.create({ ...dto, cliente_id: empresaId, centro_costo_id: centroId });
+    const centro_costo_ids = dto.centro_costo_ids?.length ? dto.centro_costo_ids : [centroId];
+    return this.proyectosService.create({ ...dto, cliente_id: empresaId, centro_costo_ids });
   }
 
   @Get()
@@ -60,12 +61,13 @@ export class ProyectosController {
     @UploadedFile() archivo: Express.Multer.File & { buffer: Buffer },
     @Body('nombre_display') nombreDisplay?: string,
     @Body('categoria') categoria?: string,
+    @Body('link_url') linkUrl?: string,
     @Req() req?: Request,
   ) {
-    if (!archivo) throw new BadRequestException('No se proporcionó archivo');
+    if (!archivo && !linkUrl) throw new BadRequestException('Debes adjuntar un archivo o un link');
     const rolUploader = (req as any)?.user?.rol as string | undefined;
     const usuarioId  = (req as any)?.user?.sub as string | undefined;
-    return this.proyectosService.agregarDocumento(proyectoId, archivo, nombreDisplay, categoria, usuarioId, rolUploader);
+    return this.proyectosService.agregarDocumento(proyectoId, { archivo, linkUrl }, nombreDisplay, categoria, usuarioId, rolUploader);
   }
 
   @Get(':proyectoId/documentos')

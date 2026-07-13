@@ -42,7 +42,7 @@
             </div>
 
             <!-- Score documental -->
-            @let score = scoresPorCentro.has(c._id) ? scoresPorCentro.get(c._id)! : null;
+            @let score = scoresPorCentro.has(asId(c._id)) ? scoresPorCentro.get(asId(c._id))! : null;
             <div class="score-block">
               <span class="score-label">Doc.</span>
               @if (score !== null) {

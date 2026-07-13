@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { DocumentoVencido, DocumentoVencidoDocument } from './documentos-vencidos.schema';
@@ -49,6 +49,7 @@ export class DocumentosVencidosService {
     if (empresaIdPermitida && String(doc.empresa_id) !== empresaIdPermitida) {
       throw new NotFoundException('Documento vencido no encontrado');
     }
+    if (doc.tipo_contenido === 'link') throw new BadRequestException('Este documento es un link externo, no un archivo');
     if (doc.s3_key) {
       const buffer = await this.s3Service.descargar(doc.s3_key);
       return { buffer, tipo_mime: doc.tipo_mime, nombre_display: doc.nombre_display };

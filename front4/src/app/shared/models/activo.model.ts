@@ -2,8 +2,10 @@ export interface DocActivo {
   _id: string;
   nombre: string;
   nombre_display: string;
-  tamano_bytes: number;
-  tipo_mime: string;
+  tamano_bytes?: number;
+  tipo_mime?: string;
+  tipo_contenido?: 'archivo' | 'link';
+  link_url?: string;
 }
 
 export interface TipoActivo {
@@ -49,8 +51,10 @@ export interface DocActividad {
   _id: string;
   nombre: string;
   nombre_display: string;
-  tamano_bytes: number;
-  tipo_mime: string;
+  tamano_bytes?: number;
+  tipo_mime?: string;
+  tipo_contenido?: 'archivo' | 'link';
+  link_url?: string;
 }
 
 export interface ActividadHistorialItem {

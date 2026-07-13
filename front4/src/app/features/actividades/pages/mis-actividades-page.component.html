@@ -60,7 +60,11 @@
           <span class="cal-day-num">{{ cell.date.getDate() }}</span>
           <div class="cal-events">
             @for (a of actividadesEnDia(cell.date); track a._id) {
-              <div class="cal-event-chip" [style.background]="colorDeActividad(a)" [title]="a.nombre"
+              <div class="cal-event-chip"
+                   [class.cal-event-chip--inicio]="posicionEnDia(a, cell.date) === 'inicio'"
+                   [class.cal-event-chip--medio]="posicionEnDia(a, cell.date) === 'medio'"
+                   [class.cal-event-chip--fin]="posicionEnDia(a, cell.date) === 'fin'"
+                   [style.background]="colorDeActividad(a)" [title]="a.nombre"
                    style="cursor:pointer" (click)="abrirDetalle(a)">
                 {{ a.nombre }}
               </div>
@@ -84,7 +88,11 @@
           </div>
           <div class="cal-week-events">
             @for (a of actividadesEnDia(day); track a._id) {
-              <div class="cal-event-chip" [style.background]="colorDeActividad(a)" [title]="a.nombre"
+              <div class="cal-event-chip"
+                   [class.cal-event-chip--inicio]="posicionEnDia(a, day) === 'inicio'"
+                   [class.cal-event-chip--medio]="posicionEnDia(a, day) === 'medio'"
+                   [class.cal-event-chip--fin]="posicionEnDia(a, day) === 'fin'"
+                   [style.background]="colorDeActividad(a)" [title]="a.nombre"
                    style="cursor:pointer" (click)="abrirDetalle(a)">
                 {{ a.nombre }}
               </div>
@@ -140,7 +148,9 @@
               </div>
               <div class="cal-day-field">
                 <span class="cal-day-field-label">Fecha</span>
-                <span class="cal-day-field-value">{{ det.fecha.slice(0,10) }}</span>
+                <span class="cal-day-field-value">
+                  {{ det.fecha.slice(0,10) }}{{ det.fecha_termino ? ' – ' + det.fecha_termino.slice(0,10) : '' }}
+                </span>
               </div>
               <div class="cal-day-field">
                 <span class="cal-day-field-label">Centro de costos</span>
@@ -176,11 +186,27 @@
                   @for (doc of service.documentosActividad(); track doc._id) {
                     <div style="display:flex;align-items:center;justify-content:space-between;gap:.5rem;width:100%;padding:.3rem 0;border-bottom:1px solid #f3f4f6">
                       <span style="font-size:.82rem;color:#374151;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;flex:1">{{ doc.nombre_display }}</span>
-                      <button
-                        style="background:none;border:1px solid #e5e7eb;border-radius:6px;padding:.2rem .55rem;font-size:.76rem;cursor:pointer;color:#0095d6;font-weight:600;flex-shrink:0"
-                        (click)="descargarDocActividad(det._id, doc.nombre, doc.nombre_display)">
-                        Descargar
-                      </button>
+                      @if (doc.tipo_contenido === 'link') {
+                        <button
+                          style="background:none;border:1px solid #e5e7eb;border-radius:6px;padding:.2rem .55rem;font-size:.76rem;cursor:pointer;color:#0095d6;font-weight:600;flex-shrink:0;display:inline-flex;align-items:center;gap:.3rem"
+                          (click)="abrirDocActividad(doc.link_url!)">
+                          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+                            <path d="M15 3h6v6"/><path d="M10 14 21 3"/>
+                          </svg>
+                          Ir a link
+                        </button>
+                      } @else {
+                        <button
+                          style="background:none;border:1px solid #e5e7eb;border-radius:6px;padding:.2rem .55rem;font-size:.76rem;cursor:pointer;color:#0095d6;font-weight:600;flex-shrink:0;display:inline-flex;align-items:center;gap:.3rem"
+                          (click)="descargarDocActividad(det._id, doc._id, doc.nombre_display)">
+                          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                            <polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+                          </svg>
+                          Descargar
+                        </button>
+                      }
                     </div>
                   }
                 }
@@ -231,7 +257,9 @@
       <div class="actividad-detalle-grid">
         <div class="actividad-detalle-box-field">
           <p class="actividad-detalle-field-label">Fecha</p>
-          <p class="actividad-detalle-field-value">{{ actividadDetalle()!.fecha | slice:0:10 }}</p>
+          <p class="actividad-detalle-field-value">
+            {{ actividadDetalle()!.fecha | slice:0:10 }}{{ actividadDetalle()!.fecha_termino ? ' – ' + (actividadDetalle()!.fecha_termino | slice:0:10) : '' }}
+          </p>
         </div>
         <div class="actividad-detalle-box-field">
           <p class="actividad-detalle-field-label">Tipo</p>
@@ -266,11 +294,27 @@
           @for (doc of service.documentosActividad(); track doc._id) {
             <div class="actividad-detalle-doc-row">
               <span class="actividad-detalle-doc-nombre">{{ doc.nombre_display }}</span>
-              <button
-                class="actividad-detalle-doc-btn"
-                (click)="descargarDocActividad(actividadDetalle()!._id, doc.nombre, doc.nombre_display)">
-                Descargar
-              </button>
+              @if (doc.tipo_contenido === 'link') {
+                <button
+                  class="actividad-detalle-doc-btn"
+                  (click)="abrirDocActividad(doc.link_url!)">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+                    <path d="M15 3h6v6"/><path d="M10 14 21 3"/>
+                  </svg>
+                  Ir a link
+                </button>
+              } @else {
+                <button
+                  class="actividad-detalle-doc-btn"
+                  (click)="descargarDocActividad(actividadDetalle()!._id, doc._id, doc.nombre_display)">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                    <polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+                  </svg>
+                  Descargar
+                </button>
+              }
             </div>
           }
         </div>

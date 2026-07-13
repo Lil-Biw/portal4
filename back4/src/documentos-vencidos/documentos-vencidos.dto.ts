@@ -4,7 +4,9 @@ import { Type } from 'class-transformer';
 export class CreateDocVencidoDto {
   @IsString() nombre_display: string;
   @IsString() @IsOptional() categoria?: string;
-  @IsString() tipo_mime: string;
+  @IsEnum(['archivo', 'link']) @IsOptional() tipo_contenido?: 'archivo' | 'link';
+  @IsString() @IsOptional() link_url?: string;
+  @IsString() @IsOptional() tipo_mime?: string;
   @IsNumber() @IsOptional() tamano_bytes?: number;
   @IsOptional() contenido?: Buffer;
   @IsString() @IsOptional() s3_key?: string;

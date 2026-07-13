@@ -6,7 +6,7 @@ import { CentrosService } from '../../centros/centros.service';
 import { ConsumidorContextService } from '../../../profile/consumidor-context.service';
 import { ActivosListComponent } from '../components/activos-list/activos-list.component';
 import { ActivoRevisarModalComponent } from '../components/activo-revisar-modal/activo-revisar-modal.component';
-import { Activo } from '../../../shared/models/activo.model';
+import { Activo, ActividadHistorialItem } from '../../../shared/models/activo.model';
 import { asId } from '../../../shared/utils';
 
 @Component({
@@ -50,9 +50,13 @@ import { asId } from '../../../shared/utils';
             [activo]="activoRevisando()"
             [historial]="service.historialActivo()"
             [loadingHistorial]="service.loadingHistorial()"
+            [documentosActivo]="service.documentosActivo()"
+            [documentosActividad]="service.documentosActividad()"
+            [loadingDocumentosActividad]="service.loadingDocumentosActividad()"
             (cerrar)="cerrarRevisar()"
             (descargarActivoDoc)="onDescargarActivoDoc($event)"
-            (descargarActividadDoc)="onDescargarActividadDoc($event)">
+            (descargarActividadDoc)="onDescargarActividadDoc($event)"
+            (actividadAbierta)="onActividadAbierta($event)">
           </app-activo-revisar-modal>
         </div>
       </div>
@@ -141,11 +145,19 @@ export class MisActivosPageComponent implements OnInit {
   protected abrirRevisar(activo: Activo): void {
     this.activoRevisando.set(activo);
     this.service.cargarHistorial(activo._id, activo.centro_costo_id);
+    this.service.listarDocumentos(activo._id, activo.centro_costo_id);
   }
 
   protected cerrarRevisar(): void {
     this.activoRevisando.set(null);
     this.service.resetHistorial();
+    this.service.resetDocumentos();
+  }
+
+  protected onActividadAbierta(item: ActividadHistorialItem): void {
+    const activo = this.activoRevisando();
+    if (!activo) return;
+    this.service.listarDocumentosActividad(item._id, activo.centro_costo_id);
   }
 
   protected onDescargarActivoDoc(ev: { docId: string; nombreDisplay?: string }): void {

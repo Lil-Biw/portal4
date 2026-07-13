@@ -13,6 +13,17 @@ export interface Usuario {
   ultimo_acceso?: string;
   creado_en?: string;
   actualizado_en?: string;
+  notificar_todas_empresas?: boolean;
+  empresas_suscritas?: string[];
+  centros_suscritos?: string[];
+  proyectos_suscritos?: string[];
+}
+
+export interface SuscripcionesDto {
+  notificar_todas_empresas: boolean;
+  empresas_suscritas: string[];
+  centros_suscritos: string[];
+  proyectos_suscritos: string[];
 }
 
 export interface CreateUsuarioDto {

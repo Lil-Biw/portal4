@@ -4,7 +4,7 @@ import { Model, Types } from 'mongoose';
 import { Activo, ActivoDocument } from './activos.schema';
 import { CreateActivoDto, UpdateActivoDto } from './activos.dto';
 import { CentroCostoDocument } from '../centros-costos/centros-costos.schema';
-import { DocumentosHelper, ArchivoInput } from '../common/helpers/documentos.helper';
+import { DocumentosHelper, DocumentoInput } from '../common/helpers/documentos.helper';
 import { S3Service } from '../common/s3/s3.service';
 
 @Injectable()
@@ -100,8 +100,8 @@ export class ActivosService {
     return this.docsHelper.listar(activoId);
   }
 
-  subirDocumento(activoId: string, archivo: ArchivoInput, nombreDisplay?: string) {
-    return this.docsHelper.agregar(activoId, archivo, nombreDisplay);
+  subirDocumento(activoId: string, input: DocumentoInput, nombreDisplay?: string) {
+    return this.docsHelper.agregar(activoId, input, nombreDisplay);
   }
 
   servirDocumento(activoId: string, docId: string) {

@@ -15,7 +15,7 @@ import { ApiService } from '../../../core/services/api.service';
 import { Solicitud } from '../../solicitudes/solicitudes.service';
 import { Actividad, TipoActividad } from '../../../shared/models/actividad.model';
 import { Noticia, SECCIONES } from '../../../shared/models/noticia.model';
-import { asId } from '../../../shared/utils';
+import { asId, porcentajeColorFn, calcularScoreDocumental } from '../../../shared/utils';
 
 export interface AtencionItem {
   id: string;
@@ -194,6 +194,7 @@ export class ResumenPageComponent implements OnInit {
   private  readonly api                 = inject(ApiService);
 
   protected todasSolicitudes = signal<Solicitud[]>([]);
+  protected docsPorEmpresa   = signal<Map<string, number>>(new Map());
   protected loadingDocs      = signal(false);
 
   // ── Saludo ──────────────────────────────────────────────────────────────
@@ -311,23 +312,25 @@ export class ResumenPageComponent implements OnInit {
   // ── Score SmartClarity ──────────────────────────────────────────────────
   protected readonly scoreEmpresas = computed((): ScoreEmpresa[] => {
     const sols = this.todasSolicitudes();
+    const docs = this.docsPorEmpresa();
     return this.clientesService.clientes()
       .map(emp => {
-        const empSols   = sols.filter(s => asId(s.empresa_id) === asId(emp._id));
-        const aprobados = empSols.filter(s => s.estado === 'aprobado').length;
+        const id          = asId(emp._id);
+        const empSols     = sols.filter(s => asId(s.empresa_id) === id);
+        const docsActivos = docs.get(id) ?? 0;
+        const total       = empSols.length + docsActivos;
         return {
           nombre: emp.razon_social,
-          score:  empSols.length > 0 ? Math.round(aprobados / empSols.length * 100) : 0,
-          total:  empSols.length,
+          score:  total > 0 ? calcularScoreDocumental(empSols, docsActivos).pct : 0,
+          total,
         };
       })
+      .filter(e => e.total > 0)
       .sort((a, b) => b.score - a.score);
   });
 
   protected scoreColor(score: number): string {
-    if (score >= 75) return '#16a34a';
-    if (score >= 50) return '#0095d6';
-    return '#f59e0b';
+    return porcentajeColorFn(score);
   }
 
   // ── Últimas noticias ────────────────────────────────────────────────────
@@ -374,7 +377,10 @@ export class ResumenPageComponent implements OnInit {
     effect(() => {
       const clientes = this.clientesService.clientes();
       if (clientes.length > 0) {
-        untracked(() => this.cargarSolicitudesGlobal(clientes.map(c => asId(c._id))));
+        untracked(() => {
+          this.cargarSolicitudesGlobal(clientes.map(c => asId(c._id)));
+          this.cargarDocsPorEmpresa(clientes.map(c => asId(c._id)));
+        });
       }
     });
   }
@@ -398,6 +404,18 @@ export class ResumenPageComponent implements OnInit {
     forkJoin(reqs).subscribe(resultados => {
       this.todasSolicitudes.set(resultados.flat());
       this.loadingDocs.set(false);
+    });
+  }
+
+  private cargarDocsPorEmpresa(clienteIds: string[]): void {
+    const reqs = clienteIds.map(id =>
+      this.http.get<unknown[]>(this.api.url(`/empresas/${id}/documentos`))
+        .pipe(catchError(() => of([] as unknown[])))
+    );
+    forkJoin(reqs).subscribe(resultados => {
+      const map = new Map<string, number>();
+      clienteIds.forEach((id, i) => map.set(id, resultados[i].length));
+      this.docsPorEmpresa.set(map);
     });
   }
 }

@@ -170,6 +170,13 @@ export class ProyectosListComponent {
     return this.centros.find(c => asId(c._id) === id)?.nombre ?? '';
   }
 
+  centrosNombres(p: Proyecto): string {
+    return (p.centro_costo_ids ?? [])
+      .map(id => this.centroPorId(asId(id)))
+      .filter(Boolean)
+      .join(', ');
+  }
+
   tipoDeProyecto(p: Proyecto): TipoProyecto | null {
     if (!p.tipo_proyecto_id) return null;
     if (typeof p.tipo_proyecto_id === 'object') return p.tipo_proyecto_id as TipoProyecto;

@@ -142,6 +142,29 @@ export class ActividadesService {
     });
   }
 
+  subirDocumentoLink(id: string, linkUrl: string, nombreDisplay?: string, onSuccess?: () => void, onError?: () => void): void {
+    if (this.saving()) return;
+    const centroId = this.actividades().find(a => a._id === id)?.centro_costo_id;
+    const empresaId = centroId ? this.getEmpresaId(centroId) : undefined;
+    if (!empresaId || !centroId) { this.setError({ error: { message: 'Centro no encontrado' } }); return; }
+    this.saving.set(true);
+    const form = new FormData();
+    form.append('link_url', linkUrl);
+    if (nombreDisplay) form.append('nombre_display', nombreDisplay);
+    this.http.post(
+      this.api.url(`/empresas/${empresaId}/centros/${centroId}/actividades/${id}/documentos`),
+      form
+    ).subscribe({
+      next: () => {
+        this.saving.set(false);
+        this.status.set({ type: 'ok', text: 'Documento adjuntado correctamente' });
+        this.listarDocumentos(id);
+        onSuccess?.();
+      },
+      error: err => { this.setError(err); onError?.(); },
+    });
+  }
+
   eliminarDocumento(actividadId: string, docId: string): void {
     const centroId = this.actividades().find(a => a._id === actividadId)?.centro_costo_id;
     const empresaId = centroId ? this.getEmpresaId(centroId) : undefined;

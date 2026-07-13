@@ -34,7 +34,7 @@
               </span>
             </div>
 
-            <p class="proyecto-meta">Cód. {{ p.codigo }} · {{ centroPorId(p.centro_costo_id) }}</p>
+            <p class="proyecto-meta">Cód. {{ p.codigo }} · {{ centrosNombres(p) }}</p>
 
             <div class="proyecto-footer">
               @if (p.fecha_inicio) {

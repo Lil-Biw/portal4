@@ -34,6 +34,8 @@ export interface DocumentoItem {
   tamano_bytes?: number;
   subido_en?: string;
   categoria?: string;
+  tipo_contenido?: 'archivo' | 'link';
+  link_url?: string;
 }
 
 export type DocTipo = 'empresa' | 'centro' | 'proyecto';
@@ -51,6 +53,8 @@ export interface DocumentoVencidoItem {
   centro_nombre?: string;
   proyecto_nombre?: string;
   url: string;
+  tipo_contenido?: 'archivo' | 'link';
+  link_url?: string;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -63,7 +67,7 @@ export class DocumentosService {
   readonly documentosCentro      = signal<DocumentoItem[]>([]);
   readonly documentosProyecto    = signal<DocumentoItem[]>([]);
   readonly documentosPorCentro   = signal<{ nombre: string; centroId: string; docs: DocumentoItem[] }[]>([]);
-  readonly documentosPorProyecto = signal<{ nombre: string; proyectoId: string; centroNombre: string; docs: DocumentoItem[] }[]>([]);
+  readonly documentosPorProyecto = signal<{ nombre: string; proyectoId: string; centroNombres: string; docs: DocumentoItem[] }[]>([]);
   readonly uploadStatus = signal<Record<DocTipo, Status | null>>({
     empresa: null, centro: null, proyecto: null,
   });
@@ -126,29 +130,36 @@ export class DocumentosService {
   // Carga docs de todos los proyectos de una empresa (para vista "todos")
   cargarTodosProyectos(
     empresaId: string,
-    proyectos: { _id: string; nombre: string; centro_costo_id: string }[],
+    proyectos: { _id: string; nombre: string; centro_costo_ids?: string[] }[],
     centros: { _id: string; nombre: string }[]
   ): void {
     this.documentosPorProyecto.set([]);
     if (!proyectos.length) return;
-    const calls = proyectos.map(p =>
-      this.http.get<DocumentoItem[]>(
-        this.api.url(`/empresas/${empresaId}/centros/${asId(p.centro_costo_id)}/proyectos/${asId(p._id)}/documentos`)
-      ).pipe(catchError(() => of([] as DocumentoItem[])))
-    );
+    const calls = proyectos.map(p => {
+      const centroId = p.centro_costo_ids?.[0];
+      if (!centroId) return of([] as DocumentoItem[]);
+      return this.http.get<DocumentoItem[]>(
+        this.api.url(`/empresas/${empresaId}/centros/${asId(centroId)}/proyectos/${asId(p._id)}/documentos`)
+      ).pipe(catchError(() => of([] as DocumentoItem[])));
+    });
     forkJoin(calls).subscribe({
       next: results => {
         const centroMap = new Map(centros.map(c => [asId(c._id), c.nombre]));
         this.documentosPorProyecto.set(
           proyectos
-            .map((p, i) => ({
-              nombre:       p.nombre,
-              proyectoId:   asId(p._id),
-              centroNombre: centroMap.get(asId(p.centro_costo_id)) ?? '',
-              docs: results[i].map(d =>
-                this.addUrl(d, `/empresas/${empresaId}/centros/${asId(p.centro_costo_id)}/proyectos/${asId(p._id)}/documentos/${d._id}`)
-              ),
-            }))
+            .map((p, i) => {
+              const centroId = p.centro_costo_ids?.[0];
+              return {
+                nombre:        p.nombre,
+                proyectoId:    asId(p._id),
+                centroNombres: (p.centro_costo_ids ?? []).map(id => centroMap.get(asId(id))).filter(Boolean).join(', '),
+                docs: centroId
+                  ? results[i].map(d =>
+                      this.addUrl(d, `/empresas/${empresaId}/centros/${asId(centroId)}/proyectos/${asId(p._id)}/documentos/${d._id}`)
+                    )
+                  : [],
+              };
+            })
             .filter(x => x.docs.length > 0)
         );
       },
@@ -166,6 +177,20 @@ export class DocumentosService {
     } else if (tipo === 'proyecto' && empresaId && centroId && proyectoId) {
       this.cargarProyecto(empresaId, centroId, proyectoId);
     }
+  }
+
+  private documentosUrl(tipo: DocTipo, empresaId?: string, centroId?: string, proyectoId?: string): string | null {
+    if (!empresaId) return null;
+    if (tipo === 'empresa') return this.api.url(`/empresas/${empresaId}/documentos`);
+    if (tipo === 'proyecto' && centroId && proyectoId) return this.api.url(`/empresas/${empresaId}/centros/${centroId}/proyectos/${proyectoId}/documentos`);
+    if (tipo === 'centro' && centroId) return this.api.url(`/empresas/${empresaId}/centros/${centroId}/documentos`);
+    return null;
+  }
+
+  private recargarTras(tipo: DocTipo, empresaId: string, centroId?: string, proyectoId?: string): void {
+    if (tipo === 'empresa') this.cargarEmpresa(empresaId);
+    else if (tipo === 'centro' && centroId) this.cargarCentro(empresaId, centroId);
+    else if (tipo === 'proyecto' && centroId && proyectoId) this.cargarProyecto(empresaId, centroId, proyectoId);
   }
 
   subir(
@@ -186,25 +211,39 @@ export class DocumentosService {
     if (nombreDisplay) form.append('nombre_display', nombreDisplay);
     if (categoria) form.append('categoria', categoria);
 
-    let url: string;
-    if (tipo === 'empresa') {
-      url = this.api.url(`/empresas/${empresaId}/documentos`);
-    } else if (tipo === 'proyecto' && centroId && proyectoId) {
-      url = this.api.url(`/empresas/${empresaId}/centros/${centroId}/proyectos/${proyectoId}/documentos`);
-    } else if (tipo === 'centro' && centroId) {
-      url = this.api.url(`/empresas/${empresaId}/centros/${centroId}/documentos`);
-    } else {
-      return throwError(() => new Error('Contexto insuficiente para subir documento'));
-    }
+    const url = this.documentosUrl(tipo, empresaId, centroId, proyectoId);
+    if (!url) return throwError(() => new Error('Contexto insuficiente para subir documento'));
 
     return this.http.post<DocumentoItem>(url, form, { reportProgress: true, observe: 'events' }).pipe(
       tap(event => {
-        if (event.type === HttpEventType.Response) {
-          if (tipo === 'empresa') this.cargarEmpresa(empresaId);
-          else if (tipo === 'centro' && centroId) this.cargarCentro(empresaId, centroId);
-          else if (tipo === 'proyecto' && centroId && proyectoId) this.cargarProyecto(empresaId, centroId, proyectoId);
-        }
+        if (event.type === HttpEventType.Response) this.recargarTras(tipo, empresaId, centroId, proyectoId);
       }),
+    );
+  }
+
+  subirLink(
+    linkUrl: string,
+    tipo: DocTipo,
+    empresaId?: string,
+    centroId?: string,
+    proyectoId?: string,
+    nombreDisplay?: string,
+    categoria?: string,
+  ): Observable<DocumentoItem> {
+    if (!empresaId) return throwError(() => new Error('Empresa no seleccionada'));
+    if (tipo === 'centro' && !centroId) return throwError(() => new Error('Selecciona un centro de costos primero.'));
+    if (tipo === 'proyecto' && (!centroId || !proyectoId)) return throwError(() => new Error('Selecciona un proyecto primero.'));
+
+    const form = new FormData();
+    form.append('link_url', linkUrl);
+    if (nombreDisplay) form.append('nombre_display', nombreDisplay);
+    if (categoria) form.append('categoria', categoria);
+
+    const url = this.documentosUrl(tipo, empresaId, centroId, proyectoId);
+    if (!url) return throwError(() => new Error('Contexto insuficiente para subir documento'));
+
+    return this.http.post<DocumentoItem>(url, form).pipe(
+      tap(() => this.recargarTras(tipo, empresaId, centroId, proyectoId)),
     );
   }
 

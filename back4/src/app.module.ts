@@ -18,6 +18,7 @@ import { ActividadesModule } from './actividades/actividades.module';
 import { ActivosModule } from './activos/activos.module';
 import { NoticiasModule } from './noticias/noticias.module';
 import { DocumentosVencidosModule } from './documentos-vencidos/documentos-vencidos.module';
+import { TareasModule } from './tareas/tareas.module';
 
 @Module({
   imports: [
@@ -38,6 +39,7 @@ import { DocumentosVencidosModule } from './documentos-vencidos/documentos-venci
     ActivosModule,
     NoticiasModule,
     DocumentosVencidosModule,
+    TareasModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: JwtAuthGuard },

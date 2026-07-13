@@ -1,12 +1,13 @@
 import { e } from './html-escape';
 import { SC_LOGO_HTML } from './logo';
+import { ContextoJerarquico, tituloJerarquia, breadcrumbJerarquiaHtml } from './jerarquia';
 
 export function solicitudRechazadaHtml(params: {
   destinatario: string;
   nombre: string;
   tipo: string;
   motivo_rechazo?: string;
-  centro: string;
+  jerarquia: ContextoJerarquico;
   portalUrl: string;
 }): string {
   const motivoBloque = params.motivo_rechazo
@@ -38,7 +39,8 @@ export function solicitudRechazadaHtml(params: {
           <div style="width:42px;height:42px;border-radius:50%;background:#fee2e2;color:#991b1b;flex-shrink:0;font-size:20px;font-weight:700;line-height:42px;text-align:center;margin-right:14px">✕</div>
           <div>
             <p style="font-size:15px;font-weight:700;color:#111827;margin:0 0 6px">Hola, ${e(params.destinatario)}</p>
-            <p style="font-size:13px;color:#6b7280;margin:0;line-height:1.4">Tu solicitud en <strong style="color:#111827">${e(params.centro)}</strong> fue rechazada.</p>
+            <p style="font-size:13px;color:#6b7280;margin:0;line-height:1.4">Tu solicitud en <strong style="color:#111827">${e(tituloJerarquia(params.jerarquia))}</strong> fue rechazada.</p>
+            ${breadcrumbJerarquiaHtml(params.jerarquia)}
           </div>
         </div>
       </div>

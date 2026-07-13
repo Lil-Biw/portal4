@@ -21,13 +21,15 @@
 <app-status-banner [status]="service.status()"></app-status-banner>
 
 <!-- Lista principal agrupada por empresa -->
-@for (grupo of usuariosAgrupados(); track grupo.empresa) {
+@for (grupo of usuariosAgrupados(); track grupo.cid) {
   <div class="empresa-grupo">
     <p class="empresa-titulo">{{ grupo.empresa }}</p>
     <app-usuarios-list
       [usuarios]="grupo.usuarios"
+      [usuarioActualId]="usuarioActualId()"
       (editado)="abrirEditar($event)"
       (eliminado)="eliminar($event)"
+      (suscripciones)="abrirSuscripciones($event)"
     >
     </app-usuarios-list>
   </div>
@@ -38,7 +40,7 @@
 
 <!-- ── Modal ──────────────────────────────────────────── -->
 <div class="modal-backdrop" *ngIf="modal() !== null" (click)="cerrar()">
-  <div class="modal" (click)="$event.stopPropagation()">
+  <div class="modal" [class.modal-ancho]="modal() === 'suscripciones'" (click)="$event.stopPropagation()">
     <!-- Crear Administrador -->
     <ng-container *ngIf="modal() === 'crear-admin'">
       <div class="modal-header">
@@ -117,10 +119,30 @@
       />
       <app-usuarios-list
         [usuarios]="usuariosFiltrados()"
+        [usuarioActualId]="usuarioActualId()"
         (editado)="editarDesdeBuscar($event)"
         (eliminado)="eliminar($event)"
+        (suscripciones)="abrirSuscripciones($event)"
       >
       </app-usuarios-list>
+    </ng-container>
+
+    <!-- Suscripciones de notificaciones -->
+    <ng-container *ngIf="modal() === 'suscripciones'">
+      <div class="modal-header">
+        <h3>Suscripciones de notificaciones</h3>
+        <button class="modal-close" (click)="cerrar()">&#x2715;</button>
+      </div>
+      <app-status-banner [status]="service.status()"></app-status-banner>
+      <app-suscripciones-form
+        [usuario]="service.seleccionado()"
+        [empresas]="clientesVisibles()"
+        [centros]="centrosVisibles()"
+        [proyectos]="proyectosVisibles()"
+        (guardado)="guardarSuscripciones($event)"
+        (cancelado)="cerrar()"
+      >
+      </app-suscripciones-form>
     </ng-container>
   </div>
 </div>

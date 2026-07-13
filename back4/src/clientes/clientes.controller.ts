@@ -126,14 +126,15 @@ export class ClientesController {
     @UploadedFile() archivo: Express.Multer.File & { buffer: Buffer },
     @Body('nombre_display') nombreDisplay?: string,
     @Body('categoria') categoria?: string,
+    @Body('link_url') linkUrl?: string,
     @Req() req?: Request,
   ) {
     const user = (req as any).user as JwtUser;
     this.assertEmpresaPermitida(user, id);
-    if (!archivo) throw new BadRequestException('No se proporcionó archivo');
+    if (!archivo && !linkUrl) throw new BadRequestException('Debes adjuntar un archivo o un link');
     return this.clientesService.agregarDocumento(
       id,
-      archivo,
+      { archivo, linkUrl },
       nombreDisplay,
       categoria,
       user?.rol,

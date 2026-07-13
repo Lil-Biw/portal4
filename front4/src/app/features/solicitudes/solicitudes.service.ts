@@ -16,11 +16,16 @@ export interface Solicitud {
   estado: EstadoSolicitud;
   motivo_rechazo?: string;
   // adjunto viene del backend como { tipo_mime, nombre } (sin contenido)
-  adjunto?: { tipo_mime: string; nombre: string };
-  // archivo_url se computa en el service para compatibilidad con templates
+  adjunto?: { tipo_mime: string; nombre: string; tipo_contenido?: 'archivo' | 'link'; link_url?: string };
+  // archivo_url/tipo_contenido/link_url se computan en el service para compatibilidad con templates
   archivo_url?: string;
   archivo_nombre?: string;
+  tipo_contenido?: 'archivo' | 'link';
+  link_url?: string;
   creado_en: string;
+  // Se actualiza en cada cambio de estado (aprobar/rechazar/adjuntar) — el backend
+  // lo mantiene automáticamente vía timestamps de Mongoose.
+  actualizado_en: string;
 }
 
 export interface NotificacionOpciones {
@@ -56,9 +61,9 @@ export class SolicitudesService {
   private readonly http = inject(HttpClient);
   private readonly api  = inject(ApiService);
 
-  readonly solicitudes = signal<Solicitud[]>([]);
-  readonly loading     = signal(false);
-  readonly status      = signal<SolicitudStatus | null>(null);
+  readonly solicitudes       = signal<Solicitud[]>([]);
+  readonly loading           = signal(false);
+  readonly status            = signal<SolicitudStatus | null>(null);
 
   clearStatus(): void { this.status.set(null); }
 
@@ -68,6 +73,8 @@ export class SolicitudesService {
         ...s,
         archivo_url: this.api.url(`/empresas/${s.empresa_id}/solicitudes/${s._id}/adjunto`),
         archivo_nombre: s.adjunto.nombre,
+        tipo_contenido: s.adjunto.tipo_contenido,
+        link_url: s.adjunto.link_url,
       };
     }
     return s;
@@ -139,7 +146,7 @@ export class SolicitudesService {
     });
   }
 
-  adjuntar(id: string, archivo: File, onSuccess?: () => void): void {
+  adjuntar(id: string, archivo: File, onSuccess?: () => void, onError?: () => void): void {
     const empresaId = this.getEmpresaId(id);
     if (!empresaId) return;
     const form = new FormData();
@@ -151,8 +158,32 @@ export class SolicitudesService {
         onSuccess?.();
       },
       error: (err) => {
-        const msg = err.error?.message ?? 'Error al adjuntar el archivo.';
+        if (err.status === 413) {
+          this.status.set({ type: 'error', text: 'El archivo supera el límite de 20MB.' });
+        } else {
+          const msg = err.error?.message ?? 'Error al adjuntar el archivo.';
+          this.status.set({ type: 'error', text: Array.isArray(msg) ? msg.join(', ') : msg });
+        }
+        onError?.();
+      },
+    });
+  }
+
+  adjuntarLink(id: string, linkUrl: string, onSuccess?: () => void, onError?: () => void): void {
+    const empresaId = this.getEmpresaId(id);
+    if (!empresaId) return;
+    const form = new FormData();
+    form.append('link_url', linkUrl);
+    this.http.post<Solicitud>(this.api.url(`/empresas/${empresaId}/solicitudes/${id}/adjuntar`), form).subscribe({
+      next: (actualizada) => {
+        this.solicitudes.update(prev => prev.map(s => s._id === id ? this.computarAdjuntoUrl(actualizada) : s));
+        this.status.set({ type: 'ok', text: 'Link adjuntado. Estado actualizado a "En revisión".' });
+        onSuccess?.();
+      },
+      error: (err) => {
+        const msg = err.error?.message ?? 'Error al adjuntar el link.';
         this.status.set({ type: 'error', text: Array.isArray(msg) ? msg.join(', ') : msg });
+        onError?.();
       },
     });
   }

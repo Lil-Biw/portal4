@@ -8,8 +8,10 @@ export class DocActividad {
   @Prop({ type: Types.ObjectId, ref: 'Actividad', required: true }) actividad_id: Types.ObjectId;
   @Prop({ required: true }) nombre: string;
   @Prop({ required: true }) nombre_display: string;
-  @Prop({ required: true }) tipo_mime: string;
-  @Prop({ required: true }) tamano_bytes: number;
+  @Prop({ enum: ['archivo', 'link'], default: 'archivo' }) tipo_contenido: string;
+  @Prop() link_url?: string;
+  @Prop() tipo_mime?: string;
+  @Prop() tamano_bytes?: number;
   @Prop({ type: Buffer }) contenido?: Buffer;
   @Prop() s3_key?: string;
   @Prop({ default: Date.now }) subido_en: Date;

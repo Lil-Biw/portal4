@@ -60,9 +60,10 @@ export class ActividadesController {
     @Param('actividadId') actividadId: string,
     @UploadedFile() archivo: Express.Multer.File & { buffer: Buffer },
     @Body('nombre_display') nombreDisplay?: string,
+    @Body('link_url') linkUrl?: string,
   ) {
-    if (!archivo) throw new BadRequestException('No se proporcionó archivo');
-    return this.service.subirDocumento(actividadId, archivo, nombreDisplay);
+    if (!archivo && !linkUrl) throw new BadRequestException('Debes adjuntar un archivo o un link');
+    return this.service.subirDocumento(actividadId, { archivo, linkUrl }, nombreDisplay);
   }
 
   @Delete(':actividadId/documentos/:docId')

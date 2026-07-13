@@ -374,8 +374,11 @@ export class SidebarComponent implements OnChanges {
   get centroDelProyecto(): string | null {
     const p = this.consumidorContext.proyectoSeleccionado();
     if (!p) return null;
-    const c = this.centrosService.centros().find((c) => asId(c._id) === asId(p.centro_costo_id));
-    return c?.nombre ?? null;
+    const ids = (p.centro_costo_ids ?? []).map(id => asId(id));
+    const nombres = this.centrosService.centros()
+      .filter((c) => ids.includes(asId(c._id)))
+      .map((c) => c.nombre);
+    return nombres.length ? nombres.join(', ') : null;
   }
 
   get logoUrl(): string | null {

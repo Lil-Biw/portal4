@@ -30,7 +30,8 @@ body { margin: 0; background: var(--bg); color: var(--ink-900); }
   color: var(--ink-600);
 }
 .field input,
-.field select {
+.field select,
+.field textarea {
   padding: .6rem .75rem;
   border-radius: 8px;
   border: 1px solid rgba(34,33,33,.2);
@@ -39,8 +40,14 @@ body { margin: 0; background: var(--bg); color: var(--ink-900); }
   background: #fff;
   transition: border-color .15s;
 }
+.field textarea {
+  resize: vertical;
+  min-height: 64px;
+  line-height: 1.45;
+}
 .field input:focus,
-.field select:focus {
+.field select:focus,
+.field textarea:focus {
   outline: none;
   border-color: var(--accent);
   background: rgba(0,149,214,.02);

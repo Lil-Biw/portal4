@@ -1,13 +1,16 @@
 import { e } from './html-escape';
 import { SC_LOGO_HTML } from './logo';
+import { ContextoJerarquico, tituloJerarquia, breadcrumbJerarquiaHtml } from './jerarquia';
+import { bloqueDocumentosAdjuntosHtml } from './documentos-adjuntos';
 
 export function nuevaActividadHtml(params: {
   nombre: string;
   tipo: string;
   fecha: string;
   descripcion?: string;
-  centro: string;
+  jerarquia: ContextoJerarquico;
   activos: string[];
+  documentos: string[];
   portalUrl: string;
   destinatario: string;
 }): string {
@@ -49,7 +52,8 @@ export function nuevaActividadHtml(params: {
           <div style="width:42px;height:42px;border-radius:50%;background:#E1F5EE;flex-shrink:0;font-size:22px;line-height:42px;text-align:center;margin-right:14px">📅</div>
           <div>
             <p style="font-size:15px;font-weight:700;color:#111827;margin:0 0 6px">Hola, ${e(params.destinatario)}</p>
-            <p style="font-size:13px;color:#6b7280;margin:0;line-height:1.4">Nueva actividad programada en <strong style="color:#111827">${e(params.centro)}</strong>.</p>
+            <p style="font-size:13px;color:#6b7280;margin:0;line-height:1.4">Nueva actividad programada en <strong style="color:#111827">${e(tituloJerarquia(params.jerarquia))}</strong>.</p>
+            ${breadcrumbJerarquiaHtml(params.jerarquia)}
           </div>
         </div>
       </div>
@@ -74,6 +78,7 @@ export function nuevaActividadHtml(params: {
 
       ${descripcionBloque}
       ${activosBloque}
+      ${bloqueDocumentosAdjuntosHtml(params.documentos)}
 
       <div style="padding:18px 24px">
         <a href="${params.portalUrl}/mis-actividades"

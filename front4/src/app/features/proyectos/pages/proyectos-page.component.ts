@@ -54,25 +54,41 @@ function emptyTipoForm(): TipoForm { return { nombre: '', color: '#0095d6' }; }
       max-width: 680px;
       max-height: 85vh;
       overflow-y: auto;
-      padding: 1.5rem;
+      padding: 0;
     }
+    /* Header fijo: solo el contenido scrollea (el footer fijo vive en el form) */
     .modal-header {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: #fff;
       display: flex;
-      align-items: center;
+      align-items: flex-start;
       justify-content: space-between;
-      margin-bottom: 1.25rem;
+      gap: 1rem;
+      padding: 1.15rem 1.5rem 1rem;
+      border-bottom: 1px solid rgba(34,33,33,.08);
     }
     .modal-header h3 { margin: 0; font-size: 1.1rem; font-weight: 700; }
+    .modal-sub { margin: .2rem 0 0; font-size: .8rem; color: #6b7280; }
     .modal-close {
       background: none;
       border: none;
-      font-size: 1.4rem;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.05rem;
       line-height: 1;
       cursor: pointer;
       color: #6b7280;
-      padding: 0 .25rem;
+      flex-shrink: 0;
+      transition: background .15s;
     }
-    .modal-close:hover { color: #1f2937; }
+    .modal-close:hover { background: rgba(34,33,33,.07); color: #1f2937; }
+    .modal-body { padding: 1.25rem 1.5rem; }
     .modal--tipos { max-width: 840px; }
     .search-input {
       width: 100%;
@@ -177,12 +193,14 @@ export class ProyectosPageComponent implements OnInit {
     return this.service.proyectos().filter(p => {
       const empresa = this.clientesService.clientes()
         .find(x => asId(x._id) === asId(p.cliente_id))?.razon_social ?? '';
-      const centro = this.centrosService.centros()
-        .find(x => asId(x._id) === asId(p.centro_costo_id))?.nombre ?? '';
+      const centroIds = (p.centro_costo_ids ?? []).map(id => asId(id));
+      const centros = this.centrosService.centros()
+        .filter(x => centroIds.includes(asId(x._id)))
+        .map(x => x.nombre);
       return p.nombre.toLowerCase().includes(q) ||
              p.codigo.toLowerCase().includes(q) ||
              empresa.toLowerCase().includes(q)  ||
-             centro.toLowerCase().includes(q);
+             centros.some(c => c.toLowerCase().includes(q));
     });
   });
 
@@ -245,6 +263,11 @@ export class ProyectosPageComponent implements OnInit {
     return this.centrosService.centros().filter(c => asId(c.cliente_id) === this._selectedEmpresaId());
   });
 
+  protected empresaNombre(p: Proyecto): string {
+    return this.clientesService.clientes()
+      .find(c => asId(c._id) === asId(p.cliente_id))?.razon_social ?? '';
+  }
+
   protected tipoDeProyecto(p: Proyecto): TipoProyecto | null {
     if (!p.tipo_proyecto_id) return null;
     if (typeof p.tipo_proyecto_id === 'object') return p.tipo_proyecto_id as TipoProyecto;
@@ -261,7 +284,7 @@ export class ProyectosPageComponent implements OnInit {
 
     let list = this.service.proyectos();
     if (empresaId) list = list.filter(p => asId(p.cliente_id) === empresaId);
-    if (centroId)  list = list.filter(p => asId(p.centro_costo_id) === centroId);
+    if (centroId)  list = list.filter(p => (p.centro_costo_ids ?? []).some(id => asId(id) === centroId));
     if (estado)    list = list.filter(p => p.estado === estado);
     if (tipoId) {
       list = list.filter(p => this.tipoDeProyecto(p)?._id === tipoId);
@@ -294,6 +317,7 @@ export class ProyectosPageComponent implements OnInit {
 
   protected abrirCrear(): void {
     this.service.seleccionado.set(null);
+    this.service.centrosSeleccionados.set([]);
     this.service.clearStatus();
     this.modal.set('crear');
   }

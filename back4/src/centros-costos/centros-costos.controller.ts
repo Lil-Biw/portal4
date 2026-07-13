@@ -66,12 +66,13 @@ export class CentrosCostosController {
     @UploadedFile() archivo: Express.Multer.File & { buffer: Buffer },
     @Body('nombre_display') nombreDisplay?: string,
     @Body('categoria') categoria?: string,
+    @Body('link_url') linkUrl?: string,
     @Req() req?: Request,
   ) {
-    if (!archivo) throw new BadRequestException('No se proporcionó archivo');
+    if (!archivo && !linkUrl) throw new BadRequestException('Debes adjuntar un archivo o un link');
     const rolUploader = (req as any)?.user?.rol as string | undefined;
     const usuarioId  = (req as any)?.user?.sub as string | undefined;
-    return this.centrosCostosService.agregarDocumento(centroId, archivo, nombreDisplay, categoria, usuarioId, rolUploader);
+    return this.centrosCostosService.agregarDocumento(centroId, { archivo, linkUrl }, nombreDisplay, categoria, usuarioId, rolUploader);
   }
 
   @Get(':centroId/documentos')

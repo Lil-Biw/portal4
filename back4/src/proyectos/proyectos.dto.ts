@@ -1,7 +1,7 @@
 import {
-  IsString, IsOptional,
+  IsArray, IsString, IsOptional,
   IsMongoId, IsEnum, IsDateString, MinLength,
-  ValidateNested,
+  ValidateNested, IsIn,
 } from 'class-validator';
 import { PartialType } from '@nestjs/mapped-types';
 import { Type } from 'class-transformer';
@@ -9,7 +9,7 @@ import { NotificacionOpcionesDto } from '../common/dto/notificacion-opciones.dto
 
 export class CreateProyectoDto {
   @IsMongoId() @IsOptional() cliente_id?: string;
-  @IsMongoId() @IsOptional() centro_costo_id?: string;
+  @IsArray() @IsMongoId({ each: true }) @IsOptional() centro_costo_ids?: string[];
   @IsMongoId() @IsOptional() tipo_proyecto_id?: string;
   @IsString() @MinLength(2) codigo: string;
   @IsString() @MinLength(3) nombre: string;
@@ -19,6 +19,7 @@ export class CreateProyectoDto {
   estado?: 'borrador' | 'planificacion' | 'activo' | 'en_pausa' | 'en_revision' | 'cerrado' | 'cancelado';
   @IsDateString() @IsOptional() fecha_inicio?: string;
   @IsDateString() @IsOptional() fecha_fin?: string;
+  @IsArray() @IsIn([30, 15, 7, 3, 1, 0], { each: true }) @IsOptional() dias_recordatorio?: number[];
 }
 
 export class UpdateProyectoDto extends PartialType(CreateProyectoDto) {}

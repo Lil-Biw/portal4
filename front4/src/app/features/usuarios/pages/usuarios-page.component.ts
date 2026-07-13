@@ -1,25 +1,27 @@
-import { Component, OnInit, inject, signal, computed } from '@angular/core';
+import { Component, OnInit, inject, signal, computed, effect } from '@angular/core';
 import { NgIf } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../auth/auth.service';
 import { UsuariosService } from '../usuarios.service';
 import { ClientesService } from '../../clientes/clientes.service';
 import { CentrosService } from '../../centros/centros.service';
+import { ProyectosService } from '../../proyectos/proyectos.service';
 import { StatusBannerComponent } from '../../../shared/components/status-banner/status-banner.component';
 import {
   UsuarioFormComponent,
   UsuarioFormOutput,
 } from '../components/usuario-form/usuario-form.component';
 import { UsuariosListComponent } from '../components/usuarios-list/usuarios-list.component';
-import { Usuario } from '../../../shared/models/usuario.model';
+import { SuscripcionesFormComponent } from '../components/suscripciones-form/suscripciones-form.component';
+import { Usuario, SuscripcionesDto } from '../../../shared/models/usuario.model';
 import { asId } from '../../../shared/utils';
 
-type ModalMode = 'crear-admin' | 'crear-usuario' | 'editar' | 'buscar' | null;
+type ModalMode = 'crear-admin' | 'crear-usuario' | 'editar' | 'suscripciones' | 'buscar' | null;
 
 @Component({
   selector: 'app-usuarios-page',
   standalone: true,
-  imports: [NgIf, FormsModule, StatusBannerComponent, UsuarioFormComponent, UsuariosListComponent],
+  imports: [NgIf, FormsModule, StatusBannerComponent, UsuarioFormComponent, UsuariosListComponent, SuscripcionesFormComponent],
   templateUrl: './usuarios-page.component.html',
   styles: [
     `
@@ -66,6 +68,9 @@ type ModalMode = 'crear-admin' | 'crear-usuario' | 'editar' | 'buscar' | null;
         max-height: 85vh;
         overflow-y: auto;
         padding: 1.5rem;
+      }
+      .modal.modal-ancho {
+        max-width: 900px;
       }
       .modal-header {
         display: flex;
@@ -124,7 +129,18 @@ export class UsuariosPageComponent implements OnInit {
   protected readonly service = inject(UsuariosService);
   protected readonly clientesService = inject(ClientesService);
   protected readonly centrosService = inject(CentrosService);
+  protected readonly proyectosService = inject(ProyectosService);
   private readonly authService = inject(AuthService);
+
+  constructor() {
+    effect(() => {
+      if (this.service.status()?.type === 'ok' && this.modal() === 'suscripciones') {
+        this.cerrar();
+      }
+    });
+  }
+
+  protected usuarioActualId = computed(() => this.authService.usuarioActual()?.id ?? null);
 
   protected esAdminSmartclarity = computed(
     () => this.authService.usuarioActual()?.rol === 'admin_smartclarity',
@@ -136,6 +152,8 @@ export class UsuariosPageComponent implements OnInit {
   protected clientesVisibles = computed(() => this.clientesService.clientes());
 
   protected centrosVisibles = computed(() => this.centrosService.centros());
+
+  protected proyectosVisibles = computed(() => this.proyectosService.proyectos());
 
   protected modal = signal<ModalMode>(null);
   protected busqueda = signal('');
@@ -155,13 +173,14 @@ export class UsuariosPageComponent implements OnInit {
   protected usuariosAgrupados = computed(() => {
     const clientes = this.clientesVisibles();
     const usuarios = this.usuariosVisibles();
-    const grupos = new Map<string, { empresa: string; usuarios: typeof usuarios }>();
+    const grupos = new Map<string, { cid: string; empresa: string; usuarios: typeof usuarios }>();
 
     for (const u of usuarios) {
       const cid = u.cliente_id ? String(u.cliente_id) : '__sin_empresa__';
       if (!grupos.has(cid)) {
         const cliente = clientes.find((c) => asId(c._id) === cid);
         grupos.set(cid, {
+          cid,
           empresa:
             cliente?.razon_social ??
             (cid === '__sin_empresa__' ? 'Sin empresa asignada' : 'Empresa desconocida'),
@@ -178,6 +197,7 @@ export class UsuariosPageComponent implements OnInit {
     this.service.cargar();
     this.clientesService.cargar();
     this.centrosService.cargar();
+    this.proyectosService.cargar();
   }
 
   protected abrirCrearUsuario(): void {
@@ -202,6 +222,19 @@ export class UsuariosPageComponent implements OnInit {
   protected abrirEditar(usuario: Usuario): void {
     this.service.seleccionar(usuario); // carga centros_asignados desde el usuario
     this.modal.set('editar');
+  }
+
+  protected abrirSuscripciones(usuario: Usuario): void {
+    if (usuario._id !== this.usuarioActualId()) return;
+    this.service.seleccionado.set(usuario);
+    this.service.clearStatus();
+    this.modal.set('suscripciones');
+  }
+
+  protected guardarSuscripciones(dto: SuscripcionesDto): void {
+    const id = this.service.seleccionado()?._id;
+    if (!id) return;
+    this.service.actualizarSuscripciones(id, dto);
   }
 
   protected cerrar(): void {

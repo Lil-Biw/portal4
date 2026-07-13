@@ -11,8 +11,10 @@ export interface DocActividad {
   _id: string;
   nombre: string;
   nombre_display: string;
-  tamano_bytes: number;
-  tipo_mime: string;
+  tamano_bytes?: number;
+  tipo_mime?: string;
+  tipo_contenido?: 'archivo' | 'link';
+  link_url?: string;
 }
 
 import type { Activo } from './activo.model';
@@ -25,6 +27,10 @@ export interface Actividad {
   centro_costo_id: string;
   activo_ids?: (Activo | string)[];
   fecha: string;
+  fecha_termino?: string | null;
+  // Días de antelación a la fecha en que se avisa a los admins suscritos
+  // (subconjunto de [30, 15, 7, 3, 1, 0]; 0 = el día de la actividad)
+  dias_recordatorio?: number[];
   creado_en?: string;
   actualizado_en?: string;
 }
@@ -43,6 +49,10 @@ export interface CreateActividadDto {
   centro_costo_id: string;
   activo_ids?: string[];
   fecha: string;
+  fecha_termino?: string | null;
+  dias_recordatorio?: number[];
+  // Nombres de los docs pendientes de subir, para listarlos en el correo de notificación
+  documentos_nombres?: string[];
   notificacion?: NotificacionOpciones;
 }
 
@@ -53,6 +63,8 @@ export interface UpdateActividadDto {
   centro_costo_id?: string;
   activo_ids?: string[];
   fecha?: string;
+  fecha_termino?: string | null;
+  dias_recordatorio?: number[];
   notificacion?: NotificacionOpciones;
 }
 

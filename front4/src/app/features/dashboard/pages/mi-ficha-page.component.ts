@@ -12,7 +12,7 @@ import { SpiderChartComponent } from '../../../shared/components/spider-chart/sp
 import { ClientesService } from '../../clientes/clientes.service';
 import { CentroCosto } from '../../../shared/models/centro.model';
 import { Proyecto } from '../../../shared/models/proyecto.model';
-import { asId, calcularScoreDocumental, scoreChipVariantFn, scoreChipLabelFn, estadoStyleFn } from '../../../shared/utils';
+import { asId, calcularScoreDocumental, scoreChipVariantFn, scoreChipLabelFn, estadoStyleFn, porcentajeColorFn } from '../../../shared/utils';
 
 @Component({
   selector: 'app-mi-ficha-page',
@@ -113,6 +113,10 @@ export class MiFichaPageComponent {
   protected scoreChipVariant = computed((): ChipVariant => scoreChipVariantFn(this.scoreDocumental().pct));
 
   protected scoreChipLabel = computed((): string => scoreChipLabelFn(this.scoreDocumental().pct));
+
+  protected porcentajeColor(pct: number): string {
+    return porcentajeColorFn(pct);
+  }
 
   readonly spiderLabels = [
     'RRHH y\ndocumentación',

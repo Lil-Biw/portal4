@@ -179,9 +179,13 @@
           [activo]="activoRevisando()"
           [historial]="service.historialActivo()"
           [loadingHistorial]="service.loadingHistorial()"
+          [documentosActivo]="service.documentosActivo()"
+          [documentosActividad]="service.documentosActividad()"
+          [loadingDocumentosActividad]="service.loadingDocumentosActividad()"
           (cerrar)="cerrar()"
           (descargarActivoDoc)="onDescargarActivoDoc($event)"
-          (descargarActividadDoc)="onDescargarActividadDoc($event)">
+          (descargarActividadDoc)="onDescargarActividadDoc($event)"
+          (actividadAbierta)="onActividadAbierta($event)">
         </app-activo-revisar-modal>
       }
 

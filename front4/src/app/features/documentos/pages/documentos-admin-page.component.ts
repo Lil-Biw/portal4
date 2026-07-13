@@ -10,8 +10,10 @@ import { UsuariosService } from '../../usuarios/usuarios.service';
 import { AuthService } from '../../auth/auth.service';
 import { StatusBannerComponent } from '../../../shared/components/status-banner/status-banner.component';
 import { UploadBubbleComponent } from '../../../shared/components/upload-bubble/upload-bubble.component';
+import { UploadDocumentFormComponent } from '../../../shared/components/upload-document-form/upload-document-form.component';
 import { createUploadQueue } from '../../../shared/upload-queue-state';
-import { asId, detectarCategoriaDocumento } from '../../../shared/utils';
+import { asId, detectarCategoriaDocumento, formatFechaHora, formatBytes, MAX_UPLOAD_SIZE_BYTES, usuarioEstaSuscrito } from '../../../shared/utils';
+import { Usuario } from '../../../shared/models/usuario.model';
 
 interface PanelState {
   showUpload: boolean;
@@ -21,7 +23,13 @@ interface PanelState {
   busqueda: string;
   filtrosCategorias: string[];
   selectedFile: File | null;
+  modoUpload: 'archivo' | 'link';
+  linkInput: string;
 }
+
+type UploadCtx =
+  | { kind: 'archivo'; file: File; tipo: DocTipo; empresaId: string; centroId?: string; proyectoId?: string; nombreDisplay?: string; categoria?: string }
+  | { kind: 'link'; linkUrl: string; tipo: DocTipo; empresaId: string; centroId?: string; proyectoId?: string; nombreDisplay?: string; categoria?: string };
 
 export interface EstadoDestino {
   valor: EstadoSolicitud;
@@ -33,7 +41,7 @@ export interface EstadoDestino {
 @Component({
   selector: 'app-documentos-admin-page',
   standalone: true,
-  imports: [FormsModule, StatusBannerComponent, UploadBubbleComponent],
+  imports: [FormsModule, StatusBannerComponent, UploadBubbleComponent, UploadDocumentFormComponent],
   templateUrl: './documentos-admin-page.component.html',
 })
 export class DocumentosAdminPageComponent implements OnInit {
@@ -95,6 +103,12 @@ export class DocumentosAdminPageComponent implements OnInit {
     return a.length > 0 && a.every(x => this.notifSolicitudAdminsIds().includes(x._id));
   });
 
+  // Admins ya suscritos al ámbito de la solicitud: siempre reciben la
+  // notificación, su checkbox no se puede deseleccionar.
+  protected adminsSuscritosSolicitudIds = computed(() =>
+    this.adminsParaSolicitud().filter(u => this.estaSuscritoAdminSolicitud(u)).map(u => u._id)
+  );
+
   // notificación — rechazo
   protected notifRechazoNotificar   = signal(true);
   protected notifRechazoTab         = signal<'usuarios' | 'admins' | 'super-admins'>('usuarios');
@@ -111,6 +125,10 @@ export class DocumentosAdminPageComponent implements OnInit {
     const a = this.adminsParaRechazo();
     return a.length > 0 && a.every(x => this.notifRechazoAdminsIds().includes(x._id));
   });
+
+  protected adminsSuscritosRechazoIds = computed(() =>
+    this.adminsParaRechazo().filter(u => this.estaSuscritoAdminRechazo(u)).map(u => u._id)
+  );
 
   // modal vencer documento (centroIdReal/proyectoIdReal solo cuando viene de la vista "todos")
   protected modalVencer = signal<{ url: string; nombre_display: string; categoria: string; centroIdReal?: string; proyectoIdReal?: string } | null>(null);
@@ -132,6 +150,10 @@ export class DocumentosAdminPageComponent implements OnInit {
     return a.length > 0 && a.every(x => this.notifVencerAdminsIds().includes(x._id));
   });
 
+  protected adminsSuscritosVencerIds = computed(() =>
+    this.adminsParaVencer().filter(u => this.estaSuscritoAdminVencer(u)).map(u => u._id)
+  );
+
   protected panels: Record<DocTipo, PanelState> = {
     empresa:  this.emptyPanel(),
     centro:   this.emptyPanel(),
@@ -139,10 +161,7 @@ export class DocumentosAdminPageComponent implements OnInit {
   };
 
   protected readonly uploadQueue = createUploadQueue();
-  private readonly retryContext = new Map<string, {
-    file: File; tipo: DocTipo; empresaId: string; centroId?: string; proyectoId?: string;
-    nombreDisplay?: string; categoria?: string;
-  }>();
+  private readonly retryContext = new Map<string, UploadCtx>();
 
   constructor() {
     effect(() => {
@@ -245,6 +264,21 @@ export class DocumentosAdminPageComponent implements OnInit {
     this.usuariosService.usuarios().filter(u => u.rol === 'super_admin')
   );
 
+  protected estaSuscritoAdminSolicitud(u: Usuario): boolean {
+    const centroId = (this.selectedCentroId && this.selectedCentroId !== 'todos') ? this.selectedCentroId : undefined;
+    const proyectoId = (this.selectedProyectoId && this.selectedProyectoId !== 'todos') ? this.selectedProyectoId : undefined;
+    return usuarioEstaSuscrito(u, this.selectedEmpresaId, centroId, proyectoId);
+  }
+
+  protected estaSuscritoAdminRechazo(u: Usuario): boolean {
+    return usuarioEstaSuscrito(u, this.rechazandoEmpresaId(), this.rechazandoCentroId() || undefined);
+  }
+
+  protected estaSuscritoAdminVencer(u: Usuario): boolean {
+    const m = this.modalVencer();
+    return usuarioEstaSuscrito(u, this.selectedEmpresaId, m?.centroIdReal, m?.proyectoIdReal);
+  }
+
   // ─── getters ──────────────────────────────────────────────────────────────
 
   get centrosFiltrados() {
@@ -255,7 +289,7 @@ export class DocumentosAdminPageComponent implements OnInit {
   get proyectosFiltrados() {
     if (!this.selectedEmpresaId || !this.selectedCentroId || this.selectedCentroId === 'todos') return [];
     return this.proyectosService.proyectos().filter(p =>
-      asId(p.cliente_id) === this.selectedEmpresaId && asId(p.centro_costo_id) === this.selectedCentroId
+      asId(p.cliente_id) === this.selectedEmpresaId && (p.centro_costo_ids ?? []).some(id => asId(id) === this.selectedCentroId)
     );
   }
 
@@ -304,6 +338,8 @@ export class DocumentosAdminPageComponent implements OnInit {
     return `${meses[d.getUTCMonth()]} ${d.getUTCFullYear()}`;
   }
 
+  protected readonly formatFechaHora = formatFechaHora;
+
   solicitudesTabActual(): Solicitud[] {
     const tab = this.tabJerarquia();
     const all = this.solicitudesService.solicitudes();
@@ -320,7 +356,7 @@ export class DocumentosAdminPageComponent implements OnInit {
     if (p === 'todos') {
       if (c === 'todos') return all.filter(s => !!s.proyecto_id);
       const ids = this.proyectosService.proyectos()
-        .filter(x => asId(x.centro_costo_id) === c)
+        .filter(x => (x.centro_costo_ids ?? []).some(id => asId(id) === c))
         .map(x => asId(x._id));
       return all.filter(s => s.proyecto_id && ids.includes(s.proyecto_id));
     }
@@ -393,7 +429,7 @@ export class DocumentosAdminPageComponent implements OnInit {
       this.service.cargarTodosProyectos(this.selectedEmpresaId, todos, this.centrosFiltrados);
     } else if (this.selectedProyectoId === 'todos' && centroId) {
       const delCentro = this.proyectosService.proyectos().filter(
-        p => asId(p.cliente_id) === this.selectedEmpresaId && asId(p.centro_costo_id) === centroId
+        p => asId(p.cliente_id) === this.selectedEmpresaId && (p.centro_costo_ids ?? []).some(id => asId(id) === centroId)
       );
       this.service.cargarTodosProyectos(this.selectedEmpresaId, delCentro, this.centrosFiltrados);
     } else if (proyectoId && centroId) {
@@ -411,7 +447,7 @@ export class DocumentosAdminPageComponent implements OnInit {
     const p = this.panels[tipo];
     p.showUpload = !p.showUpload;
     if (p.showUpload) p.showFilter = false;
-    if (!p.showUpload) { p.selectedFile = null; p.nombreInput = ''; }
+    if (!p.showUpload) { p.selectedFile = null; p.nombreInput = ''; p.linkInput = ''; p.modoUpload = 'archivo'; }
   }
 
   toggleFilter(tipo: DocTipo): void {
@@ -420,43 +456,67 @@ export class DocumentosAdminPageComponent implements OnInit {
     if (p.showFilter) p.showUpload = false;
   }
 
-  onFileSelected(ev: Event, tipo: DocTipo): void {
-    const file = (ev.target as HTMLInputElement).files?.[0];
-    if (!file) return;
+  setModoUpload(tipo: DocTipo, modo: 'archivo' | 'link'): void {
     const p = this.panels[tipo];
-    p.selectedFile = file;
-    if (!p.nombreInput) p.nombreInput = file.name;
-    p.categoriaInput = detectarCategoriaDocumento(file.name)!;
+    if (p.modoUpload === modo) return;
+    p.modoUpload = modo;
+    p.selectedFile = null;
+    p.linkInput = '';
+    p.nombreInput = '';
   }
 
-  onDrop(ev: DragEvent, tipo: DocTipo): void {
-    ev.preventDefault();
-    const file = ev.dataTransfer?.files?.[0];
-    if (!file) return;
+  linkInvalido(tipo: DocTipo): boolean {
+    const link = this.panels[tipo].linkInput.trim();
+    if (!link) return false;
+    return !/^https?:\/\/.+/i.test(link);
+  }
+
+  onArchivoChange(file: File | null, tipo: DocTipo): void {
     const p = this.panels[tipo];
     p.selectedFile = file;
-    if (!p.nombreInput) p.nombreInput = file.name;
-    p.categoriaInput = detectarCategoriaDocumento(file.name)!;
+    if (file) {
+      if (!p.nombreInput) p.nombreInput = file.name;
+      p.categoriaInput = detectarCategoriaDocumento(file.name)!;
+    }
+  }
+
+  archivoDemasiadoGrande(tipo: DocTipo): boolean {
+    const file = this.panels[tipo].selectedFile;
+    return !!file && file.size > MAX_UPLOAD_SIZE_BYTES;
+  }
+
+  mensajeArchivoDemasiadoGrande(tipo: DocTipo): string {
+    const file = this.panels[tipo].selectedFile;
+    if (!file) return '';
+    return `El archivo pesa ${formatBytes(file.size)} y supera el límite de 20 MB. Selecciona uno más liviano.`;
   }
 
   confirmarSubida(tipo: DocTipo): void {
     const p = this.panels[tipo];
-    if (!p.selectedFile) return;
-    const ctx = {
-      file: p.selectedFile,
-      tipo,
-      empresaId: this.selectedEmpresaId,
-      centroId: (this.selectedCentroId && this.selectedCentroId !== 'todos') ? this.selectedCentroId : undefined,
-      proyectoId: (this.selectedProyectoId && this.selectedProyectoId !== 'todos') ? this.selectedProyectoId : undefined,
-      nombreDisplay: p.nombreInput || undefined,
-      categoria: p.categoriaInput || undefined,
-    };
-    const id = this.uploadQueue.agregar(ctx.nombreDisplay || ctx.file.name);
+    const empresaId = this.selectedEmpresaId;
+    const centroId = (this.selectedCentroId && this.selectedCentroId !== 'todos') ? this.selectedCentroId : undefined;
+    const proyectoId = (this.selectedProyectoId && this.selectedProyectoId !== 'todos') ? this.selectedProyectoId : undefined;
+
+    let ctx: UploadCtx;
+    let nombreParaCola: string;
+    if (p.modoUpload === 'link') {
+      const link = p.linkInput.trim();
+      if (!link || this.linkInvalido(tipo)) return;
+      ctx = { kind: 'link', linkUrl: link, tipo, empresaId, centroId, proyectoId, nombreDisplay: p.nombreInput || undefined, categoria: p.categoriaInput || undefined };
+      nombreParaCola = p.nombreInput || link;
+    } else {
+      if (!p.selectedFile || this.archivoDemasiadoGrande(tipo)) return;
+      ctx = { kind: 'archivo', file: p.selectedFile, tipo, empresaId, centroId, proyectoId, nombreDisplay: p.nombreInput || undefined, categoria: p.categoriaInput || undefined };
+      nombreParaCola = p.nombreInput || p.selectedFile.name;
+    }
+
+    const id = this.uploadQueue.agregar(nombreParaCola);
     this.retryContext.set(id, ctx);
     this.ejecutarSubida(id, ctx);
 
     p.selectedFile = null;
     p.nombreInput = '';
+    p.linkInput = '';
     p.showUpload = false;
   }
 
@@ -472,10 +532,26 @@ export class DocumentosAdminPageComponent implements OnInit {
     this.retryContext.clear();
   }
 
-  private ejecutarSubida(id: string, ctx: {
-    file: File; tipo: DocTipo; empresaId: string; centroId?: string; proyectoId?: string;
-    nombreDisplay?: string; categoria?: string;
-  }): void {
+  private ejecutarSubida(id: string, ctx: UploadCtx): void {
+    const onError = (err: any) => {
+      if (err?.status === 413) {
+        this.uploadQueue.marcarError(id, 'El archivo supera el límite de 20MB.');
+        return;
+      }
+      const raw = err?.error?.message;
+      const text = Array.isArray(raw) ? raw.join('. ') : (raw ?? err?.message ?? 'Error al cargar');
+      this.uploadQueue.marcarError(id, text);
+    };
+
+    if (ctx.kind === 'link') {
+      this.service.subirLink(ctx.linkUrl, ctx.tipo, ctx.empresaId, ctx.centroId, ctx.proyectoId, ctx.nombreDisplay, ctx.categoria)
+        .subscribe({
+          next: () => { this.uploadQueue.marcarListo(id); this.retryContext.delete(id); },
+          error: onError,
+        });
+      return;
+    }
+
     this.service.subir(ctx.file, ctx.tipo, ctx.empresaId, ctx.centroId, ctx.proyectoId, ctx.nombreDisplay, ctx.categoria)
       .subscribe({
         next: (event: HttpEvent<DocumentoItem>) => {
@@ -486,15 +562,7 @@ export class DocumentosAdminPageComponent implements OnInit {
             this.retryContext.delete(id);
           }
         },
-        error: (err) => {
-          if (err?.status === 413) {
-            this.uploadQueue.marcarError(id, 'El archivo supera el límite de 20MB.');
-            return;
-          }
-          const raw = err?.error?.message;
-          const text = Array.isArray(raw) ? raw.join('. ') : (raw ?? err?.message ?? 'Error al cargar');
-          this.uploadQueue.marcarError(id, text);
-        },
+        error: onError,
       });
   }
 
@@ -550,6 +618,11 @@ export class DocumentosAdminPageComponent implements OnInit {
     this.service.eliminar(docUrl, tipo, this.selectedEmpresaId, this.selectedCentroId || undefined, this.selectedProyectoId || undefined);
   }
 
+  abrirDocumento(d: { tipo_contenido?: 'archivo' | 'link'; link_url?: string; url: string; nombre_display: string }): void {
+    if (d.tipo_contenido === 'link' && d.link_url) window.open(d.link_url, '_blank', 'noopener');
+    else this.service.descargar(d.url, d.nombre_display);
+  }
+
   eliminarEnTodosCentros(docUrl: string): void {
     const empresaId = this.selectedEmpresaId;
     this.service.eliminar(docUrl, 'centro', empresaId, undefined, undefined,
@@ -575,7 +648,7 @@ export class DocumentosAdminPageComponent implements OnInit {
   }
   toggleSeleccionarTodosAdminsSolicitud(): void {
     if (this.notifSolicitudTodosAdminsSeleccionados()) {
-      this.notifSolicitudAdminsIds.set([]);
+      this.notifSolicitudAdminsIds.set(this.adminsSuscritosSolicitudIds());
     } else {
       this.notifSolicitudAdminsIds.set(this.adminsParaSolicitud().map(u => u._id));
     }
@@ -586,6 +659,7 @@ export class DocumentosAdminPageComponent implements OnInit {
     );
   }
   toggleNotifSolicitudAdmin(id: string): void {
+    if (this.adminsSuscritosSolicitudIds().includes(id)) return;
     this.notifSolicitudAdminsIds.update(ids =>
       ids.includes(id) ? ids.filter(x => x !== id) : [...ids, id]
     );
@@ -601,7 +675,7 @@ export class DocumentosAdminPageComponent implements OnInit {
   }
   toggleSeleccionarTodosAdminsRechazo(): void {
     if (this.notifRechazoTodosAdminsSeleccionados()) {
-      this.notifRechazoAdminsIds.set([]);
+      this.notifRechazoAdminsIds.set(this.adminsSuscritosRechazoIds());
     } else {
       this.notifRechazoAdminsIds.set(this.adminsParaRechazo().map(u => u._id));
     }
@@ -612,6 +686,7 @@ export class DocumentosAdminPageComponent implements OnInit {
     );
   }
   toggleNotifRechazoAdmin(id: string): void {
+    if (this.adminsSuscritosRechazoIds().includes(id)) return;
     this.notifRechazoAdminsIds.update(ids =>
       ids.includes(id) ? ids.filter(x => x !== id) : [...ids, id]
     );
@@ -649,7 +724,9 @@ export class DocumentosAdminPageComponent implements OnInit {
         ? { notificar: true, audiencia: 'todos' as const, notificar_super_admins: superAdmins }
         : destinatariosSol.length > 0
           ? { notificar: true, audiencia: 'especificos' as const, destinatarios_ids: destinatariosSol, notificar_super_admins: superAdmins }
-          : { notificar: false };
+          : superAdmins
+            ? { notificar: true, audiencia: 'especificos' as const, destinatarios_ids: [], notificar_super_admins: true }
+            : { notificar: false };
     this.creandoSolicitud.set(true);
     this.solicitudesService.crear({
       ...this.solicitudForm,
@@ -699,7 +776,7 @@ export class DocumentosAdminPageComponent implements OnInit {
         this.service.cargarTodosProyectos(empresaId, todos, this.centrosFiltrados);
       } else if (proyectoId === 'todos' && cId) {
         const delCentro = this.proyectosService.proyectos().filter(
-          p => asId(p.cliente_id) === empresaId && asId(p.centro_costo_id) === cId
+          p => asId(p.cliente_id) === empresaId && (p.centro_costo_ids ?? []).some(id => asId(id) === cId)
         );
         this.service.cargarTodosProyectos(empresaId, delCentro, this.centrosFiltrados);
       } else if (pId && cId) {
@@ -725,7 +802,9 @@ export class DocumentosAdminPageComponent implements OnInit {
         ? { notificar: true, audiencia: 'todos' as const, notificar_super_admins: superAdmins }
         : destinatariosRec.length > 0
           ? { notificar: true, audiencia: 'especificos' as const, destinatarios_ids: destinatariosRec, notificar_super_admins: superAdmins }
-          : { notificar: false };
+          : superAdmins
+            ? { notificar: true, audiencia: 'especificos' as const, destinatarios_ids: [], notificar_super_admins: true }
+            : { notificar: false };
     this.solicitudesService.cambiarEstado(id, 'rechazado', this.motivoRechazoInput, notificacion);
     this.rechazandoId.set(null);
     this.motivoRechazoInput = '';
@@ -912,7 +991,7 @@ export class DocumentosAdminPageComponent implements OnInit {
 
   toggleSeleccionarTodosAdminsVencer(): void {
     if (this.notifVencerTodosAdminsSeleccionados()) {
-      this.notifVencerAdminsIds.set([]);
+      this.notifVencerAdminsIds.set(this.adminsSuscritosVencerIds());
     } else {
       this.notifVencerAdminsIds.set(this.adminsParaVencer().map(u => u._id));
     }
@@ -925,6 +1004,7 @@ export class DocumentosAdminPageComponent implements OnInit {
   }
 
   toggleNotifVencerAdmin(id: string): void {
+    if (this.adminsSuscritosVencerIds().includes(id)) return;
     this.notifVencerAdminsIds.update(ids =>
       ids.includes(id) ? ids.filter(x => x !== id) : [...ids, id]
     );
@@ -933,7 +1013,7 @@ export class DocumentosAdminPageComponent implements OnInit {
   // ─── private helpers ─────────────────────────────────────────────────────
 
   private emptyPanel(): PanelState {
-    return { showUpload: false, showFilter: false, nombreInput: '', categoriaInput: 'Contratos', busqueda: '', filtrosCategorias: [], selectedFile: null };
+    return { showUpload: false, showFilter: false, nombreInput: '', categoriaInput: 'Contratos', busqueda: '', filtrosCategorias: [], selectedFile: null, modoUpload: 'archivo', linkInput: '' };
   }
 
   private emptySolicitudForm(): CreateSolicitudDto {

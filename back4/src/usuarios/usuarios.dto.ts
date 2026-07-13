@@ -23,3 +23,10 @@ export class CambiarPasswordDto {
   @IsString() @MinLength(1) password_actual: string;
   @IsString() @MinLength(8) password_nueva: string;
 }
+
+export class SuscripcionesDto {
+  @IsBoolean() notificar_todas_empresas: boolean;
+  @IsArray() @IsMongoId({ each: true }) @IsOptional() empresas_suscritas?: string[];
+  @IsArray() @IsMongoId({ each: true }) @IsOptional() centros_suscritos?: string[];
+  @IsArray() @IsMongoId({ each: true }) @IsOptional() proyectos_suscritos?: string[];
+}

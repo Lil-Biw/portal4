@@ -17,11 +17,20 @@ export class Solicitud {
     type: {
       contenido: Buffer,
       s3_key: String,
+      tipo_contenido: { type: String, enum: ['archivo', 'link'], default: 'archivo' },
+      link_url: String,
       tipo_mime: String,
       nombre: String,
     },
   })
-  adjunto?: { contenido?: Buffer; s3_key?: string; tipo_mime: string; nombre: string };
+  adjunto?: {
+    contenido?: Buffer;
+    s3_key?: string;
+    tipo_contenido?: string;
+    link_url?: string;
+    tipo_mime: string;
+    nombre: string;
+  };
 }
 
 export const SolicitudSchema = SchemaFactory.createForClass(Solicitud);

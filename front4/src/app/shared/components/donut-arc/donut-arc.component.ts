@@ -1,4 +1,5 @@
 import { Component, Input } from '@angular/core';
+import { porcentajeColorFn } from '../../utils';
 
 @Component({
   selector: 'app-donut-arc',
@@ -24,7 +25,7 @@ import { Component, Input } from '@angular/core';
           [attr.transform]="'rotate(-90 '+half+' '+half+')'"/>
       } @else {
         <!-- Punto rojo en la cima para 0% -->
-        <circle [attr.cx]="half" [attr.cy]="half - r" r="4" fill="#ef4444"/>
+        <circle [attr.cx]="half" [attr.cy]="half - r" r="4" fill="#dc2626"/>
       }
       <!-- Texto central -->
       <text
@@ -50,8 +51,6 @@ export class DonutArcComponent {
   get fontSize()      { return Math.round(this.size * 0.22); }
 
   get arcColor(): string {
-    if (this.value >= 80) return '#22c55e';
-    if (this.value >= 50) return '#f59e0b';
-    return '#f97316';
+    return porcentajeColorFn(this.value);
   }
 }

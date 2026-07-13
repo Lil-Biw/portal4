@@ -8,8 +8,23 @@ import { ProyectoDocument } from '../proyectos/proyectos.schema';
 import { CreateSolicitudDto, UpdateSolicitudDto, CambiarEstadoDto } from './solicitudes.dto';
 import { MailService } from '../mail/mail.service';
 import { NotificacionOpcionesDto } from '../common/dto/notificacion-opciones.dto';
-import { DocumentosHelper, ArchivoInput, sanitizarNombreArchivo } from '../common/helpers/documentos.helper';
+import { DocumentosHelper, ArchivoInput, DocumentoInput, sanitizarNombreArchivo, esUrlValida } from '../common/helpers/documentos.helper';
+import { notificarSolicitudCompletada, ScopeDocumento } from '../common/helpers/notificar-documento.helper';
+import { ContextoJerarquico } from '../mail/templates/jerarquia';
 import { S3Service } from '../common/s3/s3.service';
+
+interface UsuarioConSuscripciones {
+  nombre: string;
+  email: string;
+  rol: string;
+  cliente_id: Types.ObjectId;
+  centros_asignados: Types.ObjectId[];
+  activo: boolean;
+  notificar_todas_empresas?: boolean;
+  empresas_suscritas?: Types.ObjectId[];
+  centros_suscritos?: Types.ObjectId[];
+  proyectos_suscritos?: Types.ObjectId[];
+}
 
 @Injectable()
 export class SolicitudesService {
@@ -28,7 +43,7 @@ export class SolicitudesService {
     @InjectModel('DocCliente') private docClienteModel: Model<any>,
     @InjectModel('DocProyecto') private docProyectoModel: Model<any>,
     @InjectModel('DocEliminado') private docEliminadoModel: Model<any>,
-    @InjectModel('Usuario') private usuarioModel: Model<{ nombre: string; email: string; rol: string; cliente_id: Types.ObjectId; centros_asignados: Types.ObjectId[]; activo: boolean }>,
+    @InjectModel('Usuario') private usuarioModel: Model<UsuarioConSuscripciones>,
     private mailService: MailService,
     private readonly s3Service: S3Service,
   ) {
@@ -67,18 +82,27 @@ export class SolicitudesService {
     try {
       const empresaId = new Types.ObjectId(empresaIdStr);
 
-      let centroNombre = 'Empresa';
-      let centroObjId: Types.ObjectId | null = null;
+      const [empresa, centro, proyecto] = await Promise.all([
+        this.clienteModel.findById(empresaId).select('razon_social').lean(),
+        centroCostoId ? this.centroCostoModel.findById(centroCostoId).select('nombre').lean() : Promise.resolve(null),
+        dto.proyecto_id ? this.proyectoModel.findById(dto.proyecto_id).select('nombre').lean() : Promise.resolve(null),
+      ]);
 
+      let centroObjId: Types.ObjectId | null = null;
       if (centroCostoId) {
-        const centro = await this.centroCostoModel.findById(centroCostoId).lean();
         if (!centro) {
           this.logger.warn(`notificarNuevaSolicitud: centro ${centroCostoId} no encontrado`);
         } else {
-          centroNombre = String(centro.nombre);
           centroObjId = new Types.ObjectId(centroCostoId);
         }
       }
+
+      const empresaNombre = empresa ? String(empresa.razon_social) : 'Empresa';
+      const jerarquia: ContextoJerarquico = {
+        empresa:  empresaNombre,
+        centro:   centro ? String(centro.nombre) : undefined,
+        proyecto: proyecto ? String(proyecto.nombre) : undefined,
+      };
 
       let usuariosDestino: { nombre: string; email: string }[] = [];
 
@@ -132,7 +156,7 @@ export class SolicitudesService {
           nombre:      dto.nombre,
           tipo:        dto.tipo,
           descripcion: dto.descripcion,
-          centro:      centroNombre,
+          jerarquia,
         },
       });
     } catch (err: unknown) {
@@ -164,7 +188,7 @@ export class SolicitudesService {
     return { deleted: true };
   }
 
-  async cambiarEstado(id: string, dto: CambiarEstadoDto) {
+  async cambiarEstado(id: string, dto: CambiarEstadoDto, usuarioRespondeId?: string) {
     const estadoPrevio = await this.solicitudModel.findById(id).select('estado').lean();
     if (!estadoPrevio) throw new NotFoundException(`Solicitud ${id} no encontrada`);
 
@@ -183,16 +207,63 @@ export class SolicitudesService {
     }
     if (dto.estado === 'aprobado' && estadoPrevio.estado !== 'aprobado') {
       const solFull = await this.solicitudModel.findById(id);
-      if (solFull?.adjunto?.s3_key || solFull?.adjunto?.contenido) {
+      if (solFull?.adjunto?.s3_key || solFull?.adjunto?.contenido || solFull?.adjunto?.link_url) {
         await this.crearDocumentoDesde(solFull).catch(err =>
           this.logger.error('Error al crear documento desde solicitud aprobada:', err)
         );
       }
     }
+    if (usuarioRespondeId && ['aprobado', 'rechazado'].includes(dto.estado)) {
+      await this.suscribirPorRespuesta(usuarioRespondeId, solicitud).catch(err =>
+        this.logger.error('Error al auto-suscribir por respuesta de solicitud:', err)
+      );
+    }
     return solicitud;
   }
 
+  // Un admin que aprueba o rechaza una solicitud queda suscrito automáticamente
+  // al ámbito más específico de esa solicitud (proyecto > centro > empresa),
+  // para seguir recibiendo notificaciones de esa misma línea sin configurarlo
+  // a mano. Solo aplica a admin_smartclarity/super_admin (ver usuarioEstaSuscrito
+  // en el frontend, que documenta la misma regla).
+  private async suscribirPorRespuesta(
+    usuarioId: string,
+    solicitud: Record<string, unknown>,
+  ): Promise<void> {
+    const usuario = await this.usuarioModel.findById(usuarioId).select('rol').lean();
+    if (!usuario || !['admin_smartclarity', 'super_admin'].includes(usuario.rol)) return;
+
+    let campo: 'proyectos_suscritos' | 'centros_suscritos' | 'empresas_suscritas';
+    let valor: unknown;
+    if (solicitud['proyecto_id']) {
+      campo = 'proyectos_suscritos';
+      valor = solicitud['proyecto_id'];
+    } else if (solicitud['centro_costo_id']) {
+      campo = 'centros_suscritos';
+      valor = solicitud['centro_costo_id'];
+    } else if (solicitud['empresa_id']) {
+      campo = 'empresas_suscritas';
+      valor = solicitud['empresa_id'];
+    } else {
+      return;
+    }
+
+    await this.usuarioModel.updateOne({ _id: usuarioId }, { $addToSet: { [campo]: valor } });
+  }
+
   private async crearDocumentoDesde(sol: SolicitudDocument): Promise<void> {
+    if (sol.adjunto?.tipo_contenido === 'link' && sol.adjunto.link_url) {
+      const input: DocumentoInput = { linkUrl: sol.adjunto.link_url };
+      if (sol.proyecto_id) {
+        await this.docsProyecto.agregar(String(sol.proyecto_id), input, sol.nombre, sol.tipo);
+      } else if (sol.centro_costo_id) {
+        await this.docsCentro.agregar(String(sol.centro_costo_id), input, sol.nombre, sol.tipo);
+      } else {
+        await this.docsEmpresa.agregar(String(sol.empresa_id), input, sol.nombre, sol.tipo);
+      }
+      return;
+    }
+
     if (!sol.adjunto?.s3_key && !sol.adjunto?.contenido) return;
 
     let buffer: Buffer;
@@ -210,11 +281,11 @@ export class SolicitudesService {
       size:         buffer.length,
     };
     if (sol.proyecto_id) {
-      await this.docsProyecto.agregar(String(sol.proyecto_id), archivo, sol.nombre, sol.tipo);
+      await this.docsProyecto.agregar(String(sol.proyecto_id), { archivo }, sol.nombre, sol.tipo);
     } else if (sol.centro_costo_id) {
-      await this.docsCentro.agregar(String(sol.centro_costo_id), archivo, sol.nombre, sol.tipo);
+      await this.docsCentro.agregar(String(sol.centro_costo_id), { archivo }, sol.nombre, sol.tipo);
     } else {
-      await this.docsEmpresa.agregar(String(sol.empresa_id), archivo, sol.nombre, sol.tipo);
+      await this.docsEmpresa.agregar(String(sol.empresa_id), { archivo }, sol.nombre, sol.tipo);
     }
   }
 
@@ -227,10 +298,23 @@ export class SolicitudesService {
 
     try {
       const empresaId = String(solicitud['empresa_id']);
-      const centro = solicitud['centro_costo_id']
-        ? await this.centroCostoModel.findById(String(solicitud['centro_costo_id'])).lean()
-        : null;
+      const [empresa, centro, proyecto] = await Promise.all([
+        this.clienteModel.findById(empresaId).select('razon_social').lean(),
+        solicitud['centro_costo_id']
+          ? this.centroCostoModel.findById(String(solicitud['centro_costo_id'])).select('nombre').lean()
+          : Promise.resolve(null),
+        solicitud['proyecto_id']
+          ? this.proyectoModel.findById(String(solicitud['proyecto_id'])).select('nombre').lean()
+          : Promise.resolve(null),
+      ]);
       const centroObjId = centro ? new Types.ObjectId(String(solicitud['centro_costo_id'])) : null;
+
+      const empresaNombre = empresa ? String(empresa.razon_social) : 'Empresa';
+      const jerarquia: ContextoJerarquico = {
+        empresa:  empresaNombre,
+        centro:   centro ? String(centro.nombre) : undefined,
+        proyecto: proyecto ? String(proyecto.nombre) : undefined,
+      };
 
       let usuariosEmpresa: { nombre: string; email: string }[] = [];
 
@@ -282,7 +366,7 @@ export class SolicitudesService {
           nombre:         String(solicitud['nombre']),
           tipo:           String(solicitud['tipo']),
           motivo_rechazo: String(solicitud['motivo_rechazo'] ?? ''),
-          centro:         centro ? String(centro.nombre) : 'Empresa',
+          jerarquia,
         },
       });
     } catch (err: unknown) {
@@ -290,36 +374,51 @@ export class SolicitudesService {
     }
   }
 
-  async adjuntarArchivo(id: string, archivo: { originalname: string; buffer: Buffer; mimetype: string }) {
+  async adjuntar(
+    id: string,
+    input: DocumentoInput,
+    usuarioId?: string,
+    rolUploader?: string,
+  ) {
     const solicitud = await this.solicitudModel.findById(id).lean();
     if (!solicitud) throw new NotFoundException(`Solicitud ${id} no encontrada`);
     if (!['pendiente', 'rechazado'].includes(solicitud.estado)) {
       throw new BadRequestException(`No se puede adjuntar un archivo a una solicitud en estado "${solicitud.estado}"`);
     }
-    const TIPOS_PERMITIDOS = [
-      'application/pdf', 'image/jpeg', 'image/png', 'image/webp',
-      'application/msword',
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-      'application/vnd.ms-excel',
-      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-    ];
-    if (!TIPOS_PERMITIDOS.includes(archivo.mimetype)) {
-      throw new BadRequestException('Tipo de archivo no permitido. Se aceptan PDF, imágenes, Word y Excel.');
-    }
 
-    const timestamp = Date.now();
-    const rand = Math.random().toString(36).substring(7);
-    const s3Key = `solicitudes/${id}/${timestamp}_${rand}_${sanitizarNombreArchivo(archivo.originalname)}`;
-    await this.s3Service.subir(s3Key, archivo.buffer, archivo.mimetype);
+    let nuevoS3Key: string | undefined;
+    let adjuntoData: Record<string, unknown>;
+
+    if (input.archivo) {
+      const archivo = input.archivo;
+      const TIPOS_PERMITIDOS = [
+        'application/pdf', 'image/jpeg', 'image/png', 'image/webp',
+        'application/msword',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'application/vnd.ms-excel',
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      ];
+      if (!TIPOS_PERMITIDOS.includes(archivo.mimetype)) {
+        throw new BadRequestException('Tipo de archivo no permitido. Se aceptan PDF, imágenes, Word y Excel.');
+      }
+
+      const timestamp = Date.now();
+      const rand = Math.random().toString(36).substring(7);
+      nuevoS3Key = `solicitudes/${id}/${timestamp}_${rand}_${sanitizarNombreArchivo(archivo.originalname)}`;
+      await this.s3Service.subir(nuevoS3Key, archivo.buffer, archivo.mimetype);
+      adjuntoData = { s3_key: nuevoS3Key, tipo_contenido: 'archivo', tipo_mime: archivo.mimetype, nombre: archivo.originalname };
+    } else if (input.linkUrl) {
+      if (!esUrlValida(input.linkUrl)) throw new BadRequestException('El link debe ser una URL http(s) válida');
+      adjuntoData = { tipo_contenido: 'link', link_url: input.linkUrl, nombre: input.linkUrl };
+    } else {
+      throw new BadRequestException('Debes adjuntar un archivo o un link');
+    }
 
     const keyAnterior = solicitud.adjunto?.s3_key;
     const actualizada = await this.solicitudModel
       .findByIdAndUpdate(
         id,
-        {
-          adjunto: { s3_key: s3Key, tipo_mime: archivo.mimetype, nombre: archivo.originalname },
-          estado: 'revision',
-        },
+        { adjunto: adjuntoData, estado: 'revision' },
         { new: true },
       )
       .select('-adjunto.contenido')
@@ -327,19 +426,94 @@ export class SolicitudesService {
 
     // El adjunto reemplazado ya no lo referencia nadie: al aprobar una solicitud
     // el documento se crea como copia bajo documentos/, nunca apunta a esta key.
-    if (actualizada && keyAnterior && keyAnterior !== s3Key) {
+    if (actualizada && keyAnterior && keyAnterior !== nuevoS3Key) {
       await this.s3Service.eliminar(keyAnterior).catch((err: unknown) =>
         this.logger.error(`No se pudo eliminar el adjunto anterior en S3 (${keyAnterior}):`, err),
+      );
+    }
+    if (actualizada && rolUploader === 'usuario') {
+      this.notificarSolicitudCompletadaEvento(actualizada, usuarioId).catch((err: unknown) =>
+        this.logger.error('Error al notificar solicitud completada:', err),
       );
     }
     return actualizada;
   }
 
+  private async notificarSolicitudCompletadaEvento(
+    solicitud: Record<string, unknown>,
+    usuarioId?: string,
+  ): Promise<void> {
+    const empresaId = String(solicitud['empresa_id']);
+    const [empresa, centro, proyecto] = await Promise.all([
+      this.clienteModel.findById(empresaId).select('razon_social').lean(),
+      solicitud['centro_costo_id']
+        ? this.centroCostoModel.findById(String(solicitud['centro_costo_id'])).select('nombre').lean()
+        : Promise.resolve(null),
+      solicitud['proyecto_id']
+        ? this.proyectoModel.findById(String(solicitud['proyecto_id'])).select('nombre').lean()
+        : Promise.resolve(null),
+    ]);
+
+    const jerarquia: ContextoJerarquico = {
+      empresa:  empresa ? String(empresa.razon_social) : 'Empresa',
+      centro:   centro ? String(centro.nombre) : undefined,
+      proyecto: proyecto ? String(proyecto.nombre) : undefined,
+    };
+
+    // El adjunto se guarda en el proyecto si existe, si no en el centro, si no a nivel de empresa
+    // (misma prioridad que adjuntarArchivo/docsHelper más arriba).
+    const scope: ScopeDocumento = solicitud['proyecto_id']
+      ? { tipo: 'proyecto', empresaId, proyectoId: String(solicitud['proyecto_id']) }
+      : solicitud['centro_costo_id']
+        ? { tipo: 'centro', empresaId, centroId: String(solicitud['centro_costo_id']) }
+        : { tipo: 'empresa', empresaId };
+
+    await notificarSolicitudCompletada({
+      jerarquia,
+      nombre: String(solicitud['nombre']),
+      tipo: String(solicitud['tipo']),
+      usuarioId,
+      usuarioModel: this.usuarioModel as any,
+      mailService: this.mailService,
+      logger: this.logger,
+      scope,
+    });
+  }
+
+  async findEnRevisionParaAdmin(usuarioId: string, rol: string) {
+    const filter: Record<string, unknown> = { estado: 'revision' };
+
+    if (rol !== 'super_admin') {
+      const usuario = await this.usuarioModel.findById(usuarioId).lean();
+      if (!usuario) return [];
+      if (usuario.notificar_todas_empresas === false) {
+        const or: Record<string, unknown>[] = [];
+        if (usuario.empresas_suscritas?.length)  or.push({ empresa_id: { $in: usuario.empresas_suscritas } });
+        if (usuario.centros_suscritos?.length)   or.push({ centro_costo_id: { $in: usuario.centros_suscritos } });
+        if (usuario.proyectos_suscritos?.length) or.push({ proyecto_id: { $in: usuario.proyectos_suscritos } });
+        if (!or.length) return [];
+        filter['$or'] = or;
+      }
+    }
+
+    return this.solicitudModel
+      .find(filter)
+      .select('-adjunto.contenido')
+      .sort({ actualizado_en: -1 })
+      .populate('empresa_id', 'razon_social')
+      .populate('centro_costo_id', 'nombre')
+      .populate('proyecto_id', 'nombre')
+      .lean();
+  }
+
   async servirAdjunto(id: string): Promise<{ buffer: Buffer; tipo_mime: string; nombre: string }> {
     const solicitud = await this.solicitudModel.findById(id);
     if (!solicitud) throw new NotFoundException(`Solicitud ${id} no encontrada`);
-    if (!solicitud.adjunto?.s3_key && !solicitud.adjunto?.contenido) {
+    if (!solicitud.adjunto?.s3_key && !solicitud.adjunto?.contenido && !solicitud.adjunto?.link_url) {
       throw new NotFoundException('Esta solicitud no tiene adjunto');
+    }
+    if (solicitud.adjunto.tipo_contenido === 'link') {
+      throw new BadRequestException('Este adjunto es un link externo, no un archivo');
     }
     if (solicitud.adjunto.s3_key) {
       const buffer = await this.s3Service.descargar(solicitud.adjunto.s3_key);

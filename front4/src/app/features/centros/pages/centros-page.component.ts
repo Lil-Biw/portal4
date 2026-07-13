@@ -13,7 +13,7 @@ import { ActivosService } from '../../activos/activos.service';
 import { TiposActivoService } from '../../activos/tipos-activo.service';
 import { ActivosFormComponent } from '../../activos/components/activos-form/activos-form.component';
 import { CreateActivoDto } from '../../../shared/models/activo.model';
-import { asId } from '../../../shared/utils';
+import { asId, calcularScoreDocumental } from '../../../shared/utils';
 import { ConsumidorContextService } from '../../../profile/consumidor-context.service';
 import { ProfileService } from '../../../profile/profile.service';
 import { AuthService } from '../../auth/auth.service';
@@ -102,16 +102,18 @@ export class CentrosPageComponent implements OnInit {
   private   readonly api               = inject(ApiService);
 
   private todasSolicitudes = signal<Solicitud[]>([]);
+  private docsPorCentro    = signal<Map<string, number>>(new Map());
 
   protected scoresPorCentro = computed((): Map<string, number> => {
     const map = new Map<string, number>();
     const sols = this.todasSolicitudes();
-    const centroIds = [...new Set(sols.map(s => s.centro_costo_id).filter(Boolean) as string[])];
-    for (const centroId of centroIds) {
-      const del = sols.filter(s => s.centro_costo_id === centroId);
-      if (del.length === 0) continue;
-      const aprobados = del.filter(s => s.estado === 'aprobado').length;
-      map.set(centroId, Math.round(aprobados / del.length * 100));
+    const docs = this.docsPorCentro();
+    for (const centro of this.service.centros()) {
+      const id = asId(centro._id);
+      const del = sols.filter(s => asId(s.centro_costo_id) === id);
+      const docsActivos = docs.get(id) ?? 0;
+      if (del.length === 0 && docsActivos === 0) continue;
+      map.set(id, calcularScoreDocumental(del, docsActivos).pct);
     }
     return map;
   });
@@ -156,6 +158,12 @@ export class CentrosPageComponent implements OnInit {
         untracked(() => this.cargarSolicitudesGlobal(clientes.map(c => asId(c._id))));
       }
     });
+    effect(() => {
+      const centros = this.service.centros();
+      if (centros.length > 0) {
+        untracked(() => this.cargarDocsPorCentro(centros));
+      }
+    });
   }
 
   private cargarSolicitudesGlobal(clienteIds: string[]): void {
@@ -165,6 +173,18 @@ export class CentrosPageComponent implements OnInit {
     );
     forkJoin(reqs).subscribe(resultados => {
       this.todasSolicitudes.set(resultados.flat());
+    });
+  }
+
+  private cargarDocsPorCentro(centros: CentroCosto[]): void {
+    const reqs = centros.map(c =>
+      this.http.get<unknown[]>(this.api.url(`/empresas/${asId(c.cliente_id)}/centros/${asId(c._id)}/documentos`))
+        .pipe(catchError(() => of([] as unknown[])))
+    );
+    forkJoin(reqs).subscribe(resultados => {
+      const map = new Map<string, number>();
+      centros.forEach((c, i) => map.set(asId(c._id), resultados[i].length));
+      this.docsPorCentro.set(map);
     });
   }
 

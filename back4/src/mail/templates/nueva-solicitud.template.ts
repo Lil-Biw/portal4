@@ -1,11 +1,12 @@
 import { e } from './html-escape';
 import { SC_LOGO_HTML } from './logo';
+import { ContextoJerarquico, tituloJerarquia, breadcrumbJerarquiaHtml } from './jerarquia';
 
 export function nuevaSolicitudHtml(params: {
   nombre: string;
   tipo: string;
   descripcion?: string;
-  centro: string;
+  jerarquia: ContextoJerarquico;
   portalUrl: string;
   destinatario: string;
 }): string {
@@ -35,7 +36,8 @@ export function nuevaSolicitudHtml(params: {
           <div style="width:42px;height:42px;border-radius:50%;background:#E6F1FB;flex-shrink:0;font-size:22px;line-height:42px;text-align:center;margin-right:14px">📄</div>
           <div>
             <p style="font-size:15px;font-weight:700;color:#111827;margin:0 0 6px">Hola, ${e(params.destinatario)}</p>
-            <p style="font-size:13px;color:#6b7280;margin:0;line-height:1.4">Nueva solicitud de documentos en <strong style="color:#111827">${e(params.centro)}</strong>.</p>
+            <p style="font-size:13px;color:#6b7280;margin:0;line-height:1.4">Nueva solicitud de documentos en <strong style="color:#111827">${e(tituloJerarquia(params.jerarquia))}</strong>.</p>
+            ${breadcrumbJerarquiaHtml(params.jerarquia)}
           </div>
         </div>
       </div>

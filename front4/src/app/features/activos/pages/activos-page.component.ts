@@ -10,7 +10,7 @@ import { ActivosFormComponent, DocPendiente } from '../components/activos-form/a
 import { ActivosListComponent } from '../components/activos-list/activos-list.component';
 import { ActivoIconoComponent } from '../components/activo-icono/activo-icono.component';
 import { ActivoRevisarModalComponent } from '../components/activo-revisar-modal/activo-revisar-modal.component';
-import { Activo, CreateActivoDto, DocActivo, TipoActivo } from '../../../shared/models/activo.model';
+import { Activo, ActividadHistorialItem, CreateActivoDto, DocActivo, TipoActivo } from '../../../shared/models/activo.model';
 import { asId } from '../../../shared/utils';
 import { COLORES_ACTIVO, ColorActivo } from '../activos-icons';
 
@@ -314,7 +314,14 @@ export class ActivosPageComponent implements OnInit {
   protected abrirRevisar(activo: Activo): void {
     this.activoRevisando.set(activo);
     this.service.cargarHistorial(activo._id, activo.centro_costo_id);
+    this.service.listarDocumentos(activo._id, activo.centro_costo_id);
     this.modal.set('revisar');
+  }
+
+  protected onActividadAbierta(item: ActividadHistorialItem): void {
+    const activo = this.activoRevisando();
+    if (!activo) return;
+    this.service.listarDocumentosActividad(item._id, activo.centro_costo_id);
   }
 
   protected cerrar(): void {
@@ -326,6 +333,7 @@ export class ActivosPageComponent implements OnInit {
     this.service.clearStatus();
     this.activoRevisando.set(null);
     this.service.resetHistorial();
+    this.service.resetDocumentos();
     this.showTipoForm.set(false);
     this.editingTipoId.set(null);
   }
@@ -377,7 +385,13 @@ export class ActivosPageComponent implements OnInit {
   protected onDocSubido(doc: DocPendiente): void {
     const activo = this.activoEditando;
     if (!activo) return;
-    this.service.subirDocumento(activo._id, activo.centro_costo_id, doc.file, doc.nombre);
+    this.subiendoDocs = true;
+    const liberar = () => setTimeout(() => { this.subiendoDocs = false; }, 0);
+    if (doc.linkUrl) {
+      this.service.subirDocumentoLink(activo._id, activo.centro_costo_id, doc.linkUrl, doc.nombre, liberar, liberar);
+    } else if (doc.file) {
+      this.service.subirDocumento(activo._id, activo.centro_costo_id, doc.file, doc.nombre, liberar, liberar);
+    }
   }
 
   protected onDocEliminado(docId: string): void {
@@ -399,11 +413,14 @@ export class ActivosPageComponent implements OnInit {
       this.cerrar();
       return;
     }
-    const { file, nombre } = this.docsPendientes[index];
-    this.service.subirDocumento(activoId, centroId, file, nombre,
-      () => this.subirDocsPendientesSecuencial(activoId, centroId, index + 1),
-      () => { this.subiendoDocs = false; },
-    );
+    const { file, linkUrl, nombre } = this.docsPendientes[index];
+    const onSuccess = () => this.subirDocsPendientesSecuencial(activoId, centroId, index + 1);
+    const onError = () => { this.subiendoDocs = false; };
+    if (linkUrl) {
+      this.service.subirDocumentoLink(activoId, centroId, linkUrl, nombre, onSuccess, onError);
+    } else if (file) {
+      this.service.subirDocumento(activoId, centroId, file, nombre, onSuccess, onError);
+    }
   }
 
   // ── Gestión de tipos ──────────────────────────────────────────────

@@ -6,10 +6,15 @@ import { nuevoUsuarioHtml } from './templates/nuevo-usuario.template';
 import { nuevaActividadHtml } from './templates/nueva-actividad.template';
 import { nuevaSolicitudHtml } from './templates/nueva-solicitud.template';
 import { solicitudRechazadaHtml } from './templates/solicitud-rechazada.template';
+import { solicitudCompletadaHtml } from './templates/solicitud-completada.template';
 import { nuevaNoticiaHtml } from './templates/nueva-noticia.template';
 import { documentoVencidoHtml } from './templates/documento-vencido.template';
 import { nuevoDocumentoHtml } from './templates/nuevo-documento.template';
+import { proyectoPorVencerHtml } from './templates/proyecto-por-vencer.template';
+import { actividadPorVencerHtml } from './templates/actividad-por-vencer.template';
+import { proyectoCerradoHtml } from './templates/proyecto-cerrado.template';
 import { SC_LOGO_PATH, SC_LOGO_CID } from './templates/logo';
+import { ContextoJerarquico, breadcrumbJerarquiaTexto } from './templates/jerarquia';
 
 const LOGO_ATTACHMENT = { filename: 'image.png', path: SC_LOGO_PATH, cid: SC_LOGO_CID };
 
@@ -58,7 +63,7 @@ export class MailService {
 
   async notificarNuevaActividad(params: {
     destinatarios: { nombre: string; email: string }[];
-    actividad: { nombre: string; tipo: string; fecha: Date; descripcion?: string; centro: string; activos: string[] };
+    actividad: { nombre: string; tipo: string; fecha: Date; descripcion?: string; jerarquia: ContextoJerarquico; activos: string[]; documentos?: string[] };
   }): Promise<void> {
     const portalUrl = this.config.get<string>('PORTAL_URL') ?? 'http://localhost:4200';
     const fecha = params.actividad.fecha.toLocaleDateString('es-CL', {
@@ -67,15 +72,16 @@ export class MailService {
     });
     await this.enviarATodos(
       params.destinatarios,
-      `Nueva actividad programada — ${params.actividad.centro}`,
+      `Nueva actividad programada — ${params.actividad.nombre} — ${breadcrumbJerarquiaTexto(params.actividad.jerarquia)}`,
       dest => nuevaActividadHtml({
         destinatario: dest.nombre,
         nombre:       params.actividad.nombre,
         tipo:         params.actividad.tipo,
         fecha,
         descripcion:  params.actividad.descripcion,
-        centro:       params.actividad.centro,
+        jerarquia:    params.actividad.jerarquia,
         activos:      params.actividad.activos,
+        documentos:   params.actividad.documentos ?? [],
         portalUrl,
       }),
       'actividad',
@@ -84,18 +90,18 @@ export class MailService {
 
   async notificarNuevaSolicitud(params: {
     destinatarios: { nombre: string; email: string }[];
-    solicitud: { nombre: string; tipo: string; descripcion?: string; centro: string };
+    solicitud: { nombre: string; tipo: string; descripcion?: string; jerarquia: ContextoJerarquico };
   }): Promise<void> {
     const portalUrl = this.config.get<string>('PORTAL_URL') ?? 'http://localhost:4200';
     await this.enviarATodos(
       params.destinatarios,
-      `Nueva solicitud de documentos — ${params.solicitud.centro}`,
+      `Nueva solicitud de documentos — ${params.solicitud.nombre} — ${breadcrumbJerarquiaTexto(params.solicitud.jerarquia)}`,
       dest => nuevaSolicitudHtml({
         destinatario: dest.nombre,
         nombre:       params.solicitud.nombre,
         tipo:         params.solicitud.tipo,
         descripcion:  params.solicitud.descripcion,
-        centro:       params.solicitud.centro,
+        jerarquia:    params.solicitud.jerarquia,
         portalUrl,
       }),
       'solicitud',
@@ -104,21 +110,41 @@ export class MailService {
 
   async notificarRechazoSolicitud(params: {
     destinatarios: { nombre: string; email: string }[];
-    solicitud: { nombre: string; tipo: string; motivo_rechazo: string; centro: string };
+    solicitud: { nombre: string; tipo: string; motivo_rechazo: string; jerarquia: ContextoJerarquico };
   }): Promise<void> {
     const portalUrl = this.config.get<string>('PORTAL_URL') ?? 'http://localhost:4200';
     await this.enviarATodos(
       params.destinatarios,
-      `Solicitud rechazada — ${params.solicitud.nombre}`,
+      `Solicitud rechazada — ${params.solicitud.nombre} — ${breadcrumbJerarquiaTexto(params.solicitud.jerarquia)}`,
       dest => solicitudRechazadaHtml({
         destinatario:   dest.nombre,
         nombre:         params.solicitud.nombre,
         tipo:           params.solicitud.tipo,
         motivo_rechazo: params.solicitud.motivo_rechazo,
-        centro:         params.solicitud.centro,
+        jerarquia:      params.solicitud.jerarquia,
         portalUrl,
       }),
       'rechazo',
+    );
+  }
+
+  async notificarSolicitudCompletada(params: {
+    destinatarios: { nombre: string; email: string }[];
+    solicitud: { nombre: string; tipo: string; jerarquia: ContextoJerarquico; completadoPor?: string };
+  }): Promise<void> {
+    const portalUrl = this.config.get<string>('PORTAL_URL') ?? 'http://localhost:4200';
+    await this.enviarATodos(
+      params.destinatarios,
+      `Solicitud completada, pendiente de revisión — ${params.solicitud.nombre} — ${breadcrumbJerarquiaTexto(params.solicitud.jerarquia)}`,
+      dest => solicitudCompletadaHtml({
+        destinatario:  dest.nombre,
+        nombre:        params.solicitud.nombre,
+        tipo:          params.solicitud.tipo,
+        jerarquia:     params.solicitud.jerarquia,
+        completadoPor: params.solicitud.completadoPor,
+        portalUrl,
+      }),
+      'solicitud-completada',
     );
   }
 
@@ -187,17 +213,17 @@ export class MailService {
 
   async notificarNuevoDocumento(params: {
     destinatarios: { nombre: string; email: string }[];
-    documento: { nombre: string; categoria: string; contexto: string; subioPor?: string };
+    documento: { nombre: string; categoria: string; jerarquia: ContextoJerarquico; subioPor?: string };
   }): Promise<void> {
     const portalUrl = this.config.get<string>('PORTAL_URL') ?? 'http://localhost:4200';
     await this.enviarATodos(
       params.destinatarios,
-      `Nuevo documento subido — ${params.documento.contexto}`,
+      `Nuevo documento subido — ${params.documento.nombre} — ${breadcrumbJerarquiaTexto(params.documento.jerarquia)}`,
       dest => nuevoDocumentoHtml({
         destinatario: dest.nombre,
         nombre:       params.documento.nombre,
         categoria:    params.documento.categoria,
-        contexto:     params.documento.contexto,
+        jerarquia:    params.documento.jerarquia,
         subioPor:     params.documento.subioPor,
         portalUrl,
       }),
@@ -207,20 +233,85 @@ export class MailService {
 
   async notificarDocumentoVencido(params: {
     destinatarios: { nombre: string; email: string }[];
-    documento: { nombre: string; categoria: string; contexto: string };
+    documento: { nombre: string; categoria: string; jerarquia: ContextoJerarquico };
   }): Promise<void> {
     const portalUrl = this.config.get<string>('PORTAL_URL') ?? 'http://localhost:4200';
     await this.enviarATodos(
       params.destinatarios,
-      `Documento vencido — ${params.documento.nombre}`,
+      `Documento vencido — ${params.documento.nombre} — ${breadcrumbJerarquiaTexto(params.documento.jerarquia)}`,
       dest => documentoVencidoHtml({
         destinatario: dest.nombre,
         nombre:       params.documento.nombre,
         categoria:    params.documento.categoria,
-        contexto:     params.documento.contexto,
+        jerarquia:    params.documento.jerarquia,
         portalUrl,
       }),
       'vencimiento',
+    );
+  }
+
+  async notificarProyectoPorVencer(params: {
+    destinatarios: { nombre: string; email: string }[];
+    proyecto: { nombre: string; fechaFin: string; diasRestantes: number; jerarquia: ContextoJerarquico };
+  }): Promise<void> {
+    const portalUrl = this.config.get<string>('PORTAL_URL') ?? 'http://localhost:4200';
+    const plazo = params.proyecto.diasRestantes === 0
+      ? 'vence hoy'
+      : `en ${params.proyecto.diasRestantes} ${params.proyecto.diasRestantes === 1 ? 'día' : 'días'}`;
+    await this.enviarATodos(
+      params.destinatarios,
+      `Proyecto próximo a vencer — ${breadcrumbJerarquiaTexto(params.proyecto.jerarquia)} (${plazo})`,
+      dest => proyectoPorVencerHtml({
+        destinatario:  dest.nombre,
+        nombre:        params.proyecto.nombre,
+        fechaFin:      params.proyecto.fechaFin,
+        diasRestantes: params.proyecto.diasRestantes,
+        jerarquia:     params.proyecto.jerarquia,
+        portalUrl,
+      }),
+      'proyecto-por-vencer',
+    );
+  }
+
+  async notificarActividadPorVencer(params: {
+    destinatarios: { nombre: string; email: string }[];
+    actividad: { nombre: string; fecha: string; diasRestantes: number; jerarquia: ContextoJerarquico; documentos?: string[] };
+  }): Promise<void> {
+    const portalUrl = this.config.get<string>('PORTAL_URL') ?? 'http://localhost:4200';
+    const plazo = params.actividad.diasRestantes === 0
+      ? 'vence hoy'
+      : `en ${params.actividad.diasRestantes} ${params.actividad.diasRestantes === 1 ? 'día' : 'días'}`;
+    await this.enviarATodos(
+      params.destinatarios,
+      `Actividad próxima — ${params.actividad.nombre} — ${breadcrumbJerarquiaTexto(params.actividad.jerarquia)} (${plazo})`,
+      dest => actividadPorVencerHtml({
+        destinatario:  dest.nombre,
+        nombre:        params.actividad.nombre,
+        fecha:         params.actividad.fecha,
+        diasRestantes: params.actividad.diasRestantes,
+        jerarquia:     params.actividad.jerarquia,
+        documentos:    params.actividad.documentos ?? [],
+        portalUrl,
+      }),
+      'actividad-por-vencer',
+    );
+  }
+
+  async notificarProyectoCerrado(params: {
+    destinatarios: { nombre: string; email: string }[];
+    proyecto: { nombre: string; jerarquia: ContextoJerarquico };
+  }): Promise<void> {
+    const portalUrl = this.config.get<string>('PORTAL_URL') ?? 'http://localhost:4200';
+    await this.enviarATodos(
+      params.destinatarios,
+      `Proyecto cerrado — ${breadcrumbJerarquiaTexto(params.proyecto.jerarquia)}`,
+      dest => proyectoCerradoHtml({
+        destinatario: dest.nombre,
+        nombre:       params.proyecto.nombre,
+        jerarquia:    params.proyecto.jerarquia,
+        portalUrl,
+      }),
+      'proyecto-cerrado',
     );
   }
 }

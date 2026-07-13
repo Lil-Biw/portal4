@@ -11,7 +11,7 @@ import { TiposActividadService } from '../../actividades/tipos-actividad.service
 import { NoticiasService } from '../../noticias/noticias.service';
 import { Actividad } from '../../../shared/models/actividad.model';
 import { SeccionNoticia } from '../../../shared/models/noticia.model';
-import { asId, calcularScoreDocumental, scoreChipVariantFn, scoreChipLabelFn } from '../../../shared/utils';
+import { asId, calcularScoreDocumental, scoreChipVariantFn, scoreChipLabelFn, porcentajeColorFn } from '../../../shared/utils';
 
 interface ResumenSolicitudes {
   total: number;
@@ -89,6 +89,10 @@ export class InicioPageComponent implements OnInit {
 
   protected scoreChipLabel = computed((): string => scoreChipLabelFn(this.scoreDocumental().pct));
 
+  protected porcentajeColor(pct: number): string {
+    return porcentajeColorFn(pct);
+  }
+
   constructor() {
     effect(() => {
       const empresa = this.consumidorContext.empresaSeleccionada();
@@ -155,20 +159,19 @@ export class InicioPageComponent implements OnInit {
     const result = new Map<string, ResumenSolicitudes>();
     for (const centro of this.centrosDeEmpresa()) {
       const centroId = asId(centro._id);
-      const proyectosIds = this.proyectosService.proyectos()
-        .filter(p => asId(p.centro_costo_id) === centroId)
-        .map(p => asId(p._id));
       const sols = this.solicitudesService.solicitudes()
-        .filter(s => s.centro_costo_id === centroId || (s.proyecto_id && proyectosIds.includes(s.proyecto_id)));
-      const aprobado = sols.filter(s => s.estado === 'aprobado').length;
+        .filter(s => asId(s.centro_costo_id) === centroId);
+      const docsActivos = this.documentosService.documentosPorCentro()
+        .find(g => g.centroId === centroId)?.docs.length ?? 0;
+      const score = calcularScoreDocumental(sols, docsActivos);
       result.set(centroId, {
-        total:     sols.length,
-        pct:       sols.length > 0 ? Math.round((aprobado / sols.length) * 100) : 50,
-        pendiente: sols.filter(s => s.estado === 'pendiente').length,
-        revision:  sols.filter(s => s.estado === 'revision').length,
-        aprobado,
-        rechazado: sols.filter(s => s.estado === 'rechazado').length,
-        vencido:   sols.filter(s => s.estado === 'vencido').length,
+        total:     score.total,
+        pct:       score.pct,
+        pendiente: score.pendiente,
+        revision:  score.revision,
+        aprobado:  score.aprobados,
+        rechazado: score.rechazado,
+        vencido:   score.vencido,
       });
     }
     return result;

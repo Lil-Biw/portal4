@@ -17,6 +17,7 @@ import {
   CreateUsuarioDto,
   UpdateUsuarioDto,
   CambiarPasswordDto,
+  SuscripcionesDto,
 } from './usuarios.dto';
 import { Roles } from '../common/guards/guards';
 
@@ -95,5 +96,19 @@ export class UsuariosController {
       throw new ForbiddenException('Solo puedes cambiar tu propia contraseña');
     }
     return this.usuariosService.cambiarPassword(id, dto);
+  }
+
+  @Patch(':id/suscripciones')
+  @Roles('super_admin', 'admin_smartclarity')
+  actualizarSuscripciones(
+    @Param('id') id: string,
+    @Body() dto: SuscripcionesDto,
+    @Req() req: Request,
+  ) {
+    const user = (req as any).user as JwtUser;
+    if (user?.sub !== id) {
+      throw new ForbiddenException('Solo puedes editar tus propias suscripciones');
+    }
+    return this.usuariosService.actualizarSuscripciones(id, dto);
   }
 }

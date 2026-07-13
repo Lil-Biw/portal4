@@ -3,10 +3,11 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { CentroCostoDocument } from './centros-costos.schema';
 import { CreateCentroCostoDto, UpdateCentroCostoDto } from './centros-costos.dto';
-import { DocumentosHelper, ArchivoInput } from '../common/helpers/documentos.helper';
+import { DocumentosHelper, DocumentoInput } from '../common/helpers/documentos.helper';
 import { notificarDocumentoSubido } from '../common/helpers/notificar-documento.helper';
 import { DocumentosVencidosService } from '../documentos-vencidos/documentos-vencidos.service';
 import { MailService } from '../mail/mail.service';
+import { ContextoJerarquico } from '../mail/templates/jerarquia';
 import { NotificacionOpcionesDto } from '../common/dto/notificacion-opciones.dto';
 import { S3Service } from '../common/s3/s3.service';
 
@@ -114,8 +115,8 @@ export class CentrosCostosService {
     return centro;
   }
 
-  async agregarDocumento(id: string, archivo: ArchivoInput, nombreDisplay?: string, categoria?: string, usuarioId?: string, rolUploader?: string) {
-    const result = await this.docsHelper.agregar(id, archivo, nombreDisplay, categoria, usuarioId);
+  async agregarDocumento(id: string, input: DocumentoInput, nombreDisplay?: string, categoria?: string, usuarioId?: string, rolUploader?: string) {
+    const result = await this.docsHelper.agregar(id, input, nombreDisplay, categoria, usuarioId);
     if (rolUploader === 'usuario') {
       this.notificarSubidaDocumento(id, result['nombre_display'] as string, result['categoria'] as string | undefined, usuarioId)
         .catch((err: unknown) => this.logger.error('Error al notificar subida de documento (centro):', err));
@@ -124,16 +125,23 @@ export class CentrosCostosService {
   }
 
   private async notificarSubidaDocumento(centroId: string, nombre: string, categoria?: string, usuarioId?: string): Promise<void> {
-    const centro = await this.centroCostoModel.findById(centroId).select('nombre').lean() as any;
-    const contexto = centro ? `Centro: ${centro.nombre}` : 'Centro de costos';
+    const centro = await this.centroCostoModel
+      .findById(centroId)
+      .select('nombre cliente_id')
+      .populate('cliente_id', 'razon_social')
+      .lean() as any;
+    if (!centro) return;
+    const empresaId = centro.cliente_id?._id ?? centro.cliente_id;
+    const empresaNombre = centro.cliente_id?.razon_social ?? 'Empresa';
     await notificarDocumentoSubido({
-      contexto,
+      jerarquia: { empresa: empresaNombre, centro: centro.nombre },
       nombre,
       categoria: categoria ?? 'Sin categoría',
       usuarioId,
       usuarioModel: this.usuarioModel as any,
       mailService: this.mailService,
       logger: this.logger,
+      scope: { tipo: 'centro', empresaId: String(empresaId), centroId },
     });
   }
 
@@ -154,7 +162,10 @@ export class CentrosCostosService {
     empresaId?: string, empresaNombre?: string, centroNombre?: string,
     notificacion?: NotificacionOpcionesDto,
   ) {
-    const centro = await this.centroCostoModel.findById(centroId).lean();
+    const centro = await this.centroCostoModel
+      .findById(centroId)
+      .populate('cliente_id', 'razon_social')
+      .lean() as any;
     if (!centro) throw new NotFoundException(`Centro ${centroId} no encontrado`);
 
     const doc = await this.docCentroCostoModel.findOne({
@@ -163,11 +174,15 @@ export class CentrosCostosService {
     });
     if (!doc) throw new NotFoundException(`Documento ${docId} no encontrado`);
 
-    const resolvedEmpresaId = empresaId ?? String(centro.cliente_id);
+    const empresaIdObj = centro.cliente_id?._id ?? centro.cliente_id;
+    const resolvedEmpresaId = empresaId ?? String(empresaIdObj);
+    const empresaNombreReal = centro.cliente_id?.razon_social ?? empresaNombre ?? 'Empresa';
 
     await this.documentosVencidosService.crear({
       nombre_display: doc.nombre_display,
       categoria:      doc.categoria,
+      tipo_contenido: doc.tipo_contenido as 'archivo' | 'link' | undefined,
+      link_url:       doc.link_url,
       tipo_mime:      doc.tipo_mime,
       tamano_bytes:   doc.tamano_bytes,
       contenido:      doc.contenido,
@@ -187,7 +202,7 @@ export class CentrosCostosService {
       centroId,
       doc.nombre_display as string,
       doc.categoria as string,
-      centroNombre ?? 'centro de costos',
+      { empresa: empresaNombreReal, centro: centro.nombre },
       notificacion,
     );
 
@@ -199,7 +214,7 @@ export class CentrosCostosService {
     centroId: string,
     nombreDoc: string,
     categoria: string,
-    contextoLabel: string,
+    jerarquia: ContextoJerarquico,
     notificacion?: NotificacionOpcionesDto,
   ): Promise<void> {
     if (!notificacion?.notificar) return;
@@ -249,7 +264,7 @@ export class CentrosCostosService {
 
       await this.mailService.notificarDocumentoVencido({
         destinatarios,
-        documento: { nombre: nombreDoc, categoria, contexto: contextoLabel },
+        documento: { nombre: nombreDoc, categoria, jerarquia },
       });
     } catch (err: unknown) {
       this.logger.error('Error al notificar vencimiento de documento:', err);

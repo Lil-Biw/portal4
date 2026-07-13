@@ -3,7 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Subscription, forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { ApiService } from '../../core/services/api.service';
-import { Activo, ActividadHistorialItem, CreateActivoDto, DocActivo, UpdateActivoDto } from '../../shared/models/activo.model';
+import { Activo, ActividadHistorialItem, CreateActivoDto, DocActivo, DocActividad, UpdateActivoDto } from '../../shared/models/activo.model';
 import { Status } from '../../shared/models/status.model';
 import { CentrosService } from '../centros/centros.service';
 import { asId } from '../../shared/utils';
@@ -22,6 +22,8 @@ export class ActivosService {
   readonly historialActivo   = signal<ActividadHistorialItem[]>([]);
   readonly loadingHistorial  = signal(false);
   readonly documentosActivo  = signal<DocActivo[]>([]);
+  readonly documentosActividad        = signal<DocActividad[]>([]);
+  readonly loadingDocumentosActividad = signal(false);
   private historialSub: Subscription | null = null;
 
   cargar(centroCostoId?: string): void {
@@ -144,6 +146,32 @@ export class ActivosService {
     });
   }
 
+  subirDocumentoLink(
+    activoId: string,
+    centroId: string,
+    linkUrl: string,
+    nombreDisplay?: string,
+    onSuccess?: () => void,
+    onError?: () => void,
+  ): void {
+    const { empresaId } = this.resolverIds(centroId);
+    if (!empresaId) { this.setError({ error: { message: 'Centro no encontrado' } }); return; }
+    const form = new FormData();
+    form.append('link_url', linkUrl);
+    if (nombreDisplay) form.append('nombre_display', nombreDisplay);
+    this.http.post(
+      this.api.url(`/empresas/${empresaId}/centros/${centroId}/activos/${activoId}/documentos`),
+      form
+    ).subscribe({
+      next: () => {
+        this.status.set({ type: 'ok', text: 'Documento adjuntado correctamente' });
+        this.listarDocumentos(activoId, centroId);
+        onSuccess?.();
+      },
+      error: (err) => { this.setError(err); onError?.(); },
+    });
+  }
+
   eliminarDocumento(activoId: string, centroId: string, docId: string): void {
     const { empresaId } = this.resolverIds(centroId);
     if (!empresaId) { this.setError({ error: { message: 'Centro no encontrado' } }); return; }
@@ -165,6 +193,18 @@ export class ActivosService {
       `/empresas/${empresaId}/centros/${centroId}/activos/${activoId}/documentos/${docId}`
     );
     this.triggerDownload(url, nombreDisplay || docId);
+  }
+
+  listarDocumentosActividad(actividadId: string, centroId: string): void {
+    const { empresaId } = this.resolverIds(centroId);
+    if (!empresaId) { this.documentosActividad.set([]); return; }
+    this.loadingDocumentosActividad.set(true);
+    this.http.get<DocActividad[]>(
+      this.api.url(`/empresas/${empresaId}/centros/${centroId}/actividades/${actividadId}/documentos`)
+    ).subscribe({
+      next: (docs) => { this.documentosActividad.set(docs); this.loadingDocumentosActividad.set(false); },
+      error: () => { this.documentosActividad.set([]); this.loadingDocumentosActividad.set(false); },
+    });
   }
 
   descargarDocumentoActividad(actividadId: string, centroId: string, docId: string, nombreDisplay?: string): void {
@@ -195,6 +235,12 @@ export class ActivosService {
     this.historialSub = null;
     this.historialActivo.set([]);
     this.loadingHistorial.set(false);
+  }
+
+  resetDocumentos(): void {
+    this.documentosActivo.set([]);
+    this.documentosActividad.set([]);
+    this.loadingDocumentosActividad.set(false);
   }
 
   private triggerDownload(url: string, fileName: string): void {

@@ -128,13 +128,13 @@
           <!-- Score arc -->
           <circle cx="100" cy="90" r="70" fill="none" stroke-width="16"
             stroke-linecap="round"
-            [attr.stroke]="scoreDocumental().pct >= 80 ? '#22c55e' : scoreDocumental().pct >= 50 ? '#f59e0b' : '#ef4444'"
+            [attr.stroke]="porcentajeColor(scoreDocumental().pct)"
             [attr.stroke-dasharray]="(scoreDocumental().pct * 3.30).toFixed(1) + ' 440'"
             transform="rotate(135 100 90)"/>
           <!-- Score number -->
           <text x="100" y="87" text-anchor="middle" dominant-baseline="middle"
             style="font-size:38px;font-weight:700"
-            [attr.fill]="scoreDocumental().pct >= 80 ? '#15803d' : scoreDocumental().pct >= 50 ? '#b45309' : '#dc2626'">{{ scoreDocumental().pct }}%</text>
+            [attr.fill]="porcentajeColor(scoreDocumental().pct)">{{ scoreDocumental().pct }}%</text>
         </svg>
 
         @if (scoreDocumental().total > 0) {

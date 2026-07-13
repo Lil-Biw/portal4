@@ -7,13 +7,14 @@ import { Activo, CreateActivoDto, DocActivo, TipoActivo } from '../../../../shar
 import { CentroCosto } from '../../../../shared/models/centro.model';
 import { Cliente } from '../../../../shared/models/cliente.model';
 import { asId } from '../../../../shared/utils';
+import { UploadDocumentFormComponent } from '../../../../shared/components/upload-document-form/upload-document-form.component';
 
-export interface DocPendiente { file: File; nombre: string; }
+export interface DocPendiente { file?: File; linkUrl?: string; nombre: string; }
 
 @Component({
   selector: 'app-activos-form',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, UploadDocumentFormComponent],
   styles: [`
     .form-dos-col {
       display: grid;
@@ -57,23 +58,6 @@ export interface DocPendiente { file: File; nombre: string; }
     }
     .doc-acciones { display: flex; gap: .3rem; flex-shrink: 0; }
     .doc-empty { font-size: .8rem; color: #9ca3af; padding: .3rem 0; }
-    .doc-upload { display: flex; flex-direction: column; gap: .35rem; margin-top: .25rem; }
-    .doc-file-input {
-      font-size: .8rem;
-      padding: .25rem;
-      border: 1px solid rgba(34,33,33,.2);
-      border-radius: .375rem;
-      width: 100%;
-      box-sizing: border-box;
-    }
-    .doc-nombre-input {
-      font-size: .82rem;
-      padding: .35rem .55rem;
-      border: 1px solid rgba(34,33,33,.2);
-      border-radius: .375rem;
-      width: 100%;
-      box-sizing: border-box;
-    }
     .form-footer {
       display: flex;
       justify-content: flex-end;
@@ -220,7 +204,11 @@ export interface DocPendiente { file: File; nombre: string; }
                   <div class="doc-item">
                     <span class="doc-nombre" [title]="doc.nombre_display">{{ doc.nombre_display }}</span>
                     <div class="doc-acciones">
-                      <button type="button" class="btn-ghost btn-sm" (click)="onDescargarDoc(doc._id, doc.nombre_display)">↓</button>
+                      @if (doc.tipo_contenido === 'link') {
+                        <button type="button" class="btn-ghost btn-sm" (click)="onAbrirDoc(doc.link_url!)">↗</button>
+                      } @else {
+                        <button type="button" class="btn-ghost btn-sm" (click)="onDescargarDoc(doc._id, doc.nombre_display)">↓</button>
+                      }
                       <button type="button" class="btn-danger btn-sm" (click)="onEliminarDoc(doc._id)">✕</button>
                     </div>
                   </div>
@@ -232,25 +220,18 @@ export interface DocPendiente { file: File; nombre: string; }
           }
 
           <!-- Upload -->
-          <div class="doc-upload">
-            @if (fileInputVisible()) {
-              <input type="file" class="doc-file-input" (change)="onFileSelected($event)" />
-            }
-            <input type="text" class="doc-nombre-input"
-              [(ngModel)]="nombreInput" name="doc_nombre"
-              placeholder="Nombre del documento (opcional)" />
-            @if (!editingId) {
-              <button type="button" class="btn-ghost btn-sm"
-                (click)="agregarPendiente()" [disabled]="!fileSelected">
-                + Agregar a la lista
-              </button>
-            } @else {
-              <button type="button" class="btn-primary btn-sm"
-                (click)="subirExistente()" [disabled]="!fileSelected">
-                Adjuntar
-              </button>
-            }
-          </div>
+          <app-upload-document-form
+            style="display:block"
+            [mostrarTipoDocumento]="false"
+            [modo]="modo()" (modoChange)="setModo($event)"
+            [archivo]="fileSelected" (archivoChange)="onArchivoChange($event)"
+            [(link)]="linkInput"
+            [(nombre)]="nombreInput"
+            [linkInvalido]="linkInvalido()"
+            [confirmLabel]="editingId ? 'Adjuntar' : '+ Agregar a la lista'"
+            [showCancel]="false"
+            [confirmDisabled]="modo()==='archivo' ? !fileSelected : (!linkInput.trim() || linkInvalido())"
+            (confirmar)="editingId ? subirExistente() : agregarPendiente()" />
         </div>
 
       </div>
@@ -300,7 +281,26 @@ export class ActivosFormComponent implements OnChanges {
 
   fileSelected: File | null = null;
   nombreInput = '';
-  fileInputVisible = signal(true);
+  linkInput = '';
+  modo = signal<'archivo' | 'link'>('archivo');
+
+  setModo(modo: 'archivo' | 'link'): void {
+    if (this.modo() === modo) return;
+    this.modo.set(modo);
+    this.fileSelected = null;
+    this.linkInput = '';
+    this.nombreInput = '';
+  }
+
+  linkInvalido(): boolean {
+    const link = this.linkInput.trim();
+    if (!link) return false;
+    return !/^https?:\/\/.+/i.test(link);
+  }
+
+  onAbrirDoc(url: string): void {
+    window.open(url, '_blank');
+  }
 
   private _centros = signal<CentroCosto[]>([]);
 
@@ -377,8 +377,7 @@ export class ActivosFormComponent implements OnChanges {
     this.form.centro_costo_id = '';
   }
 
-  onFileSelected(ev: Event): void {
-    const file = (ev.target as HTMLInputElement).files?.[0] ?? null;
+  onArchivoChange(file: File | null): void {
     this.fileSelected = file;
     if (file && !this.nombreInput) {
       this.nombreInput = file.name.replace(/\.[^/.]+$/, '');
@@ -386,27 +385,31 @@ export class ActivosFormComponent implements OnChanges {
   }
 
   agregarPendiente(): void {
-    if (!this.fileSelected) return;
-    this.docAgregado.emit({
-      file: this.fileSelected,
-      nombre: this.nombreInput || this.fileSelected.name,
-    });
+    if (this.modo() === 'link') {
+      const link = this.linkInput.trim();
+      if (!link || this.linkInvalido()) return;
+      this.docAgregado.emit({ linkUrl: link, nombre: this.nombreInput || link });
+    } else {
+      if (!this.fileSelected) return;
+      this.docAgregado.emit({ file: this.fileSelected, nombre: this.nombreInput || this.fileSelected.name });
+    }
     this.fileSelected = null;
     this.nombreInput = '';
-    this.fileInputVisible.set(false);
-    setTimeout(() => this.fileInputVisible.set(true), 0);
+    this.linkInput = '';
   }
 
   subirExistente(): void {
-    if (!this.fileSelected) return;
-    this.docSubido.emit({
-      file: this.fileSelected,
-      nombre: this.nombreInput || this.fileSelected.name,
-    });
+    if (this.modo() === 'link') {
+      const link = this.linkInput.trim();
+      if (!link || this.linkInvalido()) return;
+      this.docSubido.emit({ linkUrl: link, nombre: this.nombreInput || link });
+    } else {
+      if (!this.fileSelected) return;
+      this.docSubido.emit({ file: this.fileSelected, nombre: this.nombreInput || this.fileSelected.name });
+    }
     this.fileSelected = null;
     this.nombreInput = '';
-    this.fileInputVisible.set(false);
-    setTimeout(() => this.fileInputVisible.set(true), 0);
+    this.linkInput = '';
   }
 
   onQuitarDoc(index: number): void    { this.docQuitado.emit(index); }

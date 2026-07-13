@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { SolicitudSchema } from './solicitudes.schema';
-import { SolicitudesController } from './solicitudes.controller';
+import { SolicitudesController, SolicitudesAdminController } from './solicitudes.controller';
 import { SolicitudesService } from './solicitudes.service';
 import { CentroCostoSchema } from '../centros-costos/centros-costos.schema';
 import { ClienteSchema } from '../clientes/clientes.schema';
@@ -30,7 +30,7 @@ import { MailModule } from '../mail/mail.module';
     ]),
     MailModule,
   ],
-  controllers: [SolicitudesController],
+  controllers: [SolicitudesController, SolicitudesAdminController],
   providers: [SolicitudesService],
   exports: [SolicitudesService],
 })

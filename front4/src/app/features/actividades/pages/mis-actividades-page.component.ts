@@ -8,7 +8,7 @@ import { ActivosService } from '../../activos/activos.service';
 
 import { ConsumidorContextService } from '../../../profile/consumidor-context.service';
 import { Actividad, TipoActividad } from '../../../shared/models/actividad.model';
-import { asId, toDateKey } from '../../../shared/utils';
+import { asId, toDateKey, actividadEnDia, posicionActividadEnDia } from '../../../shared/utils';
 import { createCalendarState, CalendarView, CALENDAR_DAYS, CALENDAR_MONTHS } from '../../../shared/calendar-state';
 
 @Component({
@@ -146,13 +146,21 @@ export class MisActividadesPageComponent implements OnInit {
   }
   cerrarDetalle(): void { this.actividadDetalle.set(null); }
 
-  descargarDocActividad(actividadId: string, nombre: string, nombreDisplay?: string): void {
-    this.service.descargarDocumento(actividadId, nombre, nombreDisplay);
+  descargarDocActividad(actividadId: string, docId: string, nombreDisplay?: string): void {
+    this.service.descargarDocumento(actividadId, docId, nombreDisplay);
+  }
+
+  abrirDocActividad(linkUrl: string): void {
+    window.open(linkUrl, '_blank');
   }
 
   actividadesEnDia(date: Date): Actividad[] {
     const key = toDateKey(date);
-    return this.actividadesFiltradas().filter(a => a.fecha.slice(0, 10) === key);
+    return this.actividadesFiltradas().filter(a => actividadEnDia(a, key));
+  }
+
+  posicionEnDia(a: Actividad, date: Date): 'unico' | 'inicio' | 'medio' | 'fin' {
+    return posicionActividadEnDia(a, toDateKey(date));
   }
 
   colorDeActividad(a: Actividad): string {

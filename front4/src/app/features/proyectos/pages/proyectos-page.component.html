@@ -101,15 +101,22 @@
     <!-- Crear -->
     <ng-container *ngIf="modal() === 'crear'">
       <div class="modal-header">
-        <h3>Nuevo proyecto</h3>
+        <div>
+          <h3>Nuevo proyecto</h3>
+          <p class="modal-sub">Completa los datos del nuevo proyecto</p>
+        </div>
         <button class="modal-close" (click)="cerrar()">&#x2715;</button>
       </div>
-      <app-status-banner [status]="service.status()"></app-status-banner>
       <app-proyecto-form
         submitLabel="Crear proyecto"
+        [status]="service.status()"
         [clientes]="clientesService.clientes()"
         [centros]="centrosService.centros()"
         [tipos]="tiposService.tipos()"
+        [centrosSeleccionados]="service.centrosSeleccionados()"
+        (centroToggle)="service.toggleCentro($event.centroId, $event.checked)"
+        (clienteChange)="service.centrosSeleccionados.set([])"
+        (cancelled)="cerrar()"
         (submitted)="crear($event)">
       </app-proyecto-form>
     </ng-container>
@@ -117,16 +124,25 @@
     <!-- Editar -->
     <ng-container *ngIf="modal() === 'editar'">
       <div class="modal-header">
-        <h3>Editar proyecto</h3>
+        <div>
+          <h3>Editar proyecto</h3>
+          <p class="modal-sub" *ngIf="service.seleccionado() as p">
+            {{ p.codigo }}<ng-container *ngIf="empresaNombre(p)"> &middot; {{ empresaNombre(p) }}</ng-container>
+          </p>
+        </div>
         <button class="modal-close" (click)="cerrar()">&#x2715;</button>
       </div>
-      <app-status-banner [status]="service.status()"></app-status-banner>
       <app-proyecto-form
         [initial]="service.seleccionado()"
+        [status]="service.status()"
         [clientes]="clientesService.clientes()"
         [centros]="centrosService.centros()"
         [tipos]="tiposService.tipos()"
+        [centrosSeleccionados]="service.centrosSeleccionados()"
+        (centroToggle)="service.toggleCentro($event.centroId, $event.checked)"
+        (clienteChange)="service.centrosSeleccionados.set([])"
         submitLabel="Guardar cambios"
+        (cancelled)="cerrar()"
         (submitted)="actualizar($event)">
       </app-proyecto-form>
     </ng-container>
@@ -137,21 +153,23 @@
         <h3>Buscar proyecto</h3>
         <button class="modal-close" (click)="cerrar()">&#x2715;</button>
       </div>
-      <input
-        class="search-input"
-        type="text"
-        placeholder="Nombre, código, empresa o centro de costos..."
-        [ngModel]="busqueda()"
-        (ngModelChange)="busqueda.set($event)"
-        autofocus />
-      <app-proyectos-list
-        [proyectos]="proyectosFiltrados()"
-        [clientes]="clientesService.clientes()"
-        [centros]="centrosService.centros()"
-        [tipos]="tiposService.tipos()"
-        (editado)="editarDesdeBuscar($event)"
-        (eliminado)="eliminar($event)">
-      </app-proyectos-list>
+      <div class="modal-body">
+        <input
+          class="search-input"
+          type="text"
+          placeholder="Nombre, código, empresa o centro de costos..."
+          [ngModel]="busqueda()"
+          (ngModelChange)="busqueda.set($event)"
+          autofocus />
+        <app-proyectos-list
+          [proyectos]="proyectosFiltrados()"
+          [clientes]="clientesService.clientes()"
+          [centros]="centrosService.centros()"
+          [tipos]="tiposService.tipos()"
+          (editado)="editarDesdeBuscar($event)"
+          (eliminado)="eliminar($event)">
+        </app-proyectos-list>
+      </div>
     </ng-container>
 
     <!-- Tipos de proyecto -->
@@ -160,6 +178,7 @@
         <h3>Tipos de proyecto</h3>
         <button class="modal-close" (click)="cerrar()">&#x2715;</button>
       </div>
+      <div class="modal-body">
       <app-status-banner [status]="tiposService.status()"></app-status-banner>
 
       <div class="tipos-modal">
@@ -214,6 +233,7 @@
           </div>
         </div>
 
+      </div>
       </div>
     </ng-container>
 

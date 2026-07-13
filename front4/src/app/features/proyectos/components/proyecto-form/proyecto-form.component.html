@@ -1,76 +1,144 @@
-<form (ngSubmit)="submit()" class="form-grid">
-  <label class="field">
-    <span>Empresa *</span>
-    <select [(ngModel)]="form.cliente_id" name="cliente_id" required (ngModelChange)="onClienteChange()">
-      <option value="">Selecciona empresa</option>
-      <option *ngFor="let c of clientes" [value]="c._id">{{ c.razon_social }}</option>
-    </select>
-  </label>
-  <label class="field">
-    <span>Centro de costos *</span>
-    <select [(ngModel)]="form.centro_costo_id" name="centro_costo_id" required [disabled]="!form.cliente_id">
-      <option value="">{{ form.cliente_id ? 'Selecciona centro' : 'Selecciona empresa primero' }}</option>
-      <option *ngFor="let c of centrosFiltrados" [value]="c._id">{{ c.nombre }}</option>
-    </select>
-  </label>
-  <label class="field">
-    <span>Código *</span>
-    <input [(ngModel)]="form.codigo" name="codigo" required />
-  </label>
-  <label class="field">
-    <span>Nombre *</span>
-    <input [(ngModel)]="form.nombre" name="nombre" required />
-  </label>
-  <label class="field">
-    <span>Tipo de proyecto</span>
-    <div class="tipo-combo">
-      <input
-        class="tipo-combo-input"
-        type="text"
-        placeholder="Sin tipo asignado"
-        [ngModel]="tipoQuery()"
-        name="tipo_query"
-        (ngModelChange)="onTipoInput($event)"
-        (focus)="tipoDropdownOpen.set(true)"
-        (blur)="onTipoBlur()"
-        autocomplete="off" />
-      <span class="tipo-combo-arrow">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-          <polyline points="6 9 12 15 18 9"/>
-        </svg>
-      </span>
-      <div class="tipo-combo-dropdown" *ngIf="tipoDropdownOpen()">
-        <div class="tipo-combo-option" (mousedown)="selectTipo(null)">Sin tipo</div>
-        <div class="tipo-combo-option"
-          *ngFor="let t of tiposFiltrados()"
-          [class.tipo-combo-option--active]="form.tipo_proyecto_id === t._id"
-          (mousedown)="selectTipo(t)">
-          <app-proyecto-icono [color]="t.color" [size]="14"></app-proyecto-icono>
-          {{ t.nombre }}
+<form (ngSubmit)="submit()" class="pf">
+  <div class="pf-body">
+    <app-status-banner [status]="status"></app-status-banner>
+
+    <section class="pf-seccion">
+      <p class="pf-seccion-titulo">Empresa y centros</p>
+      <div class="form-grid">
+        <label class="field" style="grid-column:1/-1">
+          <span>Empresa *</span>
+          <select [(ngModel)]="form.cliente_id" name="cliente_id" required (ngModelChange)="onClienteChange()">
+            <option value="">Selecciona empresa</option>
+            <option *ngFor="let c of clientes" [value]="c._id">{{ c.razon_social }}</option>
+          </select>
+        </label>
+        <div class="field" style="grid-column:1/-1">
+          <span class="pf-label-row">
+            Centros de costos *
+            <span class="pf-badge" *ngIf="centrosSeleccionados.length > 0">
+              {{ centrosSeleccionados.length }} seleccionado{{ centrosSeleccionados.length > 1 ? 's' : '' }}
+            </span>
+          </span>
+          <ng-container *ngIf="form.cliente_id; else sinEmpresa">
+            <div class="centros-panel">
+              <div class="centros-search">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+                  <circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.5" y2="16.5"/>
+                </svg>
+                <input
+                  type="text"
+                  placeholder="Buscar centro..."
+                  [ngModel]="centroQuery()"
+                  name="centro_query"
+                  (ngModelChange)="centroQuery.set($event)" />
+              </div>
+              <div class="centros-lista">
+                <label class="centro-row" *ngFor="let c of centrosFiltradosPorBusqueda"
+                  [class.centro-row--sel]="centrosSeleccionados.includes(c._id)">
+                  <input type="checkbox" [checked]="centrosSeleccionados.includes(c._id)"
+                    (change)="centroToggle.emit({ centroId: c._id, checked: $any($event.target).checked })" />
+                  <span>{{ c.nombre }}</span>
+                </label>
+                <p class="centros-empty" *ngIf="centrosFiltradosPorBusqueda.length === 0">
+                  Sin resultados para "{{ centroQuery() }}"
+                </p>
+              </div>
+            </div>
+          </ng-container>
+          <ng-template #sinEmpresa>
+            <p class="pf-hint">Selecciona una empresa primero</p>
+          </ng-template>
         </div>
-        <div class="tipo-combo-empty" *ngIf="tiposFiltrados().length === 0">Sin resultados para "{{ tipoQuery() }}"</div>
       </div>
-    </div>
-  </label>
-  <label class="field">
-    <span>Estado</span>
-    <select [(ngModel)]="form.estado" name="estado">
-      <option *ngFor="let e of estados" [value]="e.value">{{ e.label }}</option>
-    </select>
-  </label>
-  <label class="field">
-    <span>Fecha inicio</span>
-    <input [(ngModel)]="form.fecha_inicio" name="fecha_inicio" type="date" />
-  </label>
-  <label class="field">
-    <span>Fecha fin</span>
-    <input [(ngModel)]="form.fecha_fin" name="fecha_fin" type="date" />
-  </label>
-  <label class="field" style="grid-column:1/-1">
-    <span>Descripción</span>
-    <input [(ngModel)]="form.descripcion" name="descripcion" />
-  </label>
-  <div class="form-footer">
-    <button type="submit" class="btn-primary">{{ submitLabel }}</button>
+    </section>
+
+    <section class="pf-seccion">
+      <p class="pf-seccion-titulo">Datos del proyecto</p>
+      <div class="form-grid">
+        <label class="field">
+          <span>Código *</span>
+          <input [(ngModel)]="form.codigo" name="codigo" required />
+        </label>
+        <label class="field">
+          <span>Nombre *</span>
+          <input [(ngModel)]="form.nombre" name="nombre" required />
+        </label>
+        <label class="field">
+          <span>Tipo de proyecto</span>
+          <div class="tipo-combo">
+            <input
+              class="tipo-combo-input"
+              type="text"
+              placeholder="Sin tipo asignado"
+              [ngModel]="tipoQuery()"
+              name="tipo_query"
+              (ngModelChange)="onTipoInput($event)"
+              (focus)="tipoDropdownOpen.set(true)"
+              (blur)="onTipoBlur()"
+              autocomplete="off" />
+            <span class="tipo-combo-arrow">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="6 9 12 15 18 9"/>
+              </svg>
+            </span>
+            <div class="tipo-combo-dropdown" *ngIf="tipoDropdownOpen()">
+              <div class="tipo-combo-option" (mousedown)="selectTipo(null)">Sin tipo</div>
+              <div class="tipo-combo-option"
+                *ngFor="let t of tiposFiltrados()"
+                [class.tipo-combo-option--active]="form.tipo_proyecto_id === t._id"
+                (mousedown)="selectTipo(t)">
+                <app-proyecto-icono [color]="t.color" [size]="14"></app-proyecto-icono>
+                {{ t.nombre }}
+              </div>
+              <div class="tipo-combo-empty" *ngIf="tiposFiltrados().length === 0">Sin resultados para "{{ tipoQuery() }}"</div>
+            </div>
+          </div>
+        </label>
+        <label class="field">
+          <span>Estado</span>
+          <select [(ngModel)]="form.estado" name="estado">
+            <option *ngFor="let e of estados" [value]="e.value">{{ e.label }}</option>
+          </select>
+        </label>
+        <label class="field" style="grid-column:1/-1">
+          <span>Descripción</span>
+          <textarea [(ngModel)]="form.descripcion" name="descripcion" rows="3"
+            placeholder="Describe brevemente el alcance del proyecto..."></textarea>
+        </label>
+      </div>
+    </section>
+
+    <section class="pf-seccion">
+      <p class="pf-seccion-titulo">Plazos y recordatorios</p>
+      <div class="form-grid">
+        <label class="field">
+          <span>Fecha inicio</span>
+          <input [(ngModel)]="form.fecha_inicio" name="fecha_inicio" type="date" />
+        </label>
+        <label class="field">
+          <span>Fecha fin</span>
+          <input [(ngModel)]="form.fecha_fin" name="fecha_fin" type="date" />
+        </label>
+        <div class="field" style="grid-column:1/-1">
+          <span>Recordatorios de vencimiento</span>
+          <p class="pf-hint">
+            Con cuánta antelación a la fecha de término se avisa por correo a los administradores suscritos (puedes marcar varias).
+          </p>
+          <div class="pf-pills">
+            <label class="pf-pill" *ngFor="let o of opcionesDiasRecordatorio"
+              [class.pf-pill--on]="diaRecordatorioChecked(o.valor)">
+              <input type="checkbox" [checked]="diaRecordatorioChecked(o.valor)"
+                (change)="toggleDiaRecordatorio(o.valor, $any($event.target).checked)" />
+              <span class="pf-pill-check">✓</span>{{ o.label }}
+            </label>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <div class="pf-footer">
+    <button type="button" class="btn-ghost" (click)="cancelled.emit()">Cancelar</button>
+    <button type="submit" class="btn-primary" [disabled]="centrosSeleccionados.length === 0">{{ submitLabel }}</button>
   </div>
 </form>

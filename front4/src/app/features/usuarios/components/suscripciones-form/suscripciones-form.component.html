@@ -1,0 +1,68 @@
+<div class="col-suscripciones">
+    <label class="toggle-row">
+      <input type="checkbox" [(ngModel)]="notificarTodas" name="notificarTodas" />
+      Notificar de todas las empresas
+    </label>
+    <p class="toggle-hint">
+      Si lo apagas, solo recibirás correos de documentos subidos en las empresas, centros o proyectos que marques abajo.
+    </p>
+
+    <ng-container *ngIf="!notificarTodas">
+      <input
+        class="search-input"
+        type="text"
+        placeholder="Buscar empresa..."
+        [(ngModel)]="busqueda"
+        name="busqueda"
+      />
+
+      <div class="arbol">
+        <div class="empresa-item" *ngFor="let g of grupos">
+          <div class="empresa-header">
+            <button type="button" class="btn-expand" [class.abierto]="isExpanded(g.empresa._id)" (click)="toggleExpand(g.empresa._id)" title="Expandir">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+            </button>
+            <label>
+              <input
+                type="checkbox"
+                [checked]="empresaChecked(g.empresa._id)"
+                (change)="toggleEmpresa(g.empresa._id, $any($event.target).checked)"
+              />
+              {{ g.empresa.razon_social }}
+            </label>
+          </div>
+
+          <div class="empresa-detalle" *ngIf="isExpanded(g.empresa._id)">
+            <p class="subgrupo-titulo">Centros</p>
+            <p class="empty-sub" *ngIf="g.centros.length === 0">Sin centros registrados.</p>
+            <label class="check-item" *ngFor="let c of g.centros">
+              <input
+                type="checkbox"
+                [checked]="centroChecked(c._id)"
+                (change)="toggleCentro(c._id, $any($event.target).checked)"
+              />
+              {{ c.nombre }}
+            </label>
+
+            <p class="subgrupo-titulo">Proyectos</p>
+            <p class="empty-sub" *ngIf="g.proyectos.length === 0">Sin proyectos registrados.</p>
+            <label class="check-item" *ngFor="let p of g.proyectos">
+              <input
+                type="checkbox"
+                [checked]="proyectoChecked(p._id)"
+                (change)="toggleProyecto(p._id, $any($event.target).checked)"
+              />
+              {{ p.nombre }}
+            </label>
+          </div>
+        </div>
+
+        <p class="empty" *ngIf="grupos.length === 0">No hay empresas para mostrar.</p>
+      </div>
+    </ng-container>
+</div>
+
+<div class="form-footer" style="margin-top:1.25rem">
+  <button type="button" class="btn-ghost" (click)="cancelado.emit()">Cancelar</button>
+  <button type="button" class="btn-primary" (click)="submit()">Guardar suscripciones</button>
+</div>

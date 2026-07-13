@@ -1,5 +1,6 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { Cliente } from '../../../../shared/models/cliente.model';
+import { asId } from '../../../../shared/utils';
 
 @Component({
   selector: 'app-clientes-list',
@@ -91,7 +92,7 @@ export class ClientesListComponent {
   }
 
   getScore(cliente: Cliente): number | null {
-    const s = this.scoresPorEmpresa.get(cliente._id);
+    const s = this.scoresPorEmpresa.get(asId(cliente._id));
     return s !== undefined ? s : null;
   }
 

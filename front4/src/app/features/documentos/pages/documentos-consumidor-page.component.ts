@@ -10,8 +10,9 @@ import { ConsumidorContextService } from '../../../profile/consumidor-context.se
 import { SolicitudesService, EstadoSolicitud, Solicitud } from '../../solicitudes/solicitudes.service';
 import { StatusBannerComponent } from '../../../shared/components/status-banner/status-banner.component';
 import { UploadBubbleComponent } from '../../../shared/components/upload-bubble/upload-bubble.component';
+import { UploadDocumentFormComponent } from '../../../shared/components/upload-document-form/upload-document-form.component';
 import { createUploadQueue } from '../../../shared/upload-queue-state';
-import { asId, detectarCategoriaDocumento } from '../../../shared/utils';
+import { asId, detectarCategoriaDocumento, formatFechaHora, formatBytes, MAX_UPLOAD_SIZE_BYTES } from '../../../shared/utils';
 
 interface PanelState {
   showUpload: boolean;
@@ -21,12 +22,18 @@ interface PanelState {
   busqueda: string;
   categoriaFiltro: string;
   selectedFile: File | null;
+  modoUpload: 'archivo' | 'link';
+  linkInput: string;
 }
+
+type UploadCtx =
+  | { kind: 'archivo'; file: File; tipo: DocTipo; empresaId: string; centroId?: string; proyectoId?: string; nombreDisplay?: string; categoria?: string }
+  | { kind: 'link'; linkUrl: string; tipo: DocTipo; empresaId: string; centroId?: string; proyectoId?: string; nombreDisplay?: string; categoria?: string };
 
 @Component({
   selector: 'app-documentos-consumidor-page',
   standalone: true,
-  imports: [NgTemplateOutlet, FormsModule, StatusBannerComponent, UploadBubbleComponent],
+  imports: [NgTemplateOutlet, FormsModule, StatusBannerComponent, UploadBubbleComponent, UploadDocumentFormComponent],
   templateUrl: './documentos-consumidor-page.component.html',
 })
 export class DocumentosConsumidorPageComponent implements OnInit {
@@ -58,6 +65,9 @@ export class DocumentosConsumidorPageComponent implements OnInit {
 
   protected solicitudAdjuntando = signal<string | null>(null);
   protected adjuntoFile: File | null = null;
+  protected adjuntoModo = signal<'archivo' | 'link'>('archivo');
+  protected adjuntoLinkInput = '';
+  protected adjuntando = signal(false);
 
   protected panels: Record<DocTipo, PanelState> = {
     empresa:  this.emptyPanel(),
@@ -66,10 +76,7 @@ export class DocumentosConsumidorPageComponent implements OnInit {
   };
 
   protected readonly uploadQueue = createUploadQueue();
-  private readonly retryContext = new Map<string, {
-    file: File; tipo: DocTipo; empresaId: string; centroId?: string; proyectoId?: string;
-    nombreDisplay?: string; categoria?: string;
-  }>();
+  private readonly retryContext = new Map<string, UploadCtx>();
 
   // ─── computed ─────────────────────────────────────────────────────────────
 
@@ -88,7 +95,7 @@ export class DocumentosConsumidorPageComponent implements OnInit {
     const centroId = this.selectedCentroIdC();
     if (!empresa || !centroId || centroId === 'todos') return [];
     return this.proyectosService.proyectos().filter(p =>
-      asId(p.cliente_id) === asId(empresa._id) && asId(p.centro_costo_id) === centroId
+      asId(p.cliente_id) === asId(empresa._id) && (p.centro_costo_ids ?? []).some(id => asId(id) === centroId)
     );
   }
 
@@ -129,6 +136,8 @@ export class DocumentosConsumidorPageComponent implements OnInit {
     return `${meses[d.getUTCMonth()]} ${d.getUTCFullYear()}`;
   }
 
+  protected readonly formatFechaHora = formatFechaHora;
+
   private filtrarSolicitudes(sols: Solicitud[], busqueda: string): Solicitud[] {
     const estado = this.filtroEstado();
     const tipo   = this.filtroTipoSolicitud();
@@ -166,7 +175,7 @@ export class DocumentosConsumidorPageComponent implements OnInit {
         sols = all.filter(s => !!s.proyecto_id);
       } else {
         const ids = this.proyectosService.proyectos()
-          .filter(p => asId(p.centro_costo_id) === centroId)
+          .filter(p => (p.centro_costo_ids ?? []).some(id => asId(id) === centroId))
           .map(p => asId(p._id));
         sols = all.filter(s => s.proyecto_id && ids.includes(s.proyecto_id));
       }
@@ -279,7 +288,7 @@ export class DocumentosConsumidorPageComponent implements OnInit {
       this.service.cargarTodosProyectos(empresaId, todosProyectos, this.centrosFiltradosC);
     } else if (id === 'todos' && centroId && centroId !== 'todos') {
       const proyectosDeCentro = this.proyectosService.proyectos().filter(
-        p => asId(p.cliente_id) === asId(empresa?._id) && asId(p.centro_costo_id) === centroId
+        p => asId(p.cliente_id) === asId(empresa?._id) && (p.centro_costo_ids ?? []).some(cid => asId(cid) === centroId)
       );
       this.service.cargarTodosProyectos(empresaId, proyectosDeCentro, this.centrosFiltradosC);
     } else if (id && id !== 'todos' && centroId && centroId !== 'todos') {
@@ -307,7 +316,7 @@ export class DocumentosConsumidorPageComponent implements OnInit {
     const p = this.panels[tipo];
     p.showUpload = !p.showUpload;
     if (p.showUpload) p.showFilter = false;
-    if (!p.showUpload) { p.selectedFile = null; p.nombreInput = ''; }
+    if (!p.showUpload) { p.selectedFile = null; p.nombreInput = ''; p.linkInput = ''; p.modoUpload = 'archivo'; }
   }
 
   toggleFilter(tipo: DocTipo): void {
@@ -316,43 +325,67 @@ export class DocumentosConsumidorPageComponent implements OnInit {
     if (p.showFilter) p.showUpload = false;
   }
 
-  onFileSelected(ev: Event, tipo: DocTipo): void {
-    const file = (ev.target as HTMLInputElement).files?.[0];
-    if (!file) return;
+  setModoUpload(tipo: DocTipo, modo: 'archivo' | 'link'): void {
     const p = this.panels[tipo];
-    p.selectedFile = file;
-    if (!p.nombreInput) p.nombreInput = file.name;
-    p.categoriaInput = detectarCategoriaDocumento(file.name)!;
+    if (p.modoUpload === modo) return;
+    p.modoUpload = modo;
+    p.selectedFile = null;
+    p.linkInput = '';
+    p.nombreInput = '';
   }
 
-  onDrop(ev: DragEvent, tipo: DocTipo): void {
-    ev.preventDefault();
-    const file = ev.dataTransfer?.files?.[0];
-    if (!file) return;
+  linkInvalido(tipo: DocTipo): boolean {
+    const link = this.panels[tipo].linkInput.trim();
+    if (!link) return false;
+    return !/^https?:\/\/.+/i.test(link);
+  }
+
+  onArchivoChange(file: File | null, tipo: DocTipo): void {
     const p = this.panels[tipo];
     p.selectedFile = file;
-    if (!p.nombreInput) p.nombreInput = file.name;
-    p.categoriaInput = detectarCategoriaDocumento(file.name)!;
+    if (file) {
+      if (!p.nombreInput) p.nombreInput = file.name;
+      p.categoriaInput = detectarCategoriaDocumento(file.name)!;
+    }
+  }
+
+  archivoDemasiadoGrande(tipo: DocTipo): boolean {
+    const file = this.panels[tipo].selectedFile;
+    return !!file && file.size > MAX_UPLOAD_SIZE_BYTES;
+  }
+
+  mensajeArchivoDemasiadoGrande(tipo: DocTipo): string {
+    const file = this.panels[tipo].selectedFile;
+    if (!file) return '';
+    return `El archivo pesa ${formatBytes(file.size)} y supera el límite de 20 MB. Selecciona uno más liviano.`;
   }
 
   confirmarSubida(tipo: DocTipo): void {
     const p = this.panels[tipo];
-    if (!p.selectedFile) return;
-    const ctx = {
-      file: p.selectedFile,
-      tipo,
-      empresaId: this.consumidorContext.empresaSeleccionada()?._id ?? '',
-      centroId: this.selectedCentroIdC() || undefined,
-      proyectoId: this.selectedProyectoIdC() || undefined,
-      nombreDisplay: p.nombreInput || undefined,
-      categoria: p.categoriaInput || undefined,
-    };
-    const id = this.uploadQueue.agregar(ctx.nombreDisplay || ctx.file.name);
+    const empresaId = this.consumidorContext.empresaSeleccionada()?._id ?? '';
+    const centroId = this.selectedCentroIdC() || undefined;
+    const proyectoId = this.selectedProyectoIdC() || undefined;
+
+    let ctx: UploadCtx;
+    let nombreParaCola: string;
+    if (p.modoUpload === 'link') {
+      const link = p.linkInput.trim();
+      if (!link || this.linkInvalido(tipo)) return;
+      ctx = { kind: 'link', linkUrl: link, tipo, empresaId, centroId, proyectoId, nombreDisplay: p.nombreInput || undefined, categoria: p.categoriaInput || undefined };
+      nombreParaCola = p.nombreInput || link;
+    } else {
+      if (!p.selectedFile || this.archivoDemasiadoGrande(tipo)) return;
+      ctx = { kind: 'archivo', file: p.selectedFile, tipo, empresaId, centroId, proyectoId, nombreDisplay: p.nombreInput || undefined, categoria: p.categoriaInput || undefined };
+      nombreParaCola = p.nombreInput || p.selectedFile.name;
+    }
+
+    const id = this.uploadQueue.agregar(nombreParaCola);
     this.retryContext.set(id, ctx);
     this.ejecutarSubida(id, ctx);
 
     p.selectedFile = null;
     p.nombreInput = '';
+    p.linkInput = '';
     p.showUpload = false;
   }
 
@@ -368,10 +401,26 @@ export class DocumentosConsumidorPageComponent implements OnInit {
     this.retryContext.clear();
   }
 
-  private ejecutarSubida(id: string, ctx: {
-    file: File; tipo: DocTipo; empresaId: string; centroId?: string; proyectoId?: string;
-    nombreDisplay?: string; categoria?: string;
-  }): void {
+  private ejecutarSubida(id: string, ctx: UploadCtx): void {
+    const onError = (err: any) => {
+      if (err?.status === 413) {
+        this.uploadQueue.marcarError(id, 'El archivo supera el límite de 20MB.');
+        return;
+      }
+      const raw = err?.error?.message;
+      const text = Array.isArray(raw) ? raw.join('. ') : (raw ?? err?.message ?? 'Error al cargar');
+      this.uploadQueue.marcarError(id, text);
+    };
+
+    if (ctx.kind === 'link') {
+      this.service.subirLink(ctx.linkUrl, ctx.tipo, ctx.empresaId, ctx.centroId, ctx.proyectoId, ctx.nombreDisplay, ctx.categoria)
+        .subscribe({
+          next: () => { this.uploadQueue.marcarListo(id); this.retryContext.delete(id); },
+          error: onError,
+        });
+      return;
+    }
+
     this.service.subir(ctx.file, ctx.tipo, ctx.empresaId, ctx.centroId, ctx.proyectoId, ctx.nombreDisplay, ctx.categoria)
       .subscribe({
         next: (event: HttpEvent<DocumentoItem>) => {
@@ -382,15 +431,7 @@ export class DocumentosConsumidorPageComponent implements OnInit {
             this.retryContext.delete(id);
           }
         },
-        error: (err) => {
-          if (err?.status === 413) {
-            this.uploadQueue.marcarError(id, 'El archivo supera el límite de 20MB.');
-            return;
-          }
-          const raw = err?.error?.message;
-          const text = Array.isArray(raw) ? raw.join('. ') : (raw ?? err?.message ?? 'Error al cargar');
-          this.uploadQueue.marcarError(id, text);
-        },
+        error: onError,
       });
   }
 
@@ -436,6 +477,11 @@ export class DocumentosConsumidorPageComponent implements OnInit {
     this.service.eliminar(docUrl, tipo, empresaId, this.selectedCentroIdC() || undefined, this.selectedProyectoIdC() || undefined);
   }
 
+  abrirDocumento(d: { tipo_contenido?: 'archivo' | 'link'; link_url?: string; url: string; nombre_display: string }): void {
+    if (d.tipo_contenido === 'link' && d.link_url) window.open(d.link_url, '_blank', 'noopener');
+    else this.service.descargar(d.url, d.nombre_display);
+  }
+
   // ─── helpers unificados para búsqueda de solicitudes ────────────────────
 
   toggleBuscadorSolicitudes(): void {
@@ -467,21 +513,63 @@ export class DocumentosConsumidorPageComponent implements OnInit {
   abrirAdjuntar(id: string): void {
     this.solicitudAdjuntando.set(id);
     this.adjuntoFile = null;
+    this.adjuntoLinkInput = '';
+    this.adjuntoModo.set('archivo');
     this.solicitudesService.clearStatus();
   }
 
-  onAdjuntoSelected(ev: Event): void {
-    this.adjuntoFile = (ev.target as HTMLInputElement).files?.[0] ?? null;
+  setAdjuntoModo(modo: 'archivo' | 'link'): void {
+    if (this.adjuntoModo() === modo) return;
+    this.adjuntoModo.set(modo);
+    this.adjuntoFile = null;
+    this.adjuntoLinkInput = '';
+  }
+
+  adjuntoLinkInvalido(): boolean {
+    const link = this.adjuntoLinkInput.trim();
+    if (!link) return false;
+    return !/^https?:\/\/.+/i.test(link);
+  }
+
+  abrirLinkSolicitud(url: string): void {
+    window.open(url, '_blank');
+  }
+
+  onAdjuntoChange(file: File | null): void {
+    this.adjuntoFile = file;
+  }
+
+  adjuntoDemasiadoGrande(): boolean {
+    return !!this.adjuntoFile && this.adjuntoFile.size > MAX_UPLOAD_SIZE_BYTES;
+  }
+
+  mensajeAdjuntoDemasiadoGrande(): string {
+    if (!this.adjuntoFile) return '';
+    return `El archivo pesa ${formatBytes(this.adjuntoFile.size)} y supera el límite de 20 MB. Selecciona uno más liviano.`;
   }
 
   confirmarAdjunto(): void {
     const id = this.solicitudAdjuntando();
-    if (!id || !this.adjuntoFile) return;
-    const file = this.adjuntoFile;
-    this.adjuntoFile = null;
-    this.solicitudesService.adjuntar(id, file, () => {
+    if (!id || this.adjuntando()) return;
+
+    const onSuccess = () => {
+      this.adjuntando.set(false);
+      this.adjuntoFile = null;
+      this.adjuntoLinkInput = '';
       this.solicitudAdjuntando.set(null);
-    });
+    };
+    const onError = () => { this.adjuntando.set(false); };
+
+    if (this.adjuntoModo() === 'link') {
+      const link = this.adjuntoLinkInput.trim();
+      if (!link || this.adjuntoLinkInvalido()) return;
+      this.adjuntando.set(true);
+      this.solicitudesService.adjuntarLink(id, link, onSuccess, onError);
+    } else {
+      if (!this.adjuntoFile || this.adjuntoDemasiadoGrande()) return;
+      this.adjuntando.set(true);
+      this.solicitudesService.adjuntar(id, this.adjuntoFile, onSuccess, onError);
+    }
   }
 
   estadoChipStyle(estado: EstadoSolicitud): { color: string; bg: string } {
@@ -524,6 +612,6 @@ export class DocumentosConsumidorPageComponent implements OnInit {
   // ─── private helpers ─────────────────────────────────────────────────────
 
   private emptyPanel(): PanelState {
-    return { showUpload: false, showFilter: false, nombreInput: '', categoriaInput: 'Contratos', busqueda: '', categoriaFiltro: '', selectedFile: null };
+    return { showUpload: false, showFilter: false, nombreInput: '', categoriaInput: 'Contratos', busqueda: '', categoriaFiltro: '', selectedFile: null, modoUpload: 'archivo', linkInput: '' };
   }
 }
