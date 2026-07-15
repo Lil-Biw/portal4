@@ -7,17 +7,16 @@ Hoy, al crear una solicitud (`documentos-admin-page.component.ts`) o una activid
 el POST está en vuelo es deshabilitar el botón y cambiar su texto a "Creando…"/
 "Guardando…"/"Subiendo…". No hay ningún indicador animado.
 
-Además existe un bug latente en solicitudes: `creandoSolicitud` (signal local de
-`documentos-admin-page.component.ts`) solo se resetea a `false` en el callback de éxito
-de `SolicitudesService.crear()`. Si el POST falla, el callback nunca se invoca y el botón
-queda deshabilitado con "Creando…" de forma permanente hasta recargar la página.
+Nota: se sospechaba un bug donde `creandoSolicitud` no se reseteaba en error, pero al
+revisar el código actual (`documentos-admin-page.component.ts:166-172`) ya existe un
+`effect()` que lo resetea cuando `solicitudesService.status()?.type === 'error'`. No
+hace falta ningún fix — se descarta ese punto del alcance.
 
 ## Objetivo
 
 Agregar una barra de progreso **indeterminada** (sin porcentaje real, ya que ambas
 operaciones son un único POST JSON sin progreso medible) dentro del botón "Crear
-solicitud" / "Guardar" mientras la operación está en curso. Aprovechar el cambio para
-corregir el bug de `creandoSolicitud` no reseteado en error.
+solicitud" / "Guardar" mientras la operación está en curso.
 
 Fuera de alcance: progreso por archivo en la subida secuencial de documentos pendientes
 del wizard de actividades (ya cubierto visualmente por el texto "Subiendo…"; no se pide
@@ -52,24 +51,12 @@ si son cortos".
 No se toca el texto actual del botón ("Creando...", "Guardando...", "Subiendo...") —
 la barra es un indicador adicional, no un reemplazo.
 
-### 3. Fix del bug `creandoSolicitud` no reseteado en error
-
-En `documentos-admin-page.component.ts`, agregar un `effect()` en el constructor
-(mismo patrón ya usado para autocierre de modales en el proyecto) que resetee
-`creandoSolicitud.set(false)` cuando `solicitudesService.status()?.type === 'error'`.
-Esto es puramente aditivo: no cambia la firma de `SolicitudesService.crear()` ni
-afecta otros llamadores.
-
-`ActividadesService` no requiere cambios — su signal `saving` ya se resetea
-correctamente en `setError()` (línea 25-28 de `actividades.service.ts`).
+Ningún servicio requiere cambios: `SolicitudesService` no se toca (el reset en error ya
+existe en el componente) y `ActividadesService.saving` ya se resetea correctamente en
+`setError()` (línea 25-28 de `actividades.service.ts`).
 
 ## Testing
 
 - Verificación manual: iniciar `npm start`, crear una solicitud y una actividad,
   observar la barra animada en el botón mientras el POST está en vuelo.
-- Verificación manual del fix: forzar un error en `crear()` de solicitud (ej. desconectar
-  backend o enviar dato inválido) y confirmar que el botón vuelve a estar habilitado
-  y con su texto normal tras el error, en vez de quedar trabado en "Creando…".
-- No se requieren tests unitarios nuevos: es un cambio de CSS + un `effect()` de una
-  línea sobre un patrón ya cubierto por convención en el proyecto (sin tests existentes
-  para el patrón de autocierre de modales tampoco).
+- No se requieren tests unitarios: es un cambio de CSS puro + dos class bindings.
