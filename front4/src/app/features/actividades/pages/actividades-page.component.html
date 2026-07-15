@@ -724,7 +724,7 @@
           @if (paso() < 4) {
             <button class="btn-primary" (click)="avanzar()">Siguiente →</button>
           } @else {
-            <button class="btn-primary" (click)="guardar()" [disabled]="service.saving() || subiendoDocs"
+            <button class="btn-primary" [class.btn-loading]="service.saving() || subiendoDocs" (click)="guardar()" [disabled]="service.saving() || subiendoDocs"
               style="background:#22c55e;border-color:#22c55e">
               @if (subiendoDocs) { Subiendo... }
               @else if (service.saving()) { Guardando... }
