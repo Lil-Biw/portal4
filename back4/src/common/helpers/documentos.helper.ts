@@ -205,3 +205,27 @@ export class DocumentosHelper {
     return { message: 'Documento eliminado', docId };
   }
 }
+
+// Resuelve en batch subido_por (ObjectId) -> nombre de usuario, para listados de
+// documentos. Un solo find() con $in, no N+1. Si un doc no tiene subido_por, o el
+// usuario no existe, se omite el campo (nunca se agrega un placeholder).
+export async function resolverSubidoPorNombre(
+  docs: Record<string, unknown>[],
+  usuarioModel: Model<any>,
+): Promise<Record<string, unknown>[]> {
+  const ids = [...new Set(
+    docs.map(d => d['subido_por']).filter(Boolean).map(String)
+  )];
+  if (!ids.length) return docs;
+
+  const usuarios = await usuarioModel
+    .find({ _id: { $in: ids } })
+    .select('nombre')
+    .lean();
+  const nombreMap = new Map(usuarios.map(u => [String((u as any)._id), (u as any).nombre]));
+
+  return docs.map(d => {
+    const nombre = d['subido_por'] ? nombreMap.get(String(d['subido_por'])) : undefined;
+    return nombre ? { ...d, subido_por_nombre: nombre } : d;
+  });
+}
