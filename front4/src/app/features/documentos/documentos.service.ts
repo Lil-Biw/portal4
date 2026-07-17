@@ -33,6 +33,7 @@ export interface DocumentoItem {
   tipo_mime: string;
   tamano_bytes?: number;
   subido_en?: string;
+  subido_por_nombre?: string;
   categoria?: string;
   tipo_contenido?: 'archivo' | 'link';
   link_url?: string;
@@ -47,6 +48,7 @@ export interface DocumentoVencidoItem {
   tipo_mime: string;
   tamano_bytes?: number;
   subido_en?: string;
+  subido_por_nombre?: string;
   vencido_en: string;
   origen_tipo: 'empresa' | 'centro' | 'proyecto';
   empresa_nombre?: string;
