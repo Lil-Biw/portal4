@@ -20,6 +20,7 @@ export class DocumentoVencido {
   @Prop() empresa_nombre?: string;
   @Prop() centro_nombre?: string;
   @Prop() proyecto_nombre?: string;
+  @Prop({ type: Types.ObjectId, ref: 'Usuario' }) subido_por?: Types.ObjectId;
   @Prop() subido_en?: Date;
   @Prop({ default: Date.now }) vencido_en: Date;
 }

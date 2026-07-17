@@ -4,11 +4,13 @@ import { Model, Types } from 'mongoose';
 import { DocumentoVencido, DocumentoVencidoDocument } from './documentos-vencidos.schema';
 import { CreateDocVencidoDto } from './documentos-vencidos.dto';
 import { S3Service } from '../common/s3/s3.service';
+import { resolverSubidoPorNombre } from '../common/helpers/documentos.helper';
 
 @Injectable()
 export class DocumentosVencidosService {
   constructor(
     @InjectModel('DocumentoVencido') private readonly model: Model<DocumentoVencidoDocument>,
+    @InjectModel('Usuario') private readonly usuarioModel: Model<any>,
     private readonly s3Service: S3Service,
   ) {}
 
@@ -18,12 +20,13 @@ export class DocumentosVencidosService {
       empresa_id:  new Types.ObjectId(dto.empresa_id),
       centro_id:   dto.centro_id   ? new Types.ObjectId(dto.centro_id)   : undefined,
       proyecto_id: dto.proyecto_id ? new Types.ObjectId(dto.proyecto_id) : undefined,
+      subido_por:  dto.subido_por  ? new Types.ObjectId(dto.subido_por)  : undefined,
     });
     return doc.save();
   }
 
-  listarUltimos20(empresaId: string, centroId?: string, proyectoId?: string, tipo?: string) {
-    if (!empresaId || !Types.ObjectId.isValid(empresaId)) return Promise.resolve([]);
+  async listarUltimos20(empresaId: string, centroId?: string, proyectoId?: string, tipo?: string) {
+    if (!empresaId || !Types.ObjectId.isValid(empresaId)) return [];
     const filter: Record<string, unknown> = { empresa_id: new Types.ObjectId(empresaId) };
     if (proyectoId && Types.ObjectId.isValid(proyectoId)) {
       filter['proyecto_id'] = new Types.ObjectId(proyectoId);
@@ -36,7 +39,8 @@ export class DocumentosVencidosService {
     } else {
       filter['origen_tipo'] = 'empresa';
     }
-    return this.model.find(filter).sort({ vencido_en: -1 }).limit(20).select('-contenido').lean();
+    const docs = await this.model.find(filter).sort({ vencido_en: -1 }).limit(20).select('-contenido').lean();
+    return resolverSubidoPorNombre(docs, this.usuarioModel);
   }
 
   async descargar(

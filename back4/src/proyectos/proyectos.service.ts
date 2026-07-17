@@ -299,6 +299,7 @@ export class ProyectosService {
       tamano_bytes:    doc.tamano_bytes,
       contenido:       doc.contenido,
       s3_key:          doc.s3_key,
+      subido_por:      doc.subido_por,
       origen_tipo:     'proyecto',
       empresa_id:      empresaId,
       centro_id:       centroId,

@@ -173,6 +173,7 @@ export class ClientesService {
       tamano_bytes:   doc.tamano_bytes,
       contenido:      doc.contenido,
       s3_key:         doc.s3_key,
+      subido_por:     doc.subido_por,
       origen_tipo:    'empresa',
       empresa_id:     clienteId,
       empresa_nombre: empresaNombre,

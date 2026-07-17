@@ -1,5 +1,6 @@
 import { IsString, IsOptional, IsMongoId, IsEnum, IsNumber } from 'class-validator';
 import { Type } from 'class-transformer';
+import { Types } from 'mongoose';
 
 export class CreateDocVencidoDto {
   @IsString() nombre_display: string;
@@ -18,4 +19,5 @@ export class CreateDocVencidoDto {
   @IsString() @IsOptional() centro_nombre?: string;
   @IsString() @IsOptional() proyecto_nombre?: string;
   @IsOptional() @Type(() => Date) subido_en?: Date;
+  @IsOptional() subido_por?: Types.ObjectId | string;
 }
