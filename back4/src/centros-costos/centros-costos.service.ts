@@ -3,7 +3,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { CentroCostoDocument } from './centros-costos.schema';
 import { CreateCentroCostoDto, UpdateCentroCostoDto } from './centros-costos.dto';
-import { DocumentosHelper, DocumentoInput } from '../common/helpers/documentos.helper';
+import { DocumentosHelper, DocumentoInput, resolverSubidoPorNombre } from '../common/helpers/documentos.helper';
 import { notificarDocumentoSubido } from '../common/helpers/notificar-documento.helper';
 import { DocumentosVencidosService } from '../documentos-vencidos/documentos-vencidos.service';
 import { MailService } from '../mail/mail.service';
@@ -145,8 +145,9 @@ export class CentrosCostosService {
     });
   }
 
-  listarDocumentos(id: string) {
-    return this.docsHelper.listar(id);
+  async listarDocumentos(id: string) {
+    const docs = await this.docsHelper.listar(id);
+    return resolverSubidoPorNombre(docs, this.usuarioModel as any);
   }
 
   servirDocumento(centroId: string, docId: string) {

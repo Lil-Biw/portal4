@@ -3,7 +3,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { ProyectoDocument } from './proyectos.schema';
 import { CreateProyectoDto, UpdateProyectoDto } from './proyectos.dto';
-import { DocumentosHelper, DocumentoInput } from '../common/helpers/documentos.helper';
+import { DocumentosHelper, DocumentoInput, resolverSubidoPorNombre } from '../common/helpers/documentos.helper';
 import { notificarDocumentoSubido, resolverAdminsSuscritos } from '../common/helpers/notificar-documento.helper';
 import { hoyUtcChile } from '../common/helpers/fechas.helper';
 import { DocumentosVencidosService } from '../documentos-vencidos/documentos-vencidos.service';
@@ -11,6 +11,7 @@ import { MailService } from '../mail/mail.service';
 import { ContextoJerarquico } from '../mail/templates/jerarquia';
 import { NotificacionOpcionesDto } from '../common/dto/notificacion-opciones.dto';
 import { S3Service } from '../common/s3/s3.service';
+import { RecordatoriosService } from '../recordatorios/recordatorios.service';
 
 @Injectable()
 export class ProyectosService {
@@ -26,6 +27,7 @@ export class ProyectosService {
     private readonly documentosVencidosService: DocumentosVencidosService,
     private readonly mailService: MailService,
     private readonly s3Service: S3Service,
+    private readonly recordatoriosService: RecordatoriosService,
   ) {
     this.docsHelper = new DocumentosHelper(
       proyectoModel,
@@ -42,6 +44,15 @@ export class ProyectosService {
     return new Types.ObjectId(value);
   }
 
+  // El campo dias_recordatorio vive en la colección recordatorios (no en el
+  // documento de Proyecto), así que hay que adjuntarlo explícitamente en
+  // cada lectura o el frontend nunca lo recibe (ver bug: el form de edición
+  // siempre mostraba los recordatorios destildados y el guardado los borraba).
+  private async adjuntarDiasRecordatorio<T extends { _id: Types.ObjectId }>(proyectos: T[]): Promise<(T & { dias_recordatorio: number[] })[]> {
+    const mapa = await this.recordatoriosService.obtenerDiasBatch('proyecto', proyectos.map(p => p._id));
+    return proyectos.map(p => ({ ...p, dias_recordatorio: mapa.get(String(p._id)) ?? [] }));
+  }
+
   private async validarCentrosEnCliente(cliente_id: string, centro_costo_ids: string[]) {
     const count = await this.centroCostoModel.countDocuments({
       _id: { $in: centro_costo_ids.map((id) => this.toObjectId(id)) },
@@ -53,7 +64,7 @@ export class ProyectosService {
     }
   }
 
-  async create(dto: CreateProyectoDto, creadoPor?: string) {
+  async create(dto: CreateProyectoDto, creadoPor?: string): Promise<any> {
     const centroIds = dto.centro_costo_ids ?? [];
     if (!centroIds.length) throw new BadRequestException('Debe seleccionar al menos un centro de costos');
     await this.validarCentrosEnCliente(dto.cliente_id!, centroIds);
@@ -73,7 +84,13 @@ export class ProyectosService {
     if (creadoPor) doc['creado_por'] = new Types.ObjectId(creadoPor);
     try {
       const proyecto = await new this.proyectoModel(doc).save();
-      return proyecto.populate('tipo_proyecto_id');
+      const diasSolicitados = dto.dias_recordatorio ?? [];
+      await this.recordatoriosService.sincronizar('proyecto', proyecto._id, diasSolicitados, proyecto.fecha_fin);
+      // sincronizar() no persiste nada si falta fecha_fin (borra en vez de crear) —
+      // reflejar eso en la respuesta en vez de ecoar siempre lo pedido en el DTO.
+      const dias_recordatorio = proyecto.fecha_fin ? diasSolicitados : [];
+      const populated = await proyecto.populate('tipo_proyecto_id');
+      return { ...populated.toObject(), dias_recordatorio };
     } catch (err: any) {
       if (err?.code === 11000) {
         throw new ConflictException(`Ya existe el código ${dto.codigo} en uno de los centros seleccionados`);
@@ -88,7 +105,7 @@ export class ProyectosService {
       this.proyectoModel.find(filter).populate('tipo_proyecto_id').sort({ nombre: 1 }).skip((page - 1) * limit).limit(limit).lean(),
       this.proyectoModel.countDocuments(filter),
     ]);
-    return { data, total, page, pages: Math.ceil(total / limit) };
+    return { data: await this.adjuntarDiasRecordatorio(data), total, page, pages: Math.ceil(total / limit) };
   }
 
   async findAllByCliente(cliente_id: string, page = 1, limit = 100) {
@@ -100,7 +117,7 @@ export class ProyectosService {
       this.proyectoModel.find(filter).populate('tipo_proyecto_id').sort({ nombre: 1 }).skip((page - 1) * limit).limit(limit).lean(),
       this.proyectoModel.countDocuments(filter),
     ]);
-    return { data, total, page, pages: Math.ceil(total / limit) };
+    return { data: await this.adjuntarDiasRecordatorio(data), total, page, pages: Math.ceil(total / limit) };
   }
 
   async findAllByCentro(centro_costo_id: string, page = 1, limit = 20) {
@@ -112,16 +129,17 @@ export class ProyectosService {
       this.proyectoModel.find(filter).populate('tipo_proyecto_id').sort({ nombre: 1 }).skip((page - 1) * limit).limit(limit).lean(),
       this.proyectoModel.countDocuments(filter),
     ]);
-    return { data, total, page, pages: Math.ceil(total / limit) };
+    return { data: await this.adjuntarDiasRecordatorio(data), total, page, pages: Math.ceil(total / limit) };
   }
 
-  async findOne(id: string) {
+  async findOne(id: string): Promise<any> {
     const proyecto = await this.proyectoModel.findById(id).populate('tipo_proyecto_id').lean();
     if (!proyecto) throw new NotFoundException(`Proyecto ${id} no encontrado`);
-    return proyecto;
+    const dias_recordatorio = await this.recordatoriosService.obtenerDias('proyecto', proyecto._id);
+    return { ...proyecto, dias_recordatorio };
   }
 
-  async update(id: string, dto: UpdateProyectoDto) {
+  async update(id: string, dto: UpdateProyectoDto): Promise<any> {
     const proyectoActual = await this.proyectoModel.findById(id).lean();
     if (!proyectoActual) throw new NotFoundException(`Proyecto ${id} no encontrado`);
     const clienteId = dto.cliente_id || proyectoActual.cliente_id.toString();
@@ -147,13 +165,27 @@ export class ProyectosService {
         .populate('tipo_proyecto_id')
         .lean();
       if (!proyecto) throw new NotFoundException(`Proyecto ${id} no encontrado`);
-      return proyecto;
+      const dias_recordatorio = await this.sincronizarRecordatorio(proyecto, dto.dias_recordatorio);
+      return { ...proyecto, dias_recordatorio };
     } catch (err: any) {
       if (err?.code === 11000) {
         throw new ConflictException(`Ya existe el código ${codigo} en uno de los centros seleccionados`);
       }
       throw err;
     }
+  }
+
+  private async sincronizarRecordatorio(proyecto: any, diasDto?: number[]): Promise<number[]> {
+    // Sin fecha_fin no hay contra qué calcular vencimiento: sincronizar() borraría
+    // igual el registro, así que evitamos la llamada y devolvemos lo realmente
+    // persistido ([]) en vez de ecoar los días pedidos en el DTO.
+    if (['cerrado', 'cancelado'].includes(proyecto.estado) || !proyecto.fecha_fin) {
+      await this.recordatoriosService.eliminar('proyecto', proyecto._id);
+      return [];
+    }
+    const dias = diasDto ?? await this.recordatoriosService.obtenerDias('proyecto', proyecto._id);
+    await this.recordatoriosService.sincronizar('proyecto', proyecto._id, dias, proyecto.fecha_fin);
+    return dias;
   }
 
   async remove(id: string) {
@@ -163,6 +195,7 @@ export class ProyectosService {
       .populate('centro_costo_ids', 'nombre')
       .lean() as any;
     if (!proyecto) throw new NotFoundException(`Proyecto ${id} no encontrado`);
+    await this.recordatoriosService.eliminar('proyecto', proyecto._id);
     this.notificarCierreProyecto(proyecto).catch((err: unknown) =>
       this.logger.error('Error al notificar cierre de proyecto:', err),
     );
@@ -222,8 +255,9 @@ export class ProyectosService {
     });
   }
 
-  listarDocumentos(id: string) {
-    return this.docsHelper.listar(id);
+  async listarDocumentos(id: string) {
+    const docs = await this.docsHelper.listar(id);
+    return resolverSubidoPorNombre(docs, this.usuarioModel as any);
   }
 
   servirDocumento(proyectoId: string, docId: string) {
@@ -357,78 +391,72 @@ export class ProyectosService {
   // seguido no repita avisos.
   async enviarRecordatoriosVencimiento(): Promise<{ evaluados: number; notificados: number; cerrados: number }> {
     const hoyUtc = hoyUtcChile();
+    const { vencidos, porNotificar } = await this.recordatoriosService.evaluarPendientes('proyecto', hoyUtc);
 
-    const proyectos = await this.proyectoModel
-      .find({ estado: { $nin: ['cerrado', 'cancelado'] }, fecha_fin: { $ne: null } })
-      .populate('cliente_id', 'razon_social')
-      .populate('centro_costo_ids', 'nombre')
-      .lean() as any[];
-
-    let notificados = 0;
     let cerrados = 0;
-
-    for (const proyecto of proyectos) {
-      if (!proyecto.fecha_fin) continue;
-      const fin = new Date(proyecto.fecha_fin);
-      const finUtc = Date.UTC(fin.getUTCFullYear(), fin.getUTCMonth(), fin.getUTCDate());
-      const diasRestantes = Math.round((finUtc - hoyUtc) / 86_400_000);
-
-      // La fecha de término ya pasó: se cierra automáticamente y se notifica
-      // a los suscritos del cambio de estado, en vez de seguir enviando
-      // recordatorios de "próximo a vencer".
-      if (diasRestantes < 0) {
+    if (vencidos.length) {
+      // El filtro de estado es defensivo: si el recordatorio quedó desincronizado
+      // (p. ej. el proyecto ya se cerró manualmente) no se vuelve a cerrar/notificar.
+      const aCerrar = await this.proyectoModel
+        .find({ _id: { $in: vencidos }, estado: { $nin: ['cerrado', 'cancelado'] } })
+        .populate('cliente_id', 'razon_social')
+        .populate('centro_costo_ids', 'nombre')
+        .lean() as any[];
+      for (const proyecto of aCerrar) {
         await this.proyectoModel.findByIdAndUpdate(proyecto._id, { estado: 'cerrado' });
         await this.notificarCierreProyecto(proyecto);
         cerrados++;
-        continue;
       }
-
-      // Los días de aviso los define el propio proyecto (creación/edición).
-      // Se dispara el umbral más cercano ya cruzado (>= días restantes) que no
-      // se haya notificado aún: si el cron corre dos veces el mismo día no
-      // reenvía, y si un día marcado pasó sin correr (proceso caído) el aviso
-      // se recupera en la siguiente corrida en vez de perderse.
-      const umbralesCruzados = (proyecto.dias_recordatorio ?? []).filter((d: number) => d >= diasRestantes);
-      if (!umbralesCruzados.length) continue;
-      const umbral = Math.min(...umbralesCruzados);
-      if (umbral === proyecto.ultimo_recordatorio_dias) continue;
-
-      const empresaId = proyecto.cliente_id?._id ?? proyecto.cliente_id;
-      // Solo admins suscritos explícitamente a la empresa o al proyecto: el
-      // toggle notificar_todas_empresas NO aplica a recordatorios (evita que
-      // todo admin reciba los avisos por el default true del campo).
-      const admins = await (this.usuarioModel as any)
-        .find({
-          rol: { $in: ['admin_smartclarity', 'super_admin'] },
-          activo: true,
-          $or: [
-            { empresas_suscritas: empresaId },
-            { proyectos_suscritos: proyecto._id },
-          ],
-        })
-        .select('nombre email')
-        .lean();
-      if (!admins.length) continue;
-
-      const empresaNombre = proyecto.cliente_id?.razon_social ?? 'Empresa';
-      const centrosNombres = (proyecto.centro_costo_ids ?? []).map((c: any) => c.nombre).join(', ') || undefined;
-      const fechaFin = fin.toLocaleDateString('es-CL', {
-        weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC',
-      });
-
-      await this.mailService.notificarProyectoPorVencer({
-        destinatarios: admins.map((a: any) => ({ nombre: a.nombre, email: a.email })),
-        proyecto: {
-          nombre: proyecto.nombre,
-          fechaFin,
-          diasRestantes,
-          jerarquia: { empresa: empresaNombre, centro: centrosNombres, proyecto: proyecto.nombre },
-        },
-      });
-      await this.proyectoModel.findByIdAndUpdate(proyecto._id, { ultimo_recordatorio_dias: umbral });
-      notificados++;
+      // Los que estaban desincronizados (ya cerrados) tampoco necesitan seguir vigilados.
+      await Promise.all(vencidos.map(id => this.recordatoriosService.eliminar('proyecto', id)));
     }
 
-    return { evaluados: proyectos.length, notificados, cerrados };
+    let notificados = 0;
+    if (porNotificar.length) {
+      // Filtro de estado defensivo (igual que en "vencidos"): si el recordatorio
+      // quedó desincronizado con un proyecto ya cerrado/cancelado, no se notifica.
+      const proyectos = await this.proyectoModel
+        .find({ _id: { $in: porNotificar.map(p => p.entidadId) }, estado: { $nin: ['cerrado', 'cancelado'] } })
+        .populate('cliente_id', 'razon_social')
+        .populate('centro_costo_ids', 'nombre')
+        .lean() as any[];
+      const porId = new Map(proyectos.map(p => [String(p._id), p]));
+
+      for (const pendiente of porNotificar) {
+        const proyecto = porId.get(String(pendiente.entidadId));
+        if (!proyecto) continue;
+
+        const empresaId = String(proyecto.cliente_id?._id ?? proyecto.cliente_id);
+        // Solo admins suscritos explícitamente a la empresa o al proyecto: el
+        // toggle notificar_todas_empresas NO aplica a recordatorios (evita que
+        // todo admin reciba los avisos por el default true del campo).
+        const admins = await resolverAdminsSuscritos(
+          this.usuarioModel as any,
+          { tipo: 'proyecto', empresaId, proyectoId: String(proyecto._id) },
+          { soloSuscritos: true },
+        );
+        if (!admins.length) continue;
+
+        const empresaNombre = proyecto.cliente_id?.razon_social ?? 'Empresa';
+        const centrosNombres = (proyecto.centro_costo_ids ?? []).map((c: any) => c.nombre).join(', ') || undefined;
+        const fechaFin = new Date(proyecto.fecha_fin).toLocaleDateString('es-CL', {
+          weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC',
+        });
+
+        await this.mailService.notificarProyectoPorVencer({
+          destinatarios: admins,
+          proyecto: {
+            nombre: proyecto.nombre,
+            fechaFin,
+            diasRestantes: pendiente.diasRestantes,
+            jerarquia: { empresa: empresaNombre, centro: centrosNombres, proyecto: proyecto.nombre },
+          },
+        });
+        await this.recordatoriosService.marcarNotificado('proyecto', pendiente.entidadId, pendiente.diasRestantes);
+        notificados++;
+      }
+    }
+
+    return { evaluados: vencidos.length + porNotificar.length, notificados, cerrados };
   }
 }
