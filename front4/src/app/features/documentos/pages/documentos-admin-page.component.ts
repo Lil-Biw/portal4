@@ -73,6 +73,7 @@ export class DocumentosAdminPageComponent implements OnInit {
   protected tabJerarquia    = signal<'empresa' | 'centro' | 'proyecto'>('empresa');
   protected tabAdminActiva  = signal<'documentacion' | 'solicitudes'>('documentacion');
   protected tabDocAdmin     = signal<'activos' | 'vencidos'>('activos');
+  protected nivelBusqueda   = signal<'empresa' | 'centro' | 'proyecto'>('empresa');
 
   protected showSolicitudForm   = signal(false);
   protected creandoSolicitud    = signal(false);
@@ -393,6 +394,7 @@ export class DocumentosAdminPageComponent implements OnInit {
     this.proyectosService.cargar();
     this.solicitudesService.cargar(this.selectedEmpresaId);
     this.usuariosService.cargar();
+    this.refrescarBusquedaCascada();
   }
 
   // ─── admin handlers ───────────────────────────────────────────────────────
@@ -586,6 +588,7 @@ export class DocumentosAdminPageComponent implements OnInit {
     const idx = filtros.indexOf(cat);
     if (idx === -1) filtros.push(cat);
     else filtros.splice(idx, 1);
+    this.refrescarBusquedaCascada();
   }
 
   isFiltroSelected(tipo: DocTipo, cat: string): boolean {
@@ -950,6 +953,41 @@ export class DocumentosAdminPageComponent implements OnInit {
     this.tabJerarquia.set(tab);
     this.tabAdminActiva.set('documentacion');
     if (this.tabDocAdmin() === 'vencidos') this.cargarVencidosAdmin();
+    this.refrescarBusquedaCascada();
+  }
+
+  seleccionarNivelBusqueda(nivel: 'empresa' | 'centro' | 'proyecto'): void {
+    this.nivelBusqueda.set(nivel);
+    this.refrescarBusquedaCascada();
+  }
+
+  refrescarBusquedaCascada(): void {
+    const { filtrosCategorias, busqueda } = this.panels[this.docTipoActual];
+    this.service.buscarCascada(this.nivelBusqueda(), filtrosCategorias, busqueda);
+  }
+
+  onBusquedaNombreChange(tipo: DocTipo, valor: string): void {
+    this.panels[tipo].busqueda = valor;
+    this.refrescarBusquedaCascada();
+  }
+
+  limpiarFiltroDocTipo(tipo: DocTipo): void {
+    this.panels[tipo].busqueda = '';
+    this.panels[tipo].filtrosCategorias = [];
+    this.refrescarBusquedaCascada();
+  }
+
+  seleccionarNodoCascada(empresaId: string, centroId?: string, proyectoId?: string): void {
+    this.selectedEmpresaId = empresaId;
+    this.onEmpresaChange();
+    if (centroId) {
+      this.selectedCentroId = centroId;
+      this.onCentroChange();
+    }
+    if (proyectoId) {
+      this.selectedProyectoId = proyectoId;
+      this.onProyectoChange();
+    }
   }
 
   cargarVencidosAdmin(): void {

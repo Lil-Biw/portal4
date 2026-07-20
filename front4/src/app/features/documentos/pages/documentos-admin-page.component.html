@@ -22,10 +22,10 @@
         <div style="display:flex;gap:.5rem;align-items:flex-end">
           <label class="field" style="margin:0;flex:1;min-width:0">
             <span style="font-size:.8rem;font-weight:600;color:#374151">Buscar por nombre</span>
-            <input type="text" [(ngModel)]="panels[docTipo].busqueda" placeholder="Nombre del documento…" />
+            <input type="text" [ngModel]="panels[docTipo].busqueda" (ngModelChange)="onBusquedaNombreChange(docTipo, $event)" placeholder="Nombre del documento…" />
           </label>
           <button class="btn-ghost" style="font-size:.8rem;padding:.45rem .7rem;white-space:nowrap"
-            (click)="panels[docTipo].busqueda = ''; panels[docTipo].filtrosCategorias = []">Limpiar</button>
+            (click)="limpiarFiltroDocTipo(docTipo)">Limpiar</button>
         </div>
       </div>
     </div>
@@ -65,8 +65,9 @@
        partido en dos: resumen del elegido (izq.) + select para
        cambiarlo (der.)
   ══════════════════════════════════════════════════════════════ -->
-  <div class="card" style="padding:0;overflow:hidden;margin-bottom:1rem">
+  <div class="card" style="padding:0;overflow:hidden;margin-bottom:1rem;display:grid;grid-template-columns:1fr 1fr">
 
+    <div style="border-right:1px solid #f0f0f0">
     <!-- Tab strip -->
     <div style="padding:.5rem;border-bottom:1px solid #f0f0f0">
       <div style="display:flex;gap:.25rem;background:#f3f4f6;border-radius:10px;padding:.25rem">
@@ -272,6 +273,103 @@
         </label>
       </div>
     }
+
+    </div>
+    <!-- fin columna 1: selector de contexto -->
+
+    <div style="padding:.75rem">
+      <p style="margin:0 0 .5rem;font-size:.8rem;font-weight:600;color:#374151">Búsqueda total cascada</p>
+      <div style="display:flex;gap:.25rem;background:#f3f4f6;border-radius:10px;padding:.25rem;margin-bottom:.75rem">
+        <button
+          style="flex:1;padding:.4rem .6rem;border-style:solid;border-width:1px;border-radius:8px;font-size:.8rem;font-weight:600;cursor:pointer"
+          [style.background]="nivelBusqueda() === 'empresa' ? 'rgba(0,149,214,.08)' : 'transparent'"
+          [style.color]="nivelBusqueda() === 'empresa' ? '#0095d6' : '#6b7280'"
+          [style.borderColor]="nivelBusqueda() === 'empresa' ? 'rgba(0,149,214,.18)' : 'transparent'"
+          (click)="seleccionarNivelBusqueda('empresa')">Empresa</button>
+        <button
+          style="flex:1;padding:.4rem .6rem;border-style:solid;border-width:1px;border-radius:8px;font-size:.8rem;font-weight:600;cursor:pointer"
+          [style.background]="nivelBusqueda() === 'centro' ? 'rgba(16,185,129,.08)' : 'transparent'"
+          [style.color]="nivelBusqueda() === 'centro' ? '#059669' : '#6b7280'"
+          [style.borderColor]="nivelBusqueda() === 'centro' ? 'rgba(16,185,129,.18)' : 'transparent'"
+          (click)="seleccionarNivelBusqueda('centro')">Centro</button>
+        <button
+          style="flex:1;padding:.4rem .6rem;border-style:solid;border-width:1px;border-radius:8px;font-size:.8rem;font-weight:600;cursor:pointer"
+          [style.background]="nivelBusqueda() === 'proyecto' ? 'rgba(245,158,11,.08)' : 'transparent'"
+          [style.color]="nivelBusqueda() === 'proyecto' ? '#d97706' : '#6b7280'"
+          [style.borderColor]="nivelBusqueda() === 'proyecto' ? 'rgba(245,158,11,.18)' : 'transparent'"
+          (click)="seleccionarNivelBusqueda('proyecto')">Proyecto</button>
+      </div>
+
+      <div style="max-height:420px;overflow-y:auto">
+        @if (service.busquedaCascada().length === 0) {
+          <p class="empty">Sin resultados para el filtro actual.</p>
+        }
+        @for (nodo of service.busquedaCascada(); track nodo._id) {
+          <div style="margin-bottom:.5rem">
+            <button class="btn-ghost" style="width:100%;text-align:left;font-weight:700;display:flex;justify-content:space-between"
+              (click)="seleccionarNodoCascada(nodo.empresa_id, nodo.nivel === 'centro' ? nodo._id : nodo.centro_id, nodo.nivel === 'proyecto' ? nodo._id : undefined)">
+              <span>{{ nodo.nivel === 'empresa' ? '📁' : nodo.nivel === 'centro' ? '🏢' : '📂' }} {{ nodo.nombre }}</span>
+              @if (nodo.nivel !== 'empresa') {
+                <span style="color:#9ca3af;font-weight:400">{{ nodo.empresa_nombre }}{{ nodo.nivel === 'proyecto' ? ' · ' + nodo.centro_nombre : '' }}</span>
+              }
+            </button>
+            @for (doc of nodo.documentos; track doc._id) {
+              <div style="padding:.3rem .5rem .3rem 1.5rem;font-size:.8rem;color:#374151;cursor:pointer;display:flex;align-items:center;gap:.4rem"
+                (click)="abrirDocumento(doc)">
+                <span>📄</span><span>{{ doc.nombre_display }}</span>
+                @if (doc.categoria) { <span style="font-size:.68rem;padding:.1rem .4rem;border-radius:999px;background:#e0e7ff;color:#3730a3">{{ doc.categoria }}</span> }
+              </div>
+            }
+            @if (nodo.nivel !== 'proyecto') {
+              @for (centro of nodo.centros; track centro._id) {
+                <div style="margin-left:1.25rem">
+                  <button class="btn-ghost" style="width:100%;text-align:left" (click)="seleccionarNodoCascada(centro.empresa_id, centro._id)">
+                    🏢 {{ centro.nombre }}
+                  </button>
+                  @for (doc of centro.documentos; track doc._id) {
+                    <div style="padding:.3rem .5rem .3rem 1.5rem;font-size:.8rem;color:#374151;cursor:pointer;display:flex;align-items:center;gap:.4rem"
+                      (click)="abrirDocumento(doc)">
+                      <span>📄</span><span>{{ doc.nombre_display }}</span>
+                      @if (doc.categoria) { <span style="font-size:.68rem;padding:.1rem .4rem;border-radius:999px;background:#e0e7ff;color:#3730a3">{{ doc.categoria }}</span> }
+                    </div>
+                  }
+                  @for (proyecto of centro.proyectos; track proyecto._id) {
+                    <div style="margin-left:1.25rem">
+                      <button class="btn-ghost" style="width:100%;text-align:left" (click)="seleccionarNodoCascada(proyecto.empresa_id, proyecto.centro_id, proyecto._id)">
+                        📂 {{ proyecto.nombre }}
+                      </button>
+                      @for (doc of proyecto.documentos; track doc._id) {
+                        <div style="padding:.3rem .5rem .3rem 1.5rem;font-size:.8rem;color:#374151;cursor:pointer;display:flex;align-items:center;gap:.4rem"
+                          (click)="abrirDocumento(doc)">
+                          <span>📄</span><span>{{ doc.nombre_display }}</span>
+                          @if (doc.categoria) { <span style="font-size:.68rem;padding:.1rem .4rem;border-radius:999px;background:#e0e7ff;color:#3730a3">{{ doc.categoria }}</span> }
+                        </div>
+                      }
+                    </div>
+                  }
+                </div>
+              }
+            }
+            @if (nodo.nivel === 'centro') {
+              @for (proyecto of nodo.proyectos; track proyecto._id) {
+                <div style="margin-left:1.25rem">
+                  <button class="btn-ghost" style="width:100%;text-align:left" (click)="seleccionarNodoCascada(proyecto.empresa_id, proyecto.centro_id, proyecto._id)">
+                    📂 {{ proyecto.nombre }}
+                  </button>
+                  @for (doc of proyecto.documentos; track doc._id) {
+                    <div style="padding:.3rem .5rem .3rem 1.5rem;font-size:.8rem;color:#374151;cursor:pointer;display:flex;align-items:center;gap:.4rem"
+                      (click)="abrirDocumento(doc)">
+                      <span>📄</span><span>{{ doc.nombre_display }}</span>
+                      @if (doc.categoria) { <span style="font-size:.68rem;padding:.1rem .4rem;border-radius:999px;background:#e0e7ff;color:#3730a3">{{ doc.categoria }}</span> }
+                    </div>
+                  }
+                </div>
+              }
+            }
+          </div>
+        }
+      </div>
+    </div>
 
   </div> <!-- fin tarjeta A -->
 
