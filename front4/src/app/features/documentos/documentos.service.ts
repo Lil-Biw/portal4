@@ -101,6 +101,7 @@ export class DocumentosService {
   });
   readonly documentosVencidos = signal<DocumentoVencidoItem[]>([]);
   readonly busquedaCascada = signal<NodoBusqueda[]>([]);
+  readonly busquedaCascadaError = signal(false);
 
   // Carga documentos de una empresa
   cargarEmpresa(empresaId: string): void {
@@ -349,9 +350,16 @@ export class DocumentosService {
     if (nombre?.trim())     params['nombre'] = nombre.trim();
     const qs = new URLSearchParams(params).toString();
 
+    this.busquedaCascadaError.set(false);
     this.http.get<NodoBusqueda[]>(this.api.url(`/documentos/busqueda-total?${qs}`)).subscribe({
-      next:  (arbol) => this.busquedaCascada.set(arbol.map(n => this.mapearNodo(n))),
-      error: ()      => this.busquedaCascada.set([]),
+      next:  (arbol) => {
+        this.busquedaCascadaError.set(false);
+        this.busquedaCascada.set(arbol.map(n => this.mapearNodo(n)));
+      },
+      error: () => {
+        this.busquedaCascadaError.set(true);
+        this.busquedaCascada.set([]);
+      },
     });
   }
 

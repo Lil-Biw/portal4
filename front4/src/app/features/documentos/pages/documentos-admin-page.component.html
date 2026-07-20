@@ -302,7 +302,11 @@
 
       <div style="max-height:420px;overflow-y:auto">
         @if (service.busquedaCascada().length === 0) {
-          <p class="empty">Sin resultados para el filtro actual.</p>
+          @if (service.busquedaCascadaError()) {
+            <p class="empty">No se pudo cargar la búsqueda total. Intenta de nuevo.</p>
+          } @else {
+            <p class="empty">Sin resultados para el filtro actual.</p>
+          }
         }
         @for (nodo of service.busquedaCascada(); track nodo._id) {
           <div style="margin-bottom:.5rem">

@@ -112,4 +112,13 @@ describe('DocumentosService.buscarCascada', () => {
     expect(url.searchParams.has('nombre')).toBe(false);
     req.flush([]);
   });
+
+  it('distingue un error HTTP de un resultado vacío: setea busquedaCascadaError y vacía busquedaCascada', () => {
+    service.buscarCascada('empresa');
+    const req = httpMock.expectOne(r => r.url.includes('/documentos/busqueda-total'));
+    req.flush('fallo', { status: 500, statusText: 'Internal Server Error' });
+
+    expect(service.busquedaCascadaError()).toBe(true);
+    expect(service.busquedaCascada()).toEqual([]);
+  });
 });
