@@ -60,10 +60,15 @@ async function main() {
   const proyectoCableado = oid();
   const proyectoRedes = oid();
   const proyectoAire = oid();
+  // Proyecto que pertenece a 2 centros a la vez (centro_costo_ids con varios ids) — no lleva
+  // documentos propios para no afectar los checks filtrados por categoría 'Contrato' de más
+  // abajo (con hayFiltro=false no se poda, así que igual aparece en las consultas sin filtro).
+  const proyectoDoble = oid();
   await db.collection('proyectos').insertMany([
     { _id: proyectoCableado, nombre: 'Proyecto Cableado', codigo: 'P1', cliente_id: empresaA, centro_costo_ids: [centroNorte] },
     { _id: proyectoRedes, nombre: 'Proyecto Redes', codigo: 'P2', cliente_id: empresaA, centro_costo_ids: [centroNorte] },
     { _id: proyectoAire, nombre: 'Proyecto Aire', codigo: 'P3', cliente_id: empresaB, centro_costo_ids: [centroPoniente] },
+    { _id: proyectoDoble, nombre: 'Proyecto Doble Centro', codigo: 'P4', cliente_id: empresaA, centro_costo_ids: [centroNorte, centroPoniente] },
   ]);
 
   const usuarioId = oid();
@@ -137,6 +142,31 @@ async function main() {
   const porNombre = await service.buscar('proyecto', undefined, 'cableado');
   check(porNombre.length === 1 && porNombre[0].nombre === 'Proyecto Cableado',
     'filtro por nombre (substring, case-insensitive) también poda por documento');
+
+  // ── nivel=proyecto, deduplicación de proyecto multi-centro ────────────────
+  // Proyecto Doble Centro pertenece a Centro Norte (Empresa Acme) y Centro Poniente
+  // (Empresa Beta) a la vez. En el árbol (nivel=empresa/centro) debe aparecer una vez
+  // bajo cada centro (comportamiento intencional). En la lista PLANA de nivel=proyecto
+  // debe aparecer una sola vez (antes del fix aparecía 2 veces con el mismo _id).
+  const proyectosSinFiltro = await service.buscar('proyecto');
+  const idsProyectosSinFiltro = proyectosSinFiltro.map((p: any) => p._id);
+  check(new Set(idsProyectosSinFiltro).size === idsProyectosSinFiltro.length,
+    'nivel=proyecto sin filtro no contiene _id duplicados');
+  check(proyectosSinFiltro.filter((p: any) => p.nombre === 'Proyecto Doble Centro').length === 1,
+    'Proyecto Doble Centro (2 centros) aparece UNA sola vez en la lista plana nivel=proyecto');
+  check(proyectosSinFiltro.length === 4,
+    `total de proyectos únicos sin filtro es 4, cableado+redes+aire+doble (${proyectosSinFiltro.length})`);
+
+  const arbolParaDoble = await service.buscar('empresa');
+  const acmeDoble = arbolParaDoble.find((e: any) => e.nombre === 'Empresa Acme');
+  const betaDoble = arbolParaDoble.find((e: any) => e.nombre === 'Empresa Beta');
+  const centroNorteNode = acmeDoble?.centros.find((c: any) => c.nombre === 'Centro Norte');
+  const centroPonienteNode = betaDoble?.centros.find((c: any) => c.nombre === 'Centro Poniente');
+  check(
+    !!centroNorteNode?.proyectos.some((p: any) => p.nombre === 'Proyecto Doble Centro') &&
+    !!centroPonienteNode?.proyectos.some((p: any) => p.nombre === 'Proyecto Doble Centro'),
+    'en el árbol (nivel=empresa/centro), Proyecto Doble Centro sigue apareciendo bajo AMBOS centros (no se deduplica ahí, es intencional)',
+  );
 
   // ── Limpieza ────────────────────────────────────────────────────────────
   await db.dropDatabase();

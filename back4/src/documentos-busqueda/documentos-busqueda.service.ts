@@ -81,7 +81,22 @@ export class DocumentosBusquedaService {
     if (nivel === 'empresa') return arbol;
     const todosCentros = arbol.flatMap(e => e.centros);
     if (nivel === 'centro') return todosCentros;
-    return todosCentros.flatMap(c => c.proyectos);
+
+    // Un Proyecto puede pertenecer a varios centros (centro_costo_ids es array), por lo
+    // que aparece una vez por cada centro en el árbol (intencional). En la lista plana
+    // 'proyecto' eso produce _id duplicados (bug NG0955 en el @for del frontend), así que
+    // se deduplica manteniendo la primera aparición — sus documentos son los mismos sin
+    // importar por qué centro se llegó a él.
+    const vistos = new Set<string>();
+    const proyectosUnicos: NodoBusqueda[] = [];
+    for (const c of todosCentros) {
+      for (const p of c.proyectos) {
+        if (vistos.has(p._id)) continue;
+        vistos.add(p._id);
+        proyectosUnicos.push(p);
+      }
+    }
+    return proyectosUnicos;
   }
 
   private async construirArbol(categorias?: string[], nombre?: string): Promise<NodoBusqueda[]> {
