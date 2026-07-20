@@ -59,3 +59,57 @@ describe('DocumentosService.subir', () => {
     httpMock.expectNone(() => true);
   });
 });
+
+describe('DocumentosService.buscarCascada', () => {
+  let service: DocumentosService;
+  let httpMock: HttpTestingController;
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({
+      providers: [provideHttpClient(), provideHttpClientTesting()],
+    });
+    service = TestBed.inject(DocumentosService);
+    httpMock = TestBed.inject(HttpTestingController);
+  });
+
+  afterEach(() => httpMock.verify());
+
+  it('pega a /documentos/busqueda-total con nivel, categorias y nombre, y arma la URL de cada documento según su nivel', () => {
+    service.buscarCascada('centro', ['Contrato', 'Factura'], 'acme');
+
+    const req = httpMock.expectOne(r => r.url.includes('/documentos/busqueda-total'));
+    const url = new URL(req.request.url);
+    expect(url.searchParams.get('nivel')).toBe('centro');
+    expect(url.searchParams.get('categorias')).toBe('Contrato,Factura');
+    expect(url.searchParams.get('nombre')).toBe('acme');
+
+    req.flush([
+      {
+        _id: 'centro1', nombre: 'Centro Norte', nivel: 'centro',
+        empresa_id: 'emp1', empresa_nombre: 'Empresa Acme',
+        documentos: [{ _id: 'doc1', nombre_display: 'Contrato Centro Norte', categoria: 'Contrato' }],
+        centros: [],
+        proyectos: [{
+          _id: 'proy1', nombre: 'Proyecto Cableado', nivel: 'proyecto',
+          empresa_id: 'emp1', empresa_nombre: 'Empresa Acme', centro_id: 'centro1', centro_nombre: 'Centro Norte',
+          documentos: [{ _id: 'doc2', nombre_display: 'Contrato Cableado', categoria: 'Contrato' }],
+          centros: [], proyectos: [],
+        }],
+      },
+    ]);
+
+    const arbol = service.busquedaCascada();
+    expect(arbol[0].documentos[0].url).toContain('/empresas/emp1/centros/centro1/documentos/doc1');
+    expect(arbol[0].proyectos[0].documentos[0].url).toContain('/empresas/emp1/centros/centro1/proyectos/proy1/documentos/doc2');
+  });
+
+  it('omite categorias y nombre del query string cuando no se pasan', () => {
+    service.buscarCascada('empresa');
+    const req = httpMock.expectOne(r => r.url.includes('/documentos/busqueda-total'));
+    const url = new URL(req.request.url);
+    expect(url.searchParams.get('nivel')).toBe('empresa');
+    expect(url.searchParams.has('categorias')).toBe(false);
+    expect(url.searchParams.has('nombre')).toBe(false);
+    req.flush([]);
+  });
+});

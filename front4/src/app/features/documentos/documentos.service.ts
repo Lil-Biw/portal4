@@ -59,6 +59,32 @@ export interface DocumentoVencidoItem {
   link_url?: string;
 }
 
+export interface DocBusquedaItem {
+  _id: string;
+  nombre_display: string;
+  categoria?: string;
+  tipo_mime?: string;
+  tamano_bytes?: number;
+  subido_en?: string;
+  subido_por_nombre?: string;
+  tipo_contenido?: 'archivo' | 'link';
+  link_url?: string;
+  url: string;
+}
+
+export interface NodoBusqueda {
+  _id: string;
+  nombre: string;
+  nivel: 'empresa' | 'centro' | 'proyecto';
+  empresa_id: string;
+  empresa_nombre: string;
+  centro_id?: string;
+  centro_nombre?: string;
+  documentos: DocBusquedaItem[];
+  centros: NodoBusqueda[];
+  proyectos: NodoBusqueda[];
+}
+
 @Injectable({ providedIn: 'root' })
 export class DocumentosService {
   private readonly http = inject(HttpClient);
@@ -74,6 +100,7 @@ export class DocumentosService {
     empresa: null, centro: null, proyecto: null,
   });
   readonly documentosVencidos = signal<DocumentoVencidoItem[]>([]);
+  readonly busquedaCascada = signal<NodoBusqueda[]>([]);
 
   // Carga documentos de una empresa
   cargarEmpresa(empresaId: string): void {
@@ -314,6 +341,33 @@ export class DocumentosService {
       ),
       error: ()  => this.documentosVencidos.set([]),
     });
+  }
+
+  buscarCascada(nivel: 'empresa' | 'centro' | 'proyecto', categorias?: string[], nombre?: string): void {
+    const params: Record<string, string> = { nivel };
+    if (categorias?.length) params['categorias'] = categorias.join(',');
+    if (nombre?.trim())     params['nombre'] = nombre.trim();
+    const qs = new URLSearchParams(params).toString();
+
+    this.http.get<NodoBusqueda[]>(this.api.url(`/documentos/busqueda-total?${qs}`)).subscribe({
+      next:  (arbol) => this.busquedaCascada.set(arbol.map(n => this.mapearNodo(n))),
+      error: ()      => this.busquedaCascada.set([]),
+    });
+  }
+
+  private mapearNodo(n: NodoBusqueda): NodoBusqueda {
+    return {
+      ...n,
+      documentos: n.documentos.map(d => ({ ...d, url: this.api.url(this.urlDocCascada(n, d._id)) })),
+      centros:    n.centros.map(c => this.mapearNodo(c)),
+      proyectos:  n.proyectos.map(p => this.mapearNodo(p)),
+    };
+  }
+
+  private urlDocCascada(n: NodoBusqueda, docId: string): string {
+    if (n.nivel === 'empresa') return `/empresas/${n.empresa_id}/documentos/${docId}`;
+    if (n.nivel === 'centro')  return `/empresas/${n.empresa_id}/centros/${n._id}/documentos/${docId}`;
+    return `/empresas/${n.empresa_id}/centros/${n.centro_id}/proyectos/${n._id}/documentos/${docId}`;
   }
 
   marcarVencido(
