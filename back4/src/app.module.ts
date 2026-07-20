@@ -18,6 +18,7 @@ import { ActividadesModule } from './actividades/actividades.module';
 import { ActivosModule } from './activos/activos.module';
 import { NoticiasModule } from './noticias/noticias.module';
 import { DocumentosVencidosModule } from './documentos-vencidos/documentos-vencidos.module';
+import { DocumentosBusquedaModule } from './documentos-busqueda/documentos-busqueda.module';
 import { TareasModule } from './tareas/tareas.module';
 
 @Module({
@@ -39,6 +40,7 @@ import { TareasModule } from './tareas/tareas.module';
     ActivosModule,
     NoticiasModule,
     DocumentosVencidosModule,
+    DocumentosBusquedaModule,
     TareasModule,
   ],
   providers: [
