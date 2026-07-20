@@ -47,7 +47,7 @@ const BUILDING_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="32" height
   standalone: true,
   imports: [RouterLink, RouterLinkActive],
   template: `
-    <nav class="sidebar">
+    <nav class="sidebar" [class.admin]="mode === 'admin'" [class.consumidor]="mode === 'consumidor'">
       <!-- Header -->
       @if (mode === 'admin') {
         <div class="brand-header">
@@ -272,6 +272,10 @@ const BUILDING_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="32" height
         color: #4db8f0;
         font-weight: 600;
       }
+      .sidebar.consumidor a.item.active {
+        background: rgba(124, 58, 237, 0.15);
+        color: #a78bfa;
+      }
       .icon {
         display: flex;
         align-items: center;
@@ -290,8 +294,8 @@ const BUILDING_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="32" height
         padding: 0.35rem 0.75rem 0.35rem 1.75rem;
         font-size: 0.78rem;
         font-weight: 600;
-        color: #4db8f0;
-        background: rgba(77, 184, 240, 0.1);
+        color: #a78bfa;
+        background: rgba(124, 58, 237, 0.1);
         border-radius: 8px;
         overflow: hidden;
       }
@@ -306,8 +310,8 @@ const BUILDING_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="32" height
       }
       .sub-item--project {
         padding-left: 2.75rem;
-        background: rgba(77, 184, 240, 0.05);
-        color: #7dd3f7;
+        background: rgba(124, 58, 237, 0.05);
+        color: #c4b5fd;
         font-size: 0.74rem;
       }
 

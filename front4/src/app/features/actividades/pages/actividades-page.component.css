@@ -138,14 +138,16 @@
   padding: 0;
   overflow: hidden;
   margin-bottom: 1rem;
+  border: 1px solid rgba(31,41,55,.14);
+  box-shadow: none;
 }
 
 /* ── Month view ─────────────────────────────────────────────────── */
 .cal-grid-header {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  border-bottom: 1px solid rgba(34,33,33,.12);
-  background: #f9fafb;
+  border-bottom: 1px solid rgba(31,41,55,.16);
+  background: #f3f5f8;
 }
 .cal-day-header {
   padding: .5rem;
@@ -156,28 +158,81 @@
   text-transform: uppercase;
   letter-spacing: .03em;
 }
-.cal-grid-month {
+.cal-grid-month-weeks {
+  display: flex;
+  flex-direction: column;
+}
+/* Cada semana es un bloque visual propio: borde superior que la separa de la
+   anterior (además de la franja zebra, ver más abajo). */
+.cal-week-row {
+  position: relative;
+  border-top: 1px solid rgba(31,41,55,.12);
+}
+.cal-week-row:first-child { border-top: none; }
+.cal-week-cells {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
 }
+
+/* Barra de actividad multi-día — solo se usa en la franja "Sin hora" de la
+   vista Semana (ver .cal-time-allday-body); en la vista Mes las multi-día se
+   muestran como un chip más dentro de cada celda (más detalle de hora/
+   continuidad en Semana o Día). Una barra por fila, atraviesa las columnas
+   sin cortes (grid-column de colStart a colEnd); si varias se solapan, se
+   apilan en filas (ver barrasMultiDiaPorSemana). */
+.cal-week-bars {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px 0;
+  padding: 3px 0 2px;
+}
+.cal-week-bar {
+  border-radius: 4px;
+  color: #fff;
+  font-size: .64rem;
+  font-weight: 700;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  padding: 0 .35rem;
+  margin: 0 2px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  cursor: pointer;
+  transition: opacity .12s;
+}
+.cal-week-bar:hover { opacity: .85; }
+
 .cal-cell {
-  min-height: 90px;
+  /* Altura fija (no min-height): con el tope de 3 chips + "+N más" el
+     contenido siempre cabe, y así todas las filas del mes miden igual en vez
+     de estirarse según cuántas actividades tenga cada día. line-height
+     explícito en día/chip/más (ver más abajo) para que la altura sea
+     predecible: 1 línea de día + hasta 4 líneas de eventos con margen. */
+  height: 168px;
+  overflow: hidden;
   padding: .4rem .35rem;
-  border-right: 1px solid rgba(34,33,33,.1);
-  border-bottom: 1px solid rgba(34,33,33,.1);
+  border-right: 1px solid rgba(31,41,55,.12);
+  border-bottom: 1px solid rgba(31,41,55,.12);
   cursor: pointer;
   transition: background .1s;
 }
-.cal-cell:hover { background: rgba(0,149,214,.04); }
+.cal-cell:hover { background: rgba(0,149,214,.05); }
 .cal-cell:nth-child(7n) { border-right: none; }
-.cal-cell.other-month { background: #f8f9fa; }
-.cal-cell.today { background: rgba(0,149,214,.06); }
+.cal-cell.other-month { background: #f6f7f9; }
+.cal-cell.today { background: rgba(0,149,214,.08); box-shadow: inset 0 0 0 1.5px #0095d6; }
+
+/* Zebra por semana: separa las filas de un vistazo sin depender solo de las
+   líneas de borde (las celdas "hoy"/"otro mes" mantienen su propio fondo). */
+.cal-week-row:nth-child(2n) .cal-cell:not(.today):not(.other-month) { background: #fafbfc; }
 .cal-day-num {
   display: block;
   font-size: .78rem;
+  line-height: 1.2;
   font-weight: 600;
   color: #374151;
-  margin-bottom: .25rem;
+  margin-bottom: .3rem;
 }
 .cal-cell.today .cal-day-num {
   background: #0095d6;
@@ -192,26 +247,7 @@
 }
 .cal-cell.other-month .cal-day-num { color: #d1d5db; }
 
-/* ── Week view ─────────────────────────────────────────────────── */
-.cal-grid-week {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  min-height: 460px;
-}
-.cal-week-col {
-  border-right: 1px solid rgba(34,33,33,.07);
-  display: flex;
-  flex-direction: column;
-}
-.cal-week-col:last-child { border-right: none; }
-.cal-week-col.today { background: rgba(0,149,214,.05); }
-.cal-week-header {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: .6rem .25rem .4rem;
-  border-bottom: 1px solid rgba(34,33,33,.08);
-}
+/* ── Week view (encabezado de días, reutilizado por la grilla horaria) ── */
 .cal-week-dow {
   font-size: .68rem;
   font-weight: 700;
@@ -233,28 +269,19 @@
   background: #0095d6;
   color: #fff;
 }
-.cal-week-events {
-  flex: 1;
-  padding: .4rem .3rem;
-  display: flex;
-  flex-direction: column;
-  gap: .25rem;
-  cursor: pointer;
-  min-height: 360px;
-}
-.cal-week-empty { flex: 1; }
 
 /* ── Event chip ─────────────────────────────────────────────────── */
 .cal-events {
   display: flex;
   flex-direction: column;
-  gap: .2rem;
+  gap: .25rem;
 }
 .cal-event-chip {
   font-size: .67rem;
+  line-height: 1.35;
   font-weight: 600;
   color: #fff;
-  padding: .18rem .35rem;
+  padding: .2rem .35rem;
   border-radius: 5px;
   white-space: nowrap;
   overflow: hidden;
@@ -265,13 +292,133 @@
 .cal-event-chip:hover { opacity: .85; }
 
 /* Actividades multi-día: bordes planos en el lado que conecta con el día
-   siguiente/anterior, para que se note que el chip continúa. */
-.cal-event-chip--inicio { border-radius: 5px 0 0 5px; position: relative; }
-.cal-event-chip--inicio::after {
-  content: '›'; float: right; margin-left: .2rem; opacity: .8;
+   siguiente/anterior, y margen negativo para "morder" el padding/borde de la
+   celda y unirse visualmente con el chip vecino (van primero en la celda, ver
+   ordenarMultiDiaPrimero, así quedan en la misma fila en todos los días que ocupan). */
+.cal-event-chip--inicio { border-radius: 5px 0 0 5px; margin-right: -.4rem; position: relative; z-index: 1; }
+.cal-event-chip--medio  { border-radius: 0; margin-left: -.4rem; margin-right: -.4rem; position: relative; z-index: 1; }
+.cal-event-chip--fin    { border-radius: 0 5px 5px 0; margin-left: -.4rem; position: relative; z-index: 1; }
+
+/* "+N más" — vista Mes, día con más de 3 actividades */
+.cal-month-more {
+  font-size: .65rem;
+  line-height: 1.35;
+  font-weight: 700;
+  color: #6b7280;
+  background: #f3f4f6;
+  border: none;
+  border-radius: 5px;
+  padding: .2rem .35rem;
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
 }
-.cal-event-chip--medio { border-radius: 0; }
-.cal-event-chip--fin   { border-radius: 0 5px 5px 0; }
+.cal-month-more:hover { background: #e5e7eb; }
+
+/* ── Grilla horaria (Semana/Día) ───────────────────────────────────
+   Filas por hora (07:00–21:00); actividades con hora se posicionan
+   absolutamente (top/height) y, si se solapan, en columnas lado a lado. */
+.cal-time-shell {
+  border: 1px solid rgba(31,41,55,.14);
+  border-radius: 10px;
+  overflow: hidden;
+}
+.cal-time-header {
+  display: flex;
+  background: #f3f5f8;
+  border-bottom: 1px solid rgba(31,41,55,.16);
+}
+.cal-time-header-spacer { width: 52px; flex-shrink: 0; }
+.cal-time-header-day {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: .5rem .25rem;
+  border-left: 1px solid rgba(31,41,55,.1);
+}
+.cal-time-header-day:first-child { border-left: none; }
+.cal-time-header-day.today { background: rgba(0,149,214,.08); }
+
+.cal-time-allday {
+  display: flex;
+  background: #fafbfc;
+  border-bottom: 1px solid rgba(31,41,55,.14);
+}
+.cal-time-allday-label {
+  width: 52px;
+  flex-shrink: 0;
+  font-size: .6rem;
+  font-weight: 700;
+  color: #9ca3af;
+  text-transform: uppercase;
+  letter-spacing: .03em;
+  padding: .5rem .25rem;
+}
+.cal-time-allday-body { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+.cal-time-allday-cells { display: grid; grid-template-columns: repeat(7, 1fr); }
+.cal-time-allday-col {
+  padding: .3rem;
+  display: flex;
+  flex-direction: column;
+  gap: .2rem;
+  min-height: 30px;
+  cursor: pointer;
+  border-left: 1px solid rgba(31,41,55,.1);
+}
+.cal-time-allday-col:first-child { border-left: none; }
+
+.cal-time-scroll {
+  display: flex;
+  max-height: 480px;
+  overflow-y: auto;
+}
+.cal-time-labels { width: 52px; flex-shrink: 0; border-right: 1px solid rgba(31,41,55,.14); }
+.cal-time-label {
+  height: 48px;
+  box-sizing: border-box;
+  padding: .3rem .35rem 0;
+  font-size: .65rem;
+  font-weight: 700;
+  color: #9ca3af;
+  border-bottom: 1px solid rgba(31,41,55,.1);
+}
+.cal-time-days { flex: 1; display: grid; grid-template-columns: repeat(7, 1fr); }
+.cal-time-days--single { grid-template-columns: 1fr; }
+.cal-time-day {
+  position: relative;
+  border-left: 1px solid rgba(31,41,55,.1);
+  cursor: pointer;
+}
+.cal-time-day:first-child { border-left: none; }
+.cal-time-day-line {
+  height: 48px;
+  box-sizing: border-box;
+  border-bottom: 1px solid rgba(31,41,55,.1);
+}
+.cal-time-block {
+  position: absolute;
+  left: 2%;
+  width: 96%;
+  box-sizing: border-box;
+  border-radius: 6px;
+  padding: .15rem .35rem;
+  overflow: hidden;
+  color: #fff;
+  font-size: .65rem;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(0,0,0,.15);
+  transition: opacity .12s;
+}
+.cal-time-block:hover { opacity: .88; }
+.cal-time-block.selected { outline: 2px solid #0095d6; outline-offset: 1px; }
+.cal-time-block-hora { opacity: .85; margin-right: .25rem; }
+.cal-time-block-nombre {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 
 /* ── Day view ───────────────────────────────────────────────────── */
 .cal-day-layout {
@@ -504,9 +651,10 @@
 .field-row {
   display: flex;
   gap: .75rem;
+  flex-wrap: wrap;
 }
 .field-row > .field {
-  flex: 1 1 0;
+  flex: 1 1 140px;
   min-width: 0;
 }
 .modal-footer {
@@ -1160,4 +1308,11 @@
 }
 .actividad-detalle-historial-nombre { font-size: .83rem; color: #374151; }
 .actividad-detalle-historial-fecha { font-size: .78rem; color: #9ca3af; }
+.actividad-detalle-footer {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 1.25rem;
+  padding-top: 1rem;
+  border-top: 1px solid #f3f4f6;
+}
 .tipo-option--selected { background: #eff6ff; color: #1d4ed8; font-weight: 600; }

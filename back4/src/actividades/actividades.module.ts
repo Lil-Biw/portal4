@@ -9,6 +9,7 @@ import { CentroCostoSchema } from '../centros-costos/centros-costos.schema';
 import { UsuarioSchema } from '../usuarios/usuarios.schema';
 import { ActivoSchema } from '../activos/activos.schema';
 import { MailModule } from '../mail/mail.module';
+import { RecordatoriosModule } from '../recordatorios/recordatorios.module';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { MailModule } from '../mail/mail.module';
       { name: 'DocEliminado', schema: DocEliminadoSchema },
     ]),
     MailModule,
+    RecordatoriosModule,
   ],
   controllers: [ActividadesController, ActividadesAdminController, ActividadesEmpresaController],
   providers: [ActividadesService],

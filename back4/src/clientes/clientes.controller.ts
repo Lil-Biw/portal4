@@ -161,6 +161,19 @@ export class ClientesController {
     sendFile(res, buffer, tipo_mime, nombre_display);
   }
 
+  @Patch(':id/documentos/:docId')
+  @Roles('super_admin', 'admin_smartclarity')
+  actualizarDocumento(
+    @Param('id') id: string,
+    @Param('docId') docId: string,
+    @Body('categoria') categoria: string,
+    @Req() req: Request,
+  ) {
+    this.assertEmpresaPermitida((req as any).user as JwtUser, id);
+    if (!categoria?.trim()) throw new BadRequestException('Debes indicar una categoría');
+    return this.clientesService.actualizarDocumento(id, docId, categoria.trim());
+  }
+
   @Delete(':id/documentos/:docId')
   @Roles('super_admin', 'admin_smartclarity')
   eliminarDocumento(

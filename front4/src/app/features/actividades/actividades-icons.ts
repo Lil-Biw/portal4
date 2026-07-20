@@ -5,12 +5,12 @@ export interface ColorActividad {
 }
 
 export const COLORES_ACTIVIDAD: ColorActividad[] = [
-  { valor: '#0095d6', label: 'Azul',    icono: 'calendario'  },
-  { valor: '#22c55e', label: 'Verde',   icono: 'check'       },
-  { valor: '#f59e0b', label: 'Ámbar',   icono: 'llave'       },
-  { valor: '#ef4444', label: 'Rojo',    icono: 'alerta'      },
-  { valor: '#8b5cf6', label: 'Morado',  icono: 'reunion'     },
-  { valor: '#6366f1', label: 'Índigo',  icono: 'documento'   },
+  { valor: '#4E9AC7', label: 'Azul',    icono: 'calendario'  },
+  { valor: '#5FAE7B', label: 'Verde',   icono: 'check'       },
+  { valor: '#D9A24B', label: 'Ámbar',   icono: 'llave'       },
+  { valor: '#D46A63', label: 'Rojo',    icono: 'alerta'      },
+  { valor: '#9B85C9', label: 'Morado',  icono: 'reunion'     },
+  { valor: '#7B82C9', label: 'Índigo',  icono: 'documento'   },
 ];
 
 export function clavePorColorActividad(color: string): string {

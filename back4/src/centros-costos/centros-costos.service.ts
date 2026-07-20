@@ -150,6 +150,12 @@ export class CentrosCostosService {
     return resolverSubidoPorNombre(docs, this.usuarioModel as any);
   }
 
+  async actualizarDocumento(id: string, docId: string, categoria: string) {
+    const doc = await this.docsHelper.actualizarCategoria(id, docId, categoria);
+    const [conNombre] = await resolverSubidoPorNombre([doc], this.usuarioModel as any);
+    return conNombre;
+  }
+
   servirDocumento(centroId: string, docId: string) {
     return this.docsHelper.servir(centroId, docId);
   }

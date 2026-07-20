@@ -90,6 +90,17 @@ export class CentrosCostosController {
     sendFile(res, buffer, tipo_mime, nombre_display);
   }
 
+  @Patch(':centroId/documentos/:docId')
+  @Roles('super_admin', 'admin_smartclarity')
+  actualizarDocumento(
+    @Param('centroId') centroId: string,
+    @Param('docId') docId: string,
+    @Body('categoria') categoria: string,
+  ) {
+    if (!categoria?.trim()) throw new BadRequestException('Debes indicar una categoría');
+    return this.centrosCostosService.actualizarDocumento(centroId, docId, categoria.trim());
+  }
+
   @Delete(':centroId/documentos/:docId')
   @Roles('super_admin', 'admin_smartclarity', 'usuario')
   eliminarDocumento(

@@ -61,7 +61,7 @@ import { clavePorColorActividad } from '../../actividades-icons';
   `],
 })
 export class ActividadIconoComponent {
-  @Input() color = '#0095d6';
+  @Input() color = '#4E9AC7';
   @Input() size  = 20;
 
   protected get clave(): string {

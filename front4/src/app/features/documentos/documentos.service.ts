@@ -249,6 +249,25 @@ export class DocumentosService {
     );
   }
 
+  actualizarCategoria(docUrl: string, categoria: string, tipo: DocTipo, onSuccess?: () => void, onError?: () => void): void {
+    this.http.patch<DocumentoItem>(docUrl, { categoria }).subscribe({
+      next: (actualizado) => {
+        const patch = (list: DocumentoItem[]) =>
+          list.map(d => d._id === actualizado._id ? { ...d, categoria: actualizado.categoria } : d);
+        this.documentosEmpresa.update(patch);
+        this.documentosCentro.update(patch);
+        this.documentosProyecto.update(patch);
+        this.documentosPorCentro.update(grupos => grupos.map(g => ({ ...g, docs: patch(g.docs) })));
+        this.documentosPorProyecto.update(grupos => grupos.map(g => ({ ...g, docs: patch(g.docs) })));
+        onSuccess?.();
+      },
+      error: (err) => {
+        this.setUploadStatus(tipo, { type: 'error', text: err?.error?.message ?? 'Error al cambiar la categoría' });
+        onError?.();
+      },
+    });
+  }
+
   eliminar(docUrl: string, tipo: DocTipo, empresaId: string, centroId?: string, proyectoId?: string, onSuccess?: () => void): void {
     if (!docUrl) { this.setUploadStatus(tipo, { type: 'error', text: 'URL de documento no disponible' }); return; }
     this.http.delete(docUrl).subscribe({

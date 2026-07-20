@@ -21,8 +21,10 @@ export class TareasController {
   ) {}
 
   private verificarSecret(authHeader?: string): void {
+    // Fail-closed: si CRON_SECRET no está configurado, estos endpoints @Public()
+    // quedarían abiertos a cualquiera en internet en vez de exigir el secreto.
     const secret = this.config.get<string>('CRON_SECRET');
-    if (secret && authHeader !== `Bearer ${secret}`) {
+    if (!secret || authHeader !== `Bearer ${secret}`) {
       throw new UnauthorizedException();
     }
   }

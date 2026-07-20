@@ -13,9 +13,9 @@ import { UploadDocumentFormComponent } from '../../../shared/components/upload-d
 import { ActividadIconoComponent } from '../components/actividad-icono/actividad-icono.component';
 import { Actividad, TipoActividad } from '../../../shared/models/actividad.model';
 import { Activo, TipoActivo } from '../../../shared/models/activo.model';
-import { asId, toDateKey, usuarioEstaSuscrito, actividadEnDia, posicionActividadEnDia } from '../../../shared/utils';
+import { asId, toDateKey, usuarioEstaSuscrito, actividadEnDia, posicionActividadEnDia, ordenarMultiDiaPrimero, barrasMultiDiaPorSemana, BarraMultiDia, layoutPorHora, BloqueHorario, rangoHora as formatRangoHora } from '../../../shared/utils';
 import { Usuario } from '../../../shared/models/usuario.model';
-import { createCalendarState, CalendarView, CALENDAR_DAYS, CALENDAR_MONTHS } from '../../../shared/calendar-state';
+import { createCalendarState, CalendarView, CALENDAR_DAYS, CALENDAR_MONTHS, DayCell } from '../../../shared/calendar-state';
 import { COLORES_ACTIVIDAD, ColorActividad } from '../actividades-icons';
 
 interface ActividadForm {
@@ -27,6 +27,8 @@ interface ActividadForm {
   activo_ids: string[];
   fecha: string;
   fecha_termino: string;
+  hora: string;
+  hora_termino: string;
 }
 
 interface TipoForm {
@@ -36,10 +38,10 @@ interface TipoForm {
 }
 
 function emptyForm(fecha = ''): ActividadForm {
-  return { nombre: '', descripcion: '', tipo_id: '', empresa_id: '', centro_costo_id: '', activo_ids: [], fecha, fecha_termino: '' };
+  return { nombre: '', descripcion: '', tipo_id: '', empresa_id: '', centro_costo_id: '', activo_ids: [], fecha, fecha_termino: '', hora: '', hora_termino: '' };
 }
 function emptyTipoForm(): TipoForm {
-  return { nombre: '', color: '#0095d6', descripcion: '' };
+  return { nombre: '', color: '#4E9AC7', descripcion: '' };
 }
 
 @Component({
@@ -103,9 +105,9 @@ export class ActividadesPageComponent implements OnInit {
   // Recordatorios: días de antelación a la fecha en que se avisa a los admins
   // suscritos; se persisten en la actividad (por defecto todos marcados al crear)
   protected readonly opcionesDiasRecordatorio = [
-    { valor: 30, label: '1 mes antes' },
+    { valor: 30, label: '30 días antes' },
     { valor: 15, label: '15 días antes' },
-    { valor: 7,  label: '1 semana antes' },
+    { valor: 7,  label: '7 días antes' },
     { valor: 3,  label: '3 días antes' },
     { valor: 1,  label: '1 día antes' },
     { valor: 0,  label: 'El día de la actividad' },
@@ -204,6 +206,7 @@ export class ActividadesPageComponent implements OnInit {
   protected showResumenNotif   = signal(false);
   protected modalLupa          = signal<'activos' | 'notif' | null>(null);
   protected lupaDetalleDia     = signal(false);
+  protected lupaDocsDia        = signal(false);
   protected tipoDropdownOpen   = signal(false);
 
   protected tipoSeleccionado = computed(() =>
@@ -272,17 +275,28 @@ export class ActividadesPageComponent implements OnInit {
   protected readonly calendarDays = this._cal.calendarDays;
   protected readonly weekStart   = this._cal.weekStart;
   protected readonly weekDays    = this._cal.weekDays;
-  navAnterior(): void            { this._cal.navAnterior(); this.actividadSeleccionadaDia.set(null); this.lupaDetalleDia.set(false); }
-  navSiguiente(): void           { this._cal.navSiguiente(); this.actividadSeleccionadaDia.set(null); this.lupaDetalleDia.set(false); }
-  irAHoy(): void                 { this._cal.irAHoy(); this.actividadSeleccionadaDia.set(null); this.lupaDetalleDia.set(false); }
-  setView(v: CalendarView): void { this._cal.setView(v); this.actividadSeleccionadaDia.set(null); this.lupaDetalleDia.set(false); }
+  navAnterior(): void            { this._cal.navAnterior(); this.actividadSeleccionadaDia.set(null); this.lupaDetalleDia.set(false); this.lupaDocsDia.set(false); }
+  navSiguiente(): void           { this._cal.navSiguiente(); this.actividadSeleccionadaDia.set(null); this.lupaDetalleDia.set(false); this.lupaDocsDia.set(false); }
+  irAHoy(): void                 { this._cal.irAHoy(); this.actividadSeleccionadaDia.set(null); this.lupaDetalleDia.set(false); this.lupaDocsDia.set(false); }
+  setView(v: CalendarView): void { this._cal.setView(v); this.actividadSeleccionadaDia.set(null); this.lupaDetalleDia.set(false); this.lupaDocsDia.set(false); }
   isToday(date: Date): boolean   { return this._cal.isToday(date); }
+
+  irADetalleDia(date: Date): void {
+    this.reference.set(date);
+    this.setView('day');
+  }
 
   protected actividadSeleccionadaDia = signal<import('../../../shared/models/actividad.model').Actividad | null>(null);
 
   seleccionarActividadDia(a: Actividad): void {
     this.actividadSeleccionadaDia.set(a);
     this.lupaDetalleDia.set(false);
+    this.lupaDocsDia.set(false);
+    this.service.listarDocumentos(a._id);
+  }
+
+  cerrarResumen(): void {
+    this.actividadSeleccionadaDia.set(null);
   }
 
   protected readonly detalleActividad = computed(() => {
@@ -311,13 +325,75 @@ export class ActividadesPageComponent implements OnInit {
     return this.actividadesFiltradas().filter(a => actividadEnDia(a, key));
   }
 
+  // Vista Mes: las multi-día se quedan como un chip más dentro de la celda
+  // (sin barra); el detalle de hora/continuidad se ve en Semana o Día. Van
+  // primero para no perderse con el tope de "primeras 3" y para que el chip
+  // conector (--inicio/--medio/--fin) quede alineado día a día.
+  primerasActividadesEnDia(date: Date): Actividad[] {
+    return ordenarMultiDiaPrimero(this.actividadesEnDia(date), toDateKey(date)).slice(0, 3);
+  }
+
   posicionEnDia(a: Actividad, date: Date): 'unico' | 'inicio' | 'medio' | 'fin' {
     return posicionActividadEnDia(a, toDateKey(date));
   }
 
+  // Vista Mes agrupada por semana, para la franja zebra (ver .cal-week-row:nth-child(2n)).
+  protected readonly semanasDelMes = computed((): DayCell[][] => {
+    const dias = this.calendarDays();
+    const semanas: DayCell[][] = [];
+    for (let i = 0; i < dias.length; i += 7) semanas.push(dias.slice(i, i + 7));
+    return semanas;
+  });
+
+  barrasSemanaActual(): { barras: BarraMultiDia<Actividad>[]; filas: number } {
+    return barrasMultiDiaPorSemana(this.actividadesFiltradas(), this.weekDays());
+  }
+
+  // Grilla horaria (Semana): actividades de un solo día sin hora van en la
+  // franja "Sin hora"; las multi-día se dibujan aparte como barra (barrasSemanaActual).
+  actividadesSinHoraUnicas(date: Date): Actividad[] {
+    const key = toDateKey(date);
+    return this.actividadesEnDia(date).filter(a => !a.hora && posicionActividadEnDia(a, key) === 'unico');
+  }
+
+  // Vista Día: no hay "semana" sobre la cual dibujar una barra, así que la
+  // franja "Sin hora" muestra también las multi-día (como un ítem más de la lista).
+  actividadesSinHoraDia(date: Date): Actividad[] {
+    return this.actividadesEnDia(date).filter(a => !a.hora);
+  }
+
+  bloquesHorarios(date: Date): BloqueHorario<Actividad>[] {
+    return layoutPorHora(this.actividadesEnDia(date).filter(a => !!a.hora));
+  }
+
+  // Grilla horaria (Semana/Día): rango fijo 07:00–21:00, filas de 48px.
+  protected readonly horasGrid = Array.from({ length: 15 }, (_, i) => `${String(7 + i).padStart(2, '0')}:00`);
+  private readonly ROW_PX = 48;
+  private readonly GRID_INICIO_MIN = 7 * 60;
+
+  topPxDeHora(inicioMin: number): number {
+    return (inicioMin - this.GRID_INICIO_MIN) * (this.ROW_PX / 60);
+  }
+
+  // Alto proporcional a la duración real (hora → hora_termino); con un mínimo
+  // visual de 30min para que los bloques cortos sigan siendo legibles.
+  alturaBloquePx(duracionMin: number): number {
+    return Math.max(duracionMin, 30) * (this.ROW_PX / 60);
+  }
+
+  rangoHora(a: Actividad): string {
+    return formatRangoHora(a);
+  }
+
   tipoDeActividad(a: Actividad): TipoActividad | null {
-    if (typeof a.tipo_id === 'object') return a.tipo_id as TipoActividad;
-    return this.tiposService.tipos().find(t => t._id === asId(a.tipo_id as string)) ?? null;
+    // Prioriza el tipo "vivo" del signal (tiposService) sobre el objeto embebido
+    // que trajo la actividad al cargarse: si el usuario edita el color/nombre de
+    // un tipo, las actividades ya cargadas no vuelven a pedirse al backend, así
+    // que el objeto embebido queda con datos viejos hasta que se recarga la página.
+    const id = asId(typeof a.tipo_id === 'object' ? (a.tipo_id as TipoActividad)._id : a.tipo_id as string);
+    const vivo = this.tiposService.tipos().find(t => asId(t._id) === id);
+    if (vivo) return vivo;
+    return typeof a.tipo_id === 'object' ? (a.tipo_id as TipoActividad) : null;
   }
 
   colorDeActividad(a: Actividad): string {
@@ -438,6 +514,10 @@ export class ActividadesPageComponent implements OnInit {
 
   abrirDocActividad(linkUrl: string): void {
     window.open(linkUrl, '_blank');
+  }
+
+  descargarDocResumen(actividadId: string, docId: string, nombreDisplay?: string): void {
+    this.service.descargarDocumento(actividadId, docId, nombreDisplay);
   }
 
   get actividadEditando() {
@@ -561,6 +641,8 @@ export class ActividadesPageComponent implements OnInit {
       activo_ids:      (a.activo_ids ?? []).map(x => asId(typeof x === 'object' ? (x as { _id: string })._id : x)),
       fecha:           a.fecha.slice(0, 10),
       fecha_termino:   a.fecha_termino ? a.fecha_termino.slice(0, 10) : '',
+      hora:            a.hora ?? '',
+      hora_termino:    a.hora_termino ?? '',
     });
     this.resetNotif();
     this.diasRecordatorio.set([...(a.dias_recordatorio ?? [])]);
@@ -595,6 +677,8 @@ export class ActividadesPageComponent implements OnInit {
     } else if (field === 'empresa_id') {
       this.form.update(f => ({ ...f, empresa_id: value as string }));
       this.notifAdminsIds.set(this.adminsParaEmpresa().map(u => u._id));
+    } else if (field === 'hora' && !value) {
+      this.form.update(f => ({ ...f, hora: '', hora_termino: '' }));
     } else {
       this.form.update(f => ({ ...f, [field]: value }));
     }
@@ -636,6 +720,8 @@ export class ActividadesPageComponent implements OnInit {
       activo_ids:      f.activo_ids.length > 0 ? f.activo_ids : undefined,
       fecha:           f.fecha,
       fecha_termino:   f.fecha_termino || null,
+      hora:            f.hora || undefined,
+      hora_termino:    f.hora && f.hora_termino ? f.hora_termino : undefined,
       dias_recordatorio: this.diasRecordatorio(),
       // Los docs pendientes se suben tras crear; se mandan los nombres para el correo
       documentos_nombres: !id && this.docsPendientes.length > 0

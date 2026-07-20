@@ -16,7 +16,6 @@ import { asId, detectarCategoriaDocumento, formatFechaHora, formatBytes, MAX_UPL
 
 interface PanelState {
   showUpload: boolean;
-  showFilter: boolean;
   nombreInput: string;
   categoriaInput: string;
   busqueda: string;
@@ -315,14 +314,11 @@ export class DocumentosConsumidorPageComponent implements OnInit {
   toggleUpload(tipo: DocTipo): void {
     const p = this.panels[tipo];
     p.showUpload = !p.showUpload;
-    if (p.showUpload) p.showFilter = false;
     if (!p.showUpload) { p.selectedFile = null; p.nombreInput = ''; p.linkInput = ''; p.modoUpload = 'archivo'; }
   }
 
-  toggleFilter(tipo: DocTipo): void {
-    const p = this.panels[tipo];
-    p.showFilter = !p.showFilter;
-    if (p.showFilter) p.showUpload = false;
+  seleccionarCategoriaFiltro(tipo: DocTipo, categoria: string): void {
+    this.panels[tipo].categoriaFiltro = categoria;
   }
 
   setModoUpload(tipo: DocTipo, modo: 'archivo' | 'link'): void {
@@ -612,6 +608,6 @@ export class DocumentosConsumidorPageComponent implements OnInit {
   // ─── private helpers ─────────────────────────────────────────────────────
 
   private emptyPanel(): PanelState {
-    return { showUpload: false, showFilter: false, nombreInput: '', categoriaInput: 'Contratos', busqueda: '', categoriaFiltro: '', selectedFile: null, modoUpload: 'archivo', linkInput: '' };
+    return { showUpload: false, nombreInput: '', categoriaInput: 'Contratos', busqueda: '', categoriaFiltro: '', selectedFile: null, modoUpload: 'archivo', linkInput: '' };
   }
 }

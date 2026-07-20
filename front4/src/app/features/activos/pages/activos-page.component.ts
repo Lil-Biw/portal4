@@ -261,6 +261,7 @@ export class ActivosPageComponent implements OnInit {
     this.centrosService.cargar();
     this.clientesService.cargar();
     this.tiposService.cargar();
+    this.recargarActivos();
   }
 
   onEmpresaChange(): void {
@@ -276,7 +277,11 @@ export class ActivosPageComponent implements OnInit {
   private recargarActivos(): void {
     const empresaId = this._selectedEmpresaId();
     const centroId  = this._selectedCentroId();
-    if (!empresaId) { return; }
+    if (!empresaId) {
+      // "Todas" las empresas: sin filtro, trae todos los activos.
+      this.service.cargar();
+      return;
+    }
     if (!centroId) {
       const ids = this.centrosFiltrados().map(c => asId(c._id));
       this.service.cargarPorCentros(empresaId, ids);

@@ -35,7 +35,9 @@ export interface CreateProyectoDto {
   descripcion?: string;
   estado?: EstadoProyecto;
   fecha_inicio?: string;
-  fecha_fin?: string;
+  // null = borrar explícitamente una fecha_fin ya guardada (distinto de
+  // "no enviar el campo", que en un PUT deja el valor anterior intacto).
+  fecha_fin?: string | null;
   dias_recordatorio?: number[];
 }
 

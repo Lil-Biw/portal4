@@ -63,13 +63,18 @@ export class MailService {
 
   async notificarNuevaActividad(params: {
     destinatarios: { nombre: string; email: string }[];
-    actividad: { nombre: string; tipo: string; fecha: Date; descripcion?: string; jerarquia: ContextoJerarquico; activos: string[]; documentos?: string[] };
+    actividad: { nombre: string; tipo: string; fecha: Date; hora?: string; hora_termino?: string; descripcion?: string; jerarquia: ContextoJerarquico; activos: string[]; documentos?: string[] };
   }): Promise<void> {
     const portalUrl = this.config.get<string>('PORTAL_URL') ?? 'http://localhost:4200';
-    const fecha = params.actividad.fecha.toLocaleDateString('es-CL', {
+    let fecha = params.actividad.fecha.toLocaleDateString('es-CL', {
       weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
       timeZone: 'UTC',
     });
+    if (params.actividad.hora) {
+      fecha += params.actividad.hora_termino
+        ? ` de ${params.actividad.hora} a ${params.actividad.hora_termino} hrs`
+        : ` a las ${params.actividad.hora} hrs`;
+    }
     await this.enviarATodos(
       params.destinatarios,
       `Nueva actividad programada — ${params.actividad.nombre} — ${breadcrumbJerarquiaTexto(params.actividad.jerarquia)}`,

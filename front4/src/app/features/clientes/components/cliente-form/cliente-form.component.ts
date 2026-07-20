@@ -23,11 +23,12 @@ export class ClienteFormComponent implements OnChanges {
   logoPreview: string | null = null;
   private _logoFile: File | null = null;
 
-  private resolveLogoUrl(url?: string): string | null {
-    if (!url) return null;
-    if (url.startsWith('http')) return url;
-    const origin = new URL(this.api.base).origin;
-    return `${origin}${url}`;
+  // El backend no devuelve el binario del logo en el cliente (solo tipo_mime/nombre,
+  // ver clientes.service.ts findAll/findOne con .select('-logo.contenido')) — hay que
+  // pedirlo al endpoint dedicado GET /empresas/:id/logo (mismo patrón que sidebar.component.ts).
+  private resolveLogoUrl(cliente: Cliente | null): string | null {
+    if (!cliente?._id || !cliente?.logo?.tipo_mime) return null;
+    return this.api.url(`/empresas/${cliente._id}/logo`);
   }
 
   ngOnChanges(): void {
@@ -45,7 +46,7 @@ export class ClienteFormComponent implements OnChanges {
           },
         }
       : this.empty();
-    this.logoPreview = this.resolveLogoUrl(this.initial?.logo_url);
+    this.logoPreview = this.resolveLogoUrl(this.initial);
     this._logoFile = null;
   }
 
@@ -57,7 +58,7 @@ export class ClienteFormComponent implements OnChanges {
       reader.onload = (e) => { this.logoPreview = e.target?.result as string; this.cdr.markForCheck(); };
       reader.readAsDataURL(file);
     } else {
-      this.logoPreview = this.resolveLogoUrl(this.initial?.logo_url);
+      this.logoPreview = this.resolveLogoUrl(this.initial);
     }
   }
 

@@ -260,6 +260,12 @@ export class ProyectosService {
     return resolverSubidoPorNombre(docs, this.usuarioModel as any);
   }
 
+  async actualizarDocumento(id: string, docId: string, categoria: string) {
+    const doc = await this.docsHelper.actualizarCategoria(id, docId, categoria);
+    const [conNombre] = await resolverSubidoPorNombre([doc], this.usuarioModel as any);
+    return conNombre;
+  }
+
   servirDocumento(proyectoId: string, docId: string) {
     return this.docsHelper.servir(proyectoId, docId);
   }

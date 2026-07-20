@@ -21,6 +21,7 @@ export class Solicitud {
       link_url: String,
       tipo_mime: String,
       nombre: String,
+      subido_por: { type: Types.ObjectId, ref: 'Usuario' },
     },
   })
   adjunto?: {
@@ -30,6 +31,7 @@ export class Solicitud {
     link_url?: string;
     tipo_mime: string;
     nombre: string;
+    subido_por?: Types.ObjectId;
   };
 }
 

@@ -159,9 +159,9 @@ export class ProyectoFormComponent implements OnChanges {
   form: CreateProyectoDto = this.empty();
 
   readonly opcionesDiasRecordatorio = [
-    { valor: 30, label: '1 mes antes' },
+    { valor: 30, label: '30 días antes' },
     { valor: 15, label: '15 días antes' },
-    { valor: 7,  label: '1 semana antes' },
+    { valor: 7,  label: '7 días antes' },
     { valor: 3,  label: '3 días antes' },
     { valor: 1,  label: '1 día antes' },
     { valor: 0,  label: 'El día de término' },
@@ -262,7 +262,11 @@ export class ProyectoFormComponent implements OnChanges {
     const dto = { ...this.form, centro_costo_ids: this.centrosSeleccionados };
     if (!dto.tipo_proyecto_id) delete dto.tipo_proyecto_id;
     if (!dto.fecha_inicio) delete dto.fecha_inicio;
-    if (!dto.fecha_fin) delete dto.fecha_fin;
+    // null explícito (no delete): al editar, vaciar el campo debe borrar la
+    // fecha_fin guardada. Si se borrara la clave en vez de mandar null, el
+    // backend interpretaría "no la toques" y la fecha vieja (con sus
+    // recordatorios/auto-cierre) quedaría vigente para siempre.
+    dto.fecha_fin = dto.fecha_fin || null;
     this.submitted.emit(dto);
   }
 

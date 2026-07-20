@@ -28,6 +28,8 @@ export interface Actividad {
   activo_ids?: (Activo | string)[];
   fecha: string;
   fecha_termino?: string | null;
+  hora?: string;
+  hora_termino?: string;
   // Días de antelación a la fecha en que se avisa a los admins suscritos
   // (subconjunto de [30, 15, 7, 3, 1, 0]; 0 = el día de la actividad)
   dias_recordatorio?: number[];
@@ -50,6 +52,8 @@ export interface CreateActividadDto {
   activo_ids?: string[];
   fecha: string;
   fecha_termino?: string | null;
+  hora?: string;
+  hora_termino?: string;
   dias_recordatorio?: number[];
   // Nombres de los docs pendientes de subir, para listarlos en el correo de notificación
   documentos_nombres?: string[];
@@ -64,6 +68,8 @@ export interface UpdateActividadDto {
   activo_ids?: string[];
   fecha?: string;
   fecha_termino?: string | null;
+  hora?: string;
+  hora_termino?: string;
   dias_recordatorio?: number[];
   notificacion?: NotificacionOpciones;
 }

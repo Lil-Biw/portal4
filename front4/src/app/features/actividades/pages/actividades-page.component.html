@@ -68,25 +68,37 @@
         <div class="cal-day-header">{{ d }}</div>
       }
     </div>
-    <div class="cal-grid-month">
-      @for (cell of calendarDays(); track cell.date.toISOString()) {
-        <div
-          class="cal-cell"
-          [class.other-month]="!cell.currentMonth"
-          [class.today]="isToday(cell.date)"
-          (click)="abrirCrear(cell.date.toISOString().slice(0,10))">
-          <span class="cal-day-num">{{ cell.date.getDate() }}</span>
-          <div class="cal-events">
-            @for (a of actividadesEnDia(cell.date); track a._id) {
+    <div class="cal-grid-month-weeks">
+      @for (semana of semanasDelMes(); track semana[0].date.toISOString()) {
+        <div class="cal-week-row">
+          <div class="cal-week-cells">
+            @for (cell of semana; track cell.date.toISOString()) {
               <div
-                class="cal-event-chip"
-                [class.cal-event-chip--inicio]="posicionEnDia(a, cell.date) === 'inicio'"
-                [class.cal-event-chip--medio]="posicionEnDia(a, cell.date) === 'medio'"
-                [class.cal-event-chip--fin]="posicionEnDia(a, cell.date) === 'fin'"
-                [style.background]="colorDeActividad(a)"
-                (click)="$event.stopPropagation(); abrirEditar(a)"
-                [title]="a.nombre">
-                {{ a.nombre }}
+                class="cal-cell"
+                [class.other-month]="!cell.currentMonth"
+                [class.today]="isToday(cell.date)"
+                (click)="abrirCrear(cell.date.toISOString().slice(0,10))">
+                <span class="cal-day-num">{{ cell.date.getDate() }}</span>
+                <div class="cal-events">
+                  @for (a of primerasActividadesEnDia(cell.date); track a._id) {
+                    <div
+                      class="cal-event-chip"
+                      [class.cal-event-chip--inicio]="posicionEnDia(a, cell.date) === 'inicio'"
+                      [class.cal-event-chip--medio]="posicionEnDia(a, cell.date) === 'medio'"
+                      [class.cal-event-chip--fin]="posicionEnDia(a, cell.date) === 'fin'"
+                      [style.background]="colorDeActividad(a)"
+                      (click)="$event.stopPropagation(); seleccionarActividadDia(a)"
+                      [title]="(a.hora ? rangoHora(a) + ' ' : '') + a.nombre">
+                      {{ a.hora ? rangoHora(a) + ' ' : '' }}{{ a.nombre }}
+                    </div>
+                  }
+                  @if (actividadesEnDia(cell.date).length > 3) {
+                    <button type="button" class="cal-month-more"
+                      (click)="$event.stopPropagation(); irADetalleDia(cell.date)">
+                      +{{ actividadesEnDia(cell.date).length - 3 }} más
+                    </button>
+                  }
+                </div>
               </div>
             }
           </div>
@@ -99,32 +111,86 @@
 <!-- ══ VISTA SEMANA ═══════════════════════════════════════════════════════ -->
 @if (view() === 'week') {
   <div class="card cal-card">
-    <div class="cal-grid-week">
-      @for (day of weekDays(); track day.toISOString()) {
-        <div class="cal-week-col" [class.today]="isToday(day)">
-          <div class="cal-week-header">
+    <div class="cal-time-shell">
+      <div class="cal-time-header">
+        <div class="cal-time-header-spacer"></div>
+        @for (day of weekDays(); track day.toISOString()) {
+          <div class="cal-time-header-day" [class.today]="isToday(day)">
             <span class="cal-week-dow">{{ days[(day.getDay() + 6) % 7] }}</span>
             <span class="cal-week-num" [class.today-num]="isToday(day)">{{ day.getDate() }}</span>
           </div>
-          <div class="cal-week-events" (click)="abrirCrear(day.toISOString().slice(0,10))">
-            @for (a of actividadesEnDia(day); track a._id) {
-              <div
-                class="cal-event-chip"
-                [class.cal-event-chip--inicio]="posicionEnDia(a, day) === 'inicio'"
-                [class.cal-event-chip--medio]="posicionEnDia(a, day) === 'medio'"
-                [class.cal-event-chip--fin]="posicionEnDia(a, day) === 'fin'"
-                [style.background]="colorDeActividad(a)"
-                (click)="$event.stopPropagation(); abrirEditar(a)"
-                [title]="a.nombre">
-                {{ a.nombre }}
+        }
+      </div>
+
+      <!-- Franja "Sin hora": barra multi-día arriba + actividades de un solo día sin hora -->
+      <div class="cal-time-allday">
+        <div class="cal-time-allday-label">Todo el día</div>
+        <div class="cal-time-allday-body">
+          @let semBar = barrasSemanaActual();
+          @if (semBar.barras.length > 0) {
+            <div class="cal-week-bars" [style.grid-template-rows]="'repeat(' + semBar.filas + ', 18px)'">
+              @for (b of semBar.barras; track b.actividad._id) {
+                <div
+                  class="cal-week-bar"
+                  [style.grid-column]="(b.colStart + 1) + ' / ' + (b.colEnd + 2)"
+                  [style.grid-row]="b.fila + 1"
+                  [style.background]="colorDeActividad(b.actividad)"
+                  (click)="seleccionarActividadDia(b.actividad)"
+                  [title]="b.actividad.nombre">
+                  {{ b.actividad.nombre }}
+                </div>
+              }
+            </div>
+          }
+          <div class="cal-time-allday-cells">
+            @for (day of weekDays(); track day.toISOString()) {
+              <div class="cal-time-allday-col" (click)="abrirCrear(day.toISOString().slice(0,10))">
+                @for (a of actividadesSinHoraUnicas(day); track a._id) {
+                  <div
+                    class="cal-event-chip"
+                    [style.background]="colorDeActividad(a)"
+                    (click)="$event.stopPropagation(); seleccionarActividadDia(a)"
+                    [title]="a.nombre">
+                    {{ a.nombre }}
+                  </div>
+                }
               </div>
-            }
-            @if (actividadesEnDia(day).length === 0) {
-              <div class="cal-week-empty"></div>
             }
           </div>
         </div>
-      }
+      </div>
+
+      <!-- Grilla horaria -->
+      <div class="cal-time-scroll">
+        <div class="cal-time-labels">
+          @for (h of horasGrid; track h) {
+            <div class="cal-time-label">{{ h }}</div>
+          }
+        </div>
+        <div class="cal-time-days">
+          @for (day of weekDays(); track day.toISOString()) {
+            <div class="cal-time-day" (click)="abrirCrear(day.toISOString().slice(0,10))">
+              @for (h of horasGrid; track h) {
+                <div class="cal-time-day-line"></div>
+              }
+              @for (b of bloquesHorarios(day); track b.actividad._id) {
+                <div
+                  class="cal-time-block"
+                  [style.top.px]="topPxDeHora(b.inicioMin)"
+                  [style.height.px]="alturaBloquePx(b.duracionMin)"
+                  [style.left]="(b.col * (100 / b.colCount)) + '%'"
+                  [style.width]="(100 / b.colCount) + '%'"
+                  [style.background]="colorDeActividad(b.actividad)"
+                  (click)="$event.stopPropagation(); seleccionarActividadDia(b.actividad)"
+                  [title]="rangoHora(b.actividad) + ' ' + b.actividad.nombre">
+                  <span class="cal-time-block-hora">{{ rangoHora(b.actividad) }}</span>
+                  <span class="cal-time-block-nombre">{{ b.actividad.nombre }}</span>
+                </div>
+              }
+            </div>
+          }
+        </div>
+      </div>
     </div>
   </div>
 }
@@ -134,20 +200,59 @@
   <div class="card cal-card">
     <div class="cal-day-layout">
 
-      <!-- Panel izquierdo: lista de actividades -->
+      <!-- Panel izquierdo: grilla horaria del día -->
       <div class="cal-day-list">
         <div class="cal-day-list-header">Actividades</div>
         @let acts = actividadesEnDia(reference());
         @if (acts.length === 0) {
           <p class="cal-day-list-empty">Sin actividades para este día</p>
-        }
-        @for (a of acts; track a._id) {
-          <div
-            class="cal-day-item"
-            [class.selected]="actividadSeleccionadaDia()?._id === a._id"
-            (click)="seleccionarActividadDia(a)">
-            <app-actividad-icono [color]="colorDeActividad(a)" [size]="18"></app-actividad-icono>
-            <span class="cal-day-item-nombre">{{ a.nombre }}</span>
+        } @else {
+          @let sinHora = actividadesSinHoraDia(reference());
+          @if (sinHora.length > 0) {
+            <div class="cal-time-allday">
+              <div class="cal-time-allday-label">Todo el día</div>
+              <div class="cal-time-allday-body" style="padding:.35rem .5rem;display:flex;flex-direction:column;gap:.3rem">
+                @for (a of sinHora; track a._id) {
+                  <div
+                    class="cal-day-item"
+                    style="padding:.4rem .5rem;border-bottom:none;border-radius:6px"
+                    [class.selected]="actividadSeleccionadaDia()?._id === a._id"
+                    (click)="seleccionarActividadDia(a)">
+                    <app-actividad-icono [color]="colorDeActividad(a)" [size]="18"></app-actividad-icono>
+                    <span class="cal-day-item-nombre">{{ a.nombre }}</span>
+                  </div>
+                }
+              </div>
+            </div>
+          }
+          <div class="cal-time-scroll">
+            <div class="cal-time-labels">
+              @for (h of horasGrid; track h) {
+                <div class="cal-time-label">{{ h }}</div>
+              }
+            </div>
+            <div class="cal-time-days cal-time-days--single">
+              <div class="cal-time-day">
+                @for (h of horasGrid; track h) {
+                  <div class="cal-time-day-line"></div>
+                }
+                @for (b of bloquesHorarios(reference()); track b.actividad._id) {
+                  <div
+                    class="cal-time-block"
+                    [class.selected]="actividadSeleccionadaDia()?._id === b.actividad._id"
+                    [style.top.px]="topPxDeHora(b.inicioMin)"
+                    [style.height.px]="alturaBloquePx(b.duracionMin)"
+                    [style.left]="(b.col * (100 / b.colCount)) + '%'"
+                    [style.width]="(100 / b.colCount) + '%'"
+                    [style.background]="colorDeActividad(b.actividad)"
+                    (click)="seleccionarActividadDia(b.actividad)"
+                    [title]="rangoHora(b.actividad) + ' ' + b.actividad.nombre">
+                    <span class="cal-time-block-hora">{{ rangoHora(b.actividad) }}</span>
+                    <span class="cal-time-block-nombre">{{ b.actividad.nombre }}</span>
+                  </div>
+                }
+              </div>
+            </div>
           </div>
         }
         <div class="cal-day-list-footer">
@@ -175,7 +280,7 @@
                 <div class="cal-day-field">
                   <span class="cal-day-field-label">Fecha</span>
                   <span class="cal-day-field-value">
-                    {{ det.a.fecha.slice(0,10) }}{{ det.a.fecha_termino ? ' – ' + det.a.fecha_termino.slice(0,10) : '' }}
+                    {{ det.a.fecha.slice(0,10) }}{{ det.a.fecha_termino ? ' – ' + det.a.fecha_termino.slice(0,10) : '' }}{{ det.a.hora ? ' · ' + rangoHora(det.a) + ' hrs' : '' }}
                   </span>
                 </div>
                 <div class="cal-day-field">
@@ -208,9 +313,46 @@
                     </button>
                   }
                 </div>
-                <div class="cal-day-field">
+                <div class="cal-day-field" style="flex-direction:column;align-items:stretch;gap:.4rem">
                   <span class="cal-day-field-label">Documentos</span>
-                  <span class="cal-day-field-value">Ver en edición</span>
+                  @if (service.documentosActividad().length === 0) {
+                    <span class="cal-day-field-value">Sin documentos</span>
+                  } @else {
+                    <div style="display:flex;flex-direction:column;gap:.3rem">
+                      @for (doc of service.documentosActividad().slice(0, 5); track doc._id) {
+                        <div class="actividad-detalle-doc-row">
+                          <span class="actividad-detalle-doc-nombre">{{ doc.nombre_display }}</span>
+                          @if (doc.tipo_contenido === 'link') {
+                            <button class="actividad-detalle-doc-btn" (click)="abrirDocActividad(doc.link_url!)">
+                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+                                <path d="M15 3h6v6"/><path d="M10 14 21 3"/>
+                              </svg>
+                              Ir a link
+                            </button>
+                          } @else {
+                            <button class="actividad-detalle-doc-btn" (click)="descargarDocResumen(det.a._id, doc._id, doc.nombre_display)">
+                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                                <polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+                              </svg>
+                              Descargar
+                            </button>
+                          }
+                        </div>
+                      }
+                      @if (service.documentosActividad().length > 5) {
+                        <button type="button" class="actividad-detalle-doc-row"
+                          style="cursor:pointer;background:none;border:none;width:100%;justify-content:flex-start;gap:.4rem;color:#6b7280;font-size:.83rem"
+                          (click)="lupaDocsDia.set(true)">
+                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                          </svg>
+                          Ver más ({{ service.documentosActividad().length - 5 }})
+                        </button>
+                      }
+                    </div>
+                  }
                 </div>
               </div>
               <div class="cal-day-detail-footer">
@@ -234,6 +376,40 @@
             </div>
           </div>
         }
+        @if (lupaDocsDia()) {
+          <div class="lupa-overlay" (click)="lupaDocsDia.set(false)">
+            <div class="lupa-box" (click)="$event.stopPropagation()">
+              <div class="lupa-header">
+                <span class="lupa-title">Documentos</span>
+                <button class="lupa-close" (click)="lupaDocsDia.set(false)">✕</button>
+              </div>
+              <div class="lupa-body">
+                @for (doc of service.documentosActividad(); track doc._id) {
+                  <div class="actividad-detalle-doc-row">
+                    <span class="actividad-detalle-doc-nombre">{{ doc.nombre_display }}</span>
+                    @if (doc.tipo_contenido === 'link') {
+                      <button class="actividad-detalle-doc-btn" (click)="abrirDocActividad(doc.link_url!)">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+                          <path d="M15 3h6v6"/><path d="M10 14 21 3"/>
+                        </svg>
+                        Ir a link
+                      </button>
+                    } @else {
+                      <button class="actividad-detalle-doc-btn" (click)="descargarDocResumen(actividadSeleccionadaDia()!._id, doc._id, doc.nombre_display)">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                          <polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+                        </svg>
+                        Descargar
+                      </button>
+                    }
+                  </div>
+                }
+              </div>
+            </div>
+          </div>
+        }
       </div>
 
     </div>
@@ -245,6 +421,108 @@
   <div class="card" style="text-align:center;padding:1.5rem;color:#9ca3af;font-size:.85rem;margin-bottom:1rem">
     No hay actividades registradas. Haz clic en <strong>+ Actividad</strong> para agregar la primera, o en cualquier día del calendario.
   </div>
+}
+
+<!-- Modal de resumen (clic en Mes/Semana) — antes de entrar a editar -->
+@if (actividadSeleccionadaDia() && view() !== 'day') {
+  @let det = detalleActividad();
+  @if (det) {
+    <div class="modal-overlay" (click)="cerrarResumen()">
+      <div class="actividad-detalle-box" (click)="$event.stopPropagation()">
+
+        <!-- Cabecera -->
+        <div class="actividad-detalle-header">
+          <div class="actividad-detalle-header-info">
+            <span class="actividad-detalle-dot" [style.background]="det.tipo?.color ?? '#9ca3af'"></span>
+            <div>
+              <h3 class="actividad-detalle-nombre">{{ det.a.nombre }}</h3>
+              <p class="actividad-detalle-centro">{{ det.centro?.nombre ?? '' }}</p>
+            </div>
+          </div>
+          <button (click)="cerrarResumen()" class="actividad-detalle-close">&#x2715;</button>
+        </div>
+
+        <!-- Datos principales -->
+        <div class="actividad-detalle-grid">
+          <div class="actividad-detalle-box-field">
+            <p class="actividad-detalle-field-label">Fecha</p>
+            <p class="actividad-detalle-field-value">
+              {{ det.a.fecha.slice(0,10) }}{{ det.a.fecha_termino ? ' – ' + det.a.fecha_termino.slice(0,10) : '' }}{{ det.a.hora ? ' · ' + rangoHora(det.a) + ' hrs' : '' }}
+            </p>
+          </div>
+          <div class="actividad-detalle-box-field">
+            <p class="actividad-detalle-field-label">Tipo</p>
+            <p class="actividad-detalle-field-value">{{ det.tipo?.nombre ?? '—' }}</p>
+          </div>
+        </div>
+
+        <!-- Empresa -->
+        <div class="actividad-detalle-grid">
+          <div class="actividad-detalle-box-field">
+            <p class="actividad-detalle-field-label">Empresa</p>
+            <p class="actividad-detalle-field-value">{{ det.empresa?.razon_social ?? '—' }}</p>
+          </div>
+          <div class="actividad-detalle-box-field">
+            <p class="actividad-detalle-field-label">Centro de costos</p>
+            <p class="actividad-detalle-field-value">{{ det.centro?.nombre ?? '—' }}</p>
+          </div>
+        </div>
+
+        <!-- Descripción -->
+        @if (det.a.descripcion) {
+          <div class="actividad-detalle-section">
+            <p class="actividad-detalle-section-label">Descripción</p>
+            <p class="actividad-detalle-descripcion">{{ det.a.descripcion }}</p>
+          </div>
+        }
+
+        <!-- Activos asociados -->
+        @if (detalleActivos().length > 0) {
+          <div class="actividad-detalle-section">
+            <p class="actividad-detalle-section-label">Activos</p>
+            @for (nombre of detalleActivos(); track nombre) {
+              <div class="actividad-detalle-activo-item">{{ nombre }}</div>
+            }
+          </div>
+        }
+
+        <!-- Documentos adjuntos -->
+        @if (service.documentosActividad().length > 0) {
+          <div class="actividad-detalle-section">
+            <p class="actividad-detalle-section-label">Documentos</p>
+            @for (doc of service.documentosActividad(); track doc._id) {
+              <div class="actividad-detalle-doc-row">
+                <span class="actividad-detalle-doc-nombre">{{ doc.nombre_display }}</span>
+                @if (doc.tipo_contenido === 'link') {
+                  <button class="actividad-detalle-doc-btn" (click)="abrirDocActividad(doc.link_url!)">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+                      <path d="M15 3h6v6"/><path d="M10 14 21 3"/>
+                    </svg>
+                    Ir a link
+                  </button>
+                } @else {
+                  <button class="actividad-detalle-doc-btn" (click)="descargarDocResumen(det.a._id, doc._id, doc.nombre_display)">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                      <polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+                    </svg>
+                    Descargar
+                  </button>
+                }
+              </div>
+            }
+          </div>
+        }
+
+        <!-- Footer -->
+        <div class="actividad-detalle-footer">
+          <button class="btn-primary btn-sm" (click)="cerrarResumen(); abrirEditar(det.a)">Editar actividad</button>
+        </div>
+
+      </div>
+    </div>
+  }
 }
 
 <!-- ══ MODAL ACTIVIDAD — WIZARD ════════════════════════════════════════ -->
@@ -354,13 +632,24 @@
           </div>
           <div class="field-row">
             <div class="field">
-              <label>Fecha *</label>
+              <label>Fecha inicio *</label>
               <input type="date" [ngModel]="form().fecha" (ngModelChange)="patchForm('fecha', $event)" />
             </div>
             <div class="field">
-              <label>Fecha de término</label>
+              <label>Hora inicio (opcional)</label>
+              <input type="time" [ngModel]="form().hora" (ngModelChange)="patchForm('hora', $event)" />
+            </div>
+          </div>
+          <div class="field-row">
+            <div class="field">
+              <label>Fecha término</label>
               <input type="date" [ngModel]="form().fecha_termino" [min]="form().fecha || null"
                      (ngModelChange)="patchForm('fecha_termino', $event)" />
+            </div>
+            <div class="field">
+              <label>Hora término (opcional)</label>
+              <input type="time" [ngModel]="form().hora_termino" [min]="form().hora || null" [disabled]="!form().hora"
+                     (ngModelChange)="patchForm('hora_termino', $event)" />
             </div>
           </div>
           <div class="field">

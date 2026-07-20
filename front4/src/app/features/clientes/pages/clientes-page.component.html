@@ -23,7 +23,6 @@
 <app-clientes-list
   [clientes]="clientesFiltrados()"
   [scoresPorEmpresa]="scoresPorEmpresa()"
-  [mostrarVerFicha]="!esAdminCliente()"
   (editado)="abrirEditar($event)"
   (eliminado)="eliminar($event)"
   (verFicha)="irAFicha($event)"

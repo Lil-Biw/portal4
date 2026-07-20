@@ -19,14 +19,6 @@ export class Proyecto {
   }) estado: string;
   @Prop() fecha_inicio?: Date;
   @Prop() fecha_fin?: Date;
-  // Días de antelación a fecha_fin en que se avisa a los admins suscritos
-  // (subconjunto de [30, 15, 7, 3, 1, 0]; 0 = el día de término).
-  // Vacío = el proyecto no genera recordatorios de vencimiento.
-  @Prop({ type: [Number], default: [] }) dias_recordatorio: number[];
-  // Último umbral de dias_recordatorio ya notificado (idempotencia del cron):
-  // evita reenviar el mismo aviso si el cron corre dos veces el mismo día y
-  // permite catch-up si estuvo caído. Ausente = nunca se ha avisado.
-  @Prop() ultimo_recordatorio_dias?: number;
   @Prop({ type: Types.ObjectId, ref: 'Usuario' }) creado_por?: Types.ObjectId;
 }
 

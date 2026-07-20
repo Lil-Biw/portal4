@@ -152,6 +152,19 @@ export class DocumentosHelper {
     return obj;
   }
 
+  async actualizarCategoria(entidadId: string, docId: string, categoria: string): Promise<Record<string, unknown>> {
+    const doc = await this.docModel
+      .findOneAndUpdate(
+        { _id: this.docOid(docId), [this.fkField]: this.entidadOid(entidadId) },
+        { categoria },
+        { new: true },
+      )
+      .select('-contenido')
+      .lean<Record<string, unknown> | null>();
+    if (!doc) throw new NotFoundException(`Documento ${docId} no encontrado`);
+    return doc;
+  }
+
   async listar(id: string): Promise<Record<string, unknown>[]> {
     return this.docModel
       .find({ [this.fkField]: this.entidadOid(id) })

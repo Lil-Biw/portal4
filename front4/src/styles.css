@@ -73,6 +73,19 @@ body { margin: 0; background: var(--bg); color: var(--ink-900); }
 }
 .btn-primary:hover { background: var(--accent-dark); }
 
+.btn-success {
+  padding: .6rem 1.2rem;
+  border-radius: 8px;
+  border: none;
+  background: #16a34a;
+  color: #fff;
+  font-weight: 700;
+  font-size: .875rem;
+  cursor: pointer;
+  transition: background .15s;
+}
+.btn-success:hover { background: #15803d; }
+
 .btn-ghost {
   padding: .55rem 1rem;
   border-radius: 8px;

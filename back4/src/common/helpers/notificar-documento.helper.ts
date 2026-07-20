@@ -22,14 +22,19 @@ type UsuarioSuscriptor = {
 // Un admin recibe la notificación si: tiene el toggle "todas" activo (o no lo ha
 // configurado nunca, default histórico), o si está suscrito explícitamente
 // a la empresa completa, o al centro/proyecto puntual del evento.
+// `soloSuscritos: true` omite el toggle (usado por los recordatorios de
+// vencimiento, donde el default true del toggle spamearía a todo admin).
 export async function resolverAdminsSuscritos(
   usuarioModel: Model<UsuarioSuscriptor>,
   scope: ScopeDocumento,
+  opciones?: { soloSuscritos?: boolean },
 ): Promise<{ nombre: string; email: string }[]> {
   const or: Record<string, unknown>[] = [
-    { notificar_todas_empresas: { $ne: false } },
     { empresas_suscritas: new Types.ObjectId(scope.empresaId) },
   ];
+  if (!opciones?.soloSuscritos) {
+    or.unshift({ notificar_todas_empresas: { $ne: false } });
+  }
   if (scope.tipo === 'centro') {
     or.push({ centros_suscritos: new Types.ObjectId(scope.centroId) });
   } else if (scope.tipo === 'proyecto') {

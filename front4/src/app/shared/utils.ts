@@ -70,6 +70,128 @@ export function posicionActividadEnDia(
   return 'medio';
 }
 
+// Las actividades multi-día siempre van primero dentro del día: así (a) no se
+// las come el tope de "primeras 3" de forma inconsistente día a día, y (b) el
+// chip conector (bordes rectos + margen negativo, ver .cal-event-chip--inicio/
+// medio/fin) queda en la misma fila en todas las celdas que ocupa.
+export function ordenarMultiDiaPrimero<T extends { fecha: string; fecha_termino?: string | null }>(
+  actividades: T[],
+  dateKey: string,
+): T[] {
+  return actividades.slice().sort((a, b) => {
+    const aMulti = posicionActividadEnDia(a, dateKey) !== 'unico';
+    const bMulti = posicionActividadEnDia(b, dateKey) !== 'unico';
+    if (aMulti === bMulti) return 0;
+    return aMulti ? -1 : 1;
+  });
+}
+
+// Actividades multi-día: en vez de un chip por celda que intenta simular
+// continuidad, se calculan como una barra real por semana (grid-column de
+// colStart a colEnd), superpuesta arriba de las celdas de esa semana — igual
+// que Google Calendar. Si varias barras se solapan en columnas, se apilan en
+// filas (empaquetado greedy por intervalos).
+
+export interface BarraMultiDia<T> { actividad: T; colStart: number; colEnd: number; fila: number; }
+
+export function barrasMultiDiaPorSemana<T extends { fecha: string; fecha_termino?: string | null }>(
+  actividades: T[],
+  semana: Date[],
+): { barras: BarraMultiDia<T>[]; filas: number } {
+  const inicioSemana = toDateKey(semana[0]);
+  const finSemana    = toDateKey(semana[semana.length - 1]);
+  const claves       = semana.map(toDateKey);
+
+  const candidatas = actividades
+    .filter(a => a.fecha_termino && a.fecha.slice(0, 10) !== a.fecha_termino.slice(0, 10))
+    .map(a => {
+      const inicio = a.fecha.slice(0, 10);
+      const fin    = a.fecha_termino!.slice(0, 10);
+      if (fin < inicioSemana || inicio > finSemana) return null;
+      const colStart = inicio < inicioSemana ? 0 : claves.indexOf(inicio);
+      const colEnd   = fin > finSemana ? claves.length - 1 : claves.indexOf(fin);
+      return { actividad: a, colStart, colEnd, fila: 0 };
+    })
+    .filter((x): x is BarraMultiDia<T> => x !== null)
+    .sort((a, b) => a.colStart - b.colStart || a.colEnd - b.colEnd);
+
+  // Empaquetado greedy: cada barra toma la primera fila cuya última barra ya no se solape.
+  const filaFin: number[] = [];
+  for (const b of candidatas) {
+    let colocada = false;
+    for (let f = 0; f < filaFin.length; f++) {
+      if (filaFin[f] < b.colStart) { b.fila = f; filaFin[f] = b.colEnd; colocada = true; break; }
+    }
+    if (!colocada) { b.fila = filaFin.length; filaFin.push(b.colEnd); }
+  }
+
+  return { barras: candidatas, filas: filaFin.length || 0 };
+}
+
+// ── Grilla horaria (vistas Semana/Día) ───────────────────────────────────────
+// Posiciona actividades con hora en columnas lado a lado cuando se solapan en el
+// tiempo, igual que un calendario tipo Google Calendar. Actividades sin hora no
+// pasan por aquí (se muestran aparte en la franja "Sin hora").
+
+export interface BloqueHorario<T> { actividad: T; col: number; colCount: number; inicioMin: number; duracionMin: number; }
+
+function horaAMinutos(hora: string): number {
+  const [h, m] = hora.split(':').map(Number);
+  return h * 60 + m;
+}
+
+// Texto de hora para chips/tooltips/detalle: "09:00" o "09:00–10:30" si hay hora_termino.
+export function rangoHora(a: { hora?: string | null; hora_termino?: string | null }): string {
+  if (!a.hora) return '';
+  return a.hora_termino ? `${a.hora}–${a.hora_termino}` : a.hora;
+}
+
+// Si la actividad tiene hora_termino posterior a hora, se usa la duración real;
+// si no, se usa una duración visual fija (para que el bloque siga siendo visible).
+function duracionMinDe(a: { hora: string; hora_termino?: string | null }, duracionVisualMin: number): number {
+  if (!a.hora_termino) return duracionVisualMin;
+  const dur = horaAMinutos(a.hora_termino) - horaAMinutos(a.hora);
+  return dur > 0 ? dur : duracionVisualMin;
+}
+
+export function layoutPorHora<T extends { hora?: string | null; hora_termino?: string | null }>(
+  actividades: T[],
+  duracionVisualMin = 60,
+): BloqueHorario<T>[] {
+  interface Seg { actividad: T; inicio: number; fin: number; col: number; }
+
+  const segs: Seg[] = actividades
+    .filter((a): a is T & { hora: string } => !!a.hora)
+    .map(a => ({ actividad: a, inicio: horaAMinutos(a.hora), fin: horaAMinutos(a.hora) + duracionMinDe(a, duracionVisualMin), col: 0 }))
+    .sort((a, b) => a.inicio - b.inicio || a.fin - b.fin);
+
+  // Agrupar en clusters de actividades cuyo rango de tiempo se solapa (transitivamente).
+  const clusters: Seg[][] = [];
+  let cur: Seg[] = [];
+  let curEnd = -Infinity;
+  for (const s of segs) {
+    if (cur.length === 0) { cur = [s]; curEnd = s.fin; continue; }
+    if (s.inicio < curEnd) { cur.push(s); curEnd = Math.max(curEnd, s.fin); }
+    else { clusters.push(cur); cur = [s]; curEnd = s.fin; }
+  }
+  if (cur.length) clusters.push(cur);
+
+  const out: BloqueHorario<T>[] = [];
+  for (const cluster of clusters) {
+    const colsEnd: number[] = [];
+    for (const s of cluster) {
+      let placed = false;
+      for (let c = 0; c < colsEnd.length; c++) {
+        if (s.inicio >= colsEnd[c]) { s.col = c; colsEnd[c] = s.fin; placed = true; break; }
+      }
+      if (!placed) { s.col = colsEnd.length; colsEnd.push(s.fin); }
+    }
+    const colCount = colsEnd.length || 1;
+    for (const s of cluster) out.push({ actividad: s.actividad, col: s.col, colCount, inicioMin: s.inicio, duracionMin: s.fin - s.inicio });
+  }
+  return out;
+}
+
 // ── Límite de tamaño de archivo (documentos) ─────────────────────────────────
 // Debe coincidir con el límite aplicado en el backend (S3Service / multer).
 

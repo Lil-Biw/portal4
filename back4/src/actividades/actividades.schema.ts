@@ -14,14 +14,8 @@ export class Actividad {
   @Prop({ type: [{ type: SchemaTypes.ObjectId, ref: 'Activo' }], default: [] }) activo_ids: Types.ObjectId[];
   @Prop({ required: true }) fecha: Date;
   @Prop() fecha_termino?: Date;
-  // Días de antelación a la fecha (o fecha_termino) en que se avisa a los admins
-  // suscritos (subconjunto de [30, 15, 7, 3, 1, 0]; 0 = el día de la actividad).
-  // Vacío = la actividad no genera recordatorios.
-  @Prop({ type: [Number], default: [] }) dias_recordatorio: number[];
-  // Último umbral de dias_recordatorio ya notificado (idempotencia del cron):
-  // evita reenviar el mismo aviso si el cron corre dos veces el mismo día y
-  // permite catch-up si estuvo caído. Ausente = nunca se ha avisado.
-  @Prop() ultimo_recordatorio_dias?: number;
+  @Prop({ match: /^([01]\d|2[0-3]):[0-5]\d$/ }) hora?: string;
+  @Prop({ match: /^([01]\d|2[0-3]):[0-5]\d$/ }) hora_termino?: string;
 }
 
 export const ActividadSchema = SchemaFactory.createForClass(Actividad);

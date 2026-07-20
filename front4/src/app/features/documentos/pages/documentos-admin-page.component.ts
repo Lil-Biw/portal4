@@ -1,7 +1,7 @@
 import { Component, OnInit, inject, signal, computed, effect } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { HttpEvent, HttpEventType } from '@angular/common/http';
-import { DocumentosService, DocTipo, CATEGORIAS_DOCUMENTO, DocumentoItem } from '../documentos.service';
+import { DocumentosService, DocTipo, CATEGORIAS_DOCUMENTO, DocumentoItem, DocumentoVencidoItem } from '../documentos.service';
 import { ClientesService } from '../../clientes/clientes.service';
 import { CentrosService } from '../../centros/centros.service';
 import { ProyectosService } from '../../proyectos/proyectos.service';
@@ -17,7 +17,6 @@ import { Usuario } from '../../../shared/models/usuario.model';
 
 interface PanelState {
   showUpload: boolean;
-  showFilter: boolean;
   nombreInput: string;
   categoriaInput: string;
   busqueda: string;
@@ -78,6 +77,24 @@ export class DocumentosAdminPageComponent implements OnInit {
   protected showSolicitudForm   = signal(false);
   protected creandoSolicitud    = signal(false);
   protected solicitudForm: CreateSolicitudDto = this.emptySolicitudForm();
+
+  protected busquedaSolicitud     = signal('');
+  protected filtrosTipoSolicitud  = signal<string[]>([]);
+
+  limpiarFiltroSolicitudes(): void {
+    this.busquedaSolicitud.set('');
+    this.filtrosTipoSolicitud.set([]);
+  }
+
+  toggleFiltroTipoSolicitud(cat: string): void {
+    this.filtrosTipoSolicitud.update(filtros =>
+      filtros.includes(cat) ? filtros.filter(c => c !== cat) : [...filtros, cat]
+    );
+  }
+
+  isFiltroTipoSolicitudSelected(cat: string): boolean {
+    return this.filtrosTipoSolicitud().includes(cat);
+  }
 
   protected solicitudEstadoEdit = signal<string | null>(null);
   protected rechazandoId        = signal<string | null>(null);
@@ -186,9 +203,14 @@ export class DocumentosAdminPageComponent implements OnInit {
     return sols.filter(s => s.centro_costo_id === centro);
   });
 
-  protected solicitudesEnSolicitudes = computed(() =>
-    this.solicitudesTabActual().filter(s => s.estado !== 'aprobado')
-  );
+  protected solicitudesEnSolicitudes = computed(() => {
+    const busqueda = this.busquedaSolicitud().trim().toLowerCase();
+    const tipos    = this.filtrosTipoSolicitud();
+    return this.solicitudesTabActual()
+      .filter(s => s.estado !== 'aprobado')
+      .filter(s => !busqueda || s.nombre.toLowerCase().includes(busqueda))
+      .filter(s => !tipos.length || tipos.includes(s.tipo));
+  });
 
   protected usuariosParaSolicitud = computed(() => {
     const empresaId = this.selectedEmpresaId;
@@ -446,14 +468,7 @@ export class DocumentosAdminPageComponent implements OnInit {
   toggleUpload(tipo: DocTipo): void {
     const p = this.panels[tipo];
     p.showUpload = !p.showUpload;
-    if (p.showUpload) p.showFilter = false;
     if (!p.showUpload) { p.selectedFile = null; p.nombreInput = ''; p.linkInput = ''; p.modoUpload = 'archivo'; }
-  }
-
-  toggleFilter(tipo: DocTipo): void {
-    const p = this.panels[tipo];
-    p.showFilter = !p.showFilter;
-    if (p.showFilter) p.showUpload = false;
   }
 
   setModoUpload(tipo: DocTipo, modo: 'archivo' | 'link'): void {
@@ -577,6 +592,14 @@ export class DocumentosAdminPageComponent implements OnInit {
     return this.panels[tipo].filtrosCategorias.includes(cat);
   }
 
+  categoriaTag(cat: string): string | null {
+    return cat.match(/^\[([^\]]+)\]/)?.[1] ?? null;
+  }
+
+  categoriaResto(cat: string): string {
+    return cat.replace(/^\[[^\]]+\]\s*/, '');
+  }
+
   filteredDocsPorCentro() {
     const { busqueda, filtrosCategorias } = this.panels['centro'];
     const term = busqueda.trim().toLowerCase();
@@ -603,6 +626,14 @@ export class DocumentosAdminPageComponent implements OnInit {
       .filter(item => item.docs.length > 0);
   }
 
+  vencidosFiltrados(): DocumentoVencidoItem[] {
+    const { filtrosCategorias, busqueda } = this.panels[this.docTipoActual];
+    const term = busqueda.trim().toLowerCase();
+    return this.service.documentosVencidos()
+      .filter(d => !filtrosCategorias.length || filtrosCategorias.includes(d.categoria ?? ''))
+      .filter(d => !term || d.nombre_display.toLowerCase().includes(term));
+  }
+
   docsFiltrados(tipo: DocTipo): DocumentoItem[] {
     const docs = tipo === 'empresa' ? this.service.documentosEmpresa()
       : tipo === 'centro' ? this.service.documentosCentro()
@@ -616,6 +647,17 @@ export class DocumentosAdminPageComponent implements OnInit {
 
   eliminar(docUrl: string, tipo: DocTipo): void {
     this.service.eliminar(docUrl, tipo, this.selectedEmpresaId, this.selectedCentroId || undefined, this.selectedProyectoId || undefined);
+  }
+
+  protected categoriaMenuAbierto = signal<string | null>(null);
+
+  toggleCategoriaMenu(docId: string): void {
+    this.categoriaMenuAbierto.update(actual => actual === docId ? null : docId);
+  }
+
+  seleccionarCategoria(docUrl: string, categoria: string, tipo: DocTipo): void {
+    this.categoriaMenuAbierto.set(null);
+    this.service.actualizarCategoria(docUrl, categoria, tipo);
   }
 
   abrirDocumento(d: { tipo_contenido?: 'archivo' | 'link'; link_url?: string; url: string; nombre_display: string }): void {
@@ -873,6 +915,12 @@ export class DocumentosAdminPageComponent implements OnInit {
     return 'Empresa';
   }
 
+  contextoTagStyle(s: Solicitud): { color: string; bg: string } {
+    if (s.proyecto_id) return { color: '#d97706', bg: 'rgba(245,158,11,.1)' };
+    if (s.centro_costo_id) return { color: '#059669', bg: 'rgba(16,185,129,.1)' };
+    return { color: '#0095d6', bg: 'rgba(0,149,214,.1)' };
+  }
+
   estadoChipStyle(estado: EstadoSolicitud): { color: string; bg: string } {
     const map: Record<EstadoSolicitud, { color: string; bg: string }> = {
       pendiente: { color: '#92400e', bg: '#fef3c7' },
@@ -1013,7 +1061,7 @@ export class DocumentosAdminPageComponent implements OnInit {
   // ─── private helpers ─────────────────────────────────────────────────────
 
   private emptyPanel(): PanelState {
-    return { showUpload: false, showFilter: false, nombreInput: '', categoriaInput: 'Contratos', busqueda: '', filtrosCategorias: [], selectedFile: null, modoUpload: 'archivo', linkInput: '' };
+    return { showUpload: false, nombreInput: '', categoriaInput: 'Contratos', busqueda: '', filtrosCategorias: [], selectedFile: null, modoUpload: 'archivo', linkInput: '' };
   }
 
   private emptySolicitudForm(): CreateSolicitudDto {

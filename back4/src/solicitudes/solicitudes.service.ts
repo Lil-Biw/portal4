@@ -169,7 +169,31 @@ export class SolicitudesService {
     if (centroId)   filter['centro_costo_id'] = new Types.ObjectId(centroId);
     if (proyectoId) filter['proyecto_id']     = new Types.ObjectId(proyectoId);
     if (estado)     filter['estado']          = estado;
-    return this.solicitudModel.find(filter).select('-adjunto.contenido').sort({ creado_en: -1 }).lean();
+    const solicitudes = await this.solicitudModel.find(filter).select('-adjunto.contenido').sort({ creado_en: -1 }).lean();
+    return this.conSubidoPorNombre(solicitudes);
+  }
+
+  // El adjunto de una solicitud es un sub-documento embebido (no una colección
+  // doc_* aparte), así que resolverSubidoPorNombre (pensado para subido_por a
+  // nivel raíz) no aplica directo — el campo vive en adjunto.subido_por.
+  private async conSubidoPorNombre(solicitudes: Record<string, unknown>[]): Promise<Record<string, unknown>[]> {
+    const ids = [...new Set(
+      solicitudes
+        .map(s => (s['adjunto'] as { subido_por?: unknown } | undefined)?.subido_por)
+        .filter(Boolean)
+        .map(String)
+    )];
+    if (!ids.length) return solicitudes;
+
+    const usuarios = await this.usuarioModel.find({ _id: { $in: ids } }).select('nombre').lean();
+    const nombreMap = new Map(usuarios.map(u => [String((u as any)._id), (u as any).nombre]));
+
+    return solicitudes.map(s => {
+      const adjunto = s['adjunto'] as Record<string, unknown> | undefined;
+      const nombre = adjunto?.['subido_por'] ? nombreMap.get(String(adjunto['subido_por'])) : undefined;
+      if (!nombre) return s;
+      return { ...s, adjunto: { ...adjunto, subido_por_nombre: nombre } };
+    });
   }
 
   async update(id: string, dto: UpdateSolicitudDto) {
@@ -252,14 +276,18 @@ export class SolicitudesService {
   }
 
   private async crearDocumentoDesde(sol: SolicitudDocument): Promise<void> {
+    // Conserva quién subió el adjunto original: el documento resultante debe
+    // mostrar el mismo tag "subido por" que tenía en la solicitud.
+    const subidoPor = sol.adjunto?.subido_por ? String(sol.adjunto.subido_por) : undefined;
+
     if (sol.adjunto?.tipo_contenido === 'link' && sol.adjunto.link_url) {
       const input: DocumentoInput = { linkUrl: sol.adjunto.link_url };
       if (sol.proyecto_id) {
-        await this.docsProyecto.agregar(String(sol.proyecto_id), input, sol.nombre, sol.tipo);
+        await this.docsProyecto.agregar(String(sol.proyecto_id), input, sol.nombre, sol.tipo, subidoPor);
       } else if (sol.centro_costo_id) {
-        await this.docsCentro.agregar(String(sol.centro_costo_id), input, sol.nombre, sol.tipo);
+        await this.docsCentro.agregar(String(sol.centro_costo_id), input, sol.nombre, sol.tipo, subidoPor);
       } else {
-        await this.docsEmpresa.agregar(String(sol.empresa_id), input, sol.nombre, sol.tipo);
+        await this.docsEmpresa.agregar(String(sol.empresa_id), input, sol.nombre, sol.tipo, subidoPor);
       }
       return;
     }
@@ -281,11 +309,11 @@ export class SolicitudesService {
       size:         buffer.length,
     };
     if (sol.proyecto_id) {
-      await this.docsProyecto.agregar(String(sol.proyecto_id), { archivo }, sol.nombre, sol.tipo);
+      await this.docsProyecto.agregar(String(sol.proyecto_id), { archivo }, sol.nombre, sol.tipo, subidoPor);
     } else if (sol.centro_costo_id) {
-      await this.docsCentro.agregar(String(sol.centro_costo_id), { archivo }, sol.nombre, sol.tipo);
+      await this.docsCentro.agregar(String(sol.centro_costo_id), { archivo }, sol.nombre, sol.tipo, subidoPor);
     } else {
-      await this.docsEmpresa.agregar(String(sol.empresa_id), { archivo }, sol.nombre, sol.tipo);
+      await this.docsEmpresa.agregar(String(sol.empresa_id), { archivo }, sol.nombre, sol.tipo, subidoPor);
     }
   }
 
@@ -413,6 +441,7 @@ export class SolicitudesService {
     } else {
       throw new BadRequestException('Debes adjuntar un archivo o un link');
     }
+    if (usuarioId) adjuntoData['subido_por'] = new Types.ObjectId(usuarioId);
 
     const keyAnterior = solicitud.adjunto?.s3_key;
     const actualizada = await this.solicitudModel
@@ -436,7 +465,9 @@ export class SolicitudesService {
         this.logger.error('Error al notificar solicitud completada:', err),
       );
     }
-    return actualizada;
+    if (!actualizada) return actualizada;
+    const [conNombre] = await this.conSubidoPorNombre([actualizada]);
+    return conNombre;
   }
 
   private async notificarSolicitudCompletadaEvento(
@@ -496,7 +527,7 @@ export class SolicitudesService {
       }
     }
 
-    return this.solicitudModel
+    const solicitudes = await this.solicitudModel
       .find(filter)
       .select('-adjunto.contenido')
       .sort({ actualizado_en: -1 })
@@ -504,6 +535,7 @@ export class SolicitudesService {
       .populate('centro_costo_id', 'nombre')
       .populate('proyecto_id', 'nombre')
       .lean();
+    return this.conSubidoPorNombre(solicitudes);
   }
 
   async servirAdjunto(id: string): Promise<{ buffer: Buffer; tipo_mime: string; nombre: string }> {

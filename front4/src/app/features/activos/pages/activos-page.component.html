@@ -78,8 +78,6 @@
   </div>
 </div>
 
-@if (selectedEmpresaId) {
-
 <app-status-banner [status]="service.status()"></app-status-banner>
 
 <app-activos-list
@@ -91,12 +89,6 @@
   (eliminado)="eliminar($event)"
   (revisado)="abrirRevisar($event)">
 </app-activos-list>
-
-} @else {
-  <div class="card" style="padding:2rem;text-align:center;color:#9ca3af">
-    <p style="margin:0;font-size:.9rem">Selecciona una empresa para ver los activos.</p>
-  </div>
-}
 
 <!-- Modales -->
 @if (modal() !== null) {

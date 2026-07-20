@@ -18,7 +18,10 @@ export class CreateProyectoDto {
   @IsOptional()
   estado?: 'borrador' | 'planificacion' | 'activo' | 'en_pausa' | 'en_revision' | 'cerrado' | 'cancelado';
   @IsDateString() @IsOptional() fecha_inicio?: string;
-  @IsDateString() @IsOptional() fecha_fin?: string;
+  // string | null: null permite borrar explícitamente una fecha_fin ya guardada
+  // (el front la manda así al vaciar el campo; a diferencia de un PATCH parcial,
+  // este DTO siempre representa el estado completo del formulario).
+  @IsDateString() @IsOptional() fecha_fin?: string | null;
   @IsArray() @IsIn([30, 15, 7, 3, 1, 0], { each: true }) @IsOptional() dias_recordatorio?: number[];
 }
 

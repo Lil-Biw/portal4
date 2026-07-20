@@ -8,8 +8,8 @@ import { ActivosService } from '../../activos/activos.service';
 
 import { ConsumidorContextService } from '../../../profile/consumidor-context.service';
 import { Actividad, TipoActividad } from '../../../shared/models/actividad.model';
-import { asId, toDateKey, actividadEnDia, posicionActividadEnDia } from '../../../shared/utils';
-import { createCalendarState, CalendarView, CALENDAR_DAYS, CALENDAR_MONTHS } from '../../../shared/calendar-state';
+import { asId, toDateKey, actividadEnDia, posicionActividadEnDia, ordenarMultiDiaPrimero, barrasMultiDiaPorSemana, BarraMultiDia, layoutPorHora, BloqueHorario, rangoHora as formatRangoHora } from '../../../shared/utils';
+import { createCalendarState, CalendarView, CALENDAR_DAYS, CALENDAR_MONTHS, DayCell } from '../../../shared/calendar-state';
 
 @Component({
   selector: 'app-mis-actividades-page',
@@ -56,7 +56,13 @@ export class MisActividadesPageComponent implements OnInit {
     );
   });
 
-  protected filtroTipoId = signal<string>('');
+  protected filtroTiposIds = signal<string[]>([]);
+
+  toggleFiltroTipo(id: string): void {
+    this.filtroTiposIds.update(ids =>
+      ids.includes(id) ? ids.filter(x => x !== id) : [...ids, id]
+    );
+  }
 
   protected actividadDetalle = signal<Actividad | null>(null);
 
@@ -91,14 +97,14 @@ export class MisActividadesPageComponent implements OnInit {
 
   protected actividadesFiltradas = computed(() => {
     const empresa = this.ctx.empresaSeleccionada();
-    const tipoId  = this.filtroTipoId();
+    const tipoIds = this.filtroTiposIds();
     let list = this.service.actividades();
     if (empresa) {
       const ids = this.centroIdsPorEmpresa();
       list = list.filter(a => ids.has(asId(a.centro_costo_id)));
     }
-    if (tipoId) {
-      list = list.filter(a => this.tipoIdDe(a) === tipoId);
+    if (tipoIds.length > 0) {
+      list = list.filter(a => tipoIds.includes(this.tipoIdDe(a)));
     }
     return list;
   });
@@ -121,6 +127,11 @@ export class MisActividadesPageComponent implements OnInit {
   setView(v: CalendarView): void { this._cal.setView(v); }
   isToday(date: Date): boolean   { return this._cal.isToday(date); }
 
+  irADetalleDia(date: Date): void {
+    this.reference.set(date);
+    this.setView('day');
+  }
+
   protected actividadSeleccionadaDia = signal<Actividad | null>(null);
   protected lupaActivosDia = signal(false);
 
@@ -136,8 +147,12 @@ export class MisActividadesPageComponent implements OnInit {
   }
 
   protected tipoDeActividad(a: Actividad): TipoActividad | null {
-    if (typeof a.tipo_id === 'object') return a.tipo_id as TipoActividad;
-    return this.tiposService.tipos().find(t => t._id === this.tipoIdDe(a)) ?? null;
+    // Prioriza el tipo "vivo" del signal sobre el objeto embebido en la
+    // actividad: si se edita el color/nombre de un tipo, las actividades ya
+    // cargadas no se vuelven a pedir al backend y quedarían con datos viejos.
+    const vivo = this.tiposService.tipos().find(t => asId(t._id) === this.tipoIdDe(a));
+    if (vivo) return vivo;
+    return typeof a.tipo_id === 'object' ? (a.tipo_id as TipoActividad) : null;
   }
 
   abrirDetalle(a: Actividad): void {
@@ -159,8 +174,62 @@ export class MisActividadesPageComponent implements OnInit {
     return this.actividadesFiltradas().filter(a => actividadEnDia(a, key));
   }
 
+  // Vista Mes: las multi-día se quedan como un chip más dentro de la celda
+  // (sin barra); el detalle de hora/continuidad se ve en Semana o Día. Van
+  // primero para no perderse con el tope de "primeras 3" y para que el chip
+  // conector (--inicio/--medio/--fin) quede alineado día a día.
+  primerasActividadesEnDia(date: Date): Actividad[] {
+    return ordenarMultiDiaPrimero(this.actividadesEnDia(date), toDateKey(date)).slice(0, 3);
+  }
+
   posicionEnDia(a: Actividad, date: Date): 'unico' | 'inicio' | 'medio' | 'fin' {
     return posicionActividadEnDia(a, toDateKey(date));
+  }
+
+  // Vista Mes agrupada por semana, para la franja zebra (ver .cal-week-row:nth-child(2n)).
+  protected readonly semanasDelMes = computed((): DayCell[][] => {
+    const dias = this.calendarDays();
+    const semanas: DayCell[][] = [];
+    for (let i = 0; i < dias.length; i += 7) semanas.push(dias.slice(i, i + 7));
+    return semanas;
+  });
+
+  barrasSemanaActual(): { barras: BarraMultiDia<Actividad>[]; filas: number } {
+    return barrasMultiDiaPorSemana(this.actividadesFiltradas(), this.weekDays());
+  }
+
+  // Grilla horaria (Semana): actividades de un solo día sin hora van en la
+  // franja "Sin hora"; las multi-día se dibujan aparte como barra (barrasSemanaActual).
+  actividadesSinHoraUnicas(date: Date): Actividad[] {
+    const key = toDateKey(date);
+    return this.actividadesEnDia(date).filter(a => !a.hora && posicionActividadEnDia(a, key) === 'unico');
+  }
+
+  // Vista Día: no hay "semana" sobre la cual dibujar una barra, así que la
+  // franja "Sin hora" muestra también las multi-día (como un ítem más de la lista).
+  actividadesSinHoraDia(date: Date): Actividad[] {
+    return this.actividadesEnDia(date).filter(a => !a.hora);
+  }
+
+  bloquesHorarios(date: Date): BloqueHorario<Actividad>[] {
+    return layoutPorHora(this.actividadesEnDia(date).filter(a => !!a.hora));
+  }
+
+  // Grilla horaria (Semana/Día): rango fijo 07:00–21:00, filas de 48px.
+  protected readonly horasGrid = Array.from({ length: 15 }, (_, i) => `${String(7 + i).padStart(2, '0')}:00`);
+  private readonly ROW_PX = 48;
+  private readonly GRID_INICIO_MIN = 7 * 60;
+
+  topPxDeHora(inicioMin: number): number {
+    return (inicioMin - this.GRID_INICIO_MIN) * (this.ROW_PX / 60);
+  }
+
+  alturaBloquePx(duracionMin: number): number {
+    return Math.max(duracionMin, 30) * (this.ROW_PX / 60);
+  }
+
+  rangoHora(a: Actividad): string {
+    return formatRangoHora(a);
   }
 
   colorDeActividad(a: Actividad): string {

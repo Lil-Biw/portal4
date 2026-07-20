@@ -61,7 +61,7 @@ interface Notificacion {
     .empresa-select {
       padding:.4rem .7rem;
       border-radius:8px;
-      border:1px solid rgba(77,184,240,.4);
+      border:1px solid rgba(124,58,237,.4);
       font-size:.85rem;
       color:#e2eaf2;
       background:rgba(255,255,255,.08);
@@ -69,7 +69,7 @@ interface Notificacion {
       min-width:180px;
       max-width:260px;
     }
-    .empresa-select:focus { outline:none; border-color:#4db8f0; }
+    .empresa-select:focus { outline:none; border-color:#7c3aed; }
     .empresa-select option { background:#18222e; color:#e2eaf2; }
 
     .icons-slot { display:flex; align-items:center; gap:.5rem; }
@@ -82,7 +82,7 @@ interface Notificacion {
       font-weight:700;
       letter-spacing:.3px;
     }
-    .topbar.consumidor .mode-chip { background:#0095d6; }
+    .topbar.consumidor .mode-chip { background:#7c3aed; }
     .topbar.admin .mode-chip { background:#2d3f52; color:#8aa4b8; }
     .toggle-btn {
       display:flex;

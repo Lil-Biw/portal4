@@ -8,7 +8,9 @@ import { MailService } from '../mail/mail.service';
 import { NotificacionOpcionesDto } from '../common/dto/notificacion-opciones.dto';
 import { DocumentosHelper, DocumentoInput } from '../common/helpers/documentos.helper';
 import { hoyUtcChile } from '../common/helpers/fechas.helper';
+import { resolverAdminsSuscritos } from '../common/helpers/notificar-documento.helper';
 import { S3Service } from '../common/s3/s3.service';
+import { RecordatoriosService } from '../recordatorios/recordatorios.service';
 
 @Injectable()
 export class ActividadesService {
@@ -24,6 +26,7 @@ export class ActividadesService {
     @InjectModel('DocEliminado') private docEliminadoModel: Model<any>,
     private mailService: MailService,
     private readonly s3Service: S3Service,
+    private readonly recordatoriosService: RecordatoriosService,
   ) {
     this.docsHelper = new DocumentosHelper(
       actividadModel,
@@ -34,6 +37,15 @@ export class ActividadesService {
       'Actividad',
       s3Service,
     );
+  }
+
+  // El campo dias_recordatorio vive en la colección recordatorios (no en el
+  // documento de Actividad), así que hay que adjuntarlo explícitamente en
+  // cada lectura o el frontend nunca lo recibe (ver bug: el wizard de edición
+  // siempre mostraba los recordatorios destildados y el guardado los borraba).
+  private async adjuntarDiasRecordatorio<T extends { _id: Types.ObjectId }>(actividades: T[]): Promise<(T & { dias_recordatorio: number[] })[]> {
+    const mapa = await this.recordatoriosService.obtenerDiasBatch('actividad', actividades.map(a => a._id));
+    return actividades.map(a => ({ ...a, dias_recordatorio: mapa.get(String(a._id)) ?? [] }));
   }
 
   async findAllByEmpresa(empresaId: string, centroCostoId?: string, desde?: string, hasta?: string) {
@@ -57,16 +69,17 @@ export class ActividadesService {
       if (desde) (filter['fecha'] as Record<string, Date>)['$gte'] = new Date(desde);
       if (hasta) (filter['fecha'] as Record<string, Date>)['$lte'] = new Date(hasta);
     }
-    return this.actividadModel
+    const actividades = await this.actividadModel
       .find(filter)
 
       .populate('tipo_id')
       .populate('activo_ids')
       .sort({ fecha: 1 })
       .lean();
+    return this.adjuntarDiasRecordatorio(actividades);
   }
 
-  findAll(centroCostoId?: string, desde?: string, hasta?: string) {
+  async findAll(centroCostoId?: string, desde?: string, hasta?: string) {
     const filter: Record<string, unknown> = {};
     if (centroCostoId) filter['centro_costo_id'] = new Types.ObjectId(centroCostoId);
     if (desde || hasta) {
@@ -74,19 +87,21 @@ export class ActividadesService {
       if (desde) (filter['fecha'] as Record<string, Date>)['$gte'] = new Date(desde);
       if (hasta) (filter['fecha'] as Record<string, Date>)['$lte'] = new Date(hasta);
     }
-    return this.actividadModel
+    const actividades = await this.actividadModel
       .find(filter)
 
       .populate('tipo_id')
       .populate('activo_ids')
       .sort({ fecha: 1 })
       .lean();
+    return this.adjuntarDiasRecordatorio(actividades);
   }
 
-  async findOne(id: string) {
+  async findOne(id: string): Promise<any> {
     const a = await this.actividadModel.findById(id).populate('tipo_id').lean();
     if (!a) throw new NotFoundException(`Actividad ${id} no encontrada`);
-    return a;
+    const dias_recordatorio = await this.recordatoriosService.obtenerDias('actividad', a._id);
+    return { ...a, dias_recordatorio };
   }
 
   async findByActivo(activoId: string) {
@@ -96,12 +111,13 @@ export class ActividadesService {
     } catch {
       return [];
     }
-    return this.actividadModel
+    const actividades = await this.actividadModel
       .find({ activo_ids: oid })
 
       .populate('tipo_id')
       .sort({ fecha: -1 })
       .lean();
+    return this.adjuntarDiasRecordatorio(actividades);
   }
 
   async findByActivoForEmpresa(activoId: string, empresaId: string) {
@@ -116,15 +132,16 @@ export class ActividadesService {
       .select('_id')
       .lean();
     const centroIds = centros.map(c => c._id);
-    return this.actividadModel
+    const actividades = await this.actividadModel
       .find({ activo_ids: oid, centro_costo_id: { $in: centroIds } })
 
       .populate('tipo_id')
       .sort({ fecha: -1 })
       .lean();
+    return this.adjuntarDiasRecordatorio(actividades);
   }
 
-  async create(dto: CreateActividadDto) {
+  async create(dto: CreateActividadDto): Promise<any> {
     const { notificacion, documentos_nombres, ...actividadData } = dto;
     const a = await new this.actividadModel({
       ...actividadData,
@@ -137,11 +154,16 @@ export class ActividadesService {
 
     const result = await this.actividadModel.findById(a._id).populate('tipo_id').lean();
 
+    const dias_recordatorio = actividadData.dias_recordatorio ?? [];
+    await this.recordatoriosService.sincronizar(
+      'actividad', a._id, dias_recordatorio, a.fecha_termino ?? a.fecha,
+    );
+
     if (actividadData.centro_costo_id) {
       await this.notificarUsuariosCentro(actividadData.centro_costo_id, result!, notificacion, documentos_nombres);
     }
 
-    return result;
+    return { ...result, dias_recordatorio };
   }
 
   private async notificarUsuariosCentro(
@@ -226,6 +248,8 @@ export class ActividadesService {
           nombre:      String(a.nombre ?? ''),
           tipo:        String(tipo?.nombre ?? 'Sin tipo'),
           fecha:       a.fecha as Date,
+          hora:        a.hora ? String(a.hora) : undefined,
+          hora_termino: a.hora_termino ? String(a.hora_termino) : undefined,
           descripcion: a.descripcion ? String(a.descripcion) : undefined,
           jerarquia:   { empresa: empresaNombre, centro: centro.nombre },
           activos:     activosNombres,
@@ -239,7 +263,7 @@ export class ActividadesService {
     }
   }
 
-  async update(id: string, dto: UpdateActividadDto) {
+  async update(id: string, dto: UpdateActividadDto): Promise<any> {
     const { notificacion: _n, documentos_nombres: _d, ...updateData } = dto;
     const payload: Record<string, unknown> = { ...updateData };
     if (dto.tipo_id) payload['tipo_id'] = new Types.ObjectId(dto.tipo_id);
@@ -257,12 +281,17 @@ export class ActividadesService {
       .populate('tipo_id')
       .lean();
     if (!a) throw new NotFoundException(`Actividad ${id} no encontrada`);
-    return a;
+
+    const dias = dto.dias_recordatorio ?? await this.recordatoriosService.obtenerDias('actividad', a._id);
+    await this.recordatoriosService.sincronizar('actividad', a._id, dias, a.fecha_termino ?? a.fecha);
+
+    return { ...a, dias_recordatorio: dias };
   }
 
   async remove(id: string) {
     const a = await this.actividadModel.findByIdAndDelete(id).lean();
     if (!a) throw new NotFoundException(`Actividad ${id} no encontrada`);
+    await this.recordatoriosService.eliminar('actividad', a._id);
     return { message: 'Actividad eliminada', id };
   }
 
@@ -284,84 +313,73 @@ export class ActividadesService {
 
   async enviarRecordatoriosVencimiento(): Promise<{ evaluados: number; notificados: number }> {
     const hoyUtc = hoyUtcChile();
-
-    const actividades = await this.actividadModel
-      // Solo actividades con al menos un día de aviso marcado; a diferencia de
-      // proyectos aquí no hay auto-cierre, así que el resto no aporta nada.
-      .find({ fecha: { $ne: null }, dias_recordatorio: { $exists: true, $ne: [] } })
-      .populate({
-        path: 'centro_costo_id',
-        select: 'nombre cliente_id',
-        populate: { path: 'cliente_id', select: 'razon_social' },
-      })
-      .lean() as any[];
-
-    let notificados = 0;
-
-    for (const actividad of actividades) {
-      const fechaRef = actividad.fecha_termino ?? actividad.fecha;
-      if (!fechaRef) continue;
-      const fecha = new Date(fechaRef);
-      const fechaUtc = Date.UTC(fecha.getUTCFullYear(), fecha.getUTCMonth(), fecha.getUTCDate());
-      const diasRestantes = Math.round((fechaUtc - hoyUtc) / 86_400_000);
-      if (diasRestantes < 0) continue;
-
-      // Los días de aviso los define la propia actividad (paso Notificaciones).
-      // Se dispara el umbral más cercano ya cruzado (>= días restantes) que no
-      // se haya notificado aún: si el cron corre dos veces el mismo día no
-      // reenvía, y si un día marcado pasó sin correr (proceso caído) el aviso
-      // se recupera en la siguiente corrida en vez de perderse.
-      const umbralesCruzados = (actividad.dias_recordatorio ?? []).filter((d: number) => d >= diasRestantes);
-      if (!umbralesCruzados.length) continue;
-      const umbral = Math.min(...umbralesCruzados);
-      if (umbral === actividad.ultimo_recordatorio_dias) continue;
-
-      const centro = actividad.centro_costo_id;
-      const centroId = centro?._id ?? actividad.centro_costo_id;
-      const empresaId = centro?.cliente_id?._id ?? centro?.cliente_id;
-      if (!centroId || !empresaId) continue;
-
-      // Solo admins suscritos explícitamente a la empresa o al centro: el
-      // toggle notificar_todas_empresas NO aplica a recordatorios (evita que
-      // todo admin reciba los avisos por el default true del campo).
-      const admins = await (this.usuarioModel as any)
-        .find({
-          rol: { $in: ['admin_smartclarity', 'super_admin'] },
-          activo: true,
-          $or: [
-            { empresas_suscritas: empresaId },
-            { centros_suscritos: centroId },
-          ],
-        })
-        .select('nombre email')
-        .lean();
-      if (!admins.length) continue;
-
-      const empresaNombre = centro?.cliente_id?.razon_social ?? 'Empresa';
-      const centroNombre = centro?.nombre ?? undefined;
-      const fechaTexto = fecha.toLocaleDateString('es-CL', {
-        weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC',
-      });
-
-      const docs = await this.docActividadModel
-        .find({ actividad_id: actividad._id })
-        .select('nombre_display')
-        .lean();
-
-      await this.mailService.notificarActividadPorVencer({
-        destinatarios: admins.map((a: any) => ({ nombre: a.nombre, email: a.email })),
-        actividad: {
-          nombre: actividad.nombre,
-          fecha: fechaTexto,
-          diasRestantes,
-          jerarquia: { empresa: empresaNombre, centro: centroNombre },
-          documentos: docs.map((d: any) => String(d.nombre_display)),
-        },
-      });
-      await this.actividadModel.findByIdAndUpdate(actividad._id, { ultimo_recordatorio_dias: umbral });
-      notificados++;
+    // Las actividades no tienen estado ni auto-cierre, así que el bucket
+    // "vencidos" no dispara ninguna acción de negocio — pero su doc en
+    // `recordatorios` sí hay que borrarlo, si no queda vigilado para siempre
+    // (cada corrida lo reevalúa y lo descarta, sin límite de crecimiento).
+    const { vencidos, porNotificar } = await this.recordatoriosService.evaluarPendientes('actividad', hoyUtc);
+    if (vencidos.length) {
+      await Promise.all(vencidos.map(id => this.recordatoriosService.eliminar('actividad', id)));
     }
 
-    return { evaluados: actividades.length, notificados };
+    let notificados = 0;
+    if (porNotificar.length) {
+      const actividades = await this.actividadModel
+        .find({ _id: { $in: porNotificar.map(p => p.entidadId) } })
+        .populate({
+          path: 'centro_costo_id',
+          select: 'nombre cliente_id',
+          populate: { path: 'cliente_id', select: 'razon_social' },
+        })
+        .lean() as any[];
+      const porId = new Map(actividades.map(a => [String(a._id), a]));
+
+      for (const pendiente of porNotificar) {
+        const actividad = porId.get(String(pendiente.entidadId));
+        if (!actividad) continue;
+
+        const centro = actividad.centro_costo_id;
+        const centroId = centro?._id ?? actividad.centro_costo_id;
+        const empresaId = centro?.cliente_id?._id ?? centro?.cliente_id;
+        if (!centroId || !empresaId) continue;
+
+        // Solo admins suscritos explícitamente a la empresa o al centro: el
+        // toggle notificar_todas_empresas NO aplica a recordatorios (evita que
+        // todo admin reciba los avisos por el default true del campo).
+        const admins = await resolverAdminsSuscritos(
+          this.usuarioModel as any,
+          { tipo: 'centro', empresaId: String(empresaId), centroId: String(centroId) },
+          { soloSuscritos: true },
+        );
+        if (!admins.length) continue;
+
+        const empresaNombre = centro?.cliente_id?.razon_social ?? 'Empresa';
+        const centroNombre = centro?.nombre ?? undefined;
+        const fechaRef = actividad.fecha_termino ?? actividad.fecha;
+        const fechaTexto = new Date(fechaRef).toLocaleDateString('es-CL', {
+          weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC',
+        });
+
+        const docs = await this.docActividadModel
+          .find({ actividad_id: actividad._id })
+          .select('nombre_display')
+          .lean();
+
+        await this.mailService.notificarActividadPorVencer({
+          destinatarios: admins,
+          actividad: {
+            nombre: actividad.nombre,
+            fecha: fechaTexto,
+            diasRestantes: pendiente.diasRestantes,
+            jerarquia: { empresa: empresaNombre, centro: centroNombre },
+            documentos: docs.map((d: any) => String(d.nombre_display)),
+          },
+        });
+        await this.recordatoriosService.marcarNotificado('actividad', pendiente.entidadId, pendiente.diasRestantes);
+        notificados++;
+      }
+    }
+
+    return { evaluados: vencidos.length + porNotificar.length, notificados };
   }
 }

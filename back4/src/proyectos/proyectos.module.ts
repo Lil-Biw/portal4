@@ -10,6 +10,7 @@ import { DocumentosVencidosModule } from '../documentos-vencidos/documentos-venc
 import { UsuarioSchema } from '../usuarios/usuarios.schema';
 import { MailModule } from '../mail/mail.module';
 import { TipoProyectoSchema } from '../tipos-proyecto/tipos-proyecto.schema';
+import { RecordatoriosModule } from '../recordatorios/recordatorios.module';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { TipoProyectoSchema } from '../tipos-proyecto/tipos-proyecto.schema';
     ]),
     DocumentosVencidosModule,
     MailModule,
+    RecordatoriosModule,
   ],
   controllers: [ProyectosController, ProyectosAdminController, ProyectosEmpresaController],
   providers: [ProyectosService],

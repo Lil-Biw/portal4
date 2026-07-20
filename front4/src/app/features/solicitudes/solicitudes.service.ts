@@ -16,12 +16,13 @@ export interface Solicitud {
   estado: EstadoSolicitud;
   motivo_rechazo?: string;
   // adjunto viene del backend como { tipo_mime, nombre } (sin contenido)
-  adjunto?: { tipo_mime: string; nombre: string; tipo_contenido?: 'archivo' | 'link'; link_url?: string };
-  // archivo_url/tipo_contenido/link_url se computan en el service para compatibilidad con templates
+  adjunto?: { tipo_mime: string; nombre: string; tipo_contenido?: 'archivo' | 'link'; link_url?: string; subido_por_nombre?: string };
+  // archivo_url/tipo_contenido/link_url/subido_por_nombre se computan en el service para compatibilidad con templates
   archivo_url?: string;
   archivo_nombre?: string;
   tipo_contenido?: 'archivo' | 'link';
   link_url?: string;
+  subido_por_nombre?: string;
   creado_en: string;
   // Se actualiza en cada cambio de estado (aprobar/rechazar/adjuntar) — el backend
   // lo mantiene automáticamente vía timestamps de Mongoose.
@@ -75,6 +76,7 @@ export class SolicitudesService {
         archivo_nombre: s.adjunto.nombre,
         tipo_contenido: s.adjunto.tipo_contenido,
         link_url: s.adjunto.link_url,
+        subido_por_nombre: s.adjunto.subido_por_nombre,
       };
     }
     return s;
