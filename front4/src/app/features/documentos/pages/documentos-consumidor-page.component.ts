@@ -3,7 +3,7 @@ import { NgTemplateOutlet } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { HttpEvent, HttpEventType } from '@angular/common/http';
-import { DocumentosService, DocTipo, CATEGORIAS_DOCUMENTO, DocumentoItem } from '../documentos.service';
+import { DocumentosService, DocTipo, CATEGORIAS_DOCUMENTO, DocumentoItem, DocBusquedaItem } from '../documentos.service';
 import { CentrosService } from '../../centros/centros.service';
 import { ProyectosService } from '../../proyectos/proyectos.service';
 import { ConsumidorContextService } from '../../../profile/consumidor-context.service';
@@ -23,6 +23,19 @@ interface PanelState {
   selectedFile: File | null;
   modoUpload: 'archivo' | 'link';
   linkInput: string;
+}
+
+type FiltroTipoC = DocTipo | 'todos';
+
+const collatorNombreC = new Intl.Collator('es', { sensitivity: 'base', numeric: true });
+
+interface FilaDocTodosC {
+  tipo: DocTipo;
+  centroId?: string;
+  centroNombre?: string;
+  proyectoId?: string;
+  proyectoNombre?: string;
+  doc: DocBusquedaItem;
 }
 
 type UploadCtx =
@@ -60,7 +73,9 @@ export class DocumentosConsumidorPageComponent implements OnInit {
   protected mostrarBuscadorProyecto   = signal(false);
   protected tabConsumidorActiva       = signal<'documentacion' | 'solicitudes'>('documentacion');
   protected tabDocConsumidor          = signal<'activos' | 'vencidos'>('activos');
-  protected tabJerarquia              = signal<'empresa' | 'centro' | 'proyecto'>('empresa');
+  protected tabJerarquia              = signal<'todos' | 'empresa' | 'centro' | 'proyecto'>('todos');
+
+  private busquedaTodosDebounceTimer?: ReturnType<typeof setTimeout>;
 
   protected solicitudAdjuntando = signal<string | null>(null);
   protected adjuntoFile: File | null = null;
@@ -68,7 +83,8 @@ export class DocumentosConsumidorPageComponent implements OnInit {
   protected adjuntoLinkInput = '';
   protected adjuntando = signal(false);
 
-  protected panels: Record<DocTipo, PanelState> = {
+  protected panels: Record<FiltroTipoC, PanelState> = {
+    todos:    this.emptyPanel(),
     empresa:  this.emptyPanel(),
     centro:   this.emptyPanel(),
     proyecto: this.emptyPanel(),
@@ -127,6 +143,42 @@ export class DocumentosConsumidorPageComponent implements OnInit {
     if (!id || id === 'todos') return null;
     return this.proyectosService.proyectos().find(p => p._id === id) ?? null;
   }
+
+  // Cascada acotada a la propia empresa del consumidor (ver refrescarBusquedaCascada).
+  // Igual que en admin, un Proyecto puede pertenecer a varios centros y aparece
+  // repetido (mismo _id) en el árbol — se deduplica manteniendo la primera aparición.
+  protected filasTodos = computed<FilaDocTodosC[]>(() => {
+    const vistos = new Set<string>();
+    const filas: FilaDocTodosC[] = [];
+    for (const empresa of this.service.busquedaCascada()) {
+      for (const doc of empresa.documentos) {
+        if (vistos.has(doc._id)) continue;
+        vistos.add(doc._id);
+        filas.push({ tipo: 'empresa', doc });
+      }
+      for (const centro of empresa.centros) {
+        for (const doc of centro.documentos) {
+          if (vistos.has(doc._id)) continue;
+          vistos.add(doc._id);
+          filas.push({ tipo: 'centro', centroId: centro._id, centroNombre: centro.nombre, doc });
+        }
+        for (const proyecto of centro.proyectos) {
+          for (const doc of proyecto.documentos) {
+            if (vistos.has(doc._id)) continue;
+            vistos.add(doc._id);
+            filas.push({
+              tipo: 'proyecto',
+              centroId: proyecto.centro_id, centroNombre: centro.nombre,
+              proyectoId: proyecto._id, proyectoNombre: proyecto.nombre,
+              doc,
+            });
+          }
+        }
+      }
+    }
+    filas.sort((a, b) => collatorNombreC.compare(a.doc.nombre_display, b.doc.nombre_display));
+    return filas;
+  });
 
   formatFecha(fecha?: string): string {
     if (!fecha) return '—';
@@ -203,10 +255,14 @@ export class DocumentosConsumidorPageComponent implements OnInit {
         this.service.documentosPorCentro.set([]);
         this.service.cargarEmpresa(empresa._id);
         this.solicitudesService.cargar(empresa._id);
-        untracked(() => this.proyectosService.cargarPorEmpresa(empresa._id));
+        untracked(() => {
+          this.proyectosService.cargarPorEmpresa(empresa._id);
+          this.refrescarBusquedaCascada();
+        });
       } else {
         this.service.documentosEmpresa.set([]);
         this.solicitudesService.cargar('');
+        this.service.busquedaCascada.set([]);
       }
     });
 
@@ -301,12 +357,42 @@ export class DocumentosConsumidorPageComponent implements OnInit {
     if (estabaEnVencidos) this.cargarVencidosConsumidor();
   }
 
-  seleccionarTabJerarquiaC(tab: 'empresa' | 'centro' | 'proyecto'): void {
+  seleccionarTabJerarquiaC(tab: 'todos' | 'empresa' | 'centro' | 'proyecto'): void {
     this.tabJerarquia.set(tab);
     this.tabConsumidorActiva.set('documentacion');
     this.filtroTipoSolicitud.set('');
     this.filtroEstado.set('');
     if (this.tabDocConsumidor() === 'vencidos') this.cargarVencidosConsumidor();
+    this.refrescarBusquedaCascada();
+  }
+
+  refrescarBusquedaCascada(): void {
+    if (this.tabJerarquia() !== 'todos') return;
+    const empresa = this.consumidorContext.empresaSeleccionada();
+    if (!empresa) { this.service.busquedaCascada.set([]); return; }
+    const { categoriaFiltro, busqueda } = this.panels['todos'];
+    this.service.buscarCascada('empresa', categoriaFiltro ? [categoriaFiltro] : undefined, busqueda, empresa._id);
+  }
+
+  onBusquedaNombreChange(tipo: FiltroTipoC, valor: string): void {
+    this.panels[tipo].busqueda = valor;
+    if (tipo === 'todos') {
+      clearTimeout(this.busquedaTodosDebounceTimer);
+      this.busquedaTodosDebounceTimer = setTimeout(() => this.refrescarBusquedaCascada(), 300);
+      return;
+    }
+  }
+
+  limpiarFiltroDocTipo(tipo: FiltroTipoC): void {
+    if (tipo === 'todos') clearTimeout(this.busquedaTodosDebounceTimer);
+    this.panels[tipo].busqueda = '';
+    this.panels[tipo].categoriaFiltro = '';
+    if (tipo === 'todos') this.refrescarBusquedaCascada();
+  }
+
+  eliminarEnTodos(docUrl: string): void {
+    const empresaId = asId(this.consumidorContext.empresaSeleccionada()?._id) ?? '';
+    this.service.eliminar(docUrl, 'empresa', empresaId, undefined, undefined, () => this.refrescarBusquedaCascada());
   }
 
   // ─── upload panels ────────────────────────────────────────────────────────
@@ -317,8 +403,9 @@ export class DocumentosConsumidorPageComponent implements OnInit {
     if (!p.showUpload) { p.selectedFile = null; p.nombreInput = ''; p.linkInput = ''; p.modoUpload = 'archivo'; }
   }
 
-  seleccionarCategoriaFiltro(tipo: DocTipo, categoria: string): void {
+  seleccionarCategoriaFiltro(tipo: FiltroTipoC, categoria: string): void {
     this.panels[tipo].categoriaFiltro = categoria;
+    if (tipo === 'todos') this.refrescarBusquedaCascada();
   }
 
   setModoUpload(tipo: DocTipo, modo: 'archivo' | 'link'): void {
@@ -502,6 +589,7 @@ export class DocumentosConsumidorPageComponent implements OnInit {
       this.mostrarBuscadorProyecto.set(false);
     }
     this.filtroTipoSolicitud.set('');
+    this.filtroEstado.set('');
   }
 
   // ─── solicitudes (consumidor) ─────────────────────────────────────────────

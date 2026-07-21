@@ -1,7 +1,7 @@
 import { Component, OnInit, inject, signal, computed, effect } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { HttpEvent, HttpEventType } from '@angular/common/http';
-import { DocumentosService, DocTipo, CATEGORIAS_DOCUMENTO, DocumentoItem, DocumentoVencidoItem } from '../documentos.service';
+import { DocumentosService, DocTipo, CATEGORIAS_DOCUMENTO, DocumentoItem, DocumentoVencidoItem, DocBusquedaItem } from '../documentos.service';
 import { ClientesService } from '../../clientes/clientes.service';
 import { CentrosService } from '../../centros/centros.service';
 import { ProyectosService } from '../../proyectos/proyectos.service';
@@ -24,6 +24,21 @@ interface PanelState {
   selectedFile: File | null;
   modoUpload: 'archivo' | 'link';
   linkInput: string;
+}
+
+type FiltroTipo = DocTipo | 'todos';
+
+const collatorNombre = new Intl.Collator('es', { sensitivity: 'base', numeric: true });
+
+interface FilaDocTodos {
+  tipo: DocTipo;
+  empresaId: string;
+  empresaNombre: string;
+  centroId?: string;
+  centroNombre?: string;
+  proyectoId?: string;
+  proyectoNombre?: string;
+  doc: DocBusquedaItem;
 }
 
 type UploadCtx =
@@ -63,6 +78,8 @@ export class DocumentosAdminPageComponent implements OnInit {
   private _selectedCentroId   = signal('');
   private _selectedProyectoId = signal('');
 
+  private busquedaTodosDebounceTimer?: ReturnType<typeof setTimeout>;
+
   get selectedEmpresaId()  { return this._selectedEmpresaId(); }
   set selectedEmpresaId(v: string)  { this._selectedEmpresaId.set(v); }
   get selectedCentroId()   { return this._selectedCentroId(); }
@@ -70,10 +87,9 @@ export class DocumentosAdminPageComponent implements OnInit {
   get selectedProyectoId() { return this._selectedProyectoId(); }
   set selectedProyectoId(v: string) { this._selectedProyectoId.set(v); }
 
-  protected tabJerarquia    = signal<'empresa' | 'centro' | 'proyecto'>('empresa');
+  protected tabJerarquia    = signal<'todos' | 'empresa' | 'centro' | 'proyecto'>('todos');
   protected tabAdminActiva  = signal<'documentacion' | 'solicitudes'>('documentacion');
   protected tabDocAdmin     = signal<'activos' | 'vencidos'>('activos');
-  protected nivelBusqueda   = signal<'empresa' | 'centro' | 'proyecto'>('empresa');
 
   protected showSolicitudForm   = signal(false);
   protected creandoSolicitud    = signal(false);
@@ -148,8 +164,10 @@ export class DocumentosAdminPageComponent implements OnInit {
     this.adminsParaRechazo().filter(u => this.estaSuscritoAdminRechazo(u)).map(u => u._id)
   );
 
-  // modal vencer documento (centroIdReal/proyectoIdReal solo cuando viene de la vista "todos")
-  protected modalVencer = signal<{ url: string; nombre_display: string; categoria: string; centroIdReal?: string; proyectoIdReal?: string } | null>(null);
+  // modal vencer documento (centroIdReal/proyectoIdReal/empresaIdReal/tipoReal solo cuando viene de una vista "todos")
+  protected modalVencer = signal<{ url: string; nombre_display: string; categoria: string; centroIdReal?: string; proyectoIdReal?: string; empresaIdReal?: string; tipoReal?: DocTipo } | null>(null);
+
+  protected empresaIdParaVencer = computed(() => this.modalVencer()?.empresaIdReal ?? this.selectedEmpresaId);
 
   // notificación — vencer documento
   protected notifVencerNotificar   = signal(false);
@@ -172,7 +190,8 @@ export class DocumentosAdminPageComponent implements OnInit {
     this.adminsParaVencer().filter(u => this.estaSuscritoAdminVencer(u)).map(u => u._id)
   );
 
-  protected panels: Record<DocTipo, PanelState> = {
+  protected panels: Record<FiltroTipo, PanelState> = {
+    todos:    this.emptyPanel(),
     empresa:  this.emptyPanel(),
     centro:   this.emptyPanel(),
     proyecto: this.emptyPanel(),
@@ -271,7 +290,7 @@ export class DocumentosAdminPageComponent implements OnInit {
   );
 
   protected usuariosParaVencer = computed(() => {
-    const empresaId = this.selectedEmpresaId;
+    const empresaId = this.empresaIdParaVencer();
     if (!empresaId) return [];
     return this.usuariosService.usuarios().filter(u =>
       u.rol === 'usuario' && asId(u.cliente_id) === empresaId
@@ -279,7 +298,7 @@ export class DocumentosAdminPageComponent implements OnInit {
   });
 
   protected adminsParaVencer = computed(() => {
-    if (!this.selectedEmpresaId) return [];
+    if (!this.empresaIdParaVencer()) return [];
     return this.usuariosService.usuarios().filter(u => u.rol === 'admin_smartclarity');
   });
 
@@ -299,7 +318,7 @@ export class DocumentosAdminPageComponent implements OnInit {
 
   protected estaSuscritoAdminVencer(u: Usuario): boolean {
     const m = this.modalVencer();
-    return usuarioEstaSuscrito(u, this.selectedEmpresaId, m?.centroIdReal, m?.proyectoIdReal);
+    return usuarioEstaSuscrito(u, this.empresaIdParaVencer(), m?.centroIdReal, m?.proyectoIdReal);
   }
 
   // ─── getters ──────────────────────────────────────────────────────────────
@@ -347,12 +366,52 @@ export class DocumentosAdminPageComponent implements OnInit {
   }
 
   get tieneContenido(): boolean {
+    if (this.tabJerarquia() === 'todos') return true;
     return !!this.selectedEmpresaId && (
       this.tabJerarquia() === 'empresa' ||
       (this.tabJerarquia() === 'centro'   && !!this.selectedCentroId) ||
       (this.tabJerarquia() === 'proyecto' && !!this.selectedCentroId && !!this.selectedProyectoId)
     );
   }
+
+  protected filasTodos = computed<FilaDocTodos[]>(() => {
+    // Un Proyecto puede pertenecer a varios centros, así que aparece una vez por cada
+    // centro en el árbol (ver documentos-busqueda.service.ts) — sus documentos vienen
+    // repetidos (mismo _id) tantas veces como centros comparta. Se deduplica manteniendo
+    // la primera aparición: si no, el mismo _id en 2+ filas hace que el menú de
+    // categoría (indexado por doc._id) se abra en todas a la vez.
+    const vistos = new Set<string>();
+    const filas: FilaDocTodos[] = [];
+    for (const empresa of this.service.busquedaCascada()) {
+      for (const doc of empresa.documentos) {
+        if (vistos.has(doc._id)) continue;
+        vistos.add(doc._id);
+        filas.push({ tipo: 'empresa', empresaId: empresa._id, empresaNombre: empresa.nombre, doc });
+      }
+      for (const centro of empresa.centros) {
+        for (const doc of centro.documentos) {
+          if (vistos.has(doc._id)) continue;
+          vistos.add(doc._id);
+          filas.push({ tipo: 'centro', empresaId: centro.empresa_id, empresaNombre: empresa.nombre, centroId: centro._id, centroNombre: centro.nombre, doc });
+        }
+        for (const proyecto of centro.proyectos) {
+          for (const doc of proyecto.documentos) {
+            if (vistos.has(doc._id)) continue;
+            vistos.add(doc._id);
+            filas.push({
+              tipo: 'proyecto',
+              empresaId: proyecto.empresa_id, empresaNombre: empresa.nombre,
+              centroId: proyecto.centro_id, centroNombre: centro.nombre,
+              proyectoId: proyecto._id, proyectoNombre: proyecto.nombre,
+              doc,
+            });
+          }
+        }
+      }
+    }
+    filas.sort((a, b) => collatorNombre.compare(a.doc.nombre_display, b.doc.nombre_display));
+    return filas;
+  });
 
   formatFecha(fecha?: string): string {
     if (!fecha) return '—';
@@ -583,7 +642,7 @@ export class DocumentosAdminPageComponent implements OnInit {
       });
   }
 
-  toggleFiltroCategoria(tipo: DocTipo, cat: string): void {
+  toggleFiltroCategoria(tipo: FiltroTipo, cat: string): void {
     const filtros = this.panels[tipo].filtrosCategorias;
     const idx = filtros.indexOf(cat);
     if (idx === -1) filtros.push(cat);
@@ -591,7 +650,7 @@ export class DocumentosAdminPageComponent implements OnInit {
     this.refrescarBusquedaCascada();
   }
 
-  isFiltroSelected(tipo: DocTipo, cat: string): boolean {
+  isFiltroSelected(tipo: FiltroTipo, cat: string): boolean {
     return this.panels[tipo].filtrosCategorias.includes(cat);
   }
 
@@ -663,6 +722,11 @@ export class DocumentosAdminPageComponent implements OnInit {
     this.service.actualizarCategoria(docUrl, categoria, tipo);
   }
 
+  seleccionarCategoriaTodos(docUrl: string, categoria: string): void {
+    this.categoriaMenuAbierto.set(null);
+    this.service.actualizarCategoria(docUrl, categoria, 'empresa', () => this.refrescarBusquedaCascada());
+  }
+
   abrirDocumento(d: { tipo_contenido?: 'archivo' | 'link'; link_url?: string; url: string; nombre_display: string }): void {
     if (d.tipo_contenido === 'link' && d.link_url) window.open(d.link_url, '_blank', 'noopener');
     else this.service.descargar(d.url, d.nombre_display);
@@ -679,6 +743,10 @@ export class DocumentosAdminPageComponent implements OnInit {
     const todos = this.proyectosService.proyectos().filter(p => asId(p.cliente_id) === empresaId);
     this.service.eliminar(docUrl, 'proyecto', empresaId, undefined, undefined,
       () => this.service.cargarTodosProyectos(empresaId, todos, this.centrosFiltrados));
+  }
+
+  eliminarEnTodos(docUrl: string): void {
+    this.service.eliminar(docUrl, 'empresa', '', undefined, undefined, () => this.refrescarBusquedaCascada());
   }
 
   // ─── solicitudes (admin) ─────────────────────────────────────────────────
@@ -949,45 +1017,36 @@ export class DocumentosAdminPageComponent implements OnInit {
     this.cargarVencidosAdmin();
   }
 
-  seleccionarTabJerarquia(tab: 'empresa' | 'centro' | 'proyecto'): void {
+  seleccionarTabJerarquia(tab: 'todos' | 'empresa' | 'centro' | 'proyecto'): void {
     this.tabJerarquia.set(tab);
     this.tabAdminActiva.set('documentacion');
     if (this.tabDocAdmin() === 'vencidos') this.cargarVencidosAdmin();
     this.refrescarBusquedaCascada();
   }
 
-  seleccionarNivelBusqueda(nivel: 'empresa' | 'centro' | 'proyecto'): void {
-    this.nivelBusqueda.set(nivel);
-    this.refrescarBusquedaCascada();
-  }
-
   refrescarBusquedaCascada(): void {
-    const { filtrosCategorias, busqueda } = this.panels[this.docTipoActual];
-    this.service.buscarCascada(this.nivelBusqueda(), filtrosCategorias, busqueda);
+    if (this.tabJerarquia() !== 'todos') return;
+    const { filtrosCategorias, busqueda } = this.panels['todos'];
+    this.service.buscarCascada('empresa', filtrosCategorias, busqueda);
   }
 
-  onBusquedaNombreChange(tipo: DocTipo, valor: string): void {
+  onBusquedaNombreChange(tipo: FiltroTipo, valor: string): void {
     this.panels[tipo].busqueda = valor;
+    if (tipo === 'todos') {
+      // Debounce: cada tecla dispara un GET /documentos/busqueda-total sobre
+      // todas las empresas — sin esto se manda un request por carácter tipeado.
+      clearTimeout(this.busquedaTodosDebounceTimer);
+      this.busquedaTodosDebounceTimer = setTimeout(() => this.refrescarBusquedaCascada(), 300);
+      return;
+    }
     this.refrescarBusquedaCascada();
   }
 
-  limpiarFiltroDocTipo(tipo: DocTipo): void {
+  limpiarFiltroDocTipo(tipo: FiltroTipo): void {
+    if (tipo === 'todos') clearTimeout(this.busquedaTodosDebounceTimer);
     this.panels[tipo].busqueda = '';
     this.panels[tipo].filtrosCategorias = [];
     this.refrescarBusquedaCascada();
-  }
-
-  seleccionarNodoCascada(empresaId: string, centroId?: string, proyectoId?: string): void {
-    this.selectedEmpresaId = empresaId;
-    this.onEmpresaChange();
-    if (centroId) {
-      this.selectedCentroId = centroId;
-      this.onCentroChange();
-    }
-    if (proyectoId) {
-      this.selectedProyectoId = proyectoId;
-      this.onProyectoChange();
-    }
   }
 
   cargarVencidosAdmin(): void {
@@ -1011,8 +1070,8 @@ export class DocumentosAdminPageComponent implements OnInit {
     );
   }
 
-  abrirModalVencer(doc: { url: string; nombre_display: string; categoria?: string }, centroIdReal?: string, proyectoIdReal?: string): void {
-    this.modalVencer.set({ url: doc.url, nombre_display: doc.nombre_display, categoria: doc.categoria ?? '', centroIdReal, proyectoIdReal });
+  abrirModalVencer(doc: { url: string; nombre_display: string; categoria?: string }, centroIdReal?: string, proyectoIdReal?: string, empresaIdReal?: string, tipoReal?: DocTipo): void {
+    this.modalVencer.set({ url: doc.url, nombre_display: doc.nombre_display, categoria: doc.categoria ?? '', centroIdReal, proyectoIdReal, empresaIdReal, tipoReal });
     this.notifVencerNotificar.set(true);
     this.notifVencerTab.set('usuarios');
     this.notifVencerUsuariosIds.set(this.usuariosParaVencer().map(u => u._id));
@@ -1038,16 +1097,19 @@ export class DocumentosAdminPageComponent implements OnInit {
         ? { notificar: true as const, audiencia: 'todos' as const, notificar_super_admins: superAdmins }
         : { notificar: true as const, audiencia: 'especificos' as const, destinatarios_ids: selIds, notificar_super_admins: superAdmins };
 
-    const tipo       = this.docTipoActual;
-    const empresaId  = this.selectedEmpresaId;
+    const tipo       = m.tipoReal ?? this.docTipoActual;
+    const empresaId  = m.empresaIdReal ?? this.selectedEmpresaId;
     const centroId   = m.centroIdReal ?? ((this.selectedCentroId   !== 'todos') ? this.selectedCentroId   : undefined);
     const proyectoId = m.proyectoIdReal ?? ((this.selectedProyectoId !== 'todos') ? this.selectedProyectoId : undefined);
 
+    const empresaNombreReal = m.empresaIdReal ? (this.clientesService.clientes().find(c => c._id === m.empresaIdReal)?.razon_social ?? this.empresaNombre) : this.empresaNombre;
     const centroNombreReal   = centroId   ? (this.centrosService.centros().find(c => asId(c._id) === centroId)?.nombre   ?? this.centroNombre)   : this.centroNombre;
     const proyectoNombreReal = proyectoId ? (this.proyectosService.proyectos().find(p => asId(p._id) === proyectoId)?.nombre ?? this.proyectoNombre) : this.proyectoNombre;
 
     let onSuccess: (() => void) | undefined;
-    if (this.selectedCentroId === 'todos' && m.centroIdReal) {
+    if (this.tabJerarquia() === 'todos') {
+      onSuccess = () => this.refrescarBusquedaCascada();
+    } else if (this.selectedCentroId === 'todos' && m.centroIdReal) {
       onSuccess = () => this.service.cargarTodosCentros(empresaId, this.centrosFiltrados);
     } else if (this.selectedProyectoId === 'todos' && m.proyectoIdReal) {
       onSuccess = () => {
@@ -1058,7 +1120,7 @@ export class DocumentosAdminPageComponent implements OnInit {
 
     this.service.marcarVencido(
       m.url, tipo, empresaId, centroId, proyectoId,
-      this.empresaNombre, centroNombreReal, proyectoNombreReal,
+      empresaNombreReal, centroNombreReal, proyectoNombreReal,
       notificacion,
       onSuccess,
     );

@@ -22,6 +22,7 @@ export class SolicitudesController {
   constructor(private readonly solicitudesService: SolicitudesService) {}
 
   @Post()
+  @Roles('super_admin', 'admin_smartclarity')
   create(@Param('empresaId') empresaId: string, @Body() dto: CreateSolicitudDto) {
     return this.solicitudesService.create({ ...dto, empresa_id: empresaId });
   }
@@ -37,23 +38,31 @@ export class SolicitudesController {
   }
 
   @Patch(':solicitudId')
-  update(@Param('solicitudId') solicitudId: string, @Body() dto: UpdateSolicitudDto) {
-    return this.solicitudesService.update(solicitudId, dto);
+  @Roles('super_admin', 'admin_smartclarity')
+  update(
+    @Param('empresaId') empresaId: string,
+    @Param('solicitudId') solicitudId: string,
+    @Body() dto: UpdateSolicitudDto,
+  ) {
+    return this.solicitudesService.update(solicitudId, empresaId, dto);
   }
 
   @Delete(':solicitudId')
-  remove(@Param('solicitudId') solicitudId: string) {
-    return this.solicitudesService.remove(solicitudId);
+  @Roles('super_admin', 'admin_smartclarity')
+  remove(@Param('empresaId') empresaId: string, @Param('solicitudId') solicitudId: string) {
+    return this.solicitudesService.remove(solicitudId, empresaId);
   }
 
   @Put(':solicitudId/estado')
+  @Roles('super_admin', 'admin_smartclarity')
   cambiarEstado(
+    @Param('empresaId') empresaId: string,
     @Param('solicitudId') solicitudId: string,
     @Body() dto: CambiarEstadoDto,
     @Req() req: Request,
   ) {
     const user = (req as any).user as JwtUser;
-    return this.solicitudesService.cambiarEstado(solicitudId, dto, user?.sub);
+    return this.solicitudesService.cambiarEstado(solicitudId, empresaId, dto, user?.sub);
   }
 
   @Post(':solicitudId/adjuntar')

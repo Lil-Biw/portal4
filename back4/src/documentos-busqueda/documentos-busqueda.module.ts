@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
-import { DocumentosBusquedaController } from './documentos-busqueda.controller';
+import { DocumentosBusquedaController, DocumentosBusquedaEmpresaController } from './documentos-busqueda.controller';
 import { DocumentosBusquedaService } from './documentos-busqueda.service';
 import { ClienteSchema } from '../clientes/clientes.schema';
 import { DocClienteSchema } from '../clientes/doc-cliente.schema';
@@ -22,7 +22,7 @@ import { UsuarioSchema } from '../usuarios/usuarios.schema';
       { name: 'Usuario', schema: UsuarioSchema },
     ]),
   ],
-  controllers: [DocumentosBusquedaController],
+  controllers: [DocumentosBusquedaController, DocumentosBusquedaEmpresaController],
   providers: [DocumentosBusquedaService],
 })
 export class DocumentosBusquedaModule {}

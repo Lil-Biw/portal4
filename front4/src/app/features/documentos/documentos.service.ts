@@ -1,7 +1,7 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient, HttpEvent, HttpEventType } from '@angular/common/http';
-import { Observable, forkJoin, of, throwError } from 'rxjs';
-import { catchError, tap } from 'rxjs/operators';
+import { Observable, Subject, forkJoin, of, throwError } from 'rxjs';
+import { catchError, map, switchMap, tap } from 'rxjs/operators';
 import { ApiService } from '../../core/services/api.service';
 import { Status } from '../../shared/models/status.model';
 import { asId, NOTIFY_COOLDOWN_MS } from '../../shared/utils';
@@ -102,6 +102,37 @@ export class DocumentosService {
   readonly documentosVencidos = signal<DocumentoVencidoItem[]>([]);
   readonly busquedaCascada = signal<NodoBusqueda[]>([]);
   readonly busquedaCascadaError = signal(false);
+
+  // switchMap cancela la búsqueda en vuelo anterior: sin esto, dos llamadas rápidas a
+  // buscarCascada() (tipeo rápido, toggles de filtro) podían resolver en cualquier
+  // orden y la respuesta más vieja pisaba el resultado de la búsqueda más reciente.
+  private readonly busquedaCascadaParams$ = new Subject<{
+    nivel: 'empresa' | 'centro' | 'proyecto';
+    categorias?: string[];
+    nombre?: string;
+    empresaId?: string;
+  }>();
+
+  constructor() {
+    this.busquedaCascadaParams$.pipe(
+      switchMap(({ nivel, categorias, nombre, empresaId }) => {
+        const params: Record<string, string> = { nivel };
+        if (categorias?.length) params['categorias'] = categorias.join(',');
+        if (nombre?.trim())     params['nombre'] = nombre.trim();
+        const qs = new URLSearchParams(params).toString();
+        // Admin (sin empresaId): cascada cross-empresa. Consumidor (con empresaId):
+        // variante acotada a su propia empresa (EmpresaAccessGuard en el backend).
+        const path = empresaId ? `/empresas/${empresaId}/documentos-busqueda-total` : '/documentos/busqueda-total';
+        return this.http.get<NodoBusqueda[]>(this.api.url(`${path}?${qs}`)).pipe(
+          map(arbol => ({ ok: true as const, arbol })),
+          catchError(() => of({ ok: false as const, arbol: [] as NodoBusqueda[] })),
+        );
+      }),
+    ).subscribe(({ ok, arbol }) => {
+      this.busquedaCascadaError.set(!ok);
+      this.busquedaCascada.set(ok ? arbol.map(n => this.mapearNodo(n)) : []);
+    });
+  }
 
   // Carga documentos de una empresa
   cargarEmpresa(empresaId: string): void {
@@ -344,23 +375,8 @@ export class DocumentosService {
     });
   }
 
-  buscarCascada(nivel: 'empresa' | 'centro' | 'proyecto', categorias?: string[], nombre?: string): void {
-    const params: Record<string, string> = { nivel };
-    if (categorias?.length) params['categorias'] = categorias.join(',');
-    if (nombre?.trim())     params['nombre'] = nombre.trim();
-    const qs = new URLSearchParams(params).toString();
-
-    this.busquedaCascadaError.set(false);
-    this.http.get<NodoBusqueda[]>(this.api.url(`/documentos/busqueda-total?${qs}`)).subscribe({
-      next:  (arbol) => {
-        this.busquedaCascadaError.set(false);
-        this.busquedaCascada.set(arbol.map(n => this.mapearNodo(n)));
-      },
-      error: () => {
-        this.busquedaCascadaError.set(true);
-        this.busquedaCascada.set([]);
-      },
-    });
+  buscarCascada(nivel: 'empresa' | 'centro' | 'proyecto', categorias?: string[], nombre?: string, empresaId?: string): void {
+    this.busquedaCascadaParams$.next({ nivel, categorias, nombre, empresaId });
   }
 
   private mapearNodo(n: NodoBusqueda): NodoBusqueda {

@@ -76,8 +76,8 @@ export class DocumentosBusquedaService {
     @InjectModel('Usuario')        private readonly usuarioModel: Model<any>,
   ) {}
 
-  async buscar(nivel: NivelBusqueda, categorias?: string[], nombre?: string): Promise<NodoBusqueda[]> {
-    const arbol = await this.construirArbol(categorias, nombre);
+  async buscar(nivel: NivelBusqueda, categorias?: string[], nombre?: string, empresaId?: string): Promise<NodoBusqueda[]> {
+    const arbol = await this.construirArbol(categorias, nombre, empresaId);
     if (nivel === 'empresa') return arbol;
     const todosCentros = arbol.flatMap(e => e.centros);
     if (nivel === 'centro') return todosCentros;
@@ -99,14 +99,17 @@ export class DocumentosBusquedaService {
     return proyectosUnicos;
   }
 
-  private async construirArbol(categorias?: string[], nombre?: string): Promise<NodoBusqueda[]> {
+  private async construirArbol(categorias?: string[], nombre?: string, empresaId?: string): Promise<NodoBusqueda[]> {
     const filtroDocs: Record<string, unknown> = {};
     if (categorias?.length) filtroDocs['categoria'] = { $in: categorias };
     if (nombre?.trim())     filtroDocs['nombre_display'] = { $regex: escapeRegExp(nombre.trim()), $options: 'i' };
     const hayFiltro = !!(categorias?.length || nombre?.trim());
 
+    const filtroClientes: Record<string, unknown> = { activo: true };
+    if (empresaId) filtroClientes['_id'] = empresaId;
+
     const [clientes, centros, proyectos, docsEmpresaRaw, docsCentroRaw, docsProyectoRaw] = await Promise.all([
-      this.clienteModel.find({ activo: true }).select('razon_social').lean(),
+      this.clienteModel.find(filtroClientes).select('razon_social').lean(),
       this.centroModel.find({ activo: true }).select('nombre cliente_id').lean(),
       this.proyectoModel.find({}).select('nombre cliente_id centro_costo_ids').lean(),
       this.docClienteModel.find(filtroDocs).select('-contenido').lean(),

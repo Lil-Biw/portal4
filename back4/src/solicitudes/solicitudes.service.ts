@@ -196,24 +196,26 @@ export class SolicitudesService {
     });
   }
 
-  async update(id: string, dto: UpdateSolicitudDto) {
+  async update(id: string, empresaId: string, dto: UpdateSolicitudDto) {
     const solicitud = await this.solicitudModel
-      .findByIdAndUpdate(id, { $set: dto }, { new: true })
+      .findOneAndUpdate({ _id: id, empresa_id: new Types.ObjectId(empresaId) }, { $set: dto }, { new: true })
       .select('-adjunto.contenido')
       .lean();
     if (!solicitud) throw new NotFoundException(`Solicitud ${id} no encontrada`);
     return solicitud;
   }
 
-  async remove(id: string) {
-    const solicitud = await this.solicitudModel.findById(id).lean();
+  async remove(id: string, empresaId: string) {
+    const filtro = { _id: id, empresa_id: new Types.ObjectId(empresaId) };
+    const solicitud = await this.solicitudModel.findOne(filtro).lean();
     if (!solicitud) throw new NotFoundException(`Solicitud ${id} no encontrada`);
-    await this.solicitudModel.findByIdAndDelete(id);
+    await this.solicitudModel.deleteOne(filtro);
     return { deleted: true };
   }
 
-  async cambiarEstado(id: string, dto: CambiarEstadoDto, usuarioRespondeId?: string) {
-    const estadoPrevio = await this.solicitudModel.findById(id).select('estado').lean();
+  async cambiarEstado(id: string, empresaId: string, dto: CambiarEstadoDto, usuarioRespondeId?: string) {
+    const filtro = { _id: id, empresa_id: new Types.ObjectId(empresaId) };
+    const estadoPrevio = await this.solicitudModel.findOne(filtro).select('estado').lean();
     if (!estadoPrevio) throw new NotFoundException(`Solicitud ${id} no encontrada`);
 
     const update: Record<string, unknown> = { estado: dto.estado };
@@ -223,7 +225,7 @@ export class SolicitudesService {
       update['motivo_rechazo'] = '';
     }
     const solicitud = await this.solicitudModel
-      .findByIdAndUpdate(id, update, { new: true })
+      .findOneAndUpdate(filtro, update, { new: true })
       .lean();
     if (!solicitud) throw new NotFoundException(`Solicitud ${id} no encontrada`);
     if (dto.estado === 'rechazado' && solicitud.empresa_id) {
