@@ -143,6 +143,42 @@
           </div>
         </div>
       </div>
+        <div style="display:flex;gap:.35rem;flex-wrap:wrap;margin-top:.65rem">
+          <span style="font-size:.72rem;font-weight:600;color:#6b7280;align-self:center;margin-right:.15rem">Ordenar por:</span>
+          <button
+            style="padding:.3rem .65rem;border-style:solid;border-width:1px;border-radius:999px;font-size:.75rem;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap"
+            [style.background]="ordenTodos() === 'alfabetico' ? 'rgba(124,58,237,.08)' : 'transparent'"
+            [style.color]="ordenTodos() === 'alfabetico' ? '#7c3aed' : '#6b7280'"
+            [style.borderColor]="ordenTodos() === 'alfabetico' ? 'rgba(124,58,237,.3)' : '#e5e7eb'"
+            (click)="ordenTodos.set('alfabetico')">
+            Alfabético
+          </button>
+          <button
+            style="padding:.3rem .65rem;border-style:solid;border-width:1px;border-radius:999px;font-size:.75rem;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap"
+            [style.background]="ordenTodos() === 'nivel_empresa' ? 'rgba(124,58,237,.08)' : 'transparent'"
+            [style.color]="ordenTodos() === 'nivel_empresa' ? '#7c3aed' : '#6b7280'"
+            [style.borderColor]="ordenTodos() === 'nivel_empresa' ? 'rgba(124,58,237,.3)' : '#e5e7eb'"
+            (click)="ordenTodos.set('nivel_empresa')">
+            Nivel empresa
+          </button>
+          <button
+            style="padding:.3rem .65rem;border-style:solid;border-width:1px;border-radius:999px;font-size:.75rem;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap"
+            [style.background]="ordenTodos() === 'nivel_centro' ? 'rgba(124,58,237,.08)' : 'transparent'"
+            [style.color]="ordenTodos() === 'nivel_centro' ? '#7c3aed' : '#6b7280'"
+            [style.borderColor]="ordenTodos() === 'nivel_centro' ? 'rgba(124,58,237,.3)' : '#e5e7eb'"
+            (click)="ordenTodos.set('nivel_centro')">
+            Nivel centro
+          </button>
+          <button
+            style="padding:.3rem .65rem;border-style:solid;border-width:1px;border-radius:999px;font-size:.75rem;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap"
+            [style.background]="ordenTodos() === 'nivel_proyecto' ? 'rgba(124,58,237,.08)' : 'transparent'"
+            [style.color]="ordenTodos() === 'nivel_proyecto' ? '#7c3aed' : '#6b7280'"
+            [style.borderColor]="ordenTodos() === 'nivel_proyecto' ? 'rgba(124,58,237,.3)' : '#e5e7eb'"
+            (click)="ordenTodos.set('nivel_proyecto')">
+            Nivel proyecto
+          </button>
+        </div>
+      </div>
     }
 
     <!-- Panel: Empresa (resumen + select) -->
