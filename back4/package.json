@@ -10,7 +10,8 @@
     "start:prod": "node dist/main",
     "preview:mails": "npx tsx scripts/preview-mails.ts",
     "test:mails": "npx tsx scripts/test-mail-all.ts",
-    "test:busqueda-cascada": "npx -y ts-node scripts/test-busqueda-cascada.ts"
+    "test:busqueda-cascada": "npx -y ts-node scripts/test-busqueda-cascada.ts",
+    "test:desuscripcion": "npx -y ts-node scripts/test-desuscripcion-admin.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1079.0",
