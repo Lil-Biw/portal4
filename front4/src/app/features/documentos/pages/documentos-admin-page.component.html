@@ -129,54 +129,55 @@
     <!-- Panel: Todos (resumen, sin selección) -->
     @if (tabJerarquia() === 'todos') {
       <div style="padding:1rem">
-        <div style="border-left:4px solid #7c3aed;border-radius:8px;background:#fafbfc;padding:.75rem .85rem;display:flex;align-items:center;gap:.75rem">
-          <div style="width:38px;height:38px;border-radius:9px;background:rgba(124,58,237,.1);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#7c3aed">
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/>
-              <path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"/>
-              <path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"/>
-            </svg>
+        <div style="border-left:4px solid #7c3aed;border-radius:8px;background:#fafbfc;padding:.75rem .85rem;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap">
+          <div style="display:flex;align-items:center;gap:.75rem">
+            <div style="width:38px;height:38px;border-radius:9px;background:rgba(124,58,237,.1);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#7c3aed">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/>
+                <path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"/>
+                <path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"/>
+              </svg>
+            </div>
+            <div>
+              <p style="margin:0 0 .15rem;font-size:.9rem;font-weight:700;color:#1f2937">Todos los documentos</p>
+              <p style="margin:0;font-size:.75rem;color:#6b7280">Empresas, centros de costos y proyectos · {{ filasTodos().length }} documentos</p>
+            </div>
           </div>
-          <div>
-            <p style="margin:0 0 .15rem;font-size:.9rem;font-weight:700;color:#1f2937">Todos los documentos</p>
-            <p style="margin:0;font-size:.75rem;color:#6b7280">Empresas, centros de costos y proyectos · {{ filasTodos().length }} documentos</p>
+          <div style="display:flex;gap:.35rem;flex-wrap:wrap;align-items:center">
+            <span style="font-size:.72rem;font-weight:600;color:#6b7280;margin-right:.15rem">Ordenar por:</span>
+            <button
+              style="padding:.3rem .65rem;border-style:solid;border-width:1px;border-radius:999px;font-size:.75rem;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap"
+              [style.background]="ordenTodos() === 'alfabetico' ? 'rgba(124,58,237,.08)' : 'transparent'"
+              [style.color]="ordenTodos() === 'alfabetico' ? '#7c3aed' : '#6b7280'"
+              [style.borderColor]="ordenTodos() === 'alfabetico' ? 'rgba(124,58,237,.3)' : '#e5e7eb'"
+              (click)="ordenTodos.set('alfabetico')">
+              Alfabético
+            </button>
+            <button
+              style="padding:.3rem .65rem;border-style:solid;border-width:1px;border-radius:999px;font-size:.75rem;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap"
+              [style.background]="ordenTodos() === 'nivel_empresa' ? 'rgba(124,58,237,.08)' : 'transparent'"
+              [style.color]="ordenTodos() === 'nivel_empresa' ? '#7c3aed' : '#6b7280'"
+              [style.borderColor]="ordenTodos() === 'nivel_empresa' ? 'rgba(124,58,237,.3)' : '#e5e7eb'"
+              (click)="ordenTodos.set('nivel_empresa')">
+              Nivel empresa
+            </button>
+            <button
+              style="padding:.3rem .65rem;border-style:solid;border-width:1px;border-radius:999px;font-size:.75rem;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap"
+              [style.background]="ordenTodos() === 'nivel_centro' ? 'rgba(124,58,237,.08)' : 'transparent'"
+              [style.color]="ordenTodos() === 'nivel_centro' ? '#7c3aed' : '#6b7280'"
+              [style.borderColor]="ordenTodos() === 'nivel_centro' ? 'rgba(124,58,237,.3)' : '#e5e7eb'"
+              (click)="ordenTodos.set('nivel_centro')">
+              Nivel centro
+            </button>
+            <button
+              style="padding:.3rem .65rem;border-style:solid;border-width:1px;border-radius:999px;font-size:.75rem;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap"
+              [style.background]="ordenTodos() === 'nivel_proyecto' ? 'rgba(124,58,237,.08)' : 'transparent'"
+              [style.color]="ordenTodos() === 'nivel_proyecto' ? '#7c3aed' : '#6b7280'"
+              [style.borderColor]="ordenTodos() === 'nivel_proyecto' ? 'rgba(124,58,237,.3)' : '#e5e7eb'"
+              (click)="ordenTodos.set('nivel_proyecto')">
+              Nivel proyecto
+            </button>
           </div>
-        </div>
-      </div>
-        <div style="display:flex;gap:.35rem;flex-wrap:wrap;margin-top:.65rem">
-          <span style="font-size:.72rem;font-weight:600;color:#6b7280;align-self:center;margin-right:.15rem">Ordenar por:</span>
-          <button
-            style="padding:.3rem .65rem;border-style:solid;border-width:1px;border-radius:999px;font-size:.75rem;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap"
-            [style.background]="ordenTodos() === 'alfabetico' ? 'rgba(124,58,237,.08)' : 'transparent'"
-            [style.color]="ordenTodos() === 'alfabetico' ? '#7c3aed' : '#6b7280'"
-            [style.borderColor]="ordenTodos() === 'alfabetico' ? 'rgba(124,58,237,.3)' : '#e5e7eb'"
-            (click)="ordenTodos.set('alfabetico')">
-            Alfabético
-          </button>
-          <button
-            style="padding:.3rem .65rem;border-style:solid;border-width:1px;border-radius:999px;font-size:.75rem;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap"
-            [style.background]="ordenTodos() === 'nivel_empresa' ? 'rgba(124,58,237,.08)' : 'transparent'"
-            [style.color]="ordenTodos() === 'nivel_empresa' ? '#7c3aed' : '#6b7280'"
-            [style.borderColor]="ordenTodos() === 'nivel_empresa' ? 'rgba(124,58,237,.3)' : '#e5e7eb'"
-            (click)="ordenTodos.set('nivel_empresa')">
-            Nivel empresa
-          </button>
-          <button
-            style="padding:.3rem .65rem;border-style:solid;border-width:1px;border-radius:999px;font-size:.75rem;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap"
-            [style.background]="ordenTodos() === 'nivel_centro' ? 'rgba(124,58,237,.08)' : 'transparent'"
-            [style.color]="ordenTodos() === 'nivel_centro' ? '#7c3aed' : '#6b7280'"
-            [style.borderColor]="ordenTodos() === 'nivel_centro' ? 'rgba(124,58,237,.3)' : '#e5e7eb'"
-            (click)="ordenTodos.set('nivel_centro')">
-            Nivel centro
-          </button>
-          <button
-            style="padding:.3rem .65rem;border-style:solid;border-width:1px;border-radius:999px;font-size:.75rem;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap"
-            [style.background]="ordenTodos() === 'nivel_proyecto' ? 'rgba(124,58,237,.08)' : 'transparent'"
-            [style.color]="ordenTodos() === 'nivel_proyecto' ? '#7c3aed' : '#6b7280'"
-            [style.borderColor]="ordenTodos() === 'nivel_proyecto' ? 'rgba(124,58,237,.3)' : '#e5e7eb'"
-            (click)="ordenTodos.set('nivel_proyecto')">
-            Nivel proyecto
-          </button>
         </div>
       </div>
     }
