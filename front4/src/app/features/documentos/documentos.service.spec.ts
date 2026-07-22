@@ -122,3 +122,61 @@ describe('DocumentosService.buscarCascada', () => {
     expect(service.busquedaCascada()).toEqual([]);
   });
 });
+
+describe('DocumentosService.cargarTodasEmpresas', () => {
+  let service: DocumentosService;
+  let httpMock: HttpTestingController;
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({
+      providers: [provideHttpClient(), provideHttpClientTesting()],
+    });
+    service = TestBed.inject(DocumentosService);
+    httpMock = TestBed.inject(HttpTestingController);
+  });
+
+  afterEach(() => httpMock.verify());
+
+  it('pega a /documentos/busqueda-total con nivel=empresa sin filtros, y arma la URL de cada documento del árbol', () => {
+    service.cargarTodasEmpresas();
+
+    const req = httpMock.expectOne(r => r.url.includes('/documentos/busqueda-total'));
+    const url = new URL(req.request.url);
+    expect(url.searchParams.get('nivel')).toBe('empresa');
+    expect(url.searchParams.has('categorias')).toBe(false);
+    expect(url.searchParams.has('nombre')).toBe(false);
+
+    req.flush([
+      {
+        _id: 'emp1', nombre: 'Empresa Acme', nivel: 'empresa',
+        empresa_id: 'emp1', empresa_nombre: 'Empresa Acme',
+        documentos: [{ _id: 'doc1', nombre_display: 'Contrato Marco', categoria: 'Contratos' }],
+        centros: [{
+          _id: 'centro1', nombre: 'Centro Norte', nivel: 'centro',
+          empresa_id: 'emp1', empresa_nombre: 'Empresa Acme',
+          documentos: [{ _id: 'doc2', nombre_display: 'Contrato Centro', categoria: 'Contratos' }],
+          centros: [],
+          proyectos: [{
+            _id: 'proy1', nombre: 'Proyecto Cableado', nivel: 'proyecto',
+            empresa_id: 'emp1', empresa_nombre: 'Empresa Acme', centro_id: 'centro1', centro_nombre: 'Centro Norte',
+            documentos: [{ _id: 'doc3', nombre_display: 'Contrato Proyecto', categoria: 'Contratos' }],
+            centros: [], proyectos: [],
+          }],
+        }],
+        proyectos: [],
+      },
+    ]);
+
+    const arbol = service.documentosTodasEmpresas();
+    expect(arbol[0].documentos[0].url).toContain('/empresas/emp1/documentos/doc1');
+    expect(arbol[0].centros[0].documentos[0].url).toContain('/empresas/emp1/centros/centro1/documentos/doc2');
+    expect(arbol[0].centros[0].proyectos[0].documentos[0].url).toContain('/empresas/emp1/centros/centro1/proyectos/proy1/documentos/doc3');
+  });
+
+  it('vacía documentosTodasEmpresas si la petición falla', () => {
+    service.cargarTodasEmpresas();
+    const req = httpMock.expectOne(r => r.url.includes('/documentos/busqueda-total'));
+    req.flush('fallo', { status: 500, statusText: 'Internal Server Error' });
+    expect(service.documentosTodasEmpresas()).toEqual([]);
+  });
+});

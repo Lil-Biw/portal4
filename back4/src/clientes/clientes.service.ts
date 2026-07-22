@@ -5,7 +5,7 @@ import { ClienteDocument } from './clientes.schema';
 import { CreateClienteDto, UpdateClienteDto } from './clientes.dto';
 import { DocumentosHelper, DocumentoInput, resolverSubidoPorNombre } from '../common/helpers/documentos.helper';
 import { DocumentosVencidosService } from '../documentos-vencidos/documentos-vencidos.service';
-import { notificarDocumentoSubido } from '../common/helpers/notificar-documento.helper';
+import { notificarDocumentoSubido, condicionSuscripcionAdmin } from '../common/helpers/notificar-documento.helper';
 import { MailService } from '../mail/mail.service';
 import { ContextoJerarquico } from '../mail/templates/jerarquia';
 import { NotificacionOpcionesDto } from '../common/dto/notificacion-opciones.dto';
@@ -226,7 +226,7 @@ export class ClientesService {
           .find({
             activo: true,
             $or: [
-              { rol: 'admin_smartclarity' },
+              { rol: 'admin_smartclarity', $or: condicionSuscripcionAdmin({ empresaId }) },
               { cliente_id: empresaId },
             ],
           })

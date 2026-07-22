@@ -102,6 +102,7 @@ export class DocumentosService {
   readonly documentosVencidos = signal<DocumentoVencidoItem[]>([]);
   readonly busquedaCascada = signal<NodoBusqueda[]>([]);
   readonly busquedaCascadaError = signal(false);
+  readonly documentosTodasEmpresas = signal<NodoBusqueda[]>([]);
 
   // switchMap cancela la búsqueda en vuelo anterior: sin esto, dos llamadas rápidas a
   // buscarCascada() (tipeo rápido, toggles de filtro) podían resolver en cualquier
@@ -377,6 +378,12 @@ export class DocumentosService {
 
   buscarCascada(nivel: 'empresa' | 'centro' | 'proyecto', categorias?: string[], nombre?: string, empresaId?: string): void {
     this.busquedaCascadaParams$.next({ nivel, categorias, nombre, empresaId });
+  }
+
+  cargarTodasEmpresas(): void {
+    this.http.get<NodoBusqueda[]>(this.api.url('/documentos/busqueda-total?nivel=empresa')).pipe(
+      catchError(() => of([] as NodoBusqueda[])),
+    ).subscribe(arbol => this.documentosTodasEmpresas.set(arbol.map(n => this.mapearNodo(n))));
   }
 
   private mapearNodo(n: NodoBusqueda): NodoBusqueda {

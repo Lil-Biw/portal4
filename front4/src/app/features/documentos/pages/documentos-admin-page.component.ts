@@ -99,9 +99,9 @@ export class DocumentosAdminPageComponent implements OnInit {
 
   protected readonly categorias = CATEGORIAS_DOCUMENTO;
 
-  private _selectedEmpresaId  = signal('');
-  private _selectedCentroId   = signal('');
-  private _selectedProyectoId = signal('');
+  private _selectedEmpresaId  = signal('todos');
+  private _selectedCentroId   = signal('todos');
+  private _selectedProyectoId = signal('todos');
 
   private busquedaTodosDebounceTimer?: ReturnType<typeof setTimeout>;
 
@@ -351,6 +351,7 @@ export class DocumentosAdminPageComponent implements OnInit {
 
   get centrosFiltrados() {
     if (!this.selectedEmpresaId) return [];
+    if (this.selectedEmpresaId === 'todos') return this.centrosService.centros();
     return this.centrosService.centros().filter(c => asId(c.cliente_id) === this.selectedEmpresaId);
   }
 
@@ -386,7 +387,7 @@ export class DocumentosAdminPageComponent implements OnInit {
   }
 
   get puedeGestionarDocumento(): boolean {
-    return this.tabJerarquia() === 'empresa' ||
+    return (this.tabJerarquia() === 'empresa' && !!this.selectedEmpresaId && this.selectedEmpresaId !== 'todos') ||
       (this.tabJerarquia() === 'centro'   && !!this.selectedCentroId   && this.selectedCentroId   !== 'todos') ||
       (this.tabJerarquia() === 'proyecto' && !!this.selectedProyectoId && this.selectedProyectoId !== 'todos');
   }
@@ -476,7 +477,12 @@ export class DocumentosAdminPageComponent implements OnInit {
     this.clientesService.cargar();
     this.centrosService.cargar();
     this.proyectosService.cargar();
-    this.solicitudesService.cargar(this.selectedEmpresaId);
+    if (this.selectedEmpresaId === 'todos') {
+      this.service.cargarTodasEmpresas();
+      this.solicitudesService.solicitudes.set([]);
+    } else {
+      this.solicitudesService.cargar(this.selectedEmpresaId);
+    }
     this.usuariosService.cargar();
     this.refrescarBusquedaCascada();
   }
@@ -484,8 +490,8 @@ export class DocumentosAdminPageComponent implements OnInit {
   // ─── admin handlers ───────────────────────────────────────────────────────
 
   onEmpresaChange(): void {
-    this.selectedCentroId = '';
-    this.selectedProyectoId = '';
+    this.selectedCentroId = 'todos';
+    this.selectedProyectoId = 'todos';
     this.tabJerarquia.set('empresa');
     this.tabAdminActiva.set('documentacion');
     this.tabDocAdmin.set('activos');
@@ -494,20 +500,32 @@ export class DocumentosAdminPageComponent implements OnInit {
     this.service.documentosProyecto.set([]);
     this.service.documentosPorCentro.set([]);
     this.service.documentosPorProyecto.set([]);
-    if (this.selectedEmpresaId) this.service.cargarEmpresa(this.selectedEmpresaId);
-    else this.service.documentosEmpresa.set([]);
-    this.solicitudesService.cargar(this.selectedEmpresaId);
+    if (this.selectedEmpresaId === 'todos') {
+      this.service.documentosEmpresa.set([]);
+      this.service.cargarTodasEmpresas();
+      this.solicitudesService.solicitudes.set([]);
+    } else if (this.selectedEmpresaId) {
+      this.service.cargarEmpresa(this.selectedEmpresaId);
+      this.solicitudesService.cargar(this.selectedEmpresaId);
+    } else {
+      this.service.documentosEmpresa.set([]);
+      this.solicitudesService.cargar(this.selectedEmpresaId);
+    }
   }
 
   onCentroChange(): void {
     const estabaEnVencidos = this.tabDocAdmin() === 'vencidos';
-    this.selectedProyectoId = '';
+    this.selectedProyectoId = 'todos';
     if (!estabaEnVencidos) this.tabDocAdmin.set('activos');
     this.service.documentosVencidos.set([]);
     this.service.documentosPorProyecto.set([]);
     if (this.selectedCentroId) this.tabJerarquia.set('centro');
     const centroId = (this.selectedCentroId && this.selectedCentroId !== 'todos') ? this.selectedCentroId : undefined;
-    if (this.selectedCentroId === 'todos') {
+    if (this.selectedEmpresaId === 'todos') {
+      // Los datos ya están en service.documentosTodasEmpresas(); no hace falta pedir nada.
+      this.service.documentosCentro.set([]);
+      this.service.documentosPorCentro.set([]);
+    } else if (this.selectedCentroId === 'todos') {
       this.service.documentosCentro.set([]);
       this.service.cargarTodosCentros(this.selectedEmpresaId, this.centrosFiltrados);
     } else if (centroId) {
@@ -517,7 +535,11 @@ export class DocumentosAdminPageComponent implements OnInit {
       this.service.documentosPorCentro.set([]);
       this.service.documentosCentro.set([]);
     }
-    this.solicitudesService.cargar(this.selectedEmpresaId, centroId);
+    if (this.selectedEmpresaId === 'todos') {
+      this.solicitudesService.solicitudes.set([]);
+    } else {
+      this.solicitudesService.cargar(this.selectedEmpresaId, centroId);
+    }
     if (estabaEnVencidos) this.cargarVencidosAdmin();
   }
 
@@ -532,7 +554,9 @@ export class DocumentosAdminPageComponent implements OnInit {
     this.service.documentosProyecto.set([]);
     this.service.documentosPorProyecto.set([]);
 
-    if (this.selectedProyectoId === 'todos' && this.selectedCentroId === 'todos') {
+    if (this.selectedEmpresaId === 'todos') {
+      // Los datos ya están en service.documentosTodasEmpresas(); no hace falta pedir nada.
+    } else if (this.selectedProyectoId === 'todos' && this.selectedCentroId === 'todos') {
       const todos = this.proyectosService.proyectos().filter(p => asId(p.cliente_id) === this.selectedEmpresaId);
       this.service.cargarTodosProyectos(this.selectedEmpresaId, todos, this.centrosFiltrados);
     } else if (this.selectedProyectoId === 'todos' && centroId) {
@@ -545,7 +569,11 @@ export class DocumentosAdminPageComponent implements OnInit {
     } else if (centroId) {
       this.service.cargar('centro', this.selectedEmpresaId, centroId);
     }
-    this.solicitudesService.cargar(this.selectedEmpresaId, centroId, proyectoId);
+    if (this.selectedEmpresaId === 'todos') {
+      this.solicitudesService.solicitudes.set([]);
+    } else {
+      this.solicitudesService.cargar(this.selectedEmpresaId, centroId, proyectoId);
+    }
     if (estabaEnVencidos) this.cargarVencidosAdmin();
   }
 
@@ -732,6 +760,56 @@ export class DocumentosAdminPageComponent implements OnInit {
       .filter(d => !term || d.nombre_display.toLowerCase().includes(term));
   }
 
+  docsEmpresaTodas(): { doc: DocBusquedaItem; empresaId: string; empresaNombre: string }[] {
+    const { filtrosCategorias, busqueda } = this.panels['empresa'];
+    const term = busqueda.trim().toLowerCase();
+    const filas: { doc: DocBusquedaItem; empresaId: string; empresaNombre: string }[] = [];
+    for (const empresa of this.service.documentosTodasEmpresas()) {
+      for (const doc of empresa.documentos) filas.push({ doc, empresaId: empresa._id, empresaNombre: empresa.nombre });
+    }
+    return filas
+      .filter(f => !filtrosCategorias.length || filtrosCategorias.includes(f.doc.categoria ?? ''))
+      .filter(f => !term || f.doc.nombre_display.toLowerCase().includes(term));
+  }
+
+  docsCentroTodas(): { doc: DocBusquedaItem; empresaId: string; empresaNombre: string; centroId: string; centroNombre: string }[] {
+    const { filtrosCategorias, busqueda } = this.panels['centro'];
+    const term = busqueda.trim().toLowerCase();
+    const filas: { doc: DocBusquedaItem; empresaId: string; empresaNombre: string; centroId: string; centroNombre: string }[] = [];
+    for (const empresa of this.service.documentosTodasEmpresas()) {
+      for (const centro of empresa.centros) {
+        for (const doc of centro.documentos) {
+          filas.push({ doc, empresaId: empresa._id, empresaNombre: empresa.nombre, centroId: centro._id, centroNombre: centro.nombre });
+        }
+      }
+    }
+    return filas
+      .filter(f => !filtrosCategorias.length || filtrosCategorias.includes(f.doc.categoria ?? ''))
+      .filter(f => !term || f.doc.nombre_display.toLowerCase().includes(term));
+  }
+
+  docsProyectoTodas(): { doc: DocBusquedaItem; empresaId: string; empresaNombre: string; centroId: string; centroNombre: string; proyectoId: string; proyectoNombre: string }[] {
+    const { filtrosCategorias, busqueda } = this.panels['proyecto'];
+    const term = busqueda.trim().toLowerCase();
+    const filas: { doc: DocBusquedaItem; empresaId: string; empresaNombre: string; centroId: string; centroNombre: string; proyectoId: string; proyectoNombre: string }[] = [];
+    for (const empresa of this.service.documentosTodasEmpresas()) {
+      for (const centro of empresa.centros) {
+        for (const proyecto of centro.proyectos) {
+          for (const doc of proyecto.documentos) {
+            filas.push({
+              doc, empresaId: empresa._id, empresaNombre: empresa.nombre,
+              centroId: centro._id, centroNombre: centro.nombre,
+              proyectoId: proyecto._id, proyectoNombre: proyecto.nombre,
+            });
+          }
+        }
+      }
+    }
+    return filas
+      .filter(f => !filtrosCategorias.length || filtrosCategorias.includes(f.doc.categoria ?? ''))
+      .filter(f => !term || f.doc.nombre_display.toLowerCase().includes(term));
+  }
+
   eliminar(docUrl: string, tipo: DocTipo): void {
     this.service.eliminar(docUrl, tipo, this.selectedEmpresaId, this.selectedCentroId || undefined, this.selectedProyectoId || undefined);
   }
@@ -750,6 +828,11 @@ export class DocumentosAdminPageComponent implements OnInit {
   seleccionarCategoriaTodos(docUrl: string, categoria: string): void {
     this.categoriaMenuAbierto.set(null);
     this.service.actualizarCategoria(docUrl, categoria, 'empresa', () => this.refrescarBusquedaCascada());
+  }
+
+  seleccionarCategoriaTodasEmpresas(docUrl: string, categoria: string, tipo: DocTipo): void {
+    this.categoriaMenuAbierto.set(null);
+    this.service.actualizarCategoria(docUrl, categoria, tipo, () => this.service.cargarTodasEmpresas());
   }
 
   abrirDocumento(d: { tipo_contenido?: 'archivo' | 'link'; link_url?: string; url: string; nombre_display: string }): void {
@@ -772,6 +855,21 @@ export class DocumentosAdminPageComponent implements OnInit {
 
   eliminarEnTodos(docUrl: string): void {
     this.service.eliminar(docUrl, 'empresa', '', undefined, undefined, () => this.refrescarBusquedaCascada());
+  }
+
+  eliminarEnTodasEmpresas(docUrl: string, empresaId: string): void {
+    this.service.eliminar(docUrl, 'empresa', empresaId, undefined, undefined,
+      () => this.service.cargarTodasEmpresas());
+  }
+
+  eliminarCentroEnTodasEmpresas(docUrl: string, empresaId: string, centroId: string): void {
+    this.service.eliminar(docUrl, 'centro', empresaId, centroId, undefined,
+      () => this.service.cargarTodasEmpresas());
+  }
+
+  eliminarProyectoEnTodasEmpresas(docUrl: string, empresaId: string, centroId: string, proyectoId: string): void {
+    this.service.eliminar(docUrl, 'proyecto', empresaId, centroId, proyectoId,
+      () => this.service.cargarTodasEmpresas());
   }
 
   // ─── solicitudes (admin) ─────────────────────────────────────────────────
@@ -844,7 +942,7 @@ export class DocumentosAdminPageComponent implements OnInit {
   cerrarSolicitudForm(): void { this.showSolicitudForm.set(false); }
 
   crearSolicitud(): void {
-    if (!this.solicitudForm.nombre || !this.selectedEmpresaId) return;
+    if (!this.solicitudForm.nombre || !this.selectedEmpresaId || this.selectedEmpresaId === 'todos') return;
     const tab = this.tabJerarquia();
     const centroId   = tab !== 'empresa' && this.selectedCentroId   !== 'todos' ? this.selectedCentroId   : undefined;
     const proyectoId = tab === 'proyecto' && this.selectedProyectoId !== 'todos' ? this.selectedProyectoId : undefined;
@@ -1076,7 +1174,7 @@ export class DocumentosAdminPageComponent implements OnInit {
 
   cargarVencidosAdmin(): void {
     const empresaId = this.selectedEmpresaId;
-    if (!empresaId) return;
+    if (!empresaId || empresaId === 'todos') { this.service.documentosVencidos.set([]); return; }
     const tab = this.tabJerarquia();
     const centroId   = tab !== 'empresa' && this.selectedCentroId   && this.selectedCentroId   !== 'todos' ? this.selectedCentroId   : undefined;
     const proyectoId = tab === 'proyecto' && this.selectedProyectoId && this.selectedProyectoId !== 'todos' ? this.selectedProyectoId : undefined;
@@ -1134,6 +1232,8 @@ export class DocumentosAdminPageComponent implements OnInit {
     let onSuccess: (() => void) | undefined;
     if (this.tabJerarquia() === 'todos') {
       onSuccess = () => this.refrescarBusquedaCascada();
+    } else if (this.selectedEmpresaId === 'todos') {
+      onSuccess = () => this.service.cargarTodasEmpresas();
     } else if (this.selectedCentroId === 'todos' && m.centroIdReal) {
       onSuccess = () => this.service.cargarTodosCentros(empresaId, this.centrosFiltrados);
     } else if (this.selectedProyectoId === 'todos' && m.proyectoIdReal) {

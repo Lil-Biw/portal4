@@ -8,7 +8,7 @@ import { MailService } from '../mail/mail.service';
 import { NotificacionOpcionesDto } from '../common/dto/notificacion-opciones.dto';
 import { DocumentosHelper, DocumentoInput } from '../common/helpers/documentos.helper';
 import { hoyUtcChile } from '../common/helpers/fechas.helper';
-import { resolverAdminsSuscritos } from '../common/helpers/notificar-documento.helper';
+import { resolverAdminsSuscritos, condicionSuscripcionAdmin } from '../common/helpers/notificar-documento.helper';
 import { S3Service } from '../common/s3/s3.service';
 import { RecordatoriosService } from '../recordatorios/recordatorios.service';
 
@@ -202,12 +202,12 @@ export class ActividadesService {
           .select('nombre email')
           .lean();
       } else {
-        // audiencia 'todos' o undefined → usuarios del centro + admin_smartclarity (globales)
+        // audiencia 'todos' o undefined → usuarios del centro + admin_smartclarity suscritos (globales)
         usuariosCentro = await this.usuarioModel
           .find({
             activo: true,
             $or: [
-              { rol: 'admin_smartclarity' },
+              { rol: 'admin_smartclarity', $or: condicionSuscripcionAdmin({ empresaId, centroId: centroObjId }) },
               { cliente_id: empresaId, centros_asignados: centroObjId },
             ],
           })

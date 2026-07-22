@@ -4,7 +4,7 @@ import { Model, Types } from 'mongoose';
 import { CentroCostoDocument } from './centros-costos.schema';
 import { CreateCentroCostoDto, UpdateCentroCostoDto } from './centros-costos.dto';
 import { DocumentosHelper, DocumentoInput, resolverSubidoPorNombre } from '../common/helpers/documentos.helper';
-import { notificarDocumentoSubido } from '../common/helpers/notificar-documento.helper';
+import { notificarDocumentoSubido, condicionSuscripcionAdmin } from '../common/helpers/notificar-documento.helper';
 import { DocumentosVencidosService } from '../documentos-vencidos/documentos-vencidos.service';
 import { MailService } from '../mail/mail.service';
 import { ContextoJerarquico } from '../mail/templates/jerarquia';
@@ -247,7 +247,7 @@ export class CentrosCostosService {
           .find({
             activo: true,
             $or: [
-              { rol: 'admin_smartclarity' },
+              { rol: 'admin_smartclarity', $or: condicionSuscripcionAdmin({ empresaId, centroId: centroObjId }) },
               { cliente_id: empresaId, centros_asignados: centroObjId },
             ],
           })

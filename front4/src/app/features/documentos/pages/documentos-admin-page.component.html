@@ -93,7 +93,7 @@
             <path d="M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2"/>
             <path d="M10 6h4"/><path d="M10 10h4"/><path d="M10 14h4"/><path d="M10 18h4"/>
           </svg>
-          <span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ empresaNombre || 'Empresa' }}</span>
+          <span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ (selectedEmpresaId === 'todos' ? 'Todas las empresas' : empresaNombre) || 'Empresa' }}</span>
         </button>
         <button
           style="flex:1;padding:.55rem 1rem;border-style:solid;border-width:1px;border-radius:8px;font-size:.875rem;font-weight:600;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;justify-content:center;gap:.4rem;overflow:hidden"
@@ -185,7 +185,22 @@
     <!-- Panel: Empresa (resumen + select) -->
     @if (tabJerarquia() === 'empresa') {
       <div style="padding:1rem;display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1rem">
-        @if (empresaSeleccionadaObj) {
+        @if (selectedEmpresaId === 'todos') {
+          <div style="border-left:4px solid #0095d6;border-radius:8px;background:#fafbfc;padding:.75rem .85rem;display:flex;align-items:center;gap:.75rem">
+            <div style="width:38px;height:38px;border-radius:9px;background:rgba(0,149,214,.1);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#0095d6">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"/>
+                <path d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"/>
+                <path d="M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2"/>
+                <path d="M10 6h4"/><path d="M10 10h4"/><path d="M10 14h4"/><path d="M10 18h4"/>
+              </svg>
+            </div>
+            <div>
+              <p style="margin:0 0 .15rem;font-size:.9rem;font-weight:700;color:#1f2937">Documentación total de empresas</p>
+              <p style="margin:0;font-size:.75rem;color:#6b7280">{{ clientesService.clientes().length }} empresas</p>
+            </div>
+          </div>
+        } @else if (empresaSeleccionadaObj) {
           <div style="border-left:4px solid #0095d6;border-radius:8px;background:#fafbfc;padding:.75rem .85rem;display:flex;align-items:center;gap:.75rem">
             <div style="width:38px;height:38px;border-radius:9px;background:rgba(0,149,214,.1);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#0095d6">
               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -211,7 +226,7 @@
         <label class="field" style="margin:0;justify-content:center">
           <span>Empresa</span>
           <select [(ngModel)]="selectedEmpresaId" (ngModelChange)="onEmpresaChange()">
-            <option value="">Todas</option>
+            <option value="todos">Todas</option>
             @for (c of clientesService.clientes(); track c._id) {
               <option [value]="c._id">{{ c.razon_social }}</option>
             }
@@ -264,10 +279,11 @@
         <label class="field" style="margin:0;justify-content:center">
           <span>Centro de costos</span>
           <select [(ngModel)]="selectedCentroId" (ngModelChange)="onCentroChange()" [disabled]="!selectedEmpresaId">
-            <option value="">Ninguno</option>
             <option value="todos">Todos</option>
-            @for (c of centrosFiltrados; track c._id) {
-              <option [value]="c._id">{{ c.nombre }}</option>
+            @if (selectedEmpresaId !== 'todos') {
+              @for (c of centrosFiltrados; track c._id) {
+                <option [value]="c._id">{{ c.nombre }}</option>
+              }
             }
           </select>
         </label>
@@ -326,7 +342,6 @@
         <label class="field" style="margin:0;justify-content:center">
           <span>Proyecto</span>
           <select [(ngModel)]="selectedProyectoId" (ngModelChange)="onProyectoChange()" [disabled]="!selectedCentroId">
-            <option value="">Ninguno</option>
             @if (selectedCentroId) {
               <option value="todos">Todos</option>
             }
@@ -410,6 +425,8 @@
                   [style.background]="tabDocAdmin() === 'vencidos' ? 'rgba(239,68,68,.06)' : 'transparent'"
                   [style.color]="tabDocAdmin() === 'vencidos' ? '#dc2626' : '#6b7280'"
                   [style.borderColor]="tabDocAdmin() === 'vencidos' ? 'rgba(239,68,68,.25)' : '#e5e7eb'"
+                  [style.opacity]="selectedEmpresaId === 'todos' ? '0.45' : '1'"
+                  [disabled]="selectedEmpresaId === 'todos'"
                   (click)="activarTabVencidosAdmin()">
                   <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0">
                     <path d="m21.73 18-8-14a2 2 0 0 0-3.46 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
@@ -419,7 +436,7 @@
               }
             </div>
             <div style="flex:1;display:flex;justify-content:center">
-              @if (tabAdminActiva() === 'solicitudes') {
+              @if (tabAdminActiva() === 'solicitudes' && selectedEmpresaId !== 'todos') {
                 <button class="btn-success" style="width:100%;font-size:.8rem;padding:.4rem .9rem;white-space:nowrap;display:inline-flex;align-items:center;justify-content:center;gap:.35rem" (click)="abrirSolicitudForm()">
                   <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0">
                     <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/>
@@ -641,8 +658,88 @@
             }
           }
 
-          <!-- Vista "todos centros": filtrada -->
-          @if (tabJerarquia() === 'centro' && selectedCentroId === 'todos') {
+          <!-- Vista "todas las empresas": nivel empresa -->
+          @if (tabJerarquia() === 'empresa' && selectedEmpresaId === 'todos') {
+            @if (docsEmpresaTodas().length === 0) {
+              <p class="empty">Sin documentos.</p>
+            } @else {
+              <div style="border:1px solid #e5e7eb;border-radius:8px">
+                <div style="display:flex;justify-content:space-between;padding:.5rem 1rem;background:#f9fafb;border-bottom:1px solid #e5e7eb;border-top-left-radius:8px;border-top-right-radius:8px">
+                  <span style="font-size:.7rem;font-weight:700;color:#9ca3af;letter-spacing:.07em;text-transform:uppercase">Documento</span>
+                  <span style="font-size:.7rem;font-weight:700;color:#9ca3af;letter-spacing:.07em;text-transform:uppercase">Acciones</span>
+                </div>
+                @for (fila of docsEmpresaTodas(); track fila.doc._id) {
+                  <div style="display:flex;align-items:center;justify-content:space-between;padding:.6rem 1rem;border-bottom:1px solid #f3f4f6">
+                    <div style="display:flex;align-items:center;gap:.6rem;min-width:0">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                      <div style="min-width:0;overflow:hidden">
+                        <div style="display:flex;align-items:center;gap:.4rem;flex-wrap:wrap">
+                          <span style="font-size:.7rem;font-weight:600;padding:.2rem .55rem;border-radius:999px;background:#e0e7ff;color:#3730a3;white-space:nowrap;flex-shrink:0">{{ fila.doc.categoria }}</span>
+                          <span style="font-size:.875rem;color:#1f2937;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ fila.doc.nombre_display }}</span>
+                          @if (fila.doc.tipo_contenido === 'link') {
+                            <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:#ecfdf5;color:#047857;flex-shrink:0">🔗 Link</span>
+                          }
+                        </div>
+                        <div style="margin-top:.2rem;display:flex;align-items:center;gap:.5rem;flex-wrap:wrap">
+                          <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:rgba(0,149,214,.1);color:#0095d6">Empresa · {{ fila.empresaNombre }}</span>
+                          <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:#f1f5f9;color:#475569">Subido: {{ formatFechaHora(fila.doc.subido_en) }}</span>
+                          @if (fila.doc.subido_por_nombre) {
+                            <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:#f0fdfa;color:#0f766e">{{ fila.doc.subido_por_nombre }}</span>
+                          }
+                        </div>
+                      </div>
+                    </div>
+                    <div style="display:flex;gap:.35rem;flex-shrink:0">
+                      <button (click)="abrirDocumento(fila.doc)"
+                              style="padding:.35rem .65rem;border-radius:7px;border:none;background:#eff6ff;color:#0095d6;cursor:pointer;display:inline-flex;align-items:center;gap:.35rem;font-size:.72rem;font-weight:600;white-space:nowrap">
+                        @if (fila.doc.tipo_contenido === 'link') {
+                          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                        } @else {
+                          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                        }
+                        {{ fila.doc.tipo_contenido === 'link' ? 'Abrir enlace' : 'Descargar' }}
+                      </button>
+                      <div style="position:relative">
+                        <button title="Cambiar categoría" (click)="toggleCategoriaMenu(fila.doc._id)"
+                                style="width:32px;height:32px;border-radius:7px;border:none;background:#eef2ff;color:#4f46e5;cursor:pointer;display:flex;align-items:center;justify-content:center">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m20.59 13.41-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82Z"/><circle cx="7" cy="7" r="1"/></svg>
+                        </button>
+                        @if (categoriaMenuAbierto() === fila.doc._id) {
+                          <div style="position:fixed;inset:0;z-index:60" (click)="categoriaMenuAbierto.set(null)"></div>
+                          <div style="position:absolute;top:36px;right:0;background:#fff;border:1px solid #e5e7eb;border-radius:8px;box-shadow:0 8px 24px rgba(15,23,42,.14);z-index:61;min-width:190px;max-height:240px;overflow-y:auto;padding:.25rem">
+                            @for (cat of categorias; track cat) {
+                              <div (click)="seleccionarCategoriaTodasEmpresas(fila.doc.url, cat, 'empresa')"
+                                   style="padding:.4rem .65rem;font-size:.8rem;border-radius:6px;cursor:pointer"
+                                   [style.font-weight]="cat === fila.doc.categoria ? '700' : '400'"
+                                   [style.color]="cat === fila.doc.categoria ? '#3730a3' : '#374151'"
+                                   [style.background]="cat === fila.doc.categoria ? '#eef2ff' : 'transparent'">
+                                {{ cat }}
+                              </div>
+                            }
+                          </div>
+                        }
+                      </div>
+                      @if (puedeVencer()) {
+                      <button (click)="abrirModalVencer(fila.doc, undefined, undefined, fila.empresaId, 'empresa')"
+                              style="padding:.35rem .65rem;border-radius:7px;border:none;background:#fffbeb;color:#d97706;cursor:pointer;display:inline-flex;align-items:center;gap:.35rem;font-size:.72rem;font-weight:600;white-space:nowrap">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                        Marcar vencido
+                      </button>
+                      }
+                      <button (click)="eliminarEnTodasEmpresas(fila.doc.url, fila.empresaId)"
+                              style="padding:.35rem .65rem;border-radius:7px;border:none;background:#fef2f2;color:#dc2626;cursor:pointer;display:inline-flex;align-items:center;gap:.35rem;font-size:.72rem;font-weight:600;white-space:nowrap">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                        Eliminar
+                      </button>
+                    </div>
+                  </div>
+                }
+              </div>
+            }
+          }
+
+          <!-- Vista "todos centros": filtrada (una sola empresa) -->
+          @if (tabJerarquia() === 'centro' && selectedCentroId === 'todos' && selectedEmpresaId !== 'todos') {
             @if (filteredDocsPorCentro().length === 0) {
               <p class="empty">Sin documentos en centros de costos.</p>
             }
@@ -725,8 +822,89 @@
             }
           }
 
-          <!-- Vista "todos proyectos": filtrada -->
-          @if (tabJerarquia() === 'proyecto' && selectedProyectoId === 'todos') {
+          <!-- Vista "todos los centros de todas las empresas" -->
+          @if (tabJerarquia() === 'centro' && selectedCentroId === 'todos' && selectedEmpresaId === 'todos') {
+            @if (docsCentroTodas().length === 0) {
+              <p class="empty">Sin documentos en centros de costos.</p>
+            } @else {
+              <div style="border:1px solid #e5e7eb;border-radius:8px">
+                <div style="display:flex;justify-content:space-between;padding:.5rem 1rem;background:#f9fafb;border-bottom:1px solid #e5e7eb;border-top-left-radius:8px;border-top-right-radius:8px">
+                  <span style="font-size:.7rem;font-weight:700;color:#9ca3af;letter-spacing:.07em;text-transform:uppercase">Documento</span>
+                  <span style="font-size:.7rem;font-weight:700;color:#9ca3af;letter-spacing:.07em;text-transform:uppercase">Acciones</span>
+                </div>
+                @for (fila of docsCentroTodas(); track fila.doc._id) {
+                  <div style="display:flex;align-items:center;justify-content:space-between;padding:.6rem 1rem;border-bottom:1px solid #f3f4f6">
+                    <div style="display:flex;align-items:center;gap:.6rem;min-width:0">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                      <div style="min-width:0;overflow:hidden">
+                        <div style="display:flex;align-items:center;gap:.4rem;flex-wrap:wrap">
+                          <span style="font-size:.7rem;font-weight:600;padding:.2rem .55rem;border-radius:999px;background:#e0e7ff;color:#3730a3;white-space:nowrap;flex-shrink:0">{{ fila.doc.categoria }}</span>
+                          <span style="font-size:.875rem;color:#1f2937;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ fila.doc.nombre_display }}</span>
+                          @if (fila.doc.tipo_contenido === 'link') {
+                            <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:#ecfdf5;color:#047857;flex-shrink:0">🔗 Link</span>
+                          }
+                        </div>
+                        <div style="margin-top:.2rem;display:flex;align-items:center;gap:.5rem;flex-wrap:wrap">
+                          <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:rgba(0,149,214,.1);color:#0095d6">Empresa · {{ fila.empresaNombre }}</span>
+                          <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:rgba(16,185,129,.1);color:#059669">Centro · {{ fila.centroNombre }}</span>
+                          <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:#f1f5f9;color:#475569">Subido: {{ formatFechaHora(fila.doc.subido_en) }}</span>
+                          @if (fila.doc.subido_por_nombre) {
+                            <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:#f0fdfa;color:#0f766e">{{ fila.doc.subido_por_nombre }}</span>
+                          }
+                        </div>
+                      </div>
+                    </div>
+                    <div style="display:flex;gap:.3rem;flex-shrink:0">
+                      <button (click)="abrirDocumento(fila.doc)"
+                              style="padding:.35rem .65rem;border-radius:7px;border:none;background:#eff6ff;color:#0095d6;cursor:pointer;display:inline-flex;align-items:center;gap:.35rem;font-size:.72rem;font-weight:600;white-space:nowrap">
+                        @if (fila.doc.tipo_contenido === 'link') {
+                          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                        } @else {
+                          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                        }
+                        {{ fila.doc.tipo_contenido === 'link' ? 'Abrir enlace' : 'Descargar' }}
+                      </button>
+                      <div style="position:relative">
+                        <button title="Cambiar categoría" (click)="toggleCategoriaMenu(fila.doc._id)"
+                                style="width:32px;height:32px;border-radius:7px;border:none;background:#eef2ff;color:#4f46e5;cursor:pointer;display:flex;align-items:center;justify-content:center">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m20.59 13.41-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82Z"/><circle cx="7" cy="7" r="1"/></svg>
+                        </button>
+                        @if (categoriaMenuAbierto() === fila.doc._id) {
+                          <div style="position:fixed;inset:0;z-index:60" (click)="categoriaMenuAbierto.set(null)"></div>
+                          <div style="position:absolute;top:36px;right:0;background:#fff;border:1px solid #e5e7eb;border-radius:8px;box-shadow:0 8px 24px rgba(15,23,42,.14);z-index:61;min-width:190px;max-height:240px;overflow-y:auto;padding:.25rem">
+                            @for (cat of categorias; track cat) {
+                              <div (click)="seleccionarCategoriaTodasEmpresas(fila.doc.url, cat, 'centro')"
+                                   style="padding:.4rem .65rem;font-size:.8rem;border-radius:6px;cursor:pointer"
+                                   [style.font-weight]="cat === fila.doc.categoria ? '700' : '400'"
+                                   [style.color]="cat === fila.doc.categoria ? '#3730a3' : '#374151'"
+                                   [style.background]="cat === fila.doc.categoria ? '#eef2ff' : 'transparent'">
+                                {{ cat }}
+                              </div>
+                            }
+                          </div>
+                        }
+                      </div>
+                      @if (puedeVencer()) {
+                      <button (click)="abrirModalVencer(fila.doc, fila.centroId, undefined, fila.empresaId, 'centro')"
+                              style="padding:.35rem .65rem;border-radius:7px;border:none;background:#fffbeb;color:#d97706;cursor:pointer;display:inline-flex;align-items:center;gap:.35rem;font-size:.72rem;font-weight:600;white-space:nowrap">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                        Marcar vencido
+                      </button>
+                      }
+                      <button (click)="eliminarCentroEnTodasEmpresas(fila.doc.url, fila.empresaId, fila.centroId)"
+                              style="padding:.35rem .65rem;border-radius:7px;border:none;background:#fef2f2;color:#dc2626;cursor:pointer;display:inline-flex;align-items:center;gap:.35rem;font-size:.72rem;font-weight:600;white-space:nowrap">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                        Eliminar
+                      </button>
+                    </div>
+                  </div>
+                }
+              </div>
+            }
+          }
+
+          <!-- Vista "todos proyectos": filtrada (una sola empresa) -->
+          @if (tabJerarquia() === 'proyecto' && selectedProyectoId === 'todos' && selectedEmpresaId !== 'todos') {
             @if (filteredDocsPorProyecto().length === 0) {
               <p class="empty">Sin documentos en proyectos.</p>
             }
@@ -812,10 +990,95 @@
             }
           }
 
+          <!-- Vista "todos los proyectos de todas las empresas" -->
+          @if (tabJerarquia() === 'proyecto' && selectedProyectoId === 'todos' && selectedEmpresaId === 'todos') {
+            @if (docsProyectoTodas().length === 0) {
+              <p class="empty">Sin documentos en proyectos.</p>
+            } @else {
+              <div style="border:1px solid #e5e7eb;border-radius:8px">
+                <div style="display:flex;justify-content:space-between;padding:.5rem 1rem;background:#f9fafb;border-bottom:1px solid #e5e7eb;border-top-left-radius:8px;border-top-right-radius:8px">
+                  <span style="font-size:.7rem;font-weight:700;color:#9ca3af;letter-spacing:.07em;text-transform:uppercase">Documento</span>
+                  <span style="font-size:.7rem;font-weight:700;color:#9ca3af;letter-spacing:.07em;text-transform:uppercase">Acciones</span>
+                </div>
+                @for (fila of docsProyectoTodas(); track fila.doc._id) {
+                  <div style="display:flex;align-items:center;justify-content:space-between;padding:.6rem 1rem;border-bottom:1px solid #f3f4f6">
+                    <div style="display:flex;align-items:center;gap:.6rem;min-width:0">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                      <div style="min-width:0;overflow:hidden">
+                        <div style="display:flex;align-items:center;gap:.4rem;flex-wrap:wrap">
+                          <span style="font-size:.7rem;font-weight:600;padding:.2rem .55rem;border-radius:999px;background:#e0e7ff;color:#3730a3;white-space:nowrap;flex-shrink:0">{{ fila.doc.categoria }}</span>
+                          <span style="font-size:.875rem;color:#1f2937;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ fila.doc.nombre_display }}</span>
+                          @if (fila.doc.tipo_contenido === 'link') {
+                            <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:#ecfdf5;color:#047857;flex-shrink:0">🔗 Link</span>
+                          }
+                        </div>
+                        <div style="margin-top:.2rem;display:flex;align-items:center;gap:.5rem;flex-wrap:wrap">
+                          <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:rgba(0,149,214,.1);color:#0095d6">Empresa · {{ fila.empresaNombre }}</span>
+                          <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:rgba(16,185,129,.1);color:#059669">Centro · {{ fila.centroNombre }}</span>
+                          <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:rgba(245,158,11,.1);color:#d97706">Proyecto · {{ fila.proyectoNombre }}</span>
+                          <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:#f1f5f9;color:#475569">Subido: {{ formatFechaHora(fila.doc.subido_en) }}</span>
+                          @if (fila.doc.subido_por_nombre) {
+                            <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:#f0fdfa;color:#0f766e">{{ fila.doc.subido_por_nombre }}</span>
+                          }
+                        </div>
+                      </div>
+                    </div>
+                    <div style="display:flex;gap:.3rem;flex-shrink:0">
+                      <button (click)="abrirDocumento(fila.doc)"
+                              style="padding:.35rem .65rem;border-radius:7px;border:none;background:#eff6ff;color:#0095d6;cursor:pointer;display:inline-flex;align-items:center;gap:.35rem;font-size:.72rem;font-weight:600;white-space:nowrap">
+                        @if (fila.doc.tipo_contenido === 'link') {
+                          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                        } @else {
+                          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                        }
+                        {{ fila.doc.tipo_contenido === 'link' ? 'Abrir enlace' : 'Descargar' }}
+                      </button>
+                      <div style="position:relative">
+                        <button title="Cambiar categoría" (click)="toggleCategoriaMenu(fila.doc._id)"
+                                style="width:32px;height:32px;border-radius:7px;border:none;background:#eef2ff;color:#4f46e5;cursor:pointer;display:flex;align-items:center;justify-content:center">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m20.59 13.41-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82Z"/><circle cx="7" cy="7" r="1"/></svg>
+                        </button>
+                        @if (categoriaMenuAbierto() === fila.doc._id) {
+                          <div style="position:fixed;inset:0;z-index:60" (click)="categoriaMenuAbierto.set(null)"></div>
+                          <div style="position:absolute;top:36px;right:0;background:#fff;border:1px solid #e5e7eb;border-radius:8px;box-shadow:0 8px 24px rgba(15,23,42,.14);z-index:61;min-width:190px;max-height:240px;overflow-y:auto;padding:.25rem">
+                            @for (cat of categorias; track cat) {
+                              <div (click)="seleccionarCategoriaTodasEmpresas(fila.doc.url, cat, 'proyecto')"
+                                   style="padding:.4rem .65rem;font-size:.8rem;border-radius:6px;cursor:pointer"
+                                   [style.font-weight]="cat === fila.doc.categoria ? '700' : '400'"
+                                   [style.color]="cat === fila.doc.categoria ? '#3730a3' : '#374151'"
+                                   [style.background]="cat === fila.doc.categoria ? '#eef2ff' : 'transparent'">
+                                {{ cat }}
+                              </div>
+                            }
+                          </div>
+                        }
+                      </div>
+                      @if (puedeVencer()) {
+                      <button (click)="abrirModalVencer(fila.doc, fila.centroId, fila.proyectoId, fila.empresaId, 'proyecto')"
+                              style="padding:.35rem .65rem;border-radius:7px;border:none;background:#fffbeb;color:#d97706;cursor:pointer;display:inline-flex;align-items:center;gap:.35rem;font-size:.72rem;font-weight:600;white-space:nowrap">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                        Marcar vencido
+                      </button>
+                      }
+                      <button (click)="eliminarProyectoEnTodasEmpresas(fila.doc.url, fila.empresaId, fila.centroId, fila.proyectoId)"
+                              style="padding:.35rem .65rem;border-radius:7px;border:none;background:#fef2f2;color:#dc2626;cursor:pointer;display:inline-flex;align-items:center;gap:.35rem;font-size:.72rem;font-weight:600;white-space:nowrap">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                        Eliminar
+                      </button>
+                    </div>
+                  </div>
+                }
+              </div>
+            }
+          }
+
           } <!-- fin activos -->
 
           <!-- Sub-vista vencidos -->
           @if (tabDocAdmin() === 'vencidos') {
+            @if (selectedEmpresaId === 'todos') {
+              <p class="empty">Selecciona una empresa específica para ver sus documentos vencidos.</p>
+            } @else {
             <p style="margin:0 0 .75rem;font-size:.8rem;color:#6b7280">Mostrando los últimos 20 documentos vencidos de este contexto.</p>
             @if (service.documentosVencidos().length === 0) {
               <p class="empty">Sin documentos vencidos.</p>
@@ -871,6 +1134,7 @@
                   </div>
                 }
               </div>
+            }
             }
           } <!-- fin vencidos -->
 
@@ -1001,6 +1265,10 @@
 
           <app-status-banner [status]="solicitudesService.status()"></app-status-banner>
 
+          @if (selectedEmpresaId === 'todos') {
+            <p class="empty">Selecciona una empresa específica para ver sus solicitudes.</p>
+          } @else {
+
           @let sols = solicitudesEnSolicitudes();
           @if (sols.length === 0) {
             <p class="empty">Sin solicitudes para este contexto.</p>
@@ -1117,6 +1385,7 @@
                 </div>
               }
             </div>
+          }
           }
 
         } <!-- fin solicitudes -->

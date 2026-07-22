@@ -19,27 +19,44 @@ type UsuarioSuscriptor = {
   proyectos_suscritos?: Types.ObjectId[];
 };
 
-// Un admin recibe la notificación si: tiene el toggle "todas" activo (o no lo ha
-// configurado nunca, default histórico), o si está suscrito explícitamente
-// a la empresa completa, o al centro/proyecto puntual del evento.
-// `soloSuscritos: true` omite el toggle (usado por los recordatorios de
-// vencimiento, donde el default true del toggle spamearía a todo admin).
+// Condiciones ($or) bajo las que un admin_smartclarity está suscrito a un scope
+// dado: tiene el toggle "todas" activo (o no lo ha configurado nunca, default
+// histórico), o está suscrito explícitamente a la empresa completa, o al
+// centro/proyecto puntual del evento. `soloSuscritos: true` omite el toggle
+// (usado por los recordatorios de vencimiento, donde el default true del
+// toggle spamearía a todo admin).
+//
+// Reutilizar esta función en cualquier punto que arme un `$or` de
+// destinatarios de notificación para admin_smartclarity — construir la
+// condición a mano ahí duplica esta lógica y es lo que causó que 6 puntos de
+// envío de correo (ver back4/tofix.md #17) ignoraran por completo las
+// preferencias de suscripción del admin.
+export function condicionSuscripcionAdmin(
+  params: { empresaId: Types.ObjectId; centroId?: Types.ObjectId; proyectoId?: Types.ObjectId },
+  opciones?: { soloSuscritos?: boolean },
+): Record<string, unknown>[] {
+  const or: Record<string, unknown>[] = [{ empresas_suscritas: params.empresaId }];
+  if (!opciones?.soloSuscritos) {
+    or.unshift({ notificar_todas_empresas: { $ne: false } });
+  }
+  if (params.centroId) or.push({ centros_suscritos: params.centroId });
+  if (params.proyectoId) or.push({ proyectos_suscritos: params.proyectoId });
+  return or;
+}
+
 export async function resolverAdminsSuscritos(
   usuarioModel: Model<UsuarioSuscriptor>,
   scope: ScopeDocumento,
   opciones?: { soloSuscritos?: boolean },
 ): Promise<{ nombre: string; email: string }[]> {
-  const or: Record<string, unknown>[] = [
-    { empresas_suscritas: new Types.ObjectId(scope.empresaId) },
-  ];
-  if (!opciones?.soloSuscritos) {
-    or.unshift({ notificar_todas_empresas: { $ne: false } });
-  }
-  if (scope.tipo === 'centro') {
-    or.push({ centros_suscritos: new Types.ObjectId(scope.centroId) });
-  } else if (scope.tipo === 'proyecto') {
-    or.push({ proyectos_suscritos: new Types.ObjectId(scope.proyectoId) });
-  }
+  const or = condicionSuscripcionAdmin(
+    {
+      empresaId: new Types.ObjectId(scope.empresaId),
+      centroId: scope.tipo === 'centro' ? new Types.ObjectId(scope.centroId) : undefined,
+      proyectoId: scope.tipo === 'proyecto' ? new Types.ObjectId(scope.proyectoId) : undefined,
+    },
+    opciones,
+  );
 
   const admins = await usuarioModel
     .find({ rol: { $in: ['admin_smartclarity', 'super_admin'] }, activo: true, $or: or })

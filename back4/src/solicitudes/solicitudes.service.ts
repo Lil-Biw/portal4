@@ -9,7 +9,7 @@ import { CreateSolicitudDto, UpdateSolicitudDto, CambiarEstadoDto } from './soli
 import { MailService } from '../mail/mail.service';
 import { NotificacionOpcionesDto } from '../common/dto/notificacion-opciones.dto';
 import { DocumentosHelper, ArchivoInput, DocumentoInput, sanitizarNombreArchivo, esUrlValida } from '../common/helpers/documentos.helper';
-import { notificarSolicitudCompletada, ScopeDocumento } from '../common/helpers/notificar-documento.helper';
+import { notificarSolicitudCompletada, ScopeDocumento, condicionSuscripcionAdmin } from '../common/helpers/notificar-documento.helper';
 import { ContextoJerarquico } from '../mail/templates/jerarquia';
 import { S3Service } from '../common/s3/s3.service';
 
@@ -96,6 +96,7 @@ export class SolicitudesService {
           centroObjId = new Types.ObjectId(centroCostoId);
         }
       }
+      const proyectoObjId = dto.proyecto_id && proyecto ? new Types.ObjectId(dto.proyecto_id) : undefined;
 
       const empresaNombre = empresa ? String(empresa.razon_social) : 'Empresa';
       const jerarquia: ContextoJerarquico = {
@@ -117,8 +118,10 @@ export class SolicitudesService {
           .select('nombre email')
           .lean();
       } else {
-        // audiencia 'todos' → admin_smartclarity (globales) + usuarios del centro o de la empresa
-        const orConditions: object[] = [{ rol: 'admin_smartclarity' }];
+        // audiencia 'todos' → admin_smartclarity suscritos (globales) + usuarios del centro o de la empresa
+        const orConditions: object[] = [
+          { rol: 'admin_smartclarity', $or: condicionSuscripcionAdmin({ empresaId, centroId: centroObjId ?? undefined, proyectoId: proyectoObjId }) },
+        ];
         if (centroObjId) {
           orConditions.push({ cliente_id: empresaId, centros_asignados: centroObjId });
         } else {
@@ -359,12 +362,16 @@ export class SolicitudesService {
           .select('nombre email')
           .lean();
       } else {
-        // audiencia 'todos' o undefined → usuarios del centro o de la empresa + admin_smartclarity (globales)
-        const orConditions: object[] = [{ rol: 'admin_smartclarity' }];
+        // audiencia 'todos' o undefined → usuarios del centro o de la empresa + admin_smartclarity suscritos (globales)
+        const empresaObjId = new Types.ObjectId(empresaId);
+        const proyectoObjId = solicitud['proyecto_id'] && proyecto ? new Types.ObjectId(String(solicitud['proyecto_id'])) : undefined;
+        const orConditions: object[] = [
+          { rol: 'admin_smartclarity', $or: condicionSuscripcionAdmin({ empresaId: empresaObjId, centroId: centroObjId ?? undefined, proyectoId: proyectoObjId }) },
+        ];
         if (centroObjId) {
-          orConditions.push({ cliente_id: new Types.ObjectId(empresaId), centros_asignados: centroObjId });
+          orConditions.push({ cliente_id: empresaObjId, centros_asignados: centroObjId });
         } else {
-          orConditions.push({ cliente_id: new Types.ObjectId(empresaId), rol: 'usuario' });
+          orConditions.push({ cliente_id: empresaObjId, rol: 'usuario' });
         }
         usuariosEmpresa = await this.usuarioModel
           .find({ activo: true, $or: orConditions })

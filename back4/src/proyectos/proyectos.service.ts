@@ -4,7 +4,7 @@ import { Model, Types } from 'mongoose';
 import { ProyectoDocument } from './proyectos.schema';
 import { CreateProyectoDto, UpdateProyectoDto } from './proyectos.dto';
 import { DocumentosHelper, DocumentoInput, resolverSubidoPorNombre } from '../common/helpers/documentos.helper';
-import { notificarDocumentoSubido, resolverAdminsSuscritos } from '../common/helpers/notificar-documento.helper';
+import { notificarDocumentoSubido, resolverAdminsSuscritos, condicionSuscripcionAdmin } from '../common/helpers/notificar-documento.helper';
 import { hoyUtcChile } from '../common/helpers/fechas.helper';
 import { DocumentosVencidosService } from '../documentos-vencidos/documentos-vencidos.service';
 import { MailService } from '../mail/mail.service';
@@ -321,6 +321,7 @@ export class ProyectosService {
     void this.notificarVencimiento(
       empresaId,
       centroId,
+      proyectoId,
       doc.nombre_display as string,
       doc.categoria as string,
       { empresa: empresaNombreReal, centro: centrosNombresReal, proyecto: proyecto.nombre },
@@ -333,6 +334,7 @@ export class ProyectosService {
   private async notificarVencimiento(
     empresaIdStr: string,
     centroId: string,
+    proyectoIdStr: string,
     nombreDoc: string,
     categoria: string,
     jerarquia: ContextoJerarquico,
@@ -343,6 +345,7 @@ export class ProyectosService {
     try {
       const empresaId  = new Types.ObjectId(empresaIdStr);
       const centroObjId = new Types.ObjectId(centroId);
+      const proyectoObjId = new Types.ObjectId(proyectoIdStr);
 
       let usuariosDestino: { nombre: string; email: string }[] = [];
 
@@ -360,7 +363,7 @@ export class ProyectosService {
           .find({
             activo: true,
             $or: [
-              { rol: 'admin_smartclarity' },
+              { rol: 'admin_smartclarity', $or: condicionSuscripcionAdmin({ empresaId, centroId: centroObjId, proyectoId: proyectoObjId }) },
               { cliente_id: empresaId, centros_asignados: centroObjId },
             ],
           })
