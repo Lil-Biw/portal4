@@ -30,7 +30,7 @@ type FiltroTipo = DocTipo | 'todos';
 
 const collatorNombre = new Intl.Collator('es', { sensitivity: 'base', numeric: true });
 
-interface FilaDocTodos {
+export interface FilaDocTodos {
   tipo: DocTipo;
   empresaId: string;
   empresaNombre: string;
@@ -39,6 +39,31 @@ interface FilaDocTodos {
   proyectoId?: string;
   proyectoNombre?: string;
   doc: DocBusquedaItem;
+}
+
+export type OrdenTodos = 'alfabetico' | 'nivel_empresa' | 'nivel_centro' | 'nivel_proyecto';
+
+const RANGOS_POR_MODO: Record<Exclude<OrdenTodos, 'alfabetico'>, DocTipo[]> = {
+  nivel_empresa:  ['empresa', 'centro', 'proyecto'],
+  nivel_centro:   ['centro', 'proyecto', 'empresa'],
+  nivel_proyecto: ['proyecto', 'empresa', 'centro'],
+};
+
+export function ordenarFilasTodos(filas: FilaDocTodos[], modo: OrdenTodos): FilaDocTodos[] {
+  const resultado = [...filas];
+  if (modo === 'alfabetico') {
+    resultado.sort((a, b) => collatorNombre.compare(a.doc.nombre_display, b.doc.nombre_display));
+    return resultado;
+  }
+  const rango = RANGOS_POR_MODO[modo];
+  resultado.sort((a, b) =>
+    (rango.indexOf(a.tipo) - rango.indexOf(b.tipo)) ||
+    collatorNombre.compare(a.empresaNombre, b.empresaNombre) ||
+    collatorNombre.compare(a.centroNombre ?? '', b.centroNombre ?? '') ||
+    collatorNombre.compare(a.proyectoNombre ?? '', b.proyectoNombre ?? '') ||
+    collatorNombre.compare(a.doc.nombre_display, b.doc.nombre_display)
+  );
+  return resultado;
 }
 
 type UploadCtx =
