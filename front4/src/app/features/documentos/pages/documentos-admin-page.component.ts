@@ -113,6 +113,7 @@ export class DocumentosAdminPageComponent implements OnInit {
   set selectedProyectoId(v: string) { this._selectedProyectoId.set(v); }
 
   protected tabJerarquia    = signal<'todos' | 'empresa' | 'centro' | 'proyecto'>('todos');
+  protected ordenTodos      = signal<OrdenTodos>('alfabetico');
   protected tabAdminActiva  = signal<'documentacion' | 'solicitudes'>('documentacion');
   protected tabDocAdmin     = signal<'activos' | 'vencidos'>('activos');
 
@@ -434,8 +435,7 @@ export class DocumentosAdminPageComponent implements OnInit {
         }
       }
     }
-    filas.sort((a, b) => collatorNombre.compare(a.doc.nombre_display, b.doc.nombre_display));
-    return filas;
+    return ordenarFilasTodos(filas, this.ordenTodos());
   });
 
   formatFecha(fecha?: string): string {
