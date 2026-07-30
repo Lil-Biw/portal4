@@ -216,7 +216,7 @@ export class ResumenPageComponent implements OnInit {
   protected readonly centrosCount  = computed(() => this.centrosService.centros().length);
 
   protected readonly proyectosActivosCount = computed(() =>
-    this.proyectosService.proyectos().filter(p => p.estado === 'activo').length
+    this.proyectosService.proyectos().filter(p => p.estado === 'en_ejecucion').length
   );
 
   protected readonly proyectosEsteMes = computed(() => {

@@ -13,6 +13,10 @@ import { NotificacionOpcionesDto } from '../common/dto/notificacion-opciones.dto
 import { S3Service } from '../common/s3/s3.service';
 import { RecordatoriosService } from '../recordatorios/recordatorios.service';
 
+// Estados que ya no requieren vigilancia de vencimiento (el proyecto terminó su
+// ejecución) ni aparecen listados por defecto cuando se agrupa con 'eliminado'.
+const ESTADOS_TERMINALES = ['cierre_pendiente', 'finalizado_facturar', 'finalizado_facturado'];
+
 @Injectable()
 export class ProyectosService {
   private readonly docsHelper: DocumentosHelper;
@@ -100,7 +104,7 @@ export class ProyectosService {
   }
 
   async findAll(page = 1, limit = 20, estado?: string) {
-    const filter = estado ? { estado } : { estado: { $ne: 'cerrado' } };
+    const filter = estado ? { estado } : { estado: { $ne: 'eliminado' } };
     const [data, total] = await Promise.all([
       this.proyectoModel.find(filter).populate('tipo_proyecto_id').sort({ nombre: 1 }).skip((page - 1) * limit).limit(limit).lean(),
       this.proyectoModel.countDocuments(filter),
@@ -111,7 +115,7 @@ export class ProyectosService {
   async findAllByCliente(cliente_id: string, page = 1, limit = 100) {
     const filter = {
       cliente_id: new Types.ObjectId(cliente_id),
-      estado: { $ne: 'cerrado' },
+      estado: { $ne: 'eliminado' },
     };
     const [data, total] = await Promise.all([
       this.proyectoModel.find(filter).populate('tipo_proyecto_id').sort({ nombre: 1 }).skip((page - 1) * limit).limit(limit).lean(),
@@ -123,7 +127,7 @@ export class ProyectosService {
   async findAllByCentro(centro_costo_id: string, page = 1, limit = 20) {
     const filter = {
       centro_costo_ids: new Types.ObjectId(centro_costo_id),
-      estado: { $ne: 'cerrado' },
+      estado: { $ne: 'eliminado' },
     };
     const [data, total] = await Promise.all([
       this.proyectoModel.find(filter).populate('tipo_proyecto_id').sort({ nombre: 1 }).skip((page - 1) * limit).limit(limit).lean(),
@@ -179,7 +183,7 @@ export class ProyectosService {
     // Sin fecha_fin no hay contra qué calcular vencimiento: sincronizar() borraría
     // igual el registro, así que evitamos la llamada y devolvemos lo realmente
     // persistido ([]) en vez de ecoar los días pedidos en el DTO.
-    if (['cerrado', 'cancelado'].includes(proyecto.estado) || !proyecto.fecha_fin) {
+    if (ESTADOS_TERMINALES.includes(proyecto.estado) || proyecto.estado === 'eliminado' || !proyecto.fecha_fin) {
       await this.recordatoriosService.eliminar('proyecto', proyecto._id);
       return [];
     }
@@ -190,7 +194,7 @@ export class ProyectosService {
 
   async remove(id: string) {
     const proyecto = await this.proyectoModel
-      .findByIdAndUpdate(id, { estado: 'cerrado' }, { new: true })
+      .findByIdAndUpdate(id, { estado: 'eliminado' }, { new: true })
       .populate('cliente_id', 'razon_social')
       .populate('centro_costo_ids', 'nombre')
       .lean() as any;
@@ -199,7 +203,7 @@ export class ProyectosService {
     this.notificarCierreProyecto(proyecto).catch((err: unknown) =>
       this.logger.error('Error al notificar cierre de proyecto:', err),
     );
-    return { message: 'Proyecto cerrado', id };
+    return { message: 'Proyecto eliminado', id };
   }
 
   private async notificarCierreProyecto(proyecto: any): Promise<void> {
@@ -406,27 +410,29 @@ export class ProyectosService {
     let cerrados = 0;
     if (vencidos.length) {
       // El filtro de estado es defensivo: si el recordatorio quedó desincronizado
-      // (p. ej. el proyecto ya se cerró manualmente) no se vuelve a cerrar/notificar.
+      // (p. ej. el proyecto ya se movió a cierre manualmente) no se vuelve a mover/notificar.
       const aCerrar = await this.proyectoModel
-        .find({ _id: { $in: vencidos }, estado: { $nin: ['cerrado', 'cancelado'] } })
+        .find({ _id: { $in: vencidos }, estado: { $nin: [...ESTADOS_TERMINALES, 'eliminado'] } })
         .populate('cliente_id', 'razon_social')
         .populate('centro_costo_ids', 'nombre')
         .lean() as any[];
       for (const proyecto of aCerrar) {
-        await this.proyectoModel.findByIdAndUpdate(proyecto._id, { estado: 'cerrado' });
+        // El plazo venció: pasa a cierre pendiente (validación interna) en vez de
+        // saltar directo a facturado.
+        await this.proyectoModel.findByIdAndUpdate(proyecto._id, { estado: 'cierre_pendiente' });
         await this.notificarCierreProyecto(proyecto);
         cerrados++;
       }
-      // Los que estaban desincronizados (ya cerrados) tampoco necesitan seguir vigilados.
+      // Los que estaban desincronizados (ya en un estado terminal) tampoco necesitan seguir vigilados.
       await Promise.all(vencidos.map(id => this.recordatoriosService.eliminar('proyecto', id)));
     }
 
     let notificados = 0;
     if (porNotificar.length) {
       // Filtro de estado defensivo (igual que en "vencidos"): si el recordatorio
-      // quedó desincronizado con un proyecto ya cerrado/cancelado, no se notifica.
+      // quedó desincronizado con un proyecto ya en un estado terminal, no se notifica.
       const proyectos = await this.proyectoModel
-        .find({ _id: { $in: porNotificar.map(p => p.entidadId) }, estado: { $nin: ['cerrado', 'cancelado'] } })
+        .find({ _id: { $in: porNotificar.map(p => p.entidadId) }, estado: { $nin: [...ESTADOS_TERMINALES, 'eliminado'] } })
         .populate('cliente_id', 'razon_social')
         .populate('centro_costo_ids', 'nombre')
         .lean() as any[];

@@ -32,6 +32,20 @@ export const routes: Routes = [
         (m) => m.CambiarPasswordPageComponent,
       ),
   },
+  {
+    path: 'olvide-password',
+    loadComponent: () =>
+      import('./features/auth/pages/olvide-password-page.component').then(
+        (m) => m.OlvidePasswordPageComponent,
+      ),
+  },
+  {
+    path: 'restablecer-password',
+    loadComponent: () =>
+      import('./features/auth/pages/restablecer-password-page.component').then(
+        (m) => m.RestablecerPasswordPageComponent,
+      ),
+  },
 
   {
     path: '',

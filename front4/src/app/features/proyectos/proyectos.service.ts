@@ -26,8 +26,8 @@ export class ProyectosService {
   }
 
   // Admin: carga todos los proyectos (endpoint plano admin).
-  // Sin `estado`, el backend excluye los cerrados por defecto; pasar un
-  // estado explícito (ej. 'cerrado') para verlos.
+  // Sin `estado`, el backend excluye los eliminados por defecto; pasar un
+  // estado explícito para filtrar por uno de los 7 estados del flujo.
   cargar(estado?: string): void {
     this.loading.set(true);
     const url = estado ? this.api.url(`/proyectos?estado=${estado}`) : this.api.url('/proyectos');

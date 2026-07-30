@@ -220,13 +220,13 @@ export class ProyectosPageComponent implements OnInit {
   set selectedEstado(v: string)    { this._selectedEstado.set(v); }
 
   protected readonly estadosFiltro: { value: string; label: string }[] = [
-    { value: 'borrador',      label: 'Borrador'      },
-    { value: 'planificacion', label: 'Planificación' },
-    { value: 'activo',        label: 'Activo'        },
-    { value: 'en_pausa',      label: 'En pausa'      },
-    { value: 'en_revision',   label: 'En revisión'   },
-    { value: 'cerrado',       label: 'Cerrado'       },
-    { value: 'cancelado',     label: 'Cancelado'     },
+    { value: 'estancado',            label: 'Estancado'            },
+    { value: 'nuevo_sin_oc',         label: 'Nuevos por Programar / Sin OC'         },
+    { value: 'nuevo_con_oc',         label: 'Nuevos por Programar / Con OC'         },
+    { value: 'en_ejecucion',         label: 'En ejecución'                         },
+    { value: 'cierre_pendiente',     label: 'Cierre pendiente / Validación Interna' },
+    { value: 'finalizado_facturar',  label: 'Finalizado / Listo para facturar'      },
+    { value: 'finalizado_facturado', label: 'Finalizado y facturado' },
   ];
 
   protected filtroContexto  = signal('');
@@ -302,7 +302,7 @@ export class ProyectosPageComponent implements OnInit {
     this._selectedCentroId.set('');
   }
 
-  // El backend excluye 'cerrado' del listado por defecto; hay que
+  // El backend excluye los proyectos eliminados del listado por defecto; hay que
   // volver a pedir cuando el filtro pide explícitamente un estado (o lo limpia).
   protected onEstadoContextoChange(): void {
     this.service.cargar(this._selectedEstado());

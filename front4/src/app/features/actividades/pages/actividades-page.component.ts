@@ -105,6 +105,8 @@ export class ActividadesPageComponent implements OnInit {
   // Recordatorios: días de antelación a la fecha en que se avisa a los admins
   // suscritos; se persisten en la actividad (por defecto todos marcados al crear)
   protected readonly opcionesDiasRecordatorio = [
+    { valor: 365, label: '1 año antes' },
+    { valor: 180, label: '6 meses antes' },
     { valor: 30, label: '30 días antes' },
     { valor: 15, label: '15 días antes' },
     { valor: 7,  label: '7 días antes' },
@@ -112,7 +114,7 @@ export class ActividadesPageComponent implements OnInit {
     { valor: 1,  label: '1 día antes' },
     { valor: 0,  label: 'El día de la actividad' },
   ];
-  protected diasRecordatorio = signal<number[]>([30, 15, 7, 3, 1, 0]);
+  protected diasRecordatorio = signal<number[]>([365, 180, 30, 15, 7, 3, 1, 0]);
 
   toggleDiaRecordatorio(valor: number): void {
     this.diasRecordatorio.update(dias =>
@@ -575,7 +577,7 @@ export class ActividadesPageComponent implements OnInit {
     this.notifUsuariosIds.set(this.usuariosParaCentro().map(u => u._id));
     this.notifAdminsIds.set(this.adminsParaEmpresa().map(u => u._id));
     this.notifSuperAdmins.set(false);
-    this.diasRecordatorio.set([30, 15, 7, 3, 1, 0]);
+    this.diasRecordatorio.set([365, 180, 30, 15, 7, 3, 1, 0]);
   }
 
   private validarPaso1(): boolean {

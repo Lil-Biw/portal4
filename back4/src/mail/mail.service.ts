@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import * as nodemailer from 'nodemailer';
 import type Mail from 'nodemailer/lib/mailer';
 import { nuevoUsuarioHtml } from './templates/nuevo-usuario.template';
+import { recuperarPasswordHtml } from './templates/recuperar-password.template';
 import { nuevaActividadHtml } from './templates/nueva-actividad.template';
 import { nuevaSolicitudHtml } from './templates/nueva-solicitud.template';
 import { solicitudRechazadaHtml } from './templates/solicitud-rechazada.template';
@@ -213,6 +214,26 @@ export class MailService {
     } catch (err: unknown) {
       const mensaje = err instanceof Error ? err.message : String(err);
       this.logger.error(`Error al enviar correo a ${params.email}: ${mensaje}`);
+    }
+  }
+
+  async notificarRecuperarPassword(params: {
+    nombre: string;
+    email: string;
+    resetUrl: string;
+  }): Promise<void> {
+    try {
+      await this.transporter.sendMail({
+        from: this.from,
+        to: params.email,
+        subject: 'Recupera tu contraseña — Portal SmartClarity',
+        html: recuperarPasswordHtml(params),
+        attachments: [LOGO_ATTACHMENT],
+      });
+      this.logger.log(`Correo de recuperación de contraseña enviado a ${params.email}`);
+    } catch (err: unknown) {
+      const mensaje = err instanceof Error ? err.message : String(err);
+      this.logger.error(`Error al enviar correo de recuperación a ${params.email}: ${mensaje}`);
     }
   }
 

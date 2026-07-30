@@ -1,11 +1,21 @@
 export type EstadoProyecto =
-  | 'borrador'
-  | 'planificacion'
-  | 'activo'
-  | 'en_pausa'
-  | 'en_revision'
-  | 'cerrado'
-  | 'cancelado';
+  | 'estancado'
+  | 'nuevo_sin_oc'
+  | 'nuevo_con_oc'
+  | 'en_ejecucion'
+  | 'cierre_pendiente'
+  | 'finalizado_facturar'
+  | 'finalizado_facturado';
+
+export const ESTADO_PROYECTO_LABEL: Record<EstadoProyecto, string> = {
+  estancado:            'Estancado',
+  nuevo_sin_oc:         'Nuevos por Programar / Sin OC',
+  nuevo_con_oc:         'Nuevos por Programar / Con OC',
+  en_ejecucion:         'En ejecución',
+  cierre_pendiente:     'Cierre pendiente / Validación Interna',
+  finalizado_facturar:  'Finalizado / Listo para facturar',
+  finalizado_facturado: 'Finalizado y facturado',
+};
 
 export interface Proyecto {
   _id: string;
@@ -19,7 +29,7 @@ export interface Proyecto {
   fecha_inicio?: string;
   fecha_fin?: string;
   // Días de antelación a fecha_fin en que se avisa a los admins suscritos
-  // (subconjunto de [30, 15, 7, 3, 1, 0]; 0 = el día de término)
+  // (subconjunto de [365, 180, 30, 15, 7, 3, 1, 0]; 0 = el día de término)
   dias_recordatorio?: number[];
   creado_por?: string;
   creado_en?: string;

@@ -58,7 +58,7 @@
                   <div style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;margin-bottom:.15rem">
                     <h3 style="margin:0;font-size:1rem;font-weight:700;color:#1f2937;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ p.nombre }}</h3>
                     <span style="font-size:.7rem;font-weight:700;padding:.18rem .5rem;border-radius:999px;white-space:nowrap;flex-shrink:0"
-                          [style]="estadoBadgeStyle(p.estado)">{{ p.estado }}</span>
+                          [style]="estadoBadgeStyle(p.estado)">{{ estadoLabel(p.estado) }}</span>
                   </div>
                   <p style="margin:0;font-size:.78rem;color:#6b7280">Cód. {{ p.codigo }}</p>
                   @if (p.descripcion) {

@@ -14,15 +14,15 @@ export class CreateProyectoDto {
   @IsString() @MinLength(2) codigo: string;
   @IsString() @MinLength(3) nombre: string;
   @IsString() @IsOptional() descripcion?: string;
-  @IsEnum(['borrador', 'planificacion', 'activo', 'en_pausa', 'en_revision', 'cerrado', 'cancelado'])
+  @IsEnum(['estancado', 'nuevo_sin_oc', 'nuevo_con_oc', 'en_ejecucion', 'cierre_pendiente', 'finalizado_facturar', 'finalizado_facturado'])
   @IsOptional()
-  estado?: 'borrador' | 'planificacion' | 'activo' | 'en_pausa' | 'en_revision' | 'cerrado' | 'cancelado';
+  estado?: 'estancado' | 'nuevo_sin_oc' | 'nuevo_con_oc' | 'en_ejecucion' | 'cierre_pendiente' | 'finalizado_facturar' | 'finalizado_facturado';
   @IsDateString() @IsOptional() fecha_inicio?: string;
   // string | null: null permite borrar explícitamente una fecha_fin ya guardada
   // (el front la manda así al vaciar el campo; a diferencia de un PATCH parcial,
   // este DTO siempre representa el estado completo del formulario).
   @IsDateString() @IsOptional() fecha_fin?: string | null;
-  @IsArray() @IsIn([30, 15, 7, 3, 1, 0], { each: true }) @IsOptional() dias_recordatorio?: number[];
+  @IsArray() @IsIn([365, 180, 30, 15, 7, 3, 1, 0], { each: true }) @IsOptional() dias_recordatorio?: number[];
 }
 
 export class UpdateProyectoDto extends PartialType(CreateProyectoDto) {}

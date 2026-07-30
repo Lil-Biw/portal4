@@ -14,8 +14,14 @@ export class Proyecto {
   @Prop({ required: true, trim: true }) nombre: string;
   @Prop({ trim: true }) descripcion?: string;
   @Prop({
-    enum: ['borrador', 'planificacion', 'activo', 'en_pausa', 'en_revision', 'cerrado', 'cancelado'],
-    default: 'borrador',
+    enum: [
+      'estancado', 'nuevo_sin_oc', 'nuevo_con_oc', 'en_ejecucion',
+      'cierre_pendiente', 'finalizado_facturar', 'finalizado_facturado',
+      // 'eliminado': sentinel interno para soft-delete (ver ProyectosService.remove),
+      // no se expone en los DTOs ni en los filtros de la UI.
+      'eliminado',
+    ],
+    default: 'nuevo_sin_oc',
   }) estado: string;
   @Prop() fecha_inicio?: Date;
   @Prop() fecha_fin?: Date;

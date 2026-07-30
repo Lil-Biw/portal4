@@ -6,13 +6,13 @@ import { asId } from '../../../../shared/utils';
 import { ProyectoIconoComponent } from '../proyecto-icono/proyecto-icono.component';
 
 const ESTADO_CHIP: Record<string, { label: string; color: string; bg: string }> = {
-  borrador:      { label: 'Borrador',      color: '#6b7280', bg: 'rgba(107,114,128,.12)' },
-  planificacion: { label: 'Planificación', color: '#64748b', bg: 'rgba(100,116,139,.12)' },
-  activo:        { label: 'Activo',        color: '#16a34a', bg: 'rgba(22,163,74,.12)'   },
-  en_pausa:      { label: 'En pausa',      color: '#d97706', bg: 'rgba(217,119,6,.12)'   },
-  en_revision:   { label: 'En revisión',   color: '#7c3aed', bg: 'rgba(124,58,237,.12)'  },
-  cerrado:       { label: 'Cerrado',       color: '#9ca3af', bg: 'rgba(156,163,175,.12)' },
-  cancelado:     { label: 'Cancelado',     color: '#dc2626', bg: 'rgba(220,38,38,.12)'   },
+  estancado:            { label: 'Estancado',              color: '#dc2626', bg: 'rgba(220,38,38,.12)'  },
+  nuevo_sin_oc:          { label: 'Nuevos por Programar / Sin OC',         color: '#6b7280', bg: 'rgba(107,114,128,.12)' },
+  nuevo_con_oc:          { label: 'Nuevos por Programar / Con OC',         color: '#64748b', bg: 'rgba(100,116,139,.12)' },
+  en_ejecucion:          { label: 'En ejecución',                         color: '#16a34a', bg: 'rgba(22,163,74,.12)'  },
+  cierre_pendiente:      { label: 'Cierre pendiente / Validación Interna', color: '#7c3aed', bg: 'rgba(124,58,237,.12)' },
+  finalizado_facturar:   { label: 'Finalizado / Listo para facturar',      color: '#d97706', bg: 'rgba(217,119,6,.12)'  },
+  finalizado_facturado:  { label: 'Finalizado y facturado', color: '#0d9488', bg: 'rgba(13,148,136,.12)' },
 };
 
 const MESES = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
@@ -183,7 +183,7 @@ export class ProyectosListComponent {
     return this.tipos.find(t => t._id === p.tipo_proyecto_id) ?? null;
   }
 
-  estadoChip(estado: string) { return ESTADO_CHIP[estado] ?? ESTADO_CHIP['borrador']; }
+  estadoChip(estado: string) { return ESTADO_CHIP[estado] ?? ESTADO_CHIP['nuevo_sin_oc']; }
 
   formatFecha(iso?: string): string {
     if (!iso) return '';

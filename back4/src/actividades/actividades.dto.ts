@@ -13,7 +13,7 @@ export class CreateActividadDto {
   @IsDateString() @IsOptional() fecha_termino?: string | null;
   @IsOptional() @Matches(/^([01]\d|2[0-3]):[0-5]\d$/) hora?: string;
   @IsOptional() @Matches(/^([01]\d|2[0-3]):[0-5]\d$/) hora_termino?: string;
-  @IsArray() @IsIn([30, 15, 7, 3, 1, 0], { each: true }) @IsOptional() dias_recordatorio?: number[];
+  @IsArray() @IsIn([365, 180, 30, 15, 7, 3, 1, 0], { each: true }) @IsOptional() dias_recordatorio?: number[];
   // Nombres de los documentos que el front subirá inmediatamente después de crear
   // la actividad; solo se usan en el correo de notificación, no se persisten.
   @IsArray() @IsString({ each: true }) @IsOptional() documentos_nombres?: string[];

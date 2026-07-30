@@ -6,7 +6,7 @@ import { SolicitudesService } from '../../solicitudes/solicitudes.service';
 import { DocumentosService } from '../../documentos/documentos.service';
 import { ConsumidorContextService } from '../../../profile/consumidor-context.service';
 import { DonutArcComponent } from '../../../shared/components/donut-arc/donut-arc.component';
-import { Proyecto } from '../../../shared/models/proyecto.model';
+import { Proyecto, EstadoProyecto, ESTADO_PROYECTO_LABEL } from '../../../shared/models/proyecto.model';
 import { asId, calcularScoreDocumental } from '../../../shared/utils';
 
 @Component({
@@ -73,18 +73,22 @@ export class MisProyectosPageComponent {
   });
 
   private static readonly ESTADO_BADGE_STYLE: Record<string, string> = {
-    borrador:      'background:rgba(107,114,128,.12);color:#6b7280',
-    planificacion: 'background:rgba(100,116,139,.12);color:#64748b',
-    activo:        'background:rgba(22,163,74,.12);color:#16a34a',
-    en_pausa:      'background:rgba(217,119,6,.12);color:#d97706',
-    en_revision:   'background:rgba(124,58,237,.12);color:#7c3aed',
-    cerrado:       'background:rgba(156,163,175,.12);color:#9ca3af',
-    cancelado:     'background:rgba(220,38,38,.12);color:#dc2626',
+    estancado:            'background:rgba(220,38,38,.12);color:#dc2626',
+    nuevo_sin_oc:         'background:rgba(107,114,128,.12);color:#6b7280',
+    nuevo_con_oc:         'background:rgba(100,116,139,.12);color:#64748b',
+    en_ejecucion:         'background:rgba(22,163,74,.12);color:#16a34a',
+    cierre_pendiente:     'background:rgba(124,58,237,.12);color:#7c3aed',
+    finalizado_facturar:  'background:rgba(217,119,6,.12);color:#d97706',
+    finalizado_facturado: 'background:rgba(13,148,136,.12);color:#0d9488',
   };
 
   protected estadoBadgeStyle(estado: string): string {
     return MisProyectosPageComponent.ESTADO_BADGE_STYLE[estado]
       ?? 'background:rgba(34,33,33,.07);color:#6b7280';
+  }
+
+  protected estadoLabel(estado: string): string {
+    return ESTADO_PROYECTO_LABEL[estado as EstadoProyecto] ?? estado;
   }
 
   toggleBuscar(): void {

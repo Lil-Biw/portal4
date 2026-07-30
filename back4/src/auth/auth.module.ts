@@ -7,6 +7,7 @@ import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { JwtStrategy } from './jwt.strategy';
 import { UsuarioSchema } from '../usuarios/usuarios.schema';
+import { MailModule } from '../mail/mail.module';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { UsuarioSchema } from '../usuarios/usuarios.schema';
       }),
     }),
     MongooseModule.forFeature([{ name: 'Usuario', schema: UsuarioSchema }]),
+    MailModule,
   ],
   controllers: [AuthController],
   providers: [AuthService, JwtStrategy],

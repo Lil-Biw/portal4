@@ -11,7 +11,7 @@ export type RecordatorioDocument = Recordatorio & Document;
 export class Recordatorio {
   @Prop({ required: true, enum: ['proyecto', 'actividad'] }) tipo: 'proyecto' | 'actividad';
   @Prop({ type: Types.ObjectId, required: true }) entidad_id: Types.ObjectId;
-  // Subconjunto de [30, 15, 7, 3, 1, 0] (0 = el día de término/actividad).
+  // Subconjunto de [365, 180, 30, 15, 7, 3, 1, 0] (0 = el día de término/actividad).
   @Prop({ type: [Number], default: [] }) dias: number[];
   @Prop({ required: true }) fecha_fin: Date;
   // Último umbral de "dias" ya notificado (idempotencia del cron).

@@ -159,6 +159,8 @@ export class ProyectoFormComponent implements OnChanges {
   form: CreateProyectoDto = this.empty();
 
   readonly opcionesDiasRecordatorio = [
+    { valor: 365, label: '1 año antes' },
+    { valor: 180, label: '6 meses antes' },
     { valor: 30, label: '30 días antes' },
     { valor: 15, label: '15 días antes' },
     { valor: 7,  label: '7 días antes' },
@@ -178,13 +180,13 @@ export class ProyectoFormComponent implements OnChanges {
   }
 
   readonly estados: { value: EstadoProyecto; label: string }[] = [
-    { value: 'borrador',      label: 'Borrador'      },
-    { value: 'planificacion', label: 'Planificación' },
-    { value: 'activo',        label: 'Activo'        },
-    { value: 'en_pausa',      label: 'En pausa'      },
-    { value: 'en_revision',   label: 'En revisión'   },
-    { value: 'cerrado',       label: 'Cerrado'       },
-    { value: 'cancelado',     label: 'Cancelado'     },
+    { value: 'estancado',            label: 'Estancado'              },
+    { value: 'nuevo_sin_oc',         label: 'Nuevos por Programar / Sin OC'         },
+    { value: 'nuevo_con_oc',         label: 'Nuevos por Programar / Con OC'         },
+    { value: 'en_ejecucion',         label: 'En ejecución'                         },
+    { value: 'cierre_pendiente',     label: 'Cierre pendiente / Validación Interna' },
+    { value: 'finalizado_facturar',  label: 'Finalizado / Listo para facturar'      },
+    { value: 'finalizado_facturado', label: 'Finalizado y facturado' },
   ];
 
   tipoQuery        = signal('');
@@ -272,6 +274,6 @@ export class ProyectoFormComponent implements OnChanges {
 
   private empty(): CreateProyectoDto {
     // Recordatorios: por defecto todas las antelaciones marcadas al crear
-    return { cliente_id: '', centro_costo_ids: [], tipo_proyecto_id: '', codigo: '', nombre: '', descripcion: '', estado: 'borrador', fecha_inicio: '', fecha_fin: '', dias_recordatorio: [30, 15, 7, 3, 1, 0] };
+    return { cliente_id: '', centro_costo_ids: [], tipo_proyecto_id: '', codigo: '', nombre: '', descripcion: '', estado: 'nuevo_sin_oc', fecha_inicio: '', fecha_fin: '', dias_recordatorio: [365, 180, 30, 15, 7, 3, 1, 0] };
   }
 }
