@@ -185,24 +185,33 @@ siendo opcional en `UpdateTipoActividadDto`).
 ## Frontend — dónde se muestra el ícono (calendario y detalle)
 
 Aplica a `actividades-page.component.html` (admin) y
-`mis-actividades-page.component.html` (consumidor):
+`mis-actividades-page.component.html` (consumidor). Restricción física
+descubierta al revisar el CSS: los chips de vista Mes (`.cal-event-chip`),
+los chips "todo el día" de Semana y los bloques de horario de Semana/Día
+(`.cal-time-block`) son etiquetas de una sola línea de ~20px de alto con
+texto de `.67rem` — el mismo problema de espacio que ya tienen las barras
+multi-día. Insertar el componente de ícono ahí (que dibuja una caja con fondo
+de `size + 20`px) rompería el layout. Por eso el ícono solo se agrega donde
+ya hay espacio real:
 
-- **Chips de vista Mes/Semana**: se antepone
-  `<app-actividad-icono [icono]="tipo?.icono" [color]="colorDeActividad(a)" [size]="12">`
-  junto al nombre de la actividad dentro del chip (hoy solo tienen
-  `[style.background]`, que se mantiene igual — el ícono se agrega, no
-  reemplaza el color de fondo).
-- **Panel de detalle vista Día**: admin ya renderiza el ícono aquí (solo le
-  falta pasar `[icono]`); consumidor hoy tiene un punto de color plano
-  (`cal-day-item-dot` / clase equivalente) que se reemplaza por
-  `<app-actividad-icono [icono]="..." [color]="..." [size]="18">`.
-- **Modal resumen/detalle** (clic en evento en vista Mes/Semana): el punto de
-  color (`actividad-detalle-dot`) se reemplaza por el mismo componente de
-  ícono, en admin y consumidor.
+- **Vista Día → lista "Todo el día"** (`.cal-day-item`): admin ya renderiza
+  `<app-actividad-icono [color]="...">` aquí — solo le falta pasar
+  `[icono]="tipoDeActividad(a)?.icono"`. Consumidor no tiene ícono aquí hoy
+  (usa un `.cal-day-item-dot` de color plano o equivalente) — se agrega el
+  mismo componente.
+- **Panel de detalle vista Día** (el header con el punto `cal-day-detail-dot`
+  junto al nombre de la actividad seleccionada): el punto de color se
+  reemplaza por `<app-actividad-icono [icono]="..." [color]="..." [size]="18">`,
+  en admin y consumidor.
+- **Modal resumen/detalle** (clic en un evento en vista Mes/Semana, header con
+  `actividad-detalle-dot`): mismo reemplazo, en admin y consumidor.
 
-**Fuera de esto**: las **barras multi-día** (franjas de pocos píxeles de alto
-para actividades que abarcan varios días) se mantienen solo con color, sin
-ícono — no hay espacio legible para un SVG en una barra tan delgada.
+**Fuera de esto — se quedan solo con color, sin ícono** (decisión explícita
+por espacio, igual que las barras multi-día):
+- Chips de vista Mes (`.cal-event-chip`).
+- Chips "todo el día" de vista Semana (misma clase `.cal-event-chip`).
+- Bloques de horario de vista Semana y Día (`.cal-time-block`).
+- Barras multi-día (`.cal-week-bar`), como ya se había decidido.
 
 ## Casos borde
 
@@ -241,4 +250,6 @@ para actividades que abarcan varios días) se mantienen solo con color, sin
   se tocan en esta spec.
 - Subida de íconos custom (SVG/imagen propia) — se eligió catálogo predefinido.
 - Backfill de `icono` para tipos de actividad ya existentes.
-- Ícono en las barras multi-día del calendario (solo color, por espacio).
+- Ícono en las barras multi-día, chips de vista Mes, chips "todo el día" de
+  Semana, y bloques de horario de Semana/Día — todos se quedan solo con
+  color, por espacio (ver "Frontend — dónde se muestra el ícono").
