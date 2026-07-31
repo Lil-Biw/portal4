@@ -218,7 +218,7 @@
                     style="padding:.4rem .5rem;border-bottom:none;border-radius:6px"
                     [class.selected]="actividadSeleccionadaDia()?._id === a._id"
                     (click)="seleccionarActividadDia(a)">
-                    <app-actividad-icono [color]="colorDeActividad(a)" [size]="18"></app-actividad-icono>
+                    <app-actividad-icono [icono]="tipoDeActividad(a)?.icono" [color]="colorDeActividad(a)" [size]="18"></app-actividad-icono>
                     <span class="cal-day-item-nombre">{{ a.nombre }}</span>
                   </div>
                 }
@@ -269,7 +269,7 @@
           @if (det) {
             <div class="cal-day-detail-content">
               <div class="cal-day-detail-header">
-                <span class="cal-day-detail-dot" [style.background]="det.tipo?.color ?? '#9ca3af'"></span>
+                <app-actividad-icono [icono]="det.tipo?.icono" [color]="det.tipo?.color ?? '#9ca3af'" [size]="18"></app-actividad-icono>
                 <h3 class="cal-day-detail-nombre">{{ det.a.nombre }}</h3>
               </div>
               <div class="cal-day-detail-fields">
@@ -439,7 +439,7 @@
         <!-- Cabecera -->
         <div class="actividad-detalle-header">
           <div class="actividad-detalle-header-info">
-            <span class="actividad-detalle-dot" [style.background]="det.tipo?.color ?? '#9ca3af'"></span>
+            <app-actividad-icono [icono]="det.tipo?.icono" [color]="det.tipo?.color ?? '#9ca3af'" [size]="16"></app-actividad-icono>
             <div>
               <h3 class="actividad-detalle-nombre">{{ det.a.nombre }}</h3>
               <p class="actividad-detalle-centro">{{ det.centro?.nombre ?? '' }}</p>
