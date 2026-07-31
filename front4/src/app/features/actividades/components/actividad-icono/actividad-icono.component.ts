@@ -1,5 +1,5 @@
 import { Component, Input } from '@angular/core';
-import { clavePorColorActividad } from '../../actividades-icons';
+import { resolverIconoActividad } from '../../actividades-icons';
 
 @Component({
   selector: 'app-actividad-icono',
@@ -39,6 +39,44 @@ import { clavePorColorActividad } from '../../actividades-icons';
             <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
             <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
           }
+          @case ('documento') {
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+            <line x1="16" y1="13" x2="8" y2="13"/>
+            <line x1="16" y1="17" x2="8" y2="17"/>
+            <polyline points="10 9 9 9 8 9"/>
+          }
+          @case ('herramienta') {
+            <line x1="6" y1="18" x2="14" y2="10"/>
+            <rect x="14" y="4" width="6" height="6" rx="1" transform="rotate(45 17 7)"/>
+          }
+          @case ('camion') {
+            <path d="M10 17h4V5H2v12h3"/>
+            <path d="M20 17h2v-3.34a4 4 0 0 0-1.17-2.83L19 9h-5v8h1"/>
+            <circle cx="7.5" cy="17.5" r="2.5"/>
+            <circle cx="17.5" cy="17.5" r="2.5"/>
+          }
+          @case ('electricidad') {
+            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+          }
+          @case ('extintor') {
+            <rect x="8" y="9" width="8" height="12" rx="2"/>
+            <line x1="12" y1="9" x2="12" y2="4"/>
+            <path d="M9 4h6"/>
+            <line x1="12" y1="4" x2="12" y2="2"/>
+            <line x1="16" y1="12" x2="19" y2="12"/>
+          }
+          @case ('casco') {
+            <path d="M4 18v-2a8 8 0 0 1 16 0v2"/>
+            <rect x="2" y="18" width="20" height="3" rx="1.5"/>
+            <line x1="12" y1="8" x2="12" y2="4"/>
+          }
+          @case ('limpieza') {
+            <line x1="18" y1="4" x2="10" y2="12"/>
+            <path d="M9 13l-5 7 3 2 5-7"/>
+            <line x1="9" y1="13" x2="12" y2="16"/>
+            <line x1="7" y1="17" x2="10" y2="20"/>
+          }
           @default {
             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
             <polyline points="14 2 14 8 20 8"/>
@@ -62,9 +100,10 @@ import { clavePorColorActividad } from '../../actividades-icons';
 })
 export class ActividadIconoComponent {
   @Input() color = '#4E9AC7';
+  @Input() icono?: string;
   @Input() size  = 20;
 
   protected get clave(): string {
-    return clavePorColorActividad(this.color);
+    return resolverIconoActividad(this.icono, this.color);
   }
 }

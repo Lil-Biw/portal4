@@ -19,3 +19,16 @@ export function clavePorColorActividad(color: string): string {
   );
   return match?.icono ?? 'calendario';
 }
+
+export const ICONOS_ACTIVIDAD = [
+  'calendario', 'check', 'llave', 'alerta', 'reunion', 'documento',
+  'herramienta', 'camion', 'electricidad', 'extintor', 'casco', 'limpieza',
+] as const;
+export type IconoActividad = typeof ICONOS_ACTIVIDAD[number];
+
+export function resolverIconoActividad(icono?: string, color?: string): IconoActividad {
+  if (icono && (ICONOS_ACTIVIDAD as readonly string[]).includes(icono)) {
+    return icono as IconoActividad;
+  }
+  return clavePorColorActividad(color ?? '') as IconoActividad;
+}
