@@ -1104,19 +1104,32 @@
             placeholder="Descripción (opcional)"
             [ngModel]="tipoForm().descripcion"
             (ngModelChange)="patchTipoForm('descripcion', $event)" />
-          <p style="font-size:.78rem;color:#6b7280;margin:0 0 .4rem">Selecciona un ícono</p>
+          <p style="font-size:.78rem;color:#6b7280;margin:0 0 .4rem">Ícono</p>
           <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:.75rem">
-            @for (c of coloresActividad; track c.valor) {
+            @for (clave of iconosActividad; track clave) {
               <button type="button"
-                [title]="c.label"
-                (click)="patchTipoForm('color', c.valor)"
-                [style.box-shadow]="tipoForm().color === c.valor ? '0 0 0 3px ' + c.valor : 'none'"
-                [style.transform]="tipoForm().color === c.valor ? 'scale(1.12)' : 'scale(1)'"
+                [title]="clave"
+                (click)="patchTipoForm('icono', clave)"
+                [style.box-shadow]="tipoForm().icono === clave ? '0 0 0 3px ' + tipoForm().color : 'none'"
+                [style.transform]="tipoForm().icono === clave ? 'scale(1.12)' : 'scale(1)'"
                 style="padding:0;border:none;background:none;cursor:pointer;
                        border-radius:12px;transition:transform .12s,box-shadow .12s;">
-                <app-actividad-icono [color]="c.valor" [size]="22"></app-actividad-icono>
+                <app-actividad-icono [icono]="clave" [color]="tipoForm().color" [size]="22"></app-actividad-icono>
               </button>
             }
+          </div>
+          <p style="font-size:.78rem;color:#6b7280;margin:0 0 .4rem">Color</p>
+          <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.75rem">
+            <input type="color"
+              [ngModel]="tipoForm().color"
+              (ngModelChange)="patchTipoForm('color', $event)"
+              style="width:36px;height:36px;padding:0;border:1px solid #e5e7eb;border-radius:8px;cursor:pointer" />
+            <input type="text"
+              class="tipo-input"
+              style="margin-bottom:0;max-width:110px"
+              [ngModel]="tipoForm().color"
+              (ngModelChange)="patchTipoForm('color', $event)"
+              placeholder="#4E9AC7" />
           </div>
           <div style="display:flex;gap:.5rem;margin-top:.25rem">
             <button class="btn-primary btn-sm" (click)="guardarTipo()"
@@ -1138,7 +1151,7 @@
             <div class="tipos-list">
               @for (t of tiposService.tipos(); track t._id) {
                 <div class="tipo-item">
-                  <app-actividad-icono [color]="t.color" [size]="16"></app-actividad-icono>
+                  <app-actividad-icono [icono]="t.icono" [color]="t.color" [size]="16"></app-actividad-icono>
                   <div class="tipo-texto">
                     <span class="tipo-nombre">{{ t.nombre }}</span>
                     @if (t.descripcion) {

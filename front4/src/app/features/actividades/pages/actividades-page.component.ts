@@ -16,7 +16,7 @@ import { Activo, TipoActivo } from '../../../shared/models/activo.model';
 import { asId, toDateKey, usuarioEstaSuscrito, actividadEnDia, posicionActividadEnDia, ordenarMultiDiaPrimero, barrasMultiDiaPorSemana, BarraMultiDia, layoutPorHora, BloqueHorario, rangoHora as formatRangoHora } from '../../../shared/utils';
 import { Usuario } from '../../../shared/models/usuario.model';
 import { createCalendarState, CalendarView, CALENDAR_DAYS, CALENDAR_MONTHS, DayCell } from '../../../shared/calendar-state';
-import { COLORES_ACTIVIDAD, ColorActividad } from '../actividades-icons';
+import { ICONOS_ACTIVIDAD } from '../actividades-icons';
 
 interface ActividadForm {
   nombre: string;
@@ -34,6 +34,7 @@ interface ActividadForm {
 interface TipoForm {
   nombre: string;
   color: string;
+  icono: string;
   descripcion: string;
 }
 
@@ -41,7 +42,7 @@ function emptyForm(fecha = ''): ActividadForm {
   return { nombre: '', descripcion: '', tipo_id: '', empresa_id: '', centro_costo_id: '', activo_ids: [], fecha, fecha_termino: '', hora: '', hora_termino: '' };
 }
 function emptyTipoForm(): TipoForm {
-  return { nombre: '', color: '#4E9AC7', descripcion: '' };
+  return { nombre: '', color: '#4E9AC7', icono: 'calendario', descripcion: '' };
 }
 
 @Component({
@@ -60,7 +61,7 @@ export class ActividadesPageComponent implements OnInit {
   protected readonly usuariosService  = inject(UsuariosService);
   private readonly authService        = inject(AuthService);
 
-  protected readonly coloresActividad: ColorActividad[] = COLORES_ACTIVIDAD;
+  protected readonly iconosActividad = ICONOS_ACTIVIDAD;
 
   protected puedeGestionarTipos = computed(() =>
     this.authService.usuarioActual()?.rol === 'super_admin'
@@ -780,7 +781,7 @@ export class ActividadesPageComponent implements OnInit {
 
   abrirEditarTipo(t: TipoActividad): void {
     this.editingTipoId.set(t._id);
-    this.tipoForm.set({ nombre: t.nombre, color: t.color, descripcion: t.descripcion ?? '' });
+    this.tipoForm.set({ nombre: t.nombre, color: t.color, icono: t.icono ?? '', descripcion: t.descripcion ?? '' });
     this.showTipoForm.set(true);
     this.tiposService.clearStatus();
   }
@@ -797,7 +798,7 @@ export class ActividadesPageComponent implements OnInit {
   guardarTipo(): void {
     const f = this.tipoForm();
     if (!f.nombre.trim()) return;
-    const dto = { nombre: f.nombre.trim(), color: f.color, descripcion: f.descripcion.trim() || undefined };
+    const dto = { nombre: f.nombre.trim(), color: f.color, icono: f.icono || undefined, descripcion: f.descripcion.trim() || undefined };
     const id = this.editingTipoId();
     if (id) this.tiposService.actualizar(id, dto);
     else     this.tiposService.crear(dto);

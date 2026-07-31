@@ -2,6 +2,7 @@ export interface TipoActividad {
   _id: string;
   nombre: string;
   color: string;
+  icono?: string;
   descripcion?: string;
   creado_en?: string;
   actualizado_en?: string;
@@ -79,11 +80,13 @@ export interface UpdateActividadDto {
 export interface CreateTipoActividadDto {
   nombre: string;
   color?: string;
+  icono?: string;
   descripcion?: string;
 }
 
 export interface UpdateTipoActividadDto {
   nombre?: string;
   color?: string;
+  icono?: string;
   descripcion?: string;
 }
