@@ -94,6 +94,15 @@ async function main() {
   check(!creadorInexistente.creado_por_nombre, 'con un id de usuario inexistente no guarda creado_por_nombre');
   check(!!creadorInexistente._id, 'la actividad se crea igual con un id de usuario inexistente');
 
+  // Caso 4: creadoPorId con formato inválido (no es un ObjectId válido) → crea igual, sin campos de autoría
+  const creadorInvalido = await controller.create(
+    centroId.toString(),
+    { ...dtoBase },
+    { user: { sub: 'no-soy-un-objectid' } } as any,
+  );
+  check(!creadorInvalido.creado_por_nombre, 'con un creadoPorId de formato inválido no guarda creado_por_nombre');
+  check(!!creadorInvalido._id, 'la actividad se crea igual con un creadoPorId de formato inválido');
+
   await db.dropDatabase();
   await app.close();
   console.log(`\nBase ${TEST_DB} eliminada.`);

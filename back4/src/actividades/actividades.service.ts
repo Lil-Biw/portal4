@@ -146,7 +146,7 @@ export class ActividadesService {
     creado_por_nombre?: string;
     creado_por_email?: string;
   }> {
-    if (!creadoPorId) return {};
+    if (!creadoPorId || !Types.ObjectId.isValid(creadoPorId)) return {};
     const usuario = await this.usuarioModel.findById(creadoPorId).select('nombre email').lean();
     if (!usuario) return {};
     return {
