@@ -291,6 +291,12 @@
                   <span class="cal-day-field-label">Centro de costos</span>
                   <span class="cal-day-field-value">{{ det.centro?.nombre ?? '—' }}</span>
                 </div>
+                @if (det.a.creado_por_nombre) {
+                  <div class="cal-day-field">
+                    <span class="cal-day-field-label">Creado por</span>
+                    <span class="cal-day-field-value">{{ det.a.creado_por_nombre }} ({{ det.a.creado_por_email }})</span>
+                  </div>
+                }
                 @if (det.a.descripcion) {
                   <div class="cal-day-field">
                     <span class="cal-day-field-label">Descripción</span>
@@ -467,6 +473,13 @@
             <p class="actividad-detalle-field-value">{{ det.centro?.nombre ?? '—' }}</p>
           </div>
         </div>
+
+        @if (det.a.creado_por_nombre) {
+          <div class="actividad-detalle-section">
+            <p class="actividad-detalle-section-label">Creado por</p>
+            <p class="actividad-detalle-descripcion">{{ det.a.creado_por_nombre }} ({{ det.a.creado_por_email }})</p>
+          </div>
+        }
 
         <!-- Descripción -->
         @if (det.a.descripcion) {

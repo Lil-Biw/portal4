@@ -33,6 +33,8 @@ export interface Actividad {
   // Días de antelación a la fecha en que se avisa a los admins suscritos
   // (subconjunto de [365, 180, 30, 15, 7, 3, 1, 0]; 0 = el día de la actividad)
   dias_recordatorio?: number[];
+  creado_por_nombre?: string;
+  creado_por_email?: string;
   creado_en?: string;
   actualizado_en?: string;
 }
