@@ -16,6 +16,9 @@ export class Actividad {
   @Prop() fecha_termino?: Date;
   @Prop({ match: /^([01]\d|2[0-3]):[0-5]\d$/ }) hora?: string;
   @Prop({ match: /^([01]\d|2[0-3]):[0-5]\d$/ }) hora_termino?: string;
+  @Prop({ type: Types.ObjectId, ref: 'Usuario' }) creado_por?: Types.ObjectId;
+  @Prop() creado_por_nombre?: string;
+  @Prop() creado_por_email?: string;
 }
 
 export const ActividadSchema = SchemaFactory.createForClass(Actividad);

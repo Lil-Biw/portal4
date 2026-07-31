@@ -32,8 +32,13 @@ export class ActividadesController {
 
   @Post()
   @Roles('super_admin', 'admin_smartclarity')
-  create(@Param('centroId') centroId: string, @Body() dto: CreateActividadDto) {
-    return this.service.create({ ...dto, centro_costo_id: centroId });
+  create(
+    @Param('centroId') centroId: string,
+    @Body() dto: CreateActividadDto,
+    @Req() req: Request,
+  ) {
+    const creadoPorId = (req as any)?.user?.sub as string | undefined;
+    return this.service.create({ ...dto, centro_costo_id: centroId }, creadoPorId);
   }
 
   @Put(':actividadId')

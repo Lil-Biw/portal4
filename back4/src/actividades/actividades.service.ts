@@ -141,10 +141,27 @@ export class ActividadesService {
     return this.adjuntarDiasRecordatorio(actividades);
   }
 
-  async create(dto: CreateActividadDto): Promise<any> {
+  private async resolverAutoria(creadoPorId?: string): Promise<{
+    creado_por?: Types.ObjectId;
+    creado_por_nombre?: string;
+    creado_por_email?: string;
+  }> {
+    if (!creadoPorId) return {};
+    const usuario = await this.usuarioModel.findById(creadoPorId).select('nombre email').lean();
+    if (!usuario) return {};
+    return {
+      creado_por: new Types.ObjectId(creadoPorId),
+      creado_por_nombre: usuario.nombre,
+      creado_por_email: usuario.email,
+    };
+  }
+
+  async create(dto: CreateActividadDto, creadoPorId?: string): Promise<any> {
     const { notificacion, documentos_nombres, ...actividadData } = dto;
+    const autoria = await this.resolverAutoria(creadoPorId);
     const a = await new this.actividadModel({
       ...actividadData,
+      ...autoria,
       tipo_id: new Types.ObjectId(actividadData.tipo_id),
       centro_costo_id: new Types.ObjectId(actividadData.centro_costo_id),
       activo_ids: (actividadData.activo_ids ?? []).map(id => new Types.ObjectId(id)),
