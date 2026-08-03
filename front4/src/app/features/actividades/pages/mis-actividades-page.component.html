@@ -200,7 +200,7 @@
                     style="padding:.4rem .5rem;border-bottom:none;border-radius:6px"
                     [class.selected]="actividadSeleccionadaDia()?._id === a._id"
                     (click)="seleccionarActividadDia(a)">
-                    <span class="cal-day-item-dot" [style.background]="colorDeActividad(a)"></span>
+                    <app-actividad-icono [icono]="tipoDeActividad(a)?.icono" [color]="colorDeActividad(a)" [size]="18"></app-actividad-icono>
                     <span class="cal-day-item-nombre">{{ a.nombre }}</span>
                   </div>
                 }
@@ -247,7 +247,7 @@
           @let det = actividadSeleccionadaDia()!;
           <div class="cal-day-detail-content">
             <div class="cal-day-detail-header">
-              <span class="cal-day-detail-dot" [style.background]="colorDeActividad(det)"></span>
+              <app-actividad-icono [icono]="tipoDeActividad(det)?.icono" [color]="colorDeActividad(det)" [size]="18"></app-actividad-icono>
               <h3 class="cal-day-detail-nombre">{{ det.nombre }}</h3>
             </div>
             <div class="cal-day-detail-fields">
@@ -359,7 +359,7 @@
       <!-- Cabecera -->
       <div class="actividad-detalle-header">
         <div class="actividad-detalle-header-info">
-          <span class="actividad-detalle-dot" [style.background]="colorDeActividad(actividadDetalle()!)"></span>
+          <app-actividad-icono [icono]="tipoDeActividad(actividadDetalle()!)?.icono" [color]="colorDeActividad(actividadDetalle()!)" [size]="16"></app-actividad-icono>
           <div>
             <h3 class="actividad-detalle-nombre">{{ actividadDetalle()!.nombre }}</h3>
             <p class="actividad-detalle-centro">{{ centroNombre(actividadDetalle()!) }}</p>

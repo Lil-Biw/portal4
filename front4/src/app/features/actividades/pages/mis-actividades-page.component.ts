@@ -2,6 +2,7 @@ import { Component, OnInit, inject, signal, computed, effect } from '@angular/co
 import { SlicePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActividadesService } from '../actividades.service';
+import { ActividadIconoComponent } from '../components/actividad-icono/actividad-icono.component';
 import { TiposActividadService } from '../tipos-actividad.service';
 import { CentrosService } from '../../centros/centros.service';
 import { ActivosService } from '../../activos/activos.service';
@@ -14,7 +15,7 @@ import { createCalendarState, CalendarView, CALENDAR_DAYS, CALENDAR_MONTHS, DayC
 @Component({
   selector: 'app-mis-actividades-page',
   standalone: true,
-  imports: [FormsModule, SlicePipe],
+  imports: [FormsModule, SlicePipe, ActividadIconoComponent],
   templateUrl: './mis-actividades-page.component.html',
   styleUrl: './actividades-page.component.css',
 })
