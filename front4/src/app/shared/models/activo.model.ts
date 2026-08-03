@@ -12,11 +12,13 @@ export interface TipoActivo {
   _id: string;
   nombre: string;
   color: string;
+  icono?: string;
 }
 
 export interface CreateTipoActivoDto {
   nombre: string;
   color: string;
+  icono?: string;
 }
 
 export type UpdateTipoActivoDto = Partial<CreateTipoActivoDto>;
