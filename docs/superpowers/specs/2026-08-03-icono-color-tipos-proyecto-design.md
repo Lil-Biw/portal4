@@ -82,16 +82,42 @@ completo al modelo sin lógica intermedia, igual que en actividades.
 
 ## Catálogo de íconos
 
-Se reutiliza el mismo catálogo de 12 claves ya implementado para actividades
-(mismos SVG, sin cambios de diseño): `calendario, check, llave, alerta,
-reunion, documento, herramienta, camion, electricidad, extintor, casco,
-limpieza`.
+Catálogo **seleccionable** en el formulario: se reutiliza el mismo catálogo
+de 12 claves ya implementado para actividades (mismos SVG, sin cambios de
+diseño): `calendario, check, llave, alerta, reunion, documento, herramienta,
+camion, electricidad, extintor, casco, limpieza`.
+
+Catálogo **renderizable** (no seleccionable, solo para compatibilidad hacia
+atrás): los 6 íconos viejos de proyecto (`carpeta, objetivo, cohete, bandera,
+maletin, grafico`) — ver "Frontend — resolución de ícono" para el porqué.
 
 ## Frontend — resolución de ícono (compatibilidad hacia atrás)
 
-`front4/src/app/features/proyectos/proyectos-icons.ts` — mismo patrón que
-`actividades-icons.ts`: se mantiene `ColorProyecto`/`COLORES_PROYECTO`/
-`clavePorColorProyecto` como fallback (no se borra), se agrega:
+**Corrección importante encontrada al planificar** (no estaba prevista en la
+primera versión de esta spec): en actividades, los 6 íconos viejos
+(`calendario, check, llave, alerta, reunion, documento`) eran un subconjunto
+exacto de los 12 nuevos, así que el fallback por color siempre resolvía a una
+clave válida del catálogo nuevo. En proyecto, los 6 íconos viejos (`carpeta,
+objetivo, cohete, bandera, maletin, grafico`) **no están** en el catálogo de
+12 que se reutiliza de actividades — son un set totalmente distinto. Si el
+switch del componente solo tuviera los 12 casos nuevos, los 11 tipos ya
+sembrados (que hoy caen todos al fallback `clavePorColorProyecto`, que a su
+vez casi siempre devuelve `'carpeta'` porque ninguno de sus colores hex
+personalizados coincide exactamente con los 6 swatches fijos) pasarían a
+mostrar el ícono genérico de `@default` en vez de `carpeta` — una regresión
+visual para todos los tipos existentes, justo lo que esta feature busca
+evitar.
+
+Por eso el `@switch` de `proyecto-icono.component.ts` mantiene los 6 casos
+viejos (sin cambios, para preservar el aspecto actual de los tipos sin
+`icono`) y además agrega los 12 casos nuevos — 18 en total. Pero el catálogo
+**seleccionable en el formulario** (grilla de íconos) sigue siendo solo el de
+12 reutilizado — los 6 viejos no aparecen como opción elegible, solo se
+siguen renderizando por compatibilidad hacia atrás vía el fallback de color.
+
+`front4/src/app/features/proyectos/proyectos-icons.ts` — se mantiene
+`ColorProyecto`/`COLORES_PROYECTO`/`clavePorColorProyecto` sin ningún cambio
+(sigue devolviendo uno de los 6 íconos viejos), se agrega:
 
 ```ts
 export const ICONOS_PROYECTO = [
@@ -100,21 +126,27 @@ export const ICONOS_PROYECTO = [
 ] as const;
 export type IconoProyecto = typeof ICONOS_PROYECTO[number];
 
-export function resolverIconoProyecto(icono?: string, color?: string): IconoProyecto {
+export function resolverIconoProyecto(icono?: string, color?: string): string {
   if (icono && (ICONOS_PROYECTO as readonly string[]).includes(icono)) {
-    return icono as IconoProyecto;
+    return icono;
   }
-  return clavePorColorProyecto(color ?? '') as IconoProyecto;
+  return clavePorColorProyecto(color ?? '');
 }
 ```
+
+El tipo de retorno es `string` (no `IconoProyecto`) porque la rama de
+fallback puede devolver una de las 6 claves viejas, que están fuera del
+catálogo de 12 — forzar el tipo angosto ahí sería una aserción falsa.
 
 `front4/src/app/features/proyectos/components/proyecto-icono/proyecto-icono.component.ts`
 agrega `@Input() icono?: string` y calcula
 `clave = resolverIconoProyecto(this.icono, this.color)`. El `@switch` interno
-pasa de 6 a 12 `@case`, dibujando los mismos 6 SVG nuevos ya usados en
-`actividad-icono.component.ts` (herramienta, camion, electricidad, extintor,
-casco, limpieza) — no se rediseña nada, se reutiliza el trazo ya aprobado.
-`color` sigue controlando `fill`/`stroke` igual que hoy.
+mantiene los 5 casos explícitos ya existentes (`carpeta, objetivo, cohete,
+bandera, maletin`), agrega un 6to caso explícito `grafico` (hoy es el
+`@default` implícito — se hace explícito, mismo criterio que se usó con
+`documento` en actividades), y agrega los 12 casos nuevos reutilizados de
+`actividad-icono.component.ts` (mismo dibujo SVG, sin rediseñar nada) — 18
+`@case` en total. `color` sigue controlando `fill`/`stroke` igual que hoy.
 
 `front4/src/app/shared/models/proyecto.model.ts`:
 
