@@ -19,3 +19,15 @@ export function clavePorColorProyecto(color: string): string {
   );
   return match?.icono ?? 'carpeta';
 }
+
+export const ICONOS_PROYECTO = [
+  'calendario', 'check', 'llave', 'alerta', 'reunion', 'documento',
+  'herramienta', 'camion', 'electricidad', 'extintor', 'casco', 'limpieza',
+] as const;
+
+export function resolverIconoProyecto(icono?: string, color?: string): string {
+  if (icono && (ICONOS_PROYECTO as readonly string[]).includes(icono)) {
+    return icono;
+  }
+  return clavePorColorProyecto(color ?? '');
+}
