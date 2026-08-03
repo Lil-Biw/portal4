@@ -19,7 +19,7 @@ export interface DescargarActividadDocEvt {
     <div class="modal-header">
       <div class="modal-title-group">
         @if (tipoActivo) {
-          <app-activo-icono [color]="tipoActivo.color" [size]="20"></app-activo-icono>
+          <app-activo-icono [icono]="tipoActivo.icono" [color]="tipoActivo.color" [size]="20"></app-activo-icono>
         }
         <div>
           <h3>{{ activo?.nombre }}</h3>

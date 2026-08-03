@@ -8,13 +8,14 @@ import { CentroCosto } from '../../../../shared/models/centro.model';
 import { Cliente } from '../../../../shared/models/cliente.model';
 import { asId } from '../../../../shared/utils';
 import { UploadDocumentFormComponent } from '../../../../shared/components/upload-document-form/upload-document-form.component';
+import { ActivoIconoComponent } from '../activo-icono/activo-icono.component';
 
 export interface DocPendiente { file?: File; linkUrl?: string; nombre: string; }
 
 @Component({
   selector: 'app-activos-form',
   standalone: true,
-  imports: [FormsModule, UploadDocumentFormComponent],
+  imports: [FormsModule, UploadDocumentFormComponent, ActivoIconoComponent],
   styles: [`
     .form-dos-col {
       display: grid;
@@ -159,7 +160,7 @@ export interface DocPendiente { file?: File; linkUrl?: string; nombre: string; }
                       class="tipo-combo-option"
                       [class.tipo-combo-option--active]="form.tipo_activo_id === t._id"
                       (mousedown)="selectTipo(t)">
-                      <span class="tipo-combo-dot" [style.background]="t.color"></span>
+                      <app-activo-icono [icono]="t.icono" [color]="t.color" [size]="14"></app-activo-icono>
                       {{ t.nombre }}
                     </div>
                   }

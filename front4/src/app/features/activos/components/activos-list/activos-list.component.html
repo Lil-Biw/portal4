@@ -25,7 +25,7 @@
                 @let tipo = tipoDeActivo(a);
                 <div class="activo-row">
                   @if (tipo) {
-                    <app-activo-icono [color]="tipo.color" [size]="18"></app-activo-icono>
+                    <app-activo-icono [icono]="tipo.icono" [color]="tipo.color" [size]="18"></app-activo-icono>
                   } @else {
                     <div class="activo-icono-placeholder"></div>
                   }

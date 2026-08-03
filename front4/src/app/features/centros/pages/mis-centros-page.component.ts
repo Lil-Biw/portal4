@@ -218,6 +218,11 @@ export class MisCentrosPageComponent implements OnInit, OnDestroy {
     return '#0095d6';
   }
 
+  tipoActivoIcono(a: Activo): string | undefined {
+    if (typeof a.tipo_activo_id === 'object') return (a.tipo_activo_id as TipoActivo).icono;
+    return undefined;
+  }
+
   protected mapsLink = computed((): string => {
     const c = this.consumidorContext.centroSeleccionado();
     if (!c) return '#';
