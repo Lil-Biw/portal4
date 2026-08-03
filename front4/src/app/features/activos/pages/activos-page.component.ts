@@ -12,12 +12,12 @@ import { ActivoIconoComponent } from '../components/activo-icono/activo-icono.co
 import { ActivoRevisarModalComponent } from '../components/activo-revisar-modal/activo-revisar-modal.component';
 import { Activo, ActividadHistorialItem, CreateActivoDto, DocActivo, TipoActivo } from '../../../shared/models/activo.model';
 import { asId } from '../../../shared/utils';
-import { COLORES_ACTIVO, ColorActivo } from '../activos-icons';
+import { ICONOS_ACTIVO } from '../activos-icons';
 
 type ModalMode = 'crear' | 'editar' | 'buscar' | 'tipos' | 'revisar' | null;
 
-interface TipoForm { nombre: string; color: string; }
-function emptyTipoForm(): TipoForm { return { nombre: '', color: '#0095d6' }; }
+interface TipoForm { nombre: string; color: string; icono: string; }
+function emptyTipoForm(): TipoForm { return { nombre: '', color: '#0095d6', icono: 'herramienta' }; }
 
 @Component({
   selector: 'app-activos-page',
@@ -158,7 +158,7 @@ export class ActivosPageComponent implements OnInit {
   protected readonly clientesService = inject(ClientesService);
   private readonly authService       = inject(AuthService);
 
-  protected readonly coloresActivo: ColorActivo[] = COLORES_ACTIVO;
+  protected readonly iconosActivo = ICONOS_ACTIVO;
 
   protected puedeGestionarTipos = computed(() =>
     this.authService.usuarioActual()?.rol === 'super_admin'
@@ -253,6 +253,11 @@ export class ActivosPageComponent implements OnInit {
         !this.subiendoDocs
       ) {
         this.cerrar();
+      }
+    });
+    effect(() => {
+      if (this.tiposService.status()?.type === 'ok' && this.showTipoForm()) {
+        this.cerrarTipoForm();
       }
     });
   }
@@ -450,7 +455,7 @@ export class ActivosPageComponent implements OnInit {
 
   abrirEditarTipo(t: TipoActivo): void {
     this.editingTipoId.set(t._id);
-    this.tipoForm.set({ nombre: t.nombre, color: t.color });
+    this.tipoForm.set({ nombre: t.nombre, color: t.color, icono: t.icono ?? 'herramienta' });
     this.showTipoForm.set(true);
     this.tiposService.clearStatus();
   }
@@ -467,11 +472,10 @@ export class ActivosPageComponent implements OnInit {
   guardarTipo(): void {
     const f = this.tipoForm();
     if (!f.nombre.trim()) return;
-    const dto = { nombre: f.nombre.trim(), color: f.color };
+    const dto = { nombre: f.nombre.trim(), color: f.color, icono: f.icono || undefined };
     const id = this.editingTipoId();
     if (id) this.tiposService.actualizar(id, dto);
     else     this.tiposService.crear(dto);
-    this.cerrarTipoForm();
   }
 
   eliminarTipo(id: string): void { this.tiposService.eliminar(id); }
