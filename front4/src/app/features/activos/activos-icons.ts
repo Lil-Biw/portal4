@@ -19,3 +19,15 @@ export function clavePorColor(color: string): string {
   );
   return match?.icono ?? 'computador';
 }
+
+export const ICONOS_ACTIVO = [
+  'calendario', 'check', 'llave', 'alerta', 'reunion', 'documento',
+  'herramienta', 'camion', 'electricidad', 'extintor', 'casco', 'limpieza',
+] as const;
+
+export function resolverIconoActivo(icono?: string, color?: string): string {
+  if (icono && (ICONOS_ACTIVO as readonly string[]).includes(icono)) {
+    return icono;
+  }
+  return clavePorColor(color ?? '');
+}
