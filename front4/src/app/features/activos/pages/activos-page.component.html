@@ -56,7 +56,7 @@
             @for (t of tipoComboFiltrados(); track t._id) {
               <div class="tipo-combo-option" [class.tipo-combo-option--active]="_selectedTipoId() === t._id"
                    (mousedown)="selectTipoCombo(t)">
-                <span class="tipo-combo-dot" [style.background]="t.color"></span>
+                <app-activo-icono [icono]="t.icono" [color]="t.color" [size]="14"></app-activo-icono>
                 {{ t.nombre }}
               </div>
             }
