@@ -87,7 +87,7 @@
                 *ngFor="let t of tiposFiltrados()"
                 [class.tipo-combo-option--active]="form.tipo_proyecto_id === t._id"
                 (mousedown)="selectTipo(t)">
-                <app-proyecto-icono [color]="t.color" [size]="14"></app-proyecto-icono>
+                <app-proyecto-icono [icono]="t.icono" [color]="t.color" [size]="14"></app-proyecto-icono>
                 {{ t.nombre }}
               </div>
               <div class="tipo-combo-empty" *ngIf="tiposFiltrados().length === 0">Sin resultados para "{{ tipoQuery() }}"</div>

@@ -23,7 +23,7 @@
             <div class="proyecto-card-top">
               <span class="proyecto-nombre-wrap">
                 @if (tipoDeProyecto(p); as tipo) {
-                  <app-proyecto-icono [color]="tipo.color" [size]="16"></app-proyecto-icono>
+                  <app-proyecto-icono [icono]="tipo.icono" [color]="tipo.color" [size]="16"></app-proyecto-icono>
                 }
                 <span class="proyecto-nombre">{{ p.nombre }}</span>
               </span>
