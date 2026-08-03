@@ -57,7 +57,7 @@
           <div class="tipo-combo-option" *ngFor="let t of tipoComboFiltrados()"
                [class.tipo-combo-option--active]="_selectedTipoId() === t._id"
                (mousedown)="selectTipoCombo(t)">
-            <app-proyecto-icono [color]="t.color" [size]="14"></app-proyecto-icono>
+            <app-proyecto-icono [icono]="t.icono" [color]="t.color" [size]="14"></app-proyecto-icono>
             {{ t.nombre }}
           </div>
           <div class="tipo-combo-empty" *ngIf="tipoComboFiltrados().length === 0">Sin resultados</div>
@@ -192,17 +192,30 @@
             placeholder="Nombre del tipo *"
             [ngModel]="tipoForm().nombre"
             (ngModelChange)="patchTipoForm('nombre', $event)" />
-          <p style="font-size:.78rem;color:#6b7280;margin:0 0 .4rem">Selecciona un ícono</p>
+          <p style="font-size:.78rem;color:#6b7280;margin:0 0 .4rem">Ícono</p>
           <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:.75rem">
-            <button type="button" *ngFor="let c of coloresProyecto"
-              [title]="c.label"
-              (click)="patchTipoForm('color', c.valor)"
-              [style.box-shadow]="tipoForm().color === c.valor ? '0 0 0 3px ' + c.valor : 'none'"
-              [style.transform]="tipoForm().color === c.valor ? 'scale(1.12)' : 'scale(1)'"
+            <button type="button" *ngFor="let clave of iconosProyecto"
+              [title]="clave"
+              (click)="patchTipoForm('icono', clave)"
+              [style.box-shadow]="tipoForm().icono === clave ? '0 0 0 3px ' + tipoForm().color : 'none'"
+              [style.transform]="tipoForm().icono === clave ? 'scale(1.12)' : 'scale(1)'"
               style="padding:0;border:none;background:none;cursor:pointer;
                      border-radius:12px;transition:transform .12s,box-shadow .12s;">
-              <app-proyecto-icono [color]="c.valor" [size]="22"></app-proyecto-icono>
+              <app-proyecto-icono [icono]="clave" [color]="tipoForm().color" [size]="22"></app-proyecto-icono>
             </button>
+          </div>
+          <p style="font-size:.78rem;color:#6b7280;margin:0 0 .4rem">Color</p>
+          <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.75rem">
+            <input type="color"
+              [ngModel]="tipoForm().color"
+              (ngModelChange)="patchTipoForm('color', $event)"
+              style="width:36px;height:36px;padding:0;border:1px solid #e5e7eb;border-radius:8px;cursor:pointer" />
+            <input type="text"
+              class="tipo-input"
+              style="margin-bottom:0;max-width:110px"
+              [ngModel]="tipoForm().color"
+              (ngModelChange)="patchTipoForm('color', $event)"
+              placeholder="#0095d6" />
           </div>
           <div style="display:flex;gap:.5rem">
             <button class="btn-primary btn-sm" (click)="guardarTipo()"
@@ -221,7 +234,7 @@
           <p class="tipos-empty" *ngIf="tiposService.tipos().length === 0">Aún no hay tipos creados.</p>
           <div class="tipos-list" *ngIf="tiposService.tipos().length > 0">
             <div class="tipo-item" *ngFor="let t of tiposService.tipos()">
-              <app-proyecto-icono [color]="t.color" [size]="16"></app-proyecto-icono>
+              <app-proyecto-icono [icono]="t.icono" [color]="t.color" [size]="16"></app-proyecto-icono>
               <div class="tipo-texto">
                 <span class="tipo-nombre">{{ t.nombre }}</span>
               </div>

@@ -57,11 +57,13 @@ export interface TipoProyecto {
   _id: string;
   nombre: string;
   color: string;
+  icono?: string;
 }
 
 export interface CreateTipoProyectoDto {
   nombre: string;
   color?: string;
+  icono?: string;
 }
 
 export type UpdateTipoProyectoDto = Partial<CreateTipoProyectoDto>;

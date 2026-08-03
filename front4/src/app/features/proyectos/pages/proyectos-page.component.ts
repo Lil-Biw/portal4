@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal, computed } from '@angular/core';
+import { Component, OnInit, inject, signal, computed, effect } from '@angular/core';
 import { NgIf, NgFor } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ProyectosService } from '../proyectos.service';
@@ -12,12 +12,12 @@ import { ProyectoIconoComponent } from '../components/proyecto-icono/proyecto-ic
 import { Proyecto, CreateProyectoDto, TipoProyecto } from '../../../shared/models/proyecto.model';
 import { asId } from '../../../shared/utils';
 import { AuthService } from '../../auth/auth.service';
-import { COLORES_PROYECTO, ColorProyecto } from '../proyectos-icons';
+import { ICONOS_PROYECTO } from '../proyectos-icons';
 
 type ModalMode = 'crear' | 'editar' | 'buscar' | 'tipos' | null;
 
-interface TipoForm { nombre: string; color: string; }
-function emptyTipoForm(): TipoForm { return { nombre: '', color: '#0095d6' }; }
+interface TipoForm { nombre: string; color: string; icono: string; }
+function emptyTipoForm(): TipoForm { return { nombre: '', color: '#0095d6', icono: 'calendario' }; }
 
 @Component({
   selector: 'app-proyectos-page',
@@ -178,11 +178,19 @@ export class ProyectosPageComponent implements OnInit {
   protected readonly centrosService   = inject(CentrosService);
   private readonly authService        = inject(AuthService);
 
-  protected readonly coloresProyecto: ColorProyecto[] = COLORES_PROYECTO;
+  protected readonly iconosProyecto = ICONOS_PROYECTO;
 
   protected puedeGestionarTipos = computed(() =>
     this.authService.usuarioActual()?.rol === 'super_admin'
   );
+
+  constructor() {
+    effect(() => {
+      if (this.tiposService.status()?.type === 'ok' && this.showTipoForm()) {
+        this.cerrarTipoForm();
+      }
+    });
+  }
 
   protected modal    = signal<ModalMode>(null);
   protected busqueda = signal('');
@@ -381,7 +389,7 @@ export class ProyectosPageComponent implements OnInit {
 
   protected abrirEditarTipo(t: TipoProyecto): void {
     this.editingTipoId.set(t._id);
-    this.tipoForm.set({ nombre: t.nombre, color: t.color });
+    this.tipoForm.set({ nombre: t.nombre, color: t.color, icono: t.icono ?? '' });
     this.showTipoForm.set(true);
     this.tiposService.clearStatus();
   }
@@ -398,11 +406,10 @@ export class ProyectosPageComponent implements OnInit {
   protected guardarTipo(): void {
     const f = this.tipoForm();
     if (!f.nombre.trim()) return;
-    const dto = { nombre: f.nombre.trim(), color: f.color };
+    const dto = { nombre: f.nombre.trim(), color: f.color, icono: f.icono || undefined };
     const id = this.editingTipoId();
     if (id) this.tiposService.actualizar(id, dto);
     else     this.tiposService.crear(dto);
-    this.cerrarTipoForm();
   }
 
   protected eliminarTipo(id: string): void { this.tiposService.eliminar(id); }
