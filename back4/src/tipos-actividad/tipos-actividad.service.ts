@@ -25,7 +25,7 @@ export class TiposActividadService {
   }
 
   async update(id: string, dto: UpdateTipoActividadDto) {
-    const tipo = await this.tipoModel.findByIdAndUpdate(id, dto, { new: true }).lean();
+    const tipo = await this.tipoModel.findByIdAndUpdate(id, dto, { new: true, runValidators: true }).lean();
     if (!tipo) throw new NotFoundException(`Tipo de actividad ${id} no encontrado`);
     return tipo;
   }

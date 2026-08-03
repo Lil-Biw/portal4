@@ -67,6 +67,14 @@ export class ActividadesPageComponent implements OnInit {
     this.authService.usuarioActual()?.rol === 'super_admin'
   );
 
+  constructor() {
+    effect(() => {
+      if (this.tiposService.status()?.type === 'ok' && this.showTipoForm()) {
+        this.cerrarTipoForm();
+      }
+    });
+  }
+
   protected centrosParaEmpresa = computed(() => {
     const empId = this.form().empresa_id;
     if (!empId) return [];
@@ -802,7 +810,6 @@ export class ActividadesPageComponent implements OnInit {
     const id = this.editingTipoId();
     if (id) this.tiposService.actualizar(id, dto);
     else     this.tiposService.crear(dto);
-    this.cerrarTipoForm();
   }
 
   eliminarTipo(id: string): void { this.tiposService.eliminar(id); }
