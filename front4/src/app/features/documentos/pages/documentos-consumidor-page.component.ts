@@ -56,8 +56,8 @@ export class DocumentosConsumidorPageComponent implements OnInit {
   protected readonly solicitudesService = inject(SolicitudesService);
   private  readonly route               = inject(ActivatedRoute);
 
-  private _pendingCentroId:   string | null = null;
-  private _pendingProyectoId: string | null = null;
+  private _pendingCentroId   = signal<string | null>(null);
+  private _pendingProyectoId = signal<string | null>(null);
 
   protected readonly categorias = CATEGORIAS_DOCUMENTO;
 
@@ -267,12 +267,12 @@ export class DocumentosConsumidorPageComponent implements OnInit {
     });
 
     effect(() => {
-      const centros = this.centrosFiltradosCSig();
-      if (!this._pendingCentroId || centros.length === 0) return;
-      const centroId   = this._pendingCentroId;
-      const proyectoId = this._pendingProyectoId;
-      this._pendingCentroId   = null;
-      this._pendingProyectoId = null;
+      const centros   = this.centrosFiltradosCSig();
+      const centroId  = this._pendingCentroId();
+      if (!centroId || centros.length === 0) return;
+      const proyectoId = this._pendingProyectoId();
+      this._pendingCentroId.set(null);
+      this._pendingProyectoId.set(null);
       untracked(() => {
         this.onCentroChangeC(centroId);
         if (proyectoId) this.onProyectoChangeC(proyectoId);
@@ -287,12 +287,15 @@ export class DocumentosConsumidorPageComponent implements OnInit {
     const proyectoId = params.get('proyectoId');
     if (tab) this.tabConsumidorActiva.set(tab);
     if (centroId) {
-      this._pendingCentroId = centroId;
+      this._pendingCentroId.set(centroId);
       this.tabJerarquia.set('centro');
     }
     if (proyectoId) {
-      this._pendingProyectoId = proyectoId;
+      this._pendingProyectoId.set(proyectoId);
       this.tabJerarquia.set('proyecto');
+    }
+    if (!centroId && !proyectoId && tab === 'solicitudes') {
+      this.tabJerarquia.set('empresa');
     }
   }
 

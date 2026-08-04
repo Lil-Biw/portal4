@@ -28,7 +28,10 @@
   } @else {
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:.85rem">
       @for (centro of centrosDeEmpresa(); track centro._id) {
-        <div style="border:1px solid rgba(34,33,33,.12);border-radius:10px;padding:.9rem">
+        <div style="border:1px solid rgba(34,33,33,.12);border-radius:10px;padding:.9rem;cursor:pointer;transition:box-shadow .15s,border-color .15s"
+          (click)="irACentro(centro)"
+          onmouseenter="this.style.boxShadow='0 4px 16px rgba(0,149,214,.18)';this.style.borderColor='rgba(0,149,214,.35)'"
+          onmouseleave="this.style.boxShadow='none';this.style.borderColor='rgba(34,33,33,.12)'">
           <!-- Nombre, código y donut -->
           <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:.35rem">
             <div>
@@ -87,7 +90,10 @@
 
 <!-- Score | Novedades -->
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:.85rem;margin-bottom:1rem">
-  <div class="card">
+  <div class="card" style="cursor:pointer;transition:box-shadow .15s"
+    (click)="irADocumentos()"
+    onmouseenter="this.style.boxShadow='0 4px 16px rgba(0,149,214,.18)'"
+    onmouseleave="this.style.boxShadow='0 1px 3px rgba(0,0,0,.06)'">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.9rem">
       <h3 style="margin:0;font-size:1rem;font-weight:700">Score 1 — Cumplimiento documental</h3>
       <app-stat-chip [label]="scoreChipLabel()" [variant]="scoreChipVariant()"></app-stat-chip>
@@ -200,7 +206,11 @@
       <p style="font-size:.83rem;color:#9ca3af;padding:.25rem 0">Sin documentos pendientes de acción.</p>
     } @else {
       @for (t of tareasReales(); track t._id; let last = $last) {
-        <div style="display:flex;align-items:center;justify-content:space-between;padding:.7rem 0" [style.border-bottom]="last ? 'none' : '1px solid rgba(34,33,33,.07)'">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:.7rem .4rem;margin:0 -.4rem;border-radius:8px;cursor:pointer;transition:background .15s"
+          [style.border-bottom]="last ? 'none' : '1px solid rgba(34,33,33,.07)'"
+          (click)="irATarea(t)"
+          onmouseenter="this.style.background='rgba(0,149,214,.04)'"
+          onmouseleave="this.style.background='transparent'">
           <div style="display:flex;align-items:flex-start;gap:.65rem">
             <span style="width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:.35rem" [style.background]="tareaColor(t.estado)"></span>
             <div>
@@ -240,8 +250,11 @@
       <p style="font-size:.83rem;color:#9ca3af;padding:.25rem 0">Sin actividades registradas para esta empresa.</p>
     } @else {
       @for (m of proxActividades(); track m._id; let last = $last) {
-        <div style="display:flex;align-items:center;gap:.75rem;padding:.65rem 0"
-          [style.border-bottom]="last ? 'none' : '1px solid rgba(34,33,33,.07)'">
+        <div style="display:flex;align-items:center;gap:.75rem;padding:.65rem .4rem;margin:0 -.4rem;border-radius:8px;cursor:pointer;transition:background .15s"
+          [style.border-bottom]="last ? 'none' : '1px solid rgba(34,33,33,.07)'"
+          (click)="irAActividades()"
+          onmouseenter="this.style.background='rgba(0,149,214,.04)'"
+          onmouseleave="this.style.background='transparent'">
           <!-- Bloque fecha -->
           <div style="min-width:40px;text-align:center;background:#f3f4f6;border-radius:8px;padding:.3rem .4rem;flex-shrink:0">
             <p style="margin:0;font-size:1.1rem;font-weight:700;color:#1f2937;line-height:1">{{ actividadDia(m.fecha) }}</p>

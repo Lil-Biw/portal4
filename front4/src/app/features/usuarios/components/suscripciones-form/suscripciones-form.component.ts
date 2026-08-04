@@ -41,12 +41,62 @@ interface EmpresaGrupo {
       display: block;
       container-type: inline-size;
     }
+    .suscripciones-layout {
+      display: grid;
+      grid-template-columns: 1.15fr 1fr;
+      gap: 1.25rem;
+      align-items: start;
+    }
+    @container (max-width: 640px) {
+      .suscripciones-layout { grid-template-columns: 1fr; }
+    }
     .arbol {
       max-height: 45vh;
       overflow-y: auto;
       border: 1px solid rgba(34,33,33,.1);
       border-radius: 10px;
     }
+    .resumen-titulo {
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: #374151;
+      margin: 0 0 0.6rem;
+    }
+    .resumen-box {
+      border: 1px solid rgba(34,33,33,.1);
+      border-radius: 10px;
+      padding: 0.85rem 0.9rem;
+      max-height: 45vh;
+      overflow-y: auto;
+      background: rgba(34,33,33,.015);
+    }
+    .resumen-general {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.5rem;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #6b7280;
+      margin: 0 0 0.9rem;
+      padding: 0.6rem 0.75rem;
+      border-radius: 8px;
+      background: rgba(34,33,33,.04);
+      border: 1px solid transparent;
+    }
+    .resumen-general svg { flex-shrink: 0; margin-top: 1px; color: #9ca3af; }
+    .resumen-general.activo {
+      color: #0075a8;
+      background: rgba(0,149,214,.12);
+      border-color: rgba(0,149,214,.3);
+    }
+    .resumen-general.activo svg { color: #0095d6; }
+    .resumen-item {
+      font-size: 0.85rem;
+      color: #374151;
+      margin: 0 0 0.35rem;
+      padding-left: 0.1rem;
+    }
+    .resumen-item small { color: #9ca3af; }
     .empresa-item {
       border-bottom: 1px solid rgba(34,33,33,.07);
     }
@@ -71,11 +121,15 @@ interface EmpresaGrupo {
       background: none;
       border: none;
       cursor: pointer;
-      color: #9ca3af;
-      padding: 0.2rem;
+      color: #6b7280;
+      padding: 0.4rem;
+      border-radius: 6px;
       display: flex;
-      transition: transform .15s;
+      align-items: center;
+      justify-content: center;
+      transition: transform .15s, background-color .15s;
     }
+    .btn-expand:hover { background: rgba(34,33,33,.07); color: #1f2937; }
     .btn-expand.abierto { transform: rotate(90deg); }
     .empresa-detalle {
       padding: 0 0.75rem 0.75rem 2.1rem;
@@ -113,7 +167,6 @@ export class SuscripcionesFormComponent implements OnChanges {
   @Output() cancelado = new EventEmitter<void>();
 
   protected notificarTodas = true;
-  protected busqueda = '';
   private empresasSet = new Set<string>();
   private centrosSet = new Set<string>();
   private proyectosSet = new Set<string>();
@@ -125,13 +178,40 @@ export class SuscripcionesFormComponent implements OnChanges {
     this.centrosSet = new Set((this.usuario?.centros_suscritos ?? []).map((id) => asId(id)));
     this.proyectosSet = new Set((this.usuario?.proyectos_suscritos ?? []).map((id) => asId(id)));
     this.expandidas = new Set();
-    this.busqueda = '';
+  }
+
+  get resumenEmpresas(): Cliente[] {
+    return this.empresas.filter((e) => this.empresasSet.has(asId(e._id)));
+  }
+
+  get resumenCentros(): { centro: CentroCosto; empresa?: Cliente }[] {
+    return this.centros
+      .filter((c) => this.centrosSet.has(asId(c._id)))
+      .map((centro) => ({
+        centro,
+        empresa: this.empresas.find((e) => asId(e._id) === asId(centro.cliente_id)),
+      }));
+  }
+
+  get resumenProyectos(): { proyecto: Proyecto; empresa?: Cliente }[] {
+    return this.proyectos
+      .filter((p) => this.proyectosSet.has(asId(p._id)))
+      .map((proyecto) => ({
+        proyecto,
+        empresa: this.empresas.find((e) => asId(e._id) === asId(proyecto.cliente_id)),
+      }));
+  }
+
+  get tieneSuscripcionesPuntuales(): boolean {
+    return (
+      this.resumenEmpresas.length > 0 ||
+      this.resumenCentros.length > 0 ||
+      this.resumenProyectos.length > 0
+    );
   }
 
   get grupos(): EmpresaGrupo[] {
-    const q = this.busqueda.toLowerCase().trim();
     return this.empresas
-      .filter((e) => !q || e.razon_social.toLowerCase().includes(q))
       .map((empresa) => ({
         empresa,
         centros: this.centros.filter((c) => asId(c.cliente_id) === asId(empresa._id)),

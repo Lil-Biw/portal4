@@ -294,7 +294,7 @@
                 @if (det.a.creado_por_nombre) {
                   <div class="cal-day-field">
                     <span class="cal-day-field-label">Creado por</span>
-                    <span class="cal-day-field-value">{{ det.a.creado_por_nombre }} ({{ det.a.creado_por_email }})</span>
+                    <span class="cal-day-field-value creado-por-tag">{{ det.a.creado_por_nombre }} ({{ det.a.creado_por_email }})</span>
                   </div>
                 }
                 @if (det.a.descripcion) {
@@ -477,7 +477,7 @@
         @if (det.a.creado_por_nombre) {
           <div class="actividad-detalle-section">
             <p class="actividad-detalle-section-label">Creado por</p>
-            <p class="actividad-detalle-descripcion">{{ det.a.creado_por_nombre }} ({{ det.a.creado_por_email }})</p>
+            <p class="actividad-detalle-descripcion creado-por-tag">{{ det.a.creado_por_nombre }} ({{ det.a.creado_por_email }})</p>
           </div>
         }
 

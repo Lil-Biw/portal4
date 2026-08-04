@@ -20,13 +20,13 @@
     <span>Email *</span>
     <input [(ngModel)]="form.email" name="email" type="email" required />
   </label>
-  <label class="field">
+  <label class="field" *ngIf="isEdit">
     <span>Rol</span>
     <select [(ngModel)]="form.rol" name="rol">
       <option *ngFor="let r of roles" [value]="r.value">{{ r.label }}</option>
     </select>
   </label>
-  <label class="field">
+  <label class="field" *ngIf="isEdit">
     <span>Permiso por defecto</span>
     <select [(ngModel)]="form.permiso_acceso" name="permiso_acceso">
       <option value="ver">Ver</option>

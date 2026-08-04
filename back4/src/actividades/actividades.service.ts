@@ -209,12 +209,16 @@ export class ActividadesService {
       let usuariosCentro: { nombre: string; email: string }[] = [];
 
       if (opciones.audiencia === 'especificos') {
-        // Los admin_smartclarity son globales (sin cliente_id), no filtrar por empresa
+        // Los admin_smartclarity son globales (sin cliente_id), no filtrar por empresa,
+        // pero sí respetar su desuscripción (igual que en la rama 'todos').
         usuariosCentro = await this.usuarioModel
           .find({
             _id: { $in: (opciones.destinatarios_ids ?? []).map(id => new Types.ObjectId(id)) },
             activo: true,
-            $or: [{ cliente_id: empresaId }, { rol: 'admin_smartclarity' }],
+            $or: [
+              { cliente_id: empresaId },
+              { rol: 'admin_smartclarity', $or: condicionSuscripcionAdmin({ empresaId, centroId: centroObjId }) },
+            ],
           })
           .select('nombre email')
           .lean();

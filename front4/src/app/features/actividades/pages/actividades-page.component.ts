@@ -584,7 +584,7 @@ export class ActividadesPageComponent implements OnInit {
     this.notifNotificar.set(true);
     this.notifTab.set('usuarios');
     this.notifUsuariosIds.set(this.usuariosParaCentro().map(u => u._id));
-    this.notifAdminsIds.set(this.adminsParaEmpresa().map(u => u._id));
+    this.notifAdminsIds.set(this.adminsSuscritosIds());
     this.notifSuperAdmins.set(false);
     this.diasRecordatorio.set([365, 180, 30, 15, 7, 3, 1, 0]);
   }
@@ -687,7 +687,7 @@ export class ActividadesPageComponent implements OnInit {
       this.notifAdminsIds.update(ids => [...new Set([...ids, ...this.adminsSuscritosIds()])]);
     } else if (field === 'empresa_id') {
       this.form.update(f => ({ ...f, empresa_id: value as string }));
-      this.notifAdminsIds.set(this.adminsParaEmpresa().map(u => u._id));
+      this.notifAdminsIds.set(this.adminsSuscritosIds());
     } else if (field === 'hora' && !value) {
       this.form.update(f => ({ ...f, hora: '', hora_termino: '' }));
     } else {

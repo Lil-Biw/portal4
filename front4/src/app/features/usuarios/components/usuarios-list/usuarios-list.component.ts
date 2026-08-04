@@ -61,35 +61,39 @@ import { Usuario, RolUsuario } from '../../../../shared/models/usuario.model';
     .badge-admin   { background: rgba(0,149,214,.1);    color: #0075a8; }
     .badge-super   { background: rgba(245,158,11,.12);  color: #b45309; }
 
+    .permiso-badge {
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: #9ca3af;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
     .user-actions {
       display: flex;
       align-items: center;
-      gap: 0.25rem;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 0.35rem;
       flex-shrink: 0;
     }
-    .btn-accion {
+    .btn-icon-label {
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
       background: none;
       border: none;
-      font-size: 0.8rem;
+      font-size: 0.78rem;
       font-weight: 500;
       color: #6b7280;
       cursor: pointer;
-      padding: 0.3rem 0.5rem;
+      padding: 0.35rem 0.55rem;
       border-radius: 6px;
+      white-space: nowrap;
     }
-    .btn-accion:hover { color: #1f2937; background: rgba(34,33,33,.06); }
-    .btn-icon {
-      background: none;
-      border: none;
-      cursor: pointer;
-      padding: 0.35rem;
-      border-radius: 6px;
-      display: flex;
-      align-items: center;
-      color: #9ca3af;
-    }
-    .btn-icon:hover { background: rgba(34,33,33,.07); color: #4b5563; }
-    .btn-icon.danger:hover { background: rgba(239,68,68,.08); color: #ef4444; }
+    .btn-icon-label:hover:not(:disabled) { color: #1f2937; background: rgba(34,33,33,.06); }
+    .btn-icon-label.danger:hover:not(:disabled) { background: rgba(239,68,68,.08); color: #ef4444; }
+    .btn-icon-label:disabled { opacity: 0.35; cursor: not-allowed; }
   `],
 })
 export class UsuariosListComponent {

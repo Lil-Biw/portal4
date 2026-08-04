@@ -1,4 +1,5 @@
-<div class="col-suscripciones">
+<div class="suscripciones-layout">
+  <div class="col-controles">
     <label class="toggle-row">
       <input type="checkbox" [(ngModel)]="notificarTodas" name="notificarTodas" />
       Notificar de todas las empresas
@@ -10,19 +11,11 @@
       correspondiente abajo, sin importar este interruptor.
     </p>
 
-    <input
-      class="search-input"
-      type="text"
-      placeholder="Buscar empresa..."
-      [(ngModel)]="busqueda"
-      name="busqueda"
-    />
-
     <div class="arbol">
       <div class="empresa-item" *ngFor="let g of grupos">
         <div class="empresa-header">
           <button type="button" class="btn-expand" [class.abierto]="isExpanded(g.empresa._id)" (click)="toggleExpand(g.empresa._id)" title="Expandir">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
           </button>
           <label>
             <input
@@ -61,6 +54,42 @@
 
       <p class="empty" *ngIf="grupos.length === 0">No hay empresas para mostrar.</p>
     </div>
+  </div>
+
+  <div class="col-resumen">
+    <p class="resumen-titulo">Recibirá notificaciones de</p>
+    <div class="resumen-box">
+      <p class="resumen-general" [class.activo]="notificarTodas">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        <span *ngIf="notificarTodas">Correos generales de todas las empresas.</span>
+        <span *ngIf="!notificarTodas">Correos generales solo de lo marcado a la izquierda.</span>
+      </p>
+
+      <ng-container *ngIf="tieneSuscripcionesPuntuales; else sinSuscripciones">
+        <ng-container *ngIf="resumenEmpresas.length">
+          <p class="subgrupo-titulo">Empresas (recordatorios de vencimiento)</p>
+          <p class="resumen-item" *ngFor="let e of resumenEmpresas">{{ e.razon_social }}</p>
+        </ng-container>
+
+        <ng-container *ngIf="resumenCentros.length">
+          <p class="subgrupo-titulo">Centros</p>
+          <p class="resumen-item" *ngFor="let r of resumenCentros">
+            {{ r.centro.nombre }} <small>({{ r.empresa?.razon_social ?? 'Empresa desconocida' }})</small>
+          </p>
+        </ng-container>
+
+        <ng-container *ngIf="resumenProyectos.length">
+          <p class="subgrupo-titulo">Proyectos</p>
+          <p class="resumen-item" *ngFor="let r of resumenProyectos">
+            {{ r.proyecto.nombre }} <small>({{ r.empresa?.razon_social ?? 'Empresa desconocida' }})</small>
+          </p>
+        </ng-container>
+      </ng-container>
+      <ng-template #sinSuscripciones>
+        <p class="empty-sub">Sin suscripciones puntuales seleccionadas.</p>
+      </ng-template>
+    </div>
+  </div>
 </div>
 
 <div class="form-footer" style="margin-top:1.25rem">

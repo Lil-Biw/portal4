@@ -1,15 +1,16 @@
 import { Component, OnInit, inject, computed, effect, untracked } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { StatChipComponent, ChipVariant } from '../../../shared/components/stat-chip/stat-chip.component';
 import { ConsumidorContextService } from '../../../profile/consumidor-context.service';
 import { CentrosService } from '../../centros/centros.service';
 import { ProyectosService } from '../../proyectos/proyectos.service';
-import { SolicitudesService } from '../../solicitudes/solicitudes.service';
+import { SolicitudesService, Solicitud } from '../../solicitudes/solicitudes.service';
 import { DocumentosService } from '../../documentos/documentos.service';
 import { ActividadesService } from '../../actividades/actividades.service';
 import { TiposActividadService } from '../../actividades/tipos-actividad.service';
 import { NoticiasService } from '../../noticias/noticias.service';
 import { Actividad } from '../../../shared/models/actividad.model';
+import { CentroCosto } from '../../../shared/models/centro.model';
 import { SeccionNoticia } from '../../../shared/models/noticia.model';
 import { asId, calcularScoreDocumental, scoreChipVariantFn, scoreChipLabelFn, porcentajeColorFn } from '../../../shared/utils';
 
@@ -30,6 +31,7 @@ interface ResumenSolicitudes {
   templateUrl: './inicio-page.component.html',
 })
 export class InicioPageComponent implements OnInit {
+  private readonly router                = inject(Router);
   private readonly consumidorContext     = inject(ConsumidorContextService);
   protected readonly centrosService      = inject(CentrosService);
   protected readonly proyectosService    = inject(ProyectosService);
@@ -153,6 +155,29 @@ export class InicioPageComponent implements OnInit {
 
   protected abrirNoticia(url: string): void {
     window.open(url, '_blank', 'noopener,noreferrer');
+  }
+
+  protected irACentro(centro: CentroCosto): void {
+    this.consumidorContext.seleccionarCentro(centro);
+    this.router.navigate(['/mis-centros']);
+  }
+
+  protected irATarea(t: Solicitud): void {
+    this.router.navigate(['/documentos'], {
+      queryParams: {
+        tab: 'solicitudes',
+        ...(t.proyecto_id ? { proyectoId: t.proyecto_id } : {}),
+        ...(!t.proyecto_id && t.centro_costo_id ? { centroId: t.centro_costo_id } : {}),
+      },
+    });
+  }
+
+  protected irAActividades(): void {
+    this.router.navigate(['/mis-actividades']);
+  }
+
+  protected irADocumentos(): void {
+    this.router.navigate(['/documentos']);
   }
 
   protected resumenPorCentro = computed((): Map<string, ResumenSolicitudes> => {
