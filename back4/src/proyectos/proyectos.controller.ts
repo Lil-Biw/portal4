@@ -31,7 +31,7 @@ export class ProyectosController {
   findAll(
     @Param('centroId') centroId: string,
     @Query('page') page = '1',
-    @Query('limit') limit = '20',
+    @Query('limit') limit = '500',
   ) {
     return this.proyectosService.findAllByCentro(centroId, +page, +limit);
   }
@@ -128,7 +128,7 @@ export class ProyectosAdminController {
   constructor(private readonly svc: ProyectosService) {}
 
   @Get()
-  findAll(@Query('page') page = '1', @Query('limit') limit = '20', @Query('estado') estado?: string) {
+  findAll(@Query('page') page = '1', @Query('limit') limit = '500', @Query('estado') estado?: string) {
     return this.svc.findAll(+page, +limit, estado);
   }
 
@@ -147,7 +147,7 @@ export class ProyectosEmpresaController {
   findAll(
     @Param('empresaId') empresaId: string,
     @Query('page') page = '1',
-    @Query('limit') limit = '20',
+    @Query('limit') limit = '500',
   ) {
     return this.svc.findAllByCliente(empresaId, +page, +limit);
   }

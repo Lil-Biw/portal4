@@ -66,7 +66,7 @@
     </div>
     <label class="field">
       <span>Estado</span>
-      <select [(ngModel)]="selectedEstado" (ngModelChange)="onEstadoContextoChange()">
+      <select [(ngModel)]="selectedEstado">
         <option value="">Todos</option>
         <option *ngFor="let e of estadosFiltro" [value]="e.value">{{ e.label }}</option>
       </select>

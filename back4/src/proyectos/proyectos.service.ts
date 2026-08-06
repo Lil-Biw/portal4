@@ -103,7 +103,7 @@ export class ProyectosService {
     }
   }
 
-  async findAll(page = 1, limit = 20, estado?: string) {
+  async findAll(page = 1, limit = 500, estado?: string) {
     const filter = estado ? { estado } : { estado: { $ne: 'eliminado' } };
     const [data, total] = await Promise.all([
       this.proyectoModel.find(filter).populate('tipo_proyecto_id').sort({ nombre: 1 }).skip((page - 1) * limit).limit(limit).lean(),
@@ -112,7 +112,7 @@ export class ProyectosService {
     return { data: await this.adjuntarDiasRecordatorio(data), total, page, pages: Math.ceil(total / limit) };
   }
 
-  async findAllByCliente(cliente_id: string, page = 1, limit = 100) {
+  async findAllByCliente(cliente_id: string, page = 1, limit = 500) {
     const filter = {
       cliente_id: new Types.ObjectId(cliente_id),
       estado: { $ne: 'eliminado' },
@@ -124,7 +124,7 @@ export class ProyectosService {
     return { data: await this.adjuntarDiasRecordatorio(data), total, page, pages: Math.ceil(total / limit) };
   }
 
-  async findAllByCentro(centro_costo_id: string, page = 1, limit = 20) {
+  async findAllByCentro(centro_costo_id: string, page = 1, limit = 500) {
     const filter = {
       centro_costo_ids: new Types.ObjectId(centro_costo_id),
       estado: { $ne: 'eliminado' },

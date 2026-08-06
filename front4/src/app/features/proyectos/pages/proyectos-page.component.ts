@@ -310,12 +310,6 @@ export class ProyectosPageComponent implements OnInit {
     this._selectedCentroId.set('');
   }
 
-  // El backend excluye los proyectos eliminados del listado por defecto; hay que
-  // volver a pedir cuando el filtro pide explícitamente un estado (o lo limpia).
-  protected onEstadoContextoChange(): void {
-    this.service.cargar(this._selectedEstado());
-  }
-
   ngOnInit(): void {
     this.service.cargar();
     this.centrosService.cargar();

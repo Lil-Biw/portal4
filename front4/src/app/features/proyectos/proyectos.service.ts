@@ -25,13 +25,11 @@ export class ProyectosService {
     this.centrosSeleccionados.set(Array.from(set));
   }
 
-  // Admin: carga todos los proyectos (endpoint plano admin).
-  // Sin `estado`, el backend excluye los eliminados por defecto; pasar un
-  // estado explícito para filtrar por uno de los 7 estados del flujo.
-  cargar(estado?: string): void {
+  // Admin: carga todos los proyectos (endpoint plano admin). El backend excluye
+  // los eliminados por defecto; el resto de los estados se filtra client-side.
+  cargar(): void {
     this.loading.set(true);
-    const url = estado ? this.api.url(`/proyectos?estado=${estado}`) : this.api.url('/proyectos');
-    this.http.get<{ data: Proyecto[] } | Proyecto[]>(url).subscribe({
+    this.http.get<{ data: Proyecto[] } | Proyecto[]>(this.api.url('/proyectos')).subscribe({
       next: (res) => { this.proyectos.set(Array.isArray(res) ? res : res.data); this.loading.set(false); },
       error: (err) => { this.setError(err); this.loading.set(false); },
     });
