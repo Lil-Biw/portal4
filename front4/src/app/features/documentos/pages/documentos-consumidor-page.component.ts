@@ -68,9 +68,6 @@ export class DocumentosConsumidorPageComponent implements OnInit {
   protected busquedaEmpresa           = signal('');
   protected busquedaCentro            = signal('');
   protected busquedaProyecto          = signal('');
-  protected mostrarBuscadorEmpresa    = signal(false);
-  protected mostrarBuscadorCentro     = signal(false);
-  protected mostrarBuscadorProyecto   = signal(false);
   protected tabConsumidorActiva       = signal<'documentacion' | 'solicitudes'>('documentacion');
   protected tabDocConsumidor          = signal<'activos' | 'vencidos'>('activos');
   protected tabJerarquia              = signal<'todos' | 'empresa' | 'centro' | 'proyecto'>('todos');
@@ -239,6 +236,20 @@ export class DocumentosConsumidorPageComponent implements OnInit {
   protected haySolicitudesActivas = computed(() =>
     this.solicitudesService.solicitudes().some(s => s.estado !== 'aprobado')
   );
+
+  protected busquedaSolicitudActual = computed(() => {
+    const jerarquia = this.tabJerarquia();
+    if (jerarquia === 'empresa') return this.busquedaEmpresa();
+    if (jerarquia === 'centro')  return this.busquedaCentro();
+    return this.busquedaProyecto();
+  });
+
+  onBusquedaSolicitudChange(value: string): void {
+    const jerarquia = this.tabJerarquia();
+    if (jerarquia === 'empresa') this.busquedaEmpresa.set(value);
+    else if (jerarquia === 'centro') this.busquedaCentro.set(value);
+    else this.busquedaProyecto.set(value);
+  }
 
   // ─── lifecycle ────────────────────────────────────────────────────────────
 
@@ -570,26 +581,13 @@ export class DocumentosConsumidorPageComponent implements OnInit {
 
   // ─── helpers unificados para búsqueda de solicitudes ────────────────────
 
-  toggleBuscadorSolicitudes(): void {
-    if (this.tabJerarquia() === 'empresa') {
-      this.mostrarBuscadorEmpresa.set(!this.mostrarBuscadorEmpresa());
-    } else if (this.tabJerarquia() === 'centro') {
-      this.mostrarBuscadorCentro.set(!this.mostrarBuscadorCentro());
-    } else {
-      this.mostrarBuscadorProyecto.set(!this.mostrarBuscadorProyecto());
-    }
-  }
-
   limpiarBuscadorSolicitudes(): void {
     if (this.tabJerarquia() === 'empresa') {
       this.busquedaEmpresa.set('');
-      this.mostrarBuscadorEmpresa.set(false);
     } else if (this.tabJerarquia() === 'centro') {
       this.busquedaCentro.set('');
-      this.mostrarBuscadorCentro.set(false);
     } else {
       this.busquedaProyecto.set('');
-      this.mostrarBuscadorProyecto.set(false);
     }
     this.filtroTipoSolicitud.set('');
     this.filtroEstado.set('');

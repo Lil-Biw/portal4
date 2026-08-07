@@ -41,6 +41,46 @@
     }
   }
 
+  @if (tabConsumidorActiva() === 'solicitudes') {
+    <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:.5rem;padding:.75rem;margin-bottom:1rem">
+      <div style="display:flex;gap:.75rem;align-items:flex-end;margin-bottom:.75rem">
+        <label class="field" style="margin:0;flex:1">
+          <span style="font-size:.8rem;font-weight:600;color:#374151">Buscar por nombre</span>
+          <input type="text" [ngModel]="busquedaSolicitudActual()" (ngModelChange)="onBusquedaSolicitudChange($event)" placeholder="Nombre de la solicitud…" />
+        </label>
+        <label class="field" style="margin:0;min-width:170px">
+          <span style="font-size:.8rem;font-weight:600;color:#374151">Estado</span>
+          <select [ngModel]="filtroEstado()" (ngModelChange)="filtroEstado.set($event)">
+            <option value="">Todos</option>
+            <option value="pendiente">Pendiente</option>
+            <option value="revision">En revisión</option>
+            <option value="rechazado">Rechazado</option>
+            <option value="vencido">Vencido</option>
+          </select>
+        </label>
+        <button class="btn-ghost" style="font-size:.8rem;padding:.45rem .9rem;white-space:nowrap"
+          (click)="limpiarBuscadorSolicitudes()">Limpiar</button>
+      </div>
+      <p style="margin:0 0 .5rem;font-size:.8rem;font-weight:600;color:#374151">Tipo de documento</p>
+      <div style="display:flex;flex-wrap:wrap;gap:.5rem">
+        <button type="button"
+          style="font-size:.85rem;padding:.3rem .6rem;border-style:solid;border-width:1px;border-radius:.375rem;cursor:pointer"
+          [style.background]="!filtroTipoSolicitud() ? '#e0e7ff' : '#fff'"
+          [style.borderColor]="!filtroTipoSolicitud() ? '#6366f1' : '#d1d5db'"
+          [style.color]="!filtroTipoSolicitud() ? '#6366f1' : '#374151'"
+          (click)="filtroTipoSolicitud.set('')">Todos</button>
+        @for (cat of categorias; track cat) {
+          <button type="button"
+            style="font-size:.85rem;padding:.3rem .6rem;border-style:solid;border-width:1px;border-radius:.375rem;cursor:pointer"
+            [style.background]="filtroTipoSolicitud() === cat ? '#e0e7ff' : '#fff'"
+            [style.borderColor]="filtroTipoSolicitud() === cat ? '#6366f1' : '#d1d5db'"
+            [style.color]="filtroTipoSolicitud() === cat ? '#6366f1' : '#374151'"
+            (click)="filtroTipoSolicitud.set(cat)">{{ cat }}</button>
+        }
+      </div>
+    </div>
+  }
+
   <!-- ══════════════════════════════════════════════════════════════
        TARJETA A: Tabs de jerarquía + subcontexto integrado
   ══════════════════════════════════════════════════════════════ -->
@@ -352,16 +392,7 @@
             </button>
           }
         </div>
-        <div style="flex:1;display:flex;justify-content:center">
-          @if (tabConsumidorActiva() === 'solicitudes') {
-            <button class="btn-ghost" style="font-size:.8rem;padding:.4rem .9rem;display:inline-flex;align-items:center;justify-content:center;gap:.35rem" (click)="toggleBuscadorSolicitudes()">
-              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0">
-                <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-              </svg>
-              Buscar ▾
-            </button>
-          }
-        </div>
+        <div style="flex:1;display:flex;justify-content:center"></div>
       </div>
 
       <!-- Contenido -->
@@ -686,44 +717,7 @@
         @if (tabConsumidorActiva() === 'solicitudes') {
           <app-status-banner [status]="solicitudesService.status()"></app-status-banner>
 
-          @let solMostrar  = tabJerarquia() === 'empresa' ? mostrarBuscadorEmpresa() : tabJerarquia() === 'centro' ? mostrarBuscadorCentro() : mostrarBuscadorProyecto();
           @let solicitudes = tabJerarquia() === 'empresa' ? solicitudesDeEmpresa() : tabJerarquia() === 'centro' ? solicitudesDeCentro() : solicitudesDeProyecto();
-
-          @if (solMostrar) {
-            <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:.5rem;padding:.75rem;margin-bottom:.75rem">
-              <div style="display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:.75rem;align-items:flex-end">
-                <label class="field" style="margin:0">
-                  <span style="font-size:.8rem;font-weight:600;color:#374151">Buscar por nombre</span>
-                  @if (tabJerarquia() === 'empresa') {
-                    <input type="text" [ngModel]="busquedaEmpresa()" (ngModelChange)="busquedaEmpresa.set($event)" placeholder="Nombre de la solicitud…" />
-                  } @else if (tabJerarquia() === 'centro') {
-                    <input type="text" [ngModel]="busquedaCentro()" (ngModelChange)="busquedaCentro.set($event)" placeholder="Nombre de la solicitud…" />
-                  } @else {
-                    <input type="text" [ngModel]="busquedaProyecto()" (ngModelChange)="busquedaProyecto.set($event)" placeholder="Nombre de la solicitud…" />
-                  }
-                </label>
-                <label class="field" style="margin:0">
-                  <span style="font-size:.8rem;font-weight:600;color:#374151">Tipo de documento</span>
-                  <select [ngModel]="filtroTipoSolicitud()" (ngModelChange)="filtroTipoSolicitud.set($event)">
-                    <option value="">Todos</option>
-                    @for (cat of categorias; track cat) { <option [value]="cat">{{ cat }}</option> }
-                  </select>
-                </label>
-                <label class="field" style="margin:0">
-                  <span style="font-size:.8rem;font-weight:600;color:#374151">Estado</span>
-                  <select [ngModel]="filtroEstado()" (ngModelChange)="filtroEstado.set($event)">
-                    <option value="">Todos</option>
-                    <option value="pendiente">Pendiente</option>
-                    <option value="revision">En revisión</option>
-                    <option value="rechazado">Rechazado</option>
-                    <option value="vencido">Vencido</option>
-                  </select>
-                </label>
-                <button class="btn-ghost" style="font-size:.8rem;padding:.45rem .9rem;align-self:flex-end"
-                  (click)="limpiarBuscadorSolicitudes()">Limpiar</button>
-              </div>
-            </div>
-          }
 
           @if (solicitudes.length === 0) { <p class="empty">Sin solicitudes.</p> }
           @for (s of solicitudes; track s._id) {
