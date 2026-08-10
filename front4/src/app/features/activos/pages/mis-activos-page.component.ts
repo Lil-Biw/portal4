@@ -45,7 +45,7 @@ import { asId } from '../../../shared/utils';
 
     @if (activoRevisando()) {
       <div class="modal-backdrop" (click)="cerrarRevisar()">
-        <div class="modal" (click)="$event.stopPropagation()">
+        <div class="modal" [style.max-width]="anchoModalRevisar" (click)="$event.stopPropagation()">
           <app-activo-revisar-modal
             [activo]="activoRevisando()"
             [historial]="service.historialActivo()"
@@ -53,10 +53,12 @@ import { asId } from '../../../shared/utils';
             [documentosActivo]="service.documentosActivo()"
             [documentosActividad]="service.documentosActividad()"
             [loadingDocumentosActividad]="service.loadingDocumentosActividad()"
+            [imagenesActivo]="service.imagenesActivo()"
             (cerrar)="cerrarRevisar()"
             (descargarActivoDoc)="onDescargarActivoDoc($event)"
             (descargarActividadDoc)="onDescargarActividadDoc($event)"
-            (actividadAbierta)="onActividadAbierta($event)">
+            (actividadAbierta)="onActividadAbierta($event)"
+            (cargarImagenActivo)="onCargarImagenActivo($event)">
           </app-activo-revisar-modal>
         </div>
       </div>
@@ -88,7 +90,7 @@ import { asId } from '../../../shared/utils';
     .modal {
       background: #fff; border-radius: 16px;
       box-shadow: 0 20px 60px rgba(15,23,42,.18);
-      width: 100%; max-width: 700px; max-height: 90vh; overflow-y: auto; padding: 1.5rem;
+      width: 100%; max-height: 90vh; overflow-y: auto; padding: 1.5rem;
     }
   `],
 })
@@ -101,6 +103,11 @@ export class MisActivosPageComponent implements OnInit {
   protected busqueda        = signal('');
   protected busquedaVisible = signal(false);
   protected activoRevisando = signal<Activo | null>(null);
+
+  protected get anchoModalRevisar(): string {
+    const hayImagenes = this.service.documentosActivo().some(d => d.tipo_mime?.startsWith('image/'));
+    return hayImagenes ? '960px' : '700px';
+  }
 
   protected clientes = computed(() => {
     const empresa = this.ctx.empresaSeleccionada();
@@ -164,6 +171,12 @@ export class MisActivosPageComponent implements OnInit {
     const activo = this.activoRevisando();
     if (!activo) return;
     this.service.descargarDocumento(activo._id, activo.centro_costo_id, ev.docId, ev.nombreDisplay);
+  }
+
+  protected onCargarImagenActivo(ev: { docId: string }): void {
+    const activo = this.activoRevisando();
+    if (!activo) return;
+    this.service.cargarImagenActivo(activo._id, activo.centro_costo_id, ev.docId);
   }
 
   protected onDescargarActividadDoc(ev: { actividadId: string; centroId: string; docId: string; nombreDisplay?: string }): void {
