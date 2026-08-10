@@ -351,7 +351,7 @@ export interface DescargarActividadDocEvt {
     }
     .gallery-scroll {
       display: flex; flex-direction: column; gap: .65rem;
-      max-height: 60vh; overflow-y: auto; padding-right: .25rem;
+      max-height: 580px; overflow-y: auto; padding-right: .25rem;
     }
     .sec-count { font-weight: 600; color: #9ca3af; text-transform: none; letter-spacing: 0; }
 
