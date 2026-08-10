@@ -104,6 +104,28 @@ export class ActividadesService {
     return { ...a, dias_recordatorio };
   }
 
+  // Confirma que la actividad pertenece al centro y que el centro pertenece a la
+  // empresa de la ruta, antes de exponer la actividad o sus documentos — sin esto
+  // cualquier usuario autenticado podía leer/descargar actividades de otra empresa
+  // pasando su propio empresaId pero un actividadId ajeno adivinado o filtrado.
+  private async validarPertenencia(actividadId: string, centroId: string, empresaId: string): Promise<void> {
+    const [centro, actividad] = await Promise.all([
+      this.centroCostoModel.findById(centroId).select('cliente_id').lean(),
+      this.actividadModel.findById(actividadId).select('centro_costo_id').lean(),
+    ]);
+    if (!centro || String(centro.cliente_id) !== String(empresaId)) {
+      throw new NotFoundException(`Centro ${centroId} no encontrado`);
+    }
+    if (!actividad || String(actividad.centro_costo_id) !== String(centroId)) {
+      throw new NotFoundException(`Actividad ${actividadId} no encontrada`);
+    }
+  }
+
+  async findOneEnCentro(actividadId: string, centroId: string, empresaId: string): Promise<any> {
+    await this.validarPertenencia(actividadId, centroId, empresaId);
+    return this.findOne(actividadId);
+  }
+
   async findByActivo(activoId: string) {
     let oid: Types.ObjectId;
     try {
@@ -316,7 +338,8 @@ export class ActividadesService {
     return { message: 'Actividad eliminada', id };
   }
 
-  listarDocumentos(actividadId: string) {
+  async listarDocumentos(actividadId: string, centroId: string, empresaId: string) {
+    await this.validarPertenencia(actividadId, centroId, empresaId);
     return this.docsHelper.listar(actividadId);
   }
 
@@ -324,7 +347,8 @@ export class ActividadesService {
     return this.docsHelper.agregar(actividadId, input, nombreDisplay);
   }
 
-  servirDocumento(actividadId: string, docId: string) {
+  async servirDocumento(actividadId: string, docId: string, centroId: string, empresaId: string) {
+    await this.validarPertenencia(actividadId, centroId, empresaId);
     return this.docsHelper.servir(actividadId, docId);
   }
 

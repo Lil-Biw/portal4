@@ -6,6 +6,7 @@ import { CentrosService } from '../../centros/centros.service';
 import { ProyectosService } from '../../proyectos/proyectos.service';
 import { SolicitudesService, Solicitud } from '../../solicitudes/solicitudes.service';
 import { DocumentosService } from '../../documentos/documentos.service';
+import { ActivosService } from '../../activos/activos.service';
 import { ActividadesService } from '../../actividades/actividades.service';
 import { TiposActividadService } from '../../actividades/tipos-actividad.service';
 import { NoticiasService } from '../../noticias/noticias.service';
@@ -37,6 +38,7 @@ export class InicioPageComponent implements OnInit {
   protected readonly proyectosService    = inject(ProyectosService);
   protected readonly solicitudesService  = inject(SolicitudesService);
   private readonly documentosService     = inject(DocumentosService);
+  private readonly activosService        = inject(ActivosService);
   protected readonly actividadesService  = inject(ActividadesService);
   protected readonly tiposActividadService = inject(TiposActividadService);
   protected readonly noticiasService     = inject(NoticiasService);
@@ -159,6 +161,13 @@ export class InicioPageComponent implements OnInit {
 
   protected irACentro(centro: CentroCosto): void {
     this.consumidorContext.seleccionarCentro(centro);
+    const empresa = this.consumidorContext.empresaSeleccionada();
+    if (empresa) {
+      this.documentosService.cargar('centro', empresa._id, asId(centro._id));
+      this.documentosService.cargarVencidos(empresa._id, asId(centro._id));
+      this.activosService.cargarParaConsumidor(empresa._id, asId(centro._id));
+      this.proyectosService.cargarParaConsumidor(empresa._id, asId(centro._id));
+    }
     this.router.navigate(['/mis-centros']);
   }
 

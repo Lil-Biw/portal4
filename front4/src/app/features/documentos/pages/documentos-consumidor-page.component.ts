@@ -38,6 +38,33 @@ interface FilaDocTodosC {
   doc: DocBusquedaItem;
 }
 
+// Igual que en admin (documentos-admin-page.component.ts), pero sin nivel
+// empresa como criterio de desempate: en consumidor todas las filas son de
+// la misma empresa, así que no hace falta compararla.
+type OrdenTodosC = 'alfabetico' | 'nivel_empresa' | 'nivel_centro' | 'nivel_proyecto';
+
+const RANGOS_POR_MODO_C: Record<Exclude<OrdenTodosC, 'alfabetico'>, DocTipo[]> = {
+  nivel_empresa:  ['empresa', 'centro', 'proyecto'],
+  nivel_centro:   ['centro', 'proyecto', 'empresa'],
+  nivel_proyecto: ['proyecto', 'empresa', 'centro'],
+};
+
+function ordenarFilasTodosC(filas: FilaDocTodosC[], modo: OrdenTodosC): FilaDocTodosC[] {
+  const resultado = [...filas];
+  if (modo === 'alfabetico') {
+    resultado.sort((a, b) => collatorNombreC.compare(a.doc.nombre_display, b.doc.nombre_display));
+    return resultado;
+  }
+  const rango = RANGOS_POR_MODO_C[modo];
+  resultado.sort((a, b) =>
+    (rango.indexOf(a.tipo) - rango.indexOf(b.tipo)) ||
+    collatorNombreC.compare(a.centroNombre ?? '', b.centroNombre ?? '') ||
+    collatorNombreC.compare(a.proyectoNombre ?? '', b.proyectoNombre ?? '') ||
+    collatorNombreC.compare(a.doc.nombre_display, b.doc.nombre_display)
+  );
+  return resultado;
+}
+
 type UploadCtx =
   | { kind: 'archivo'; file: File; tipo: DocTipo; empresaId: string; centroId?: string; proyectoId?: string; nombreDisplay?: string; categoria?: string }
   | { kind: 'link'; linkUrl: string; tipo: DocTipo; empresaId: string; centroId?: string; proyectoId?: string; nombreDisplay?: string; categoria?: string };
@@ -71,6 +98,7 @@ export class DocumentosConsumidorPageComponent implements OnInit {
   protected tabConsumidorActiva       = signal<'documentacion' | 'solicitudes'>('documentacion');
   protected tabDocConsumidor          = signal<'activos' | 'vencidos'>('activos');
   protected tabJerarquia              = signal<'todos' | 'empresa' | 'centro' | 'proyecto'>('todos');
+  protected ordenTodosC               = signal<OrdenTodosC>('alfabetico');
 
   private busquedaTodosDebounceTimer?: ReturnType<typeof setTimeout>;
 
@@ -173,8 +201,7 @@ export class DocumentosConsumidorPageComponent implements OnInit {
         }
       }
     }
-    filas.sort((a, b) => collatorNombreC.compare(a.doc.nombre_display, b.doc.nombre_display));
-    return filas;
+    return ordenarFilasTodosC(filas, this.ordenTodosC());
   });
 
   formatFecha(fecha?: string): string {

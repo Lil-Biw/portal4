@@ -95,7 +95,7 @@ export class MisCentrosPageComponent implements OnInit, OnDestroy {
     const centro = this.consumidorContext.centroSeleccionado();
     if (!centro) return calcularScoreDocumental([]);
     const sols = this.solicitudesService.solicitudes()
-      .filter(s => s.centro_costo_id === asId(centro._id));
+      .filter(s => asId(s.centro_costo_id) === asId(centro._id));
     const docsActivos  = this.documentosService.documentosCentro().length;
     const docsVencidos = this.documentosService.documentosVencidos().length;
     return calcularScoreDocumental(sols, docsActivos, docsVencidos);

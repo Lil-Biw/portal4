@@ -27,14 +27,13 @@ export class MiFichaPageComponent {
   private readonly centrosService      = inject(CentrosService);
 
   constructor() {
+    // Centros y solicitudes ya se cargan globalmente en TopbarComponent
+    // al cambiar empresaSeleccionada — aquí solo se recarga lo que es
+    // exclusivo de esta página.
     effect(() => {
       const emp = this.consumidorContext.empresaSeleccionada();
       if (emp) {
-        untracked(() => {
-          this.centrosService.cargarPorEmpresa(emp._id);
-          this.proyectosService.cargarPorEmpresa(emp._id);
-          this.solicitudesService.cargar(emp._id);
-        });
+        untracked(() => this.proyectosService.cargarPorEmpresa(emp._id));
       }
     });
 

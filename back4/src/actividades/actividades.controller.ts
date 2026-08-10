@@ -26,8 +26,12 @@ export class ActividadesController {
   }
 
   @Get(':actividadId')
-  findOne(@Param('actividadId') actividadId: string) {
-    return this.service.findOne(actividadId);
+  findOne(
+    @Param('actividadId') actividadId: string,
+    @Param('centroId') centroId: string,
+    @Param('empresaId') empresaId: string,
+  ) {
+    return this.service.findOneEnCentro(actividadId, centroId, empresaId);
   }
 
   @Post()
@@ -54,8 +58,12 @@ export class ActividadesController {
   }
 
   @Get(':actividadId/documentos')
-  listarDocumentos(@Param('actividadId') actividadId: string) {
-    return this.service.listarDocumentos(actividadId);
+  listarDocumentos(
+    @Param('actividadId') actividadId: string,
+    @Param('centroId') centroId: string,
+    @Param('empresaId') empresaId: string,
+  ) {
+    return this.service.listarDocumentos(actividadId, centroId, empresaId);
   }
 
   @Post(':actividadId/documentos')
@@ -84,9 +92,11 @@ export class ActividadesController {
   async descargarDocumento(
     @Param('actividadId') actividadId: string,
     @Param('docId') docId: string,
+    @Param('centroId') centroId: string,
+    @Param('empresaId') empresaId: string,
     @Res() res: Response,
   ) {
-    const { buffer, tipo_mime, nombre_display } = await this.service.servirDocumento(actividadId, docId);
+    const { buffer, tipo_mime, nombre_display } = await this.service.servirDocumento(actividadId, docId, centroId, empresaId);
     sendFile(res, buffer, tipo_mime, nombre_display);
   }
 }
