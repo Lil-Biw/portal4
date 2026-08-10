@@ -1,7 +1,8 @@
-import { Component, EventEmitter, Input, Output, signal } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
-import { Activo, ActividadHistorialItem, DocActivo, DocActividad, TipoActivo, TipoActividad } from '../../../../shared/models/activo.model';
+import { Activo, ActividadHistorialItem, DocActivo, DocActividad, ImagenDocEstado, TipoActivo, TipoActividad } from '../../../../shared/models/activo.model';
 import { ActivoIconoComponent } from '../activo-icono/activo-icono.component';
+import { esImagenDoc, formatoImagen } from '../../galeria-fotos.utils';
 
 export interface DescargarActivoDocEvt  { docId: string; nombreDisplay?: string; }
 export interface DescargarActividadDocEvt {
@@ -41,85 +42,125 @@ export interface DescargarActividadDocEvt {
       </div>
     </div>
 
-    <!-- Documentos del activo -->
-    @if (mostrarDocsActivo()) {
-      <div class="seccion">
-        <p class="sec-label">Documentos del activo</p>
-        @if (!documentosActivo.length) {
-          <p class="empty-text">Este activo no tiene documentos adjuntos.</p>
-        } @else {
-          <div class="docs-list">
-            @for (doc of documentosActivo; track doc._id) {
-              <div class="doc-row">
-                <svg class="doc-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/>
-                  <path d="M14 2v6h6"/>
-                </svg>
-                <div class="doc-info">
-                  <span class="doc-nombre">{{ doc.nombre_display || doc.nombre }}</span>
-                  <span class="doc-meta">{{ doc.tipo_contenido === 'link' ? 'Link externo' : formatBytes(doc.tamano_bytes) }}</span>
-                </div>
-                @if (doc.tipo_contenido === 'link') {
-                  <button class="btn-ghost btn-sm doc-accion-btn" (click)="abrirDoc(doc.link_url)">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
-                      <path d="M15 3h6v6"/><path d="M10 14 21 3"/>
+    <div class="modal-body" [class.modal-body--split]="imagenesGaleria.length > 0">
+      <div class="main-col">
+        <!-- Documentos del activo -->
+        @if (mostrarDocsActivo()) {
+          <div class="seccion">
+            <p class="sec-label">Documentos del activo</p>
+            @if (!documentosActivo.length) {
+              <p class="empty-text">Este activo no tiene documentos adjuntos.</p>
+            } @else {
+              <div class="docs-list">
+                @for (doc of documentosActivo; track doc._id) {
+                  <div class="doc-row">
+                    <svg class="doc-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/>
+                      <path d="M14 2v6h6"/>
                     </svg>
-                    Ir a link
-                  </button>
-                } @else {
-                  <button class="btn-ghost btn-sm doc-accion-btn"
-                    (click)="descargarActivoDoc.emit({ docId: doc._id, nombreDisplay: doc.nombre_display })">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                      <polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
-                    </svg>
-                    Descargar
-                  </button>
+                    <div class="doc-info">
+                      <span class="doc-nombre">{{ doc.nombre_display || doc.nombre }}</span>
+                      <span class="doc-meta">{{ doc.tipo_contenido === 'link' ? 'Link externo' : formatBytes(doc.tamano_bytes) }}</span>
+                    </div>
+                    @if (doc.tipo_contenido === 'link') {
+                      <button class="btn-ghost btn-sm doc-accion-btn" (click)="abrirDoc(doc.link_url)">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+                          <path d="M15 3h6v6"/><path d="M10 14 21 3"/>
+                        </svg>
+                        Ir a link
+                      </button>
+                    } @else {
+                      <button class="btn-ghost btn-sm doc-accion-btn"
+                        (click)="descargarActivoDoc.emit({ docId: doc._id, nombreDisplay: doc.nombre_display })">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                          <polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+                        </svg>
+                        Descargar
+                      </button>
+                    }
+                  </div>
                 }
               </div>
             }
           </div>
         }
-      </div>
-    }
 
-    <!-- Descripción -->
-    @if (activo?.descripcion) {
-      <div class="seccion">
-        <p class="sec-label">Descripción</p>
-        <p class="descripcion-texto">{{ activo!.descripcion }}</p>
-      </div>
-    }
+        <!-- Descripción -->
+        @if (activo?.descripcion) {
+          <div class="seccion">
+            <p class="sec-label">Descripción</p>
+            <p class="descripcion-texto">{{ activo!.descripcion }}</p>
+          </div>
+        }
 
-    <!-- Historial de actividades -->
-    <div class="seccion">
-      <p class="sec-label">Historial de actividades</p>
-      @if (loadingHistorial) {
-        <p class="empty-text">Cargando historial...</p>
-      } @else if (!historial.length) {
-        <p class="empty-text">Este activo no ha participado en ninguna actividad.</p>
-      } @else {
-        <div class="historial-list">
-          @for (item of historial; track item._id) {
-            <div class="hist-card" role="button" tabindex="0"
-              (click)="abrirActividad(item)" (keyup.enter)="abrirActividad(item)">
-              <div class="hist-card-header">
-                <span class="hist-fecha">{{ item.fecha | date:'dd/MM/yyyy' }}</span>
-                <div class="hist-nombre-wrap">
-                  <span class="hist-nombre">{{ item.nombre }}</span>
-                  @if (item.descripcion) {
-                    <span class="hist-desc">{{ item.descripcion }}</span>
-                  }
+        <!-- Historial de actividades -->
+        <div class="seccion">
+          <p class="sec-label">Historial de actividades</p>
+          @if (loadingHistorial) {
+            <p class="empty-text">Cargando historial...</p>
+          } @else if (!historial.length) {
+            <p class="empty-text">Este activo no ha participado en ninguna actividad.</p>
+          } @else {
+            <div class="historial-list">
+              @for (item of historial; track item._id) {
+                <div class="hist-card" role="button" tabindex="0"
+                  (click)="abrirActividad(item)" (keyup.enter)="abrirActividad(item)">
+                  <div class="hist-card-header">
+                    <span class="hist-fecha">{{ item.fecha | date:'dd/MM/yyyy' }}</span>
+                    <div class="hist-nombre-wrap">
+                      <span class="hist-nombre">{{ item.nombre }}</span>
+                      @if (item.descripcion) {
+                        <span class="hist-desc">{{ item.descripcion }}</span>
+                      }
+                    </div>
+                    <span class="hist-tipo"
+                      [style.color]="tipoActividadColor(item)"
+                      [style.background]="tipoActividadColor(item) + '18'">
+                      {{ tipoActividadNombre(item) }}
+                    </span>
+                  </div>
                 </div>
-                <span class="hist-tipo"
-                  [style.color]="tipoActividadColor(item)"
-                  [style.background]="tipoActividadColor(item) + '18'">
-                  {{ tipoActividadNombre(item) }}
-                </span>
-              </div>
+              }
             </div>
           }
+        </div>
+      </div>
+
+      @if (imagenesGaleria.length > 0) {
+        <div class="gallery-col">
+          <p class="sec-label">Galería de fotos <span class="sec-count">({{ imagenesGaleria.length }})</span></p>
+          <div class="gallery-scroll">
+            @for (doc of imagenesGaleria; track doc._id) {
+              <div class="thumb" role="button" tabindex="0"
+                (click)="abrirImagenCompleta(doc._id)" (keyup.enter)="abrirImagenCompleta(doc._id)">
+                @switch (imagenEstado(doc._id)) {
+                  @case ('lista') {
+                    <img class="thumb-img" [src]="imagenUrl(doc._id)" [alt]="doc.nombre_display || doc.nombre" />
+                  }
+                  @case ('error') {
+                    <div class="thumb-fallback thumb-fallback--error">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/>
+                        <path d="M14 2v6h6"/>
+                      </svg>
+                    </div>
+                  }
+                  @default {
+                    <div class="thumb-fallback thumb-fallback--loading">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/>
+                        <path d="M14 2v6h6"/>
+                      </svg>
+                    </div>
+                  }
+                }
+                <span class="fmt-badge">{{ formatoImagen(doc.tipo_mime) }}</span>
+                <div class="thumb-caption">{{ doc.nombre_display || doc.nombre }}</div>
+              </div>
+            }
+          </div>
         </div>
       }
     </div>
@@ -298,20 +339,59 @@ export interface DescargarActividadDocEvt {
       background: #fff; border-radius: 16px; box-shadow: 0 20px 60px rgba(15,23,42,.25);
       width: 100%; max-width: 600px; max-height: 90vh; overflow-y: auto; padding: 1.5rem;
     }
+
+    .modal-body { display: grid; grid-template-columns: 1fr; column-gap: 1.25rem; }
+    .modal-body--split { grid-template-columns: 1fr 220px; }
+    .main-col { min-width: 0; }
+
+    .gallery-col {
+      border-left: 1px solid rgba(34,33,33,.08);
+      padding-left: 1.25rem;
+      display: flex; flex-direction: column; min-width: 0;
+    }
+    .gallery-scroll {
+      display: flex; flex-direction: column; gap: .65rem;
+      max-height: 60vh; overflow-y: auto; padding-right: .25rem;
+    }
+    .sec-count { font-weight: 600; color: #9ca3af; text-transform: none; letter-spacing: 0; }
+
+    .thumb {
+      position: relative; border-radius: 10px; overflow: hidden;
+      border: 1px solid rgba(34,33,33,.08); cursor: pointer; background: #f9fafb;
+    }
+    .thumb-img { display: block; width: 100%; aspect-ratio: 4 / 3; object-fit: cover; }
+    .thumb-fallback {
+      width: 100%; aspect-ratio: 4 / 3; display: flex; align-items: center; justify-content: center;
+      background: #f3f4f6; color: #9ca3af;
+    }
+    .thumb-fallback--loading { animation: thumb-pulse 1.2s ease-in-out infinite; }
+    .thumb-fallback--error { color: #d1d5db; }
+    @keyframes thumb-pulse { 0%, 100% { opacity: .5; } 50% { opacity: 1; } }
+    .fmt-badge {
+      position: absolute; top: .35rem; right: .35rem;
+      font-size: .62rem; font-weight: 700; letter-spacing: .02em; color: #fff;
+      background: rgba(15,23,42,.65); padding: .12rem .4rem; border-radius: 5px;
+    }
+    .thumb-caption {
+      padding: .35rem .5rem .45rem; font-size: .72rem; color: #6b7280;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
   `],
 })
-export class ActivoRevisarModalComponent {
+export class ActivoRevisarModalComponent implements OnChanges {
   @Input() activo: Activo | null = null;
   @Input() historial: ActividadHistorialItem[] = [];
   @Input() loadingHistorial = false;
   @Input() documentosActivo: DocActivo[] = [];
   @Input() documentosActividad: DocActividad[] = [];
   @Input() loadingDocumentosActividad = false;
+  @Input() imagenesActivo: Map<string, ImagenDocEstado> = new Map();
 
   @Output() cerrar             = new EventEmitter<void>();
   @Output() descargarActivoDoc = new EventEmitter<DescargarActivoDocEvt>();
   @Output() descargarActividadDoc = new EventEmitter<DescargarActividadDocEvt>();
   @Output() actividadAbierta   = new EventEmitter<ActividadHistorialItem>();
+  @Output() cargarImagenActivo = new EventEmitter<{ docId: string }>();
 
   // Abierta por defecto: este modal siempre muestra el historial de
   // actividades del activo, así que sus documentos deben verse de entrada.
@@ -319,10 +399,38 @@ export class ActivoRevisarModalComponent {
   protected mostrarDocsActividad  = signal(false);
   protected actividadSeleccionada = signal<ActividadHistorialItem | null>(null);
 
+  protected readonly formatoImagen = formatoImagen;
+
   get tipoActivo(): TipoActivo | null {
     if (!this.activo) return null;
     if (typeof this.activo.tipo_activo_id === 'object') return this.activo.tipo_activo_id as TipoActivo;
     return null;
+  }
+
+  get imagenesGaleria(): DocActivo[] {
+    return this.documentosActivo.filter(esImagenDoc);
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (!changes['documentosActivo'] && !changes['imagenesActivo']) return;
+    for (const doc of this.imagenesGaleria) {
+      if (!this.imagenesActivo.has(doc._id)) {
+        this.cargarImagenActivo.emit({ docId: doc._id });
+      }
+    }
+  }
+
+  protected imagenEstado(docId: string): 'cargando' | 'lista' | 'error' {
+    return this.imagenesActivo.get(docId)?.estado ?? 'cargando';
+  }
+
+  protected imagenUrl(docId: string): string {
+    return this.imagenesActivo.get(docId)?.url ?? '';
+  }
+
+  protected abrirImagenCompleta(docId: string): void {
+    const url = this.imagenUrl(docId);
+    if (url) window.open(url, '_blank');
   }
 
   protected abrirActividad(item: ActividadHistorialItem): void {
