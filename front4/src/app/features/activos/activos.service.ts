@@ -3,7 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Subscription, forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { ApiService } from '../../core/services/api.service';
-import { Activo, ActividadHistorialItem, CreateActivoDto, DocActivo, DocActividad, UpdateActivoDto } from '../../shared/models/activo.model';
+import { Activo, ActividadHistorialItem, CreateActivoDto, DocActivo, DocActividad, ImagenDocEstado, UpdateActivoDto } from '../../shared/models/activo.model';
 import { Status } from '../../shared/models/status.model';
 import { CentrosService } from '../centros/centros.service';
 import { asId } from '../../shared/utils';
@@ -24,6 +24,7 @@ export class ActivosService {
   readonly documentosActivo  = signal<DocActivo[]>([]);
   readonly documentosActividad        = signal<DocActividad[]>([]);
   readonly loadingDocumentosActividad = signal(false);
+  readonly imagenesActivo = signal<Map<string, ImagenDocEstado>>(new Map());
   private historialSub: Subscription | null = null;
 
   cargar(centroCostoId?: string): void {
@@ -195,6 +196,32 @@ export class ActivosService {
     this.triggerDownload(url, nombreDisplay || docId);
   }
 
+  cargarImagenActivo(activoId: string, centroId: string, docId: string): void {
+    if (this.imagenesActivo().has(docId)) return;
+    const { empresaId } = this.resolverIds(centroId);
+    if (!empresaId) return;
+    this.imagenesActivo.update(map => new Map(map).set(docId, { url: '', estado: 'cargando' }));
+    const url = this.api.url(
+      `/empresas/${empresaId}/centros/${centroId}/activos/${activoId}/documentos/${docId}`
+    );
+    this.http.get(url, { responseType: 'blob' }).subscribe({
+      next: (blob) => {
+        const objectUrl = URL.createObjectURL(blob);
+        this.imagenesActivo.update(map => new Map(map).set(docId, { url: objectUrl, estado: 'lista' }));
+      },
+      error: () => {
+        this.imagenesActivo.update(map => new Map(map).set(docId, { url: '', estado: 'error' }));
+      },
+    });
+  }
+
+  resetImagenesActivo(): void {
+    this.imagenesActivo().forEach((img) => {
+      if (img.estado === 'lista' && img.url) URL.revokeObjectURL(img.url);
+    });
+    this.imagenesActivo.set(new Map());
+  }
+
   listarDocumentosActividad(actividadId: string, centroId: string): void {
     const { empresaId } = this.resolverIds(centroId);
     if (!empresaId) { this.documentosActividad.set([]); return; }
@@ -241,6 +268,7 @@ export class ActivosService {
     this.documentosActivo.set([]);
     this.documentosActividad.set([]);
     this.loadingDocumentosActividad.set(false);
+    this.resetImagenesActivo();
   }
 
   private triggerDownload(url: string, fileName: string): void {
