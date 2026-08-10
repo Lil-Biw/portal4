@@ -358,6 +358,22 @@ export class ActivosPageComponent implements OnInit {
     this.service.descargarDocumentoActividad(ev.actividadId, ev.centroId, ev.docId, ev.nombreDisplay);
   }
 
+  protected onCargarImagenActivo(ev: { docId: string }): void {
+    const activo = this.activoRevisando();
+    if (!activo) return;
+    this.service.cargarImagenActivo(activo._id, activo.centro_costo_id, ev.docId);
+  }
+
+  protected hayImagenesGaleria(): boolean {
+    return this.service.documentosActivo().some(d => d.tipo_mime?.startsWith('image/'));
+  }
+
+  protected get modalAncho(): string {
+    if (this.modal() === 'tipos') return '1000px';
+    if (this.modal() === 'revisar' && this.hayImagenesGaleria()) return '1120px';
+    return '860px';
+  }
+
   protected crear(dto: CreateActivoDto): void {
     this.service.crear(dto, (nuevo) => {
       if (this.docsPendientes.length === 0) return;

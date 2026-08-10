@@ -93,7 +93,7 @@
 <!-- Modales -->
 @if (modal() !== null) {
   <div class="modal-backdrop" (click)="cerrar()">
-    <div class="modal" [style.max-width]="modal() === 'tipos' ? '1000px' : '860px'" (click)="$event.stopPropagation()">
+    <div class="modal" [style.max-width]="modalAncho" (click)="$event.stopPropagation()">
 
       <!-- Crear activo -->
       @if (modal() === 'crear') {
@@ -174,10 +174,12 @@
           [documentosActivo]="service.documentosActivo()"
           [documentosActividad]="service.documentosActividad()"
           [loadingDocumentosActividad]="service.loadingDocumentosActividad()"
+          [imagenesActivo]="service.imagenesActivo()"
           (cerrar)="cerrar()"
           (descargarActivoDoc)="onDescargarActivoDoc($event)"
           (descargarActividadDoc)="onDescargarActividadDoc($event)"
-          (actividadAbierta)="onActividadAbierta($event)">
+          (actividadAbierta)="onActividadAbierta($event)"
+          (cargarImagenActivo)="onCargarImagenActivo($event)">
         </app-activo-revisar-modal>
       }
 
