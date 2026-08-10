@@ -50,7 +50,7 @@ export class ClientesController {
   @Get()
   async findAll(
     @Query('page') page = '1',
-    @Query('limit') limit = '20',
+    @Query('limit') limit = '30',
     @Req() req: Request,
   ) {
     const user = (req as any).user as JwtUser;

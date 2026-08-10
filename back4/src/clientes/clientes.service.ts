@@ -43,7 +43,7 @@ export class ClientesService {
     return cliente.save();
   }
 
-  async findAll(page = 1, limit = 20, soloActivos = true) {
+  async findAll(page = 1, limit = 30, soloActivos = true) {
     const filter = soloActivos ? { activo: true } : {};
     const [data, total] = await Promise.all([
       this.clienteModel.find(filter).select('-logo.contenido').sort({ razon_social: 1 }).skip((page - 1) * limit).limit(limit).lean(),
