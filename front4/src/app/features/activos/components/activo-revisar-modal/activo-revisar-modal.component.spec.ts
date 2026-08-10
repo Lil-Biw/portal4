@@ -56,6 +56,20 @@ describe('ActivoRevisarModalComponent — galería de fotos', () => {
     expect(emitidos).toEqual([]);
   });
 
+  it('no lista las imágenes en "Documentos del activo" — ya se muestran en la galería', () => {
+    const fixture = TestBed.createComponent(ActivoRevisarModalComponent);
+    fixture.componentRef.setInput('documentosActivo', [
+      docActivo({ _id: 'd1', nombre_display: 'foto.png', tipo_mime: 'image/png' }),
+      docActivo({ _id: 'd2', nombre_display: 'manual.pdf', tipo_mime: 'application/pdf' }),
+    ]);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    const filas = el.querySelectorAll('.doc-row');
+    expect(filas.length).toBe(1);
+    expect(el.textContent).toContain('manual.pdf');
+    expect(el.querySelector('.folder-count')?.textContent?.trim()).toBe('1');
+  });
+
   it('al hacer click en una miniatura lista, abre su url en una pestaña nueva', () => {
     const fixture = TestBed.createComponent(ActivoRevisarModalComponent);
     const mapa = new Map<string, ImagenDocEstado>([['d1', { url: 'blob:abc', estado: 'lista' }]]);

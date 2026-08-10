@@ -36,7 +36,7 @@ export interface DescargarActividadDocEvt {
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7Z"/>
           </svg>
-          <span class="folder-count">{{ documentosActivo.length }}</span>
+          <span class="folder-count">{{ documentosNoImagen.length }}</span>
         </button>
         <button class="modal-close" (click)="cerrar.emit()">&#x2715;</button>
       </div>
@@ -48,11 +48,11 @@ export interface DescargarActividadDocEvt {
         @if (mostrarDocsActivo()) {
           <div class="seccion">
             <p class="sec-label">Documentos del activo</p>
-            @if (!documentosActivo.length) {
+            @if (!documentosNoImagen.length) {
               <p class="empty-text">Este activo no tiene documentos adjuntos.</p>
             } @else {
               <div class="docs-list">
-                @for (doc of documentosActivo; track doc._id) {
+                @for (doc of documentosNoImagen; track doc._id) {
                   <div class="doc-row">
                     <svg class="doc-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                       <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/>
@@ -409,6 +409,10 @@ export class ActivoRevisarModalComponent implements OnChanges {
 
   get imagenesGaleria(): DocActivo[] {
     return this.documentosActivo.filter(esImagenDoc);
+  }
+
+  get documentosNoImagen(): DocActivo[] {
+    return this.documentosActivo.filter(doc => !esImagenDoc(doc));
   }
 
   ngOnChanges(changes: SimpleChanges): void {
