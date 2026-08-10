@@ -16,3 +16,6 @@ Thumbs.db
 # Deploy local
 deploy.sh
 front4/docs/
+
+# Superpowers subagent-driven-development scratch
+.superpowers/
