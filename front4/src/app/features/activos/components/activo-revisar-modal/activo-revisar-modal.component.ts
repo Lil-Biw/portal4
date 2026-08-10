@@ -356,7 +356,7 @@ export interface DescargarActividadDocEvt {
     .sec-count { font-weight: 600; color: #9ca3af; text-transform: none; letter-spacing: 0; }
 
     .thumb {
-      position: relative; border-radius: 10px; overflow: hidden;
+      position: relative; border-radius: 10px; overflow: hidden; flex-shrink: 0;
       border: 1px solid rgba(34,33,33,.08); cursor: pointer; background: #f9fafb;
     }
     .thumb-img { display: block; width: 100%; aspect-ratio: 4 / 3; object-fit: cover; }
