@@ -13,6 +13,7 @@ import { ActivoRevisarModalComponent } from '../components/activo-revisar-modal/
 import { Activo, ActividadHistorialItem, CreateActivoDto, DocActivo, TipoActivo } from '../../../shared/models/activo.model';
 import { asId } from '../../../shared/utils';
 import { ICONOS_ACTIVO } from '../activos-icons';
+import { esImagenDoc } from '../galeria-fotos.utils';
 
 type ModalMode = 'crear' | 'editar' | 'buscar' | 'tipos' | 'revisar' | null;
 
@@ -365,7 +366,7 @@ export class ActivosPageComponent implements OnInit {
   }
 
   protected hayImagenesGaleria(): boolean {
-    return this.service.documentosActivo().some(d => d.tipo_mime?.startsWith('image/'));
+    return this.service.documentosActivo().some(esImagenDoc);
   }
 
   protected get modalAncho(): string {

@@ -8,6 +8,7 @@ import { ActivosListComponent } from '../components/activos-list/activos-list.co
 import { ActivoRevisarModalComponent } from '../components/activo-revisar-modal/activo-revisar-modal.component';
 import { Activo, ActividadHistorialItem } from '../../../shared/models/activo.model';
 import { asId } from '../../../shared/utils';
+import { esImagenDoc } from '../galeria-fotos.utils';
 
 @Component({
   selector: 'app-mis-activos-page',
@@ -105,7 +106,7 @@ export class MisActivosPageComponent implements OnInit {
   protected activoRevisando = signal<Activo | null>(null);
 
   protected get anchoModalRevisar(): string {
-    const hayImagenes = this.service.documentosActivo().some(d => d.tipo_mime?.startsWith('image/'));
+    const hayImagenes = this.service.documentosActivo().some(esImagenDoc);
     return hayImagenes ? '960px' : '700px';
   }
 

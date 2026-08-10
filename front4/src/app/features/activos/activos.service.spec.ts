@@ -55,6 +55,23 @@ describe('ActivosService.cargarImagenActivo', () => {
     service.cargarImagenActivo('activo1', 'centro1', 'doc1');
     httpMock.expectNone(() => true);
   });
+
+  it('cancela la petición en vuelo al resetear, evitando que una respuesta tardía reaparezca en el mapa', () => {
+    service.cargarImagenActivo('activo1', 'centro1', 'doc1');
+    const req = httpMock.expectOne(r => r.url.includes('/documentos/doc1'));
+
+    // El reset ocurre ANTES de que la petición HTTP resuelva.
+    service.resetImagenesActivo();
+    expect(service.imagenesActivo().size).toBe(0);
+
+    // La suscripción quedó cancelada por el reset: Angular ya no permite
+    // resolverla, lo que demuestra que un callback tardío no puede reinsertar
+    // la entrada en el mapa (antes del fix, `flush()` aquí habría revivido
+    // la entrada 'doc1' con estado 'lista' o 'error').
+    expect(req.cancelled).toBe(true);
+    expect(service.imagenesActivo().has('doc1')).toBe(false);
+    expect(service.imagenesActivo().size).toBe(0);
+  });
 });
 
 describe('ActivosService.resetDocumentos — limpia imágenes', () => {

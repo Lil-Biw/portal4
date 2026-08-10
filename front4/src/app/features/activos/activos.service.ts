@@ -26,6 +26,7 @@ export class ActivosService {
   readonly loadingDocumentosActividad = signal(false);
   readonly imagenesActivo = signal<Map<string, ImagenDocEstado>>(new Map());
   private historialSub: Subscription | null = null;
+  private imagenSubs = new Map<string, Subscription>();
 
   cargar(centroCostoId?: string): void {
     this.loading.set(true);
@@ -204,18 +205,23 @@ export class ActivosService {
     const url = this.api.url(
       `/empresas/${empresaId}/centros/${centroId}/activos/${activoId}/documentos/${docId}`
     );
-    this.http.get(url, { responseType: 'blob' }).subscribe({
+    this.imagenSubs.get(docId)?.unsubscribe();
+    this.imagenSubs.set(docId, this.http.get(url, { responseType: 'blob' }).subscribe({
       next: (blob) => {
         const objectUrl = URL.createObjectURL(blob);
         this.imagenesActivo.update(map => new Map(map).set(docId, { url: objectUrl, estado: 'lista' }));
+        this.imagenSubs.delete(docId);
       },
       error: () => {
         this.imagenesActivo.update(map => new Map(map).set(docId, { url: '', estado: 'error' }));
+        this.imagenSubs.delete(docId);
       },
-    });
+    }));
   }
 
   resetImagenesActivo(): void {
+    this.imagenSubs.forEach(sub => sub.unsubscribe());
+    this.imagenSubs.clear();
     this.imagenesActivo().forEach((img) => {
       if (img.estado === 'lista' && img.url) URL.revokeObjectURL(img.url);
     });
