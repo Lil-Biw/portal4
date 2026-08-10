@@ -8,6 +8,11 @@ export interface DocActivo {
   link_url?: string;
 }
 
+export interface ImagenDocEstado {
+  url: string;
+  estado: 'cargando' | 'lista' | 'error';
+}
+
 export interface TipoActivo {
   _id: string;
   nombre: string;
