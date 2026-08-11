@@ -14,8 +14,7 @@
     "test:desuscripcion": "npx -y ts-node scripts/test-desuscripcion-admin.ts",
     "test:recuperar-password": "npx -y ts-node scripts/test-recuperar-password.ts",
     "test:creado-por-actividad": "npx -y ts-node scripts/test-creado-por-actividad.ts",
-    "test:lider-actividad": "npx -y ts-node scripts/test-lider-actividad.ts",
-    "test:parse-object-id-pipe": "npx -y ts-node scripts/test-parse-object-id-pipe.ts"
+    "test:lider-actividad": "npx -y ts-node scripts/test-lider-actividad.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1079.0",
