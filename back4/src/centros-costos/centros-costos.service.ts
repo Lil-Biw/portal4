@@ -116,6 +116,36 @@ export class CentrosCostosService {
     return centro;
   }
 
+  async subirFoto(id: string, archivo: { originalname: string; buffer: Buffer; mimetype: string }) {
+    const centro = await this.centroCostoModel.findById(id).lean();
+    if (!centro) throw new NotFoundException(`Centro de costos ${id} no encontrado`);
+    return this.centroCostoModel
+      .findByIdAndUpdate(
+        id,
+        { foto: { contenido: archivo.buffer, tipo_mime: archivo.mimetype, nombre: archivo.originalname } },
+        { new: true, runValidators: false },
+      )
+      .select('-foto.contenido')
+      .lean();
+  }
+
+  async servirFoto(id: string): Promise<{ buffer: Buffer; tipo_mime: string; nombre: string }> {
+    const centro = await this.centroCostoModel.findById(id).select('foto').lean();
+    if (!centro) throw new NotFoundException(`Centro de costos ${id} no encontrado`);
+    if (!centro.foto?.contenido) throw new NotFoundException('Este centro no tiene foto');
+    const raw = centro.foto.contenido as unknown;
+    let buffer: Buffer;
+    if (Buffer.isBuffer(raw)) {
+      buffer = raw;
+    } else if (raw && typeof raw === 'object' && 'buffer' in (raw as object)) {
+      const buf = (raw as { buffer: Buffer | ArrayBuffer }).buffer;
+      buffer = Buffer.isBuffer(buf) ? buf : Buffer.from(buf);
+    } else {
+      buffer = Buffer.from(raw as ArrayBuffer);
+    }
+    return { buffer, tipo_mime: centro.foto.tipo_mime, nombre: centro.foto.nombre };
+  }
+
   async agregarDocumento(id: string, input: DocumentoInput, nombreDisplay?: string, categoria?: string, usuarioId?: string, rolUploader?: string) {
     const result = await this.docsHelper.agregar(id, input, nombreDisplay, categoria, usuarioId);
     if (rolUploader === 'usuario') {
