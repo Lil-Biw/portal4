@@ -251,7 +251,8 @@ export class ActivosPageComponent implements OnInit {
         this.modal() !== null &&
         this.modal() !== 'buscar' &&
         this.modal() !== 'revisar' &&
-        !this.subiendoDocs
+        !this.subiendoDocs &&
+        this.docOperacionesEnCurso() === 0
       ) {
         this.cerrar();
       }
@@ -415,13 +416,22 @@ export class ActivosPageComponent implements OnInit {
     this.docsPendientes = this.docsPendientes.filter(d => d.localId !== localId);
   }
 
-  protected subiendoCards    = signal<{ id: string; nombre: string }[]>([]);
-  protected eliminandoDocIds = signal<Set<string>>(new Set());
+  protected subiendoCards         = signal<{ id: string; nombre: string }[]>([]);
+  protected eliminandoDocIds      = signal<Set<string>>(new Set());
+  // Contador de operaciones de documentos en curso: evita que el effect() de
+  // auto-cierre del modal (que se dispara con status 'ok') cierre el modal de
+  // edición mientras hay una subida/eliminación/renombrado en vuelo.
+  protected docOperacionesEnCurso = signal(0);
 
   protected onDocRenombrado(ev: { id: string; nuevoNombre: string }): void {
     const activo = this.activoEditando;
     if (!activo) return;
+    this.docOperacionesEnCurso.update(n => n + 1);
     this.service.renombrarDocumento(activo._id, activo.centro_costo_id, ev.id, ev.nuevoNombre);
+    // renombrarDocumento no expone onSuccess/onError: se refresca sola al éxito.
+    // Diferimos el decremento a un macrotask para sobrevivir al flush síncrono
+    // del effect que ocurre justo después de status.set({type:'ok'}).
+    setTimeout(() => this.docOperacionesEnCurso.update(n => n - 1), 0);
   }
 
   protected onDocSubido(doc: DocPendiente): void {
@@ -429,7 +439,11 @@ export class ActivosPageComponent implements OnInit {
     if (!activo) return;
     const tempId = `subiendo-${Date.now()}-${Math.random().toString(36).slice(2)}`;
     this.subiendoCards.update(list => [...list, { id: tempId, nombre: doc.nombre }]);
-    const limpiar = () => this.subiendoCards.update(list => list.filter(c => c.id !== tempId));
+    this.docOperacionesEnCurso.update(n => n + 1);
+    const limpiar = () => {
+      this.subiendoCards.update(list => list.filter(c => c.id !== tempId));
+      this.docOperacionesEnCurso.update(n => n - 1);
+    };
     if (doc.linkUrl) {
       this.service.subirDocumentoLink(activo._id, activo.centro_costo_id, doc.linkUrl, doc.nombre, limpiar, limpiar);
     } else if (doc.file) {
@@ -441,11 +455,15 @@ export class ActivosPageComponent implements OnInit {
     const activo = this.activoEditando;
     if (!activo) return;
     this.eliminandoDocIds.update(set => new Set(set).add(docId));
-    const limpiar = () => this.eliminandoDocIds.update(set => {
-      const copia = new Set(set);
-      copia.delete(docId);
-      return copia;
-    });
+    this.docOperacionesEnCurso.update(n => n + 1);
+    const limpiar = () => {
+      this.eliminandoDocIds.update(set => {
+        const copia = new Set(set);
+        copia.delete(docId);
+        return copia;
+      });
+      this.docOperacionesEnCurso.update(n => n - 1);
+    };
     this.service.eliminarDocumento(activo._id, activo.centro_costo_id, docId, limpiar, limpiar);
   }
 
