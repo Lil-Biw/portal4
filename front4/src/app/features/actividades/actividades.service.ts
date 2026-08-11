@@ -120,10 +120,10 @@ export class ActividadesService {
   }
 
   subirDocumento(id: string, archivo: File, nombreDisplay?: string, onSuccess?: () => void, onError?: () => void): void {
-    if (this.saving()) return;
+    if (this.saving()) { onError?.(); return; }
     const centroId = this.actividades().find(a => a._id === id)?.centro_costo_id;
     const empresaId = centroId ? this.getEmpresaId(centroId) : undefined;
-    if (!empresaId || !centroId) { this.setError({ error: { message: 'Centro no encontrado' } }); return; }
+    if (!empresaId || !centroId) { this.setError({ error: { message: 'Centro no encontrado' } }); onError?.(); return; }
     this.saving.set(true);
     const form = new FormData();
     form.append('archivo', archivo);
@@ -143,10 +143,10 @@ export class ActividadesService {
   }
 
   subirDocumentoLink(id: string, linkUrl: string, nombreDisplay?: string, onSuccess?: () => void, onError?: () => void): void {
-    if (this.saving()) return;
+    if (this.saving()) { onError?.(); return; }
     const centroId = this.actividades().find(a => a._id === id)?.centro_costo_id;
     const empresaId = centroId ? this.getEmpresaId(centroId) : undefined;
-    if (!empresaId || !centroId) { this.setError({ error: { message: 'Centro no encontrado' } }); return; }
+    if (!empresaId || !centroId) { this.setError({ error: { message: 'Centro no encontrado' } }); onError?.(); return; }
     this.saving.set(true);
     const form = new FormData();
     form.append('link_url', linkUrl);
@@ -168,7 +168,7 @@ export class ActividadesService {
   eliminarDocumento(actividadId: string, docId: string, onSuccess?: () => void, onError?: () => void): void {
     const centroId = this.actividades().find(a => a._id === actividadId)?.centro_costo_id;
     const empresaId = centroId ? this.getEmpresaId(centroId) : undefined;
-    if (!empresaId || !centroId) { this.setError({ error: { message: 'Centro no encontrado' } }); return; }
+    if (!empresaId || !centroId) { this.setError({ error: { message: 'Centro no encontrado' } }); onError?.(); return; }
     this.http.delete(
       this.api.url(`/empresas/${empresaId}/centros/${centroId}/actividades/${actividadId}/documentos/${docId}`)
     ).subscribe({

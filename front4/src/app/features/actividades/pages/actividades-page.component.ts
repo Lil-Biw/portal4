@@ -663,6 +663,8 @@ export class ActividadesPageComponent implements OnInit {
     this.editingId.set(null);
     this.form.set(emptyForm(fecha));
     this.docsPendientes = [];
+    this.subiendoCards.set([]);
+    this.eliminandoDocIds.set(new Set());
     this.resetNotif();
     this.paso.set(1);
     this.pasoMaxAlcanzado.set(1);
@@ -677,6 +679,8 @@ export class ActividadesPageComponent implements OnInit {
   abrirEditar(a: Actividad): void {
     this.editingId.set(a._id);
     this.filtroActivo.set('');
+    this.subiendoCards.set([]);
+    this.eliminandoDocIds.set(new Set());
     const centroId = asId(a.centro_costo_id);
     const centro = this.centrosService.centros().find(c => asId(c._id) === centroId);
     this.form.set({
