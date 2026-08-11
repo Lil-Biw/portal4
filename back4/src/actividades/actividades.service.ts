@@ -356,6 +356,10 @@ export class ActividadesService {
     return this.docsHelper.eliminar(actividadId, docId);
   }
 
+  renombrarDocumento(actividadId: string, docId: string, nombreDisplay: string) {
+    return this.docsHelper.renombrar(actividadId, docId, nombreDisplay);
+  }
+
   async enviarRecordatoriosVencimiento(): Promise<{ evaluados: number; notificados: number }> {
     const hoyUtc = hoyUtcChile();
     // Las actividades no tienen estado ni auto-cierre, así que el bucket

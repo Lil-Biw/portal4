@@ -1,5 +1,5 @@
 import {
-  Controller, Get, Post, Put, Delete,
+  Controller, Get, Post, Put, Patch, Delete,
   Param, Body, Query, Req, Res, UseGuards,
   UseInterceptors, UploadedFile, BadRequestException,
 } from '@nestjs/common';
@@ -86,6 +86,17 @@ export class ActividadesController {
     @Param('docId') docId: string,
   ) {
     return this.service.eliminarDocumento(actividadId, docId);
+  }
+
+  @Patch(':actividadId/documentos/:docId')
+  @Roles('super_admin', 'admin_smartclarity')
+  renombrarDocumento(
+    @Param('actividadId') actividadId: string,
+    @Param('docId') docId: string,
+    @Body('nombre_display') nombreDisplay: string,
+  ) {
+    if (!nombreDisplay?.trim()) throw new BadRequestException('Debes indicar un nombre');
+    return this.service.renombrarDocumento(actividadId, docId, nombreDisplay.trim());
   }
 
   @Get(':actividadId/documentos/:docId')
