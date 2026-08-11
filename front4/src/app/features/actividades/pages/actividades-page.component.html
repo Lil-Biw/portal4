@@ -1004,6 +1004,15 @@
             <div class="wz-resumen-row">
               <span class="wz-resumen-label">Documentos</span>
               <span class="wz-resumen-value">{{ resumenDocumentosTexto }}</span>
+              @if (resumenDocumentosLista().length > 0) {
+                <button type="button" (click)="modalLupa.set('docs')"
+                  style="margin-left:auto;background:none;border:none;cursor:pointer;padding:0;color:#9ca3af;display:flex;align-items:center;flex-shrink:0"
+                  title="Ver documentos">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                  </svg>
+                </button>
+              }
             </div>
           </div>
         </div>
@@ -1066,6 +1075,23 @@
         <div class="lupa-body">
           @for (nombre of resumenNotifLista(); track nombre) {
             <div class="lupa-item lupa-item--green">· {{ nombre }}</div>
+          }
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Mini-modal lupa documentos -->
+  @if (modalLupa() === 'docs') {
+    <div class="lupa-overlay" (click)="$event.stopPropagation(); modalLupa.set(null)">
+      <div class="lupa-box" (click)="$event.stopPropagation()">
+        <div class="lupa-header">
+          <span class="lupa-title">Documentos adjuntos</span>
+          <button class="lupa-close" (click)="modalLupa.set(null)">✕</button>
+        </div>
+        <div class="lupa-body">
+          @for (nombre of resumenDocumentosLista(); track nombre) {
+            <div class="lupa-item lupa-item--amber">· {{ nombre }}</div>
           }
         </div>
       </div>

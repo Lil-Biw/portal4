@@ -1130,6 +1130,7 @@
 }
 .lupa-item--blue  { color: #0369a1; background: #f0f9ff; }
 .lupa-item--green { color: #15803d; background: #f0fdf4; }
+.lupa-item--amber { color: #b45309; background: #fffbeb; }
 
 /* ── Tipo custom dropdown ──────────────────────────────────────── */
 .tipo-select-btn {

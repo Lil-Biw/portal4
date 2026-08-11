@@ -213,9 +213,16 @@ export class ActividadesPageComponent implements OnInit {
     return items;
   });
 
+  protected resumenDocumentosLista = computed(() => {
+    if (this.editingId()) {
+      return this.service.documentosActividad().map(d => d.nombre_display);
+    }
+    return this.docsPendientes.map(d => d.nombre);
+  });
+
   protected showResumenActivos = signal(false);
   protected showResumenNotif   = signal(false);
-  protected modalLupa          = signal<'activos' | 'notif' | null>(null);
+  protected modalLupa          = signal<'activos' | 'notif' | 'docs' | null>(null);
   protected lupaDetalleDia     = signal(false);
   protected lupaDocsDia        = signal(false);
   protected tipoDropdownOpen   = signal(false);
