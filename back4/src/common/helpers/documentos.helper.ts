@@ -165,6 +165,19 @@ export class DocumentosHelper {
     return doc;
   }
 
+  async renombrar(entidadId: string, docId: string, nombreDisplay: string): Promise<Record<string, unknown>> {
+    const doc = await this.docModel
+      .findOneAndUpdate(
+        { _id: this.docOid(docId), [this.fkField]: this.entidadOid(entidadId) },
+        { nombre_display: nombreDisplay },
+        { new: true },
+      )
+      .select('-contenido')
+      .lean<Record<string, unknown> | null>();
+    if (!doc) throw new NotFoundException(`Documento ${docId} no encontrado`);
+    return doc;
+  }
+
   async listar(id: string): Promise<Record<string, unknown>[]> {
     return this.docModel
       .find({ [this.fkField]: this.entidadOid(id) })
