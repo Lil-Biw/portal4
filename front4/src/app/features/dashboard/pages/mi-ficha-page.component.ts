@@ -59,7 +59,13 @@ export class MiFichaPageComponent {
 
   protected empresa = computed(() => this.consumidorContext.empresaSeleccionada());
 
-  protected fotoUrl = computed(() => {
+  protected imagenUrl = computed(() => {
+    const emp = this.empresa();
+    if (!emp?._id || !emp?.imagen?.tipo_mime) return null;
+    return this.api.url(`/empresas/${emp._id}/imagen`);
+  });
+
+  protected logoUrl = computed(() => {
     const emp = this.empresa();
     if (!emp?._id || !emp?.logo?.tipo_mime) return null;
     return this.api.url(`/empresas/${emp._id}/logo`);
