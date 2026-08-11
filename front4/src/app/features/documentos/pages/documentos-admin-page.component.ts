@@ -11,7 +11,6 @@ import { AuthService } from '../../auth/auth.service';
 import { StatusBannerComponent } from '../../../shared/components/status-banner/status-banner.component';
 import { UploadBubbleComponent } from '../../../shared/components/upload-bubble/upload-bubble.component';
 import { UploadDocumentFormComponent } from '../../../shared/components/upload-document-form/upload-document-form.component';
-import { DocumentoCardComponent } from '../components/documento-card/documento-card.component';
 import { createUploadQueue } from '../../../shared/upload-queue-state';
 import { asId, detectarCategoriaDocumento, formatFechaHora, formatBytes, MAX_UPLOAD_SIZE_BYTES, usuarioEstaSuscrito } from '../../../shared/utils';
 import { Usuario } from '../../../shared/models/usuario.model';
@@ -81,7 +80,7 @@ export interface EstadoDestino {
 @Component({
   selector: 'app-documentos-admin-page',
   standalone: true,
-  imports: [FormsModule, StatusBannerComponent, UploadBubbleComponent, UploadDocumentFormComponent, DocumentoCardComponent],
+  imports: [FormsModule, StatusBannerComponent, UploadBubbleComponent, UploadDocumentFormComponent],
   templateUrl: './documentos-admin-page.component.html',
 })
 export class DocumentosAdminPageComponent implements OnInit {
