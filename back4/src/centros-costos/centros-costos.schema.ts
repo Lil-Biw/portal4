@@ -16,6 +16,14 @@ export class CentroCosto {
   @Prop() ubicacion_latitud?: number;
   @Prop() ubicacion_longitud?: number;
   @Prop({ default: true }) activo: boolean;
+  @Prop({
+    type: {
+      contenido: Buffer,
+      tipo_mime: String,
+      nombre: String,
+    },
+  })
+  foto?: { contenido: Buffer; tipo_mime: string; nombre: string };
   @Prop({ type: [Number], default: [5, 5, 5, 5, 5] }) score_smartclarity: number[];
 }
 
