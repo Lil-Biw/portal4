@@ -186,7 +186,10 @@ export class ActividadesService {
     if (liderId === '') {
       return { lider_id: null, lider_nombre: null, lider_email: null };
     }
-    if (!liderId || !Types.ObjectId.isValid(liderId)) return {};
+    if (!liderId) return {};
+    if (!Types.ObjectId.isValid(liderId)) {
+      throw new BadRequestException('El lider_id no tiene un formato válido.');
+    }
     const usuario = await this.usuarioModel.findById(liderId).select('nombre email rol').lean();
     if (!usuario) {
       throw new BadRequestException('El usuario seleccionado como líder no existe.');
