@@ -175,20 +175,22 @@ import { FormsModule } from '@angular/forms';
         }
       }
 
-      <div class="udf-buttons">
-        <button type="button" class="btn-primary udf-confirm" (click)="confirmar.emit()"
-                [disabled]="confirmDisabled || confirmLoading">
-          @if (confirmLoading) {
-            <span class="udf-spinner"></span> Subiendo...
-          } @else {
-            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-            {{ confirmLabel }}
+      @if (modo === 'link' || !ocultarBotonConfirmarArchivo) {
+        <div class="udf-buttons">
+          <button type="button" class="btn-primary udf-confirm" (click)="confirmar.emit()"
+                  [disabled]="confirmDisabled || confirmLoading">
+            @if (confirmLoading) {
+              <span class="udf-spinner"></span> Subiendo...
+            } @else {
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              {{ confirmLabel }}
+            }
+          </button>
+          @if (showCancel) {
+            <button type="button" class="btn-ghost udf-cancel" [disabled]="confirmLoading" (click)="cancelar.emit()">{{ cancelLabel }}</button>
           }
-        </button>
-        @if (showCancel) {
-          <button type="button" class="btn-ghost udf-cancel" [disabled]="confirmLoading" (click)="cancelar.emit()">{{ cancelLabel }}</button>
-        }
-      </div>
+        </div>
+      }
     </div>
   `,
 })
@@ -229,6 +231,7 @@ export class UploadDocumentFormComponent {
   @Input() showCancel = true;
   @Input() confirmDisabled = false;
   @Input() confirmLoading = false;
+  @Input() ocultarBotonConfirmarArchivo = false;
 
   @Output() confirmar = new EventEmitter<void>();
   @Output() cancelar = new EventEmitter<void>();
