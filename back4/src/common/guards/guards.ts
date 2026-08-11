@@ -79,10 +79,19 @@ export class PermisosGuard implements CanActivate {
 // Verifica que el usuario tenga acceso al :empresaId del route param.
 // super_admin tiene acceso a todo. Usuarios normales solo a su propia empresa.
 // Si la ruta no tiene :empresaId el guard deja pasar (para rutas sin contexto).
+// Las rutas marcadas con @Public() quedan exentas (igual criterio que JwtAuthGuard).
 
 @Injectable()
 export class EmpresaAccessGuard implements CanActivate {
+  constructor(private reflector: Reflector) {}
+
   canActivate(context: ExecutionContext): boolean {
+    const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
+      context.getHandler(),
+      context.getClass(),
+    ]);
+    if (isPublic) return true;
+
     const req = context.switchToHttp().getRequest();
     const user = req.user;
     if (!user) return false;
