@@ -111,4 +111,8 @@ export class ActivosService {
   eliminarDocumento(activoId: string, docId: string) {
     return this.docsHelper.eliminar(activoId, docId);
   }
+
+  renombrarDocumento(activoId: string, docId: string, nombreDisplay: string) {
+    return this.docsHelper.renombrar(activoId, docId, nombreDisplay);
+  }
 }
