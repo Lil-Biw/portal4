@@ -36,6 +36,16 @@ function sinExtension(nombre: string): string {
       display: block; margin-top: .2rem; font-size: .6rem; text-transform: uppercase;
       letter-spacing: .04em; color: #0075a8;
     }
+    .dcl-categoria-select {
+      margin-top: .3rem; width: 96%; font-size: .68rem; border: 1px solid #d7e6ee;
+      border-radius: 5px; padding: .2rem .3rem; outline: none; box-sizing: border-box;
+      background: #fff; color: #1a2733; font-family: inherit;
+    }
+    .dcl-retry {
+      margin-top: .3rem; width: 96%; font-size: .68rem; border: 1px solid #f1c3bb;
+      border-radius: 5px; padding: .25rem .3rem; background: #fef8f7; color: #c0392b;
+      cursor: pointer; font-family: inherit;
+    }
     .dcl-acciones {
       display: flex; gap: .4rem; margin-top: .5rem; padding-top: .45rem;
       border-top: 1px solid #eef2f5; width: 100%; justify-content: center;
@@ -93,6 +103,15 @@ function sinExtension(nombre: string): string {
               @if (doc.estado === 'pendiente') { <span class="dcl-tag">pendiente</span> }
             </p>
           }
+          @if (mostrarCategoria && (doc.estado === 'subiendo' || doc.estado === 'listo')) {
+            <select class="dcl-categoria-select" [value]="doc.categoria"
+                    (change)="onCategoriaChange(doc, $event)">
+              @for (cat of categorias; track cat) { <option [value]="cat">{{ cat }}</option> }
+            </select>
+          }
+          @if (doc.estado === 'error') {
+            <button type="button" class="dcl-retry" (click)="reintentar.emit(doc.id)">↻ Reintentar</button>
+          }
           @if (doc.estado === 'listo') {
             <div class="dcl-acciones">
               @if (doc.tipoContenido === 'link') {
@@ -117,6 +136,11 @@ export class DocumentCardListComponent implements AfterViewChecked {
   @Output() abrirLink = new EventEmitter<string>();
   @Output() eliminar  = new EventEmitter<string>();
   @Output() renombrar = new EventEmitter<{ id: string; nuevoNombre: string }>();
+
+  @Input() mostrarCategoria = false;
+  @Input() categorias: readonly string[] = [];
+  @Output() categoriaChange = new EventEmitter<{ id: string; categoria: string }>();
+  @Output() reintentar = new EventEmitter<string>();
 
   @ViewChild('renameInput') private renameInputRef?: ElementRef<HTMLInputElement>;
   private renameInputFocused = false;
@@ -154,5 +178,10 @@ export class DocumentCardListComponent implements AfterViewChecked {
 
   cancelarRenombre(): void {
     this.renombrandoId.set(null);
+  }
+
+  onCategoriaChange(doc: DocumentoTarjeta, event: Event): void {
+    const categoria = (event.target as HTMLSelectElement).value;
+    this.categoriaChange.emit({ id: doc.id, categoria });
   }
 }

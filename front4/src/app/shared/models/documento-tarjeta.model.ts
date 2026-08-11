@@ -6,4 +6,5 @@ export interface DocumentoTarjeta {
   tipoContenido: 'archivo' | 'link';
   linkUrl?: string;
   estado: EstadoDocumentoTarjeta;
+  categoria?: string;
 }

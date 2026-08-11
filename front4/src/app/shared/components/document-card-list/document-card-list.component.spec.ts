@@ -135,4 +135,60 @@ describe('DocumentCardListComponent', () => {
     expect(fixture.nativeElement.querySelector('.dcl-rename-input')).toBeNull();
     expect(fixture.nativeElement.textContent).toContain('informe_final.pdf');
   });
+
+  it('no muestra selector de categoría por defecto (mostrarCategoria=false)', () => {
+    const documentos: DocumentoTarjeta[] = [
+      { id: '1', nombre: 'a.pdf', tipoContenido: 'archivo', estado: 'subiendo', categoria: 'Otros' },
+    ];
+    const fixture = TestBed.createComponent(DocumentCardListComponent);
+    fixture.componentRef.setInput('documentos', documentos);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.dcl-categoria-select')).toBeNull();
+  });
+
+  it('con mostrarCategoria=true muestra el selector en subiendo y listo, no en pendiente/error', () => {
+    const documentos: DocumentoTarjeta[] = [
+      { id: '1', nombre: 'a.pdf', tipoContenido: 'archivo', estado: 'subiendo', categoria: 'Otros' },
+      { id: '2', nombre: 'b.pdf', tipoContenido: 'archivo', estado: 'listo', categoria: 'Contratos' },
+      { id: '3', nombre: 'c.pdf', tipoContenido: 'archivo', estado: 'pendiente' },
+      { id: '4', nombre: 'd.pdf', tipoContenido: 'archivo', estado: 'error' },
+    ];
+    const fixture = TestBed.createComponent(DocumentCardListComponent);
+    fixture.componentRef.setInput('documentos', documentos);
+    fixture.componentRef.setInput('mostrarCategoria', true);
+    fixture.componentRef.setInput('categorias', ['Otros', 'Contratos']);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelectorAll('.dcl-categoria-select').length).toBe(2);
+  });
+
+  it('emite categoriaChange con el id y la categoría elegida', () => {
+    const documentos: DocumentoTarjeta[] = [
+      { id: 'doc1', nombre: 'a.pdf', tipoContenido: 'archivo', estado: 'subiendo', categoria: 'Otros' },
+    ];
+    const fixture = TestBed.createComponent(DocumentCardListComponent);
+    fixture.componentRef.setInput('documentos', documentos);
+    fixture.componentRef.setInput('mostrarCategoria', true);
+    fixture.componentRef.setInput('categorias', ['Otros', 'Contratos']);
+    fixture.detectChanges();
+    let emitido: { id: string; categoria: string } | null = null;
+    fixture.componentInstance.categoriaChange.subscribe((ev: { id: string; categoria: string }) => { emitido = ev; });
+    const select = fixture.nativeElement.querySelector('.dcl-categoria-select') as HTMLSelectElement;
+    select.value = 'Contratos';
+    select.dispatchEvent(new Event('change'));
+    expect(emitido).toEqual({ id: 'doc1', categoria: 'Contratos' });
+  });
+
+  it('en estado error muestra el botón reintentar y emite el id al hacer click', () => {
+    const documentos: DocumentoTarjeta[] = [
+      { id: 'doc1', nombre: 'a.pdf', tipoContenido: 'archivo', estado: 'error' },
+    ];
+    const fixture = TestBed.createComponent(DocumentCardListComponent);
+    fixture.componentRef.setInput('documentos', documentos);
+    fixture.componentRef.setInput('mostrarCategoria', true);
+    fixture.detectChanges();
+    let emitido = '';
+    fixture.componentInstance.reintentar.subscribe((id: string) => { emitido = id; });
+    (fixture.nativeElement.querySelector('.dcl-retry') as HTMLButtonElement).click();
+    expect(emitido).toBe('doc1');
+  });
 });
