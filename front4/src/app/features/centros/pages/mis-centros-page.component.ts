@@ -44,7 +44,7 @@ export class MisCentrosPageComponent implements OnInit, OnDestroy {
   protected readonly activosService     = inject(ActivosService);
   protected readonly proyectosService    = inject(ProyectosService);
   private  readonly sanitizer          = inject(DomSanitizer);
-  private readonly api = inject(ApiService);
+  private  readonly api                = inject(ApiService);
 
   get empresa()        { return this.consumidorContext.empresaSeleccionada(); }
   get centroActivo()   { return this.consumidorContext.centroSeleccionado(); }

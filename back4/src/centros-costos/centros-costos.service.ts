@@ -80,6 +80,7 @@ export class CentrosCostosService {
   async findByIds(ids: string[]) {
     return this.centroCostoModel
       .find({ _id: { $in: ids.map(id => new Types.ObjectId(id)) }, activo: true })
+      .select('-foto.contenido')
       .lean();
   }
 
@@ -103,6 +104,7 @@ export class CentrosCostosService {
   async remove(id: string) {
     const centro = await this.centroCostoModel
       .findByIdAndUpdate(id, { activo: false }, { new: true })
+      .select('-foto.contenido')
       .lean();
     if (!centro) throw new NotFoundException(`Centro de costos ${id} no encontrado`);
     return { message: 'Centro desactivado', id };
@@ -111,6 +113,7 @@ export class CentrosCostosService {
   async updateScoreSmartclarity(centroId: string, valores: number[]) {
     const centro = await this.centroCostoModel
       .findByIdAndUpdate(centroId, { score_smartclarity: valores }, { new: true, runValidators: true })
+      .select('-foto.contenido')
       .lean();
     if (!centro) throw new NotFoundException(`Centro ${centroId} no encontrado`);
     return centro;

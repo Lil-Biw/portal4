@@ -5,6 +5,7 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { CentroCosto, CreateCentroDto } from '../../../../shared/models/centro.model';
 import { Cliente } from '../../../../shared/models/cliente.model';
 import { ApiService } from '../../../../core/services/api.service';
+import { asId } from '../../../../shared/utils';
 
 // Parsea "lat, lng" en formato decimal de Google Maps, ej: -38.758556, -72.609528
 function parseDecimal(input: string): { lat: number; lng: number } | null {
@@ -97,7 +98,7 @@ export class CentroFormComponent implements OnChanges {
   // — hay que pedirla al endpoint dedicado GET /empresas/:empresaId/centros/:centroId/foto.
   private resolveFotoUrl(centro: CentroCosto | null): string | null {
     if (!centro?._id || !centro?.foto?.tipo_mime) return null;
-    return this.api.url(`/empresas/${centro.cliente_id}/centros/${centro._id}/foto`);
+    return this.api.url(`/empresas/${asId(centro.cliente_id)}/centros/${asId(centro._id)}/foto`);
   }
 
   onFotoSelected(ev: Event): void {
