@@ -11,6 +11,7 @@ export interface CentroCosto {
   ubicacion_latitud?: number;
   ubicacion_longitud?: number;
   activo: boolean;
+  foto?: { tipo_mime: string; nombre: string };
   score_smartclarity?: number[];
   creado_en?: string;
   actualizado_en?: string;
