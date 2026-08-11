@@ -32,6 +32,14 @@ export class Cliente {
     },
   })
   logo?: { contenido: Buffer; tipo_mime: string; nombre: string };
+  @Prop({
+    type: {
+      contenido: Buffer,
+      tipo_mime: String,
+      nombre: String,
+    },
+  })
+  imagen?: { contenido: Buffer; tipo_mime: string; nombre: string };
   @Prop({ type: [Number], default: [5, 5, 5, 5, 5] }) score_smartclarity: number[];
   @Prop({ default: false }) mostrar_grafico_promedio: boolean;
 }

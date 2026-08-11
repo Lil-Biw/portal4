@@ -118,6 +118,25 @@ export class ClientesController {
     sendFile(res, buffer, tipo_mime, nombre, true);
   }
 
+  @Post(':id/imagen')
+  @Roles('super_admin', 'admin_smartclarity')
+  @UseInterceptors(FileInterceptor('archivo', OPCIONES_SUBIDA))
+  subirImagen(
+    @Param('id') id: string,
+    @UploadedFile() archivo: Express.Multer.File & { buffer: Buffer },
+  ) {
+    if (!archivo) throw new BadRequestException('No se proporcionó archivo');
+    return this.clientesService.subirImagen(id, archivo);
+  }
+
+  @Get(':id/imagen')
+  @Public()
+  async servirImagen(@Param('id') id: string, @Res() res: Response) {
+    const { buffer, tipo_mime, nombre } =
+      await this.clientesService.servirImagen(id);
+    sendFile(res, buffer, tipo_mime, nombre, true);
+  }
+
   @Post(':id/documentos')
   @Roles('super_admin', 'admin_smartclarity', 'usuario')
   @UseInterceptors(FileInterceptor('archivo', OPCIONES_SUBIDA))

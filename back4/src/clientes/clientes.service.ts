@@ -46,14 +46,14 @@ export class ClientesService {
   async findAll(page = 1, limit = 30, soloActivos = true) {
     const filter = soloActivos ? { activo: true } : {};
     const [data, total] = await Promise.all([
-      this.clienteModel.find(filter).select('-logo.contenido').sort({ razon_social: 1 }).skip((page - 1) * limit).limit(limit).lean(),
+      this.clienteModel.find(filter).select('-logo.contenido -imagen.contenido').sort({ razon_social: 1 }).skip((page - 1) * limit).limit(limit).lean(),
       this.clienteModel.countDocuments(filter),
     ]);
     return { data, total, page, pages: Math.ceil(total / limit) };
   }
 
   async findOne(id: string) {
-    const cliente = await this.clienteModel.findById(id).select('-logo.contenido').lean();
+    const cliente = await this.clienteModel.findById(id).select('-logo.contenido -imagen.contenido').lean();
     if (!cliente) throw new NotFoundException(`Cliente ${id} no encontrado`);
     return cliente;
   }
@@ -61,7 +61,7 @@ export class ClientesService {
   async update(id: string, dto: UpdateClienteDto) {
     const cliente = await this.clienteModel
       .findByIdAndUpdate(id, dto, { new: true, runValidators: true })
-      .select('-logo.contenido')
+      .select('-logo.contenido -imagen.contenido')
       .lean();
     if (!cliente) throw new NotFoundException(`Cliente ${id} no encontrado`);
     return cliente;
@@ -78,7 +78,7 @@ export class ClientesService {
   async updateScoreSmartclarity(id: string, valores: number[]) {
     const cliente = await this.clienteModel
       .findByIdAndUpdate(id, { score_smartclarity: valores }, { new: true, runValidators: true })
-      .select('-logo.contenido')
+      .select('-logo.contenido -imagen.contenido')
       .lean();
     if (!cliente) throw new NotFoundException(`Cliente ${id} no encontrado`);
     return cliente;
@@ -87,7 +87,7 @@ export class ClientesService {
   async updateConfigGrafico(id: string, mostrarPromedio: boolean) {
     const cliente = await this.clienteModel
       .findByIdAndUpdate(id, { mostrar_grafico_promedio: mostrarPromedio }, { new: true, runValidators: true })
-      .select('-logo.contenido')
+      .select('-logo.contenido -imagen.contenido')
       .lean();
     if (!cliente) throw new NotFoundException(`Cliente ${id} no encontrado`);
     return cliente;
@@ -121,6 +121,36 @@ export class ClientesService {
       buffer = Buffer.from(raw as ArrayBuffer);
     }
     return { buffer, tipo_mime: cliente.logo.tipo_mime, nombre: cliente.logo.nombre };
+  }
+
+  async subirImagen(id: string, archivo: { originalname: string; buffer: Buffer; mimetype: string }) {
+    const cliente = await this.clienteModel.findById(id).lean();
+    if (!cliente) throw new NotFoundException(`Cliente ${id} no encontrado`);
+    return this.clienteModel
+      .findByIdAndUpdate(
+        id,
+        { imagen: { contenido: archivo.buffer, tipo_mime: archivo.mimetype, nombre: archivo.originalname } },
+        { new: true, runValidators: false },
+      )
+      .select('-logo.contenido -imagen.contenido')
+      .lean();
+  }
+
+  async servirImagen(id: string): Promise<{ buffer: Buffer; tipo_mime: string; nombre: string }> {
+    const cliente = await this.clienteModel.findById(id).select('imagen').lean();
+    if (!cliente) throw new NotFoundException(`Cliente ${id} no encontrado`);
+    if (!cliente.imagen?.contenido) throw new NotFoundException('Este cliente no tiene imagen');
+    const raw = cliente.imagen.contenido as unknown;
+    let buffer: Buffer;
+    if (Buffer.isBuffer(raw)) {
+      buffer = raw;
+    } else if (raw && typeof raw === 'object' && 'buffer' in (raw as object)) {
+      const buf = (raw as { buffer: Buffer | ArrayBuffer }).buffer;
+      buffer = Buffer.isBuffer(buf) ? buf : Buffer.from(buf);
+    } else {
+      buffer = Buffer.from(raw as ArrayBuffer);
+    }
+    return { buffer, tipo_mime: cliente.imagen.tipo_mime, nombre: cliente.imagen.nombre };
   }
 
   async agregarDocumento(id: string, input: DocumentoInput, nombreDisplay?: string, categoria?: string, rolUploader?: string, usuarioId?: string) {
