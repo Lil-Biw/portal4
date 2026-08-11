@@ -134,6 +134,17 @@ async function main() {
   check(!limpiada.lider_email, "lider_id vacío limpia lider_email");
   check(!limpiada.lider_id, "lider_id vacío limpia la referencia lider_id");
 
+  // Caso 8: editar sin incluir lider_id → el líder existente no se toca
+  const conLiderOtraVez = await controller.create(
+    centroId.toString(),
+    { ...dtoBase, lider_id: adminId.toString() },
+    reqSinUsuario,
+  );
+  const sinTocarLider = await controller.update(String(conLiderOtraVez._id), { nombre: 'Actividad renombrada' });
+  check(sinTocarLider.lider_nombre === 'Admin Líder', 'update() sin lider_id conserva lider_nombre existente');
+  check(sinTocarLider.lider_email === 'admin-lider@example.com', 'update() sin lider_id conserva lider_email existente');
+  check(String(sinTocarLider.lider_id) === adminId.toString(), 'update() sin lider_id conserva la referencia lider_id existente');
+
   await db.dropDatabase();
   await app.close();
   console.log(`\nBase ${TEST_DB} eliminada.`);
