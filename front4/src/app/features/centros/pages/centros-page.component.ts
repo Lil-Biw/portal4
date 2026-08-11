@@ -120,6 +120,7 @@ export class CentrosPageComponent implements OnInit {
 
   protected modal            = signal<ModalMode>(null);
   protected busqueda         = signal('');
+  protected pendingFoto      = signal<File | null>(null);
   protected centroParaActivo = signal<CentroCosto | null>(null);
   protected centroParaScore  = signal<CentroCosto | null>(null);
   protected valoresScoreEdit = signal<number[]>([5, 5, 5, 5, 5]);
@@ -209,6 +210,7 @@ export class CentrosPageComponent implements OnInit {
   protected abrirCrear(): void {
     this.service.seleccionado.set(null);
     this.service.clearStatus();
+    this.pendingFoto.set(null);
     this.modal.set('crear');
   }
 
@@ -220,6 +222,7 @@ export class CentrosPageComponent implements OnInit {
 
   protected abrirEditar(centro: CentroCosto): void {
     this.service.seleccionar(centro);
+    this.pendingFoto.set(null);
     this.modal.set('editar');
   }
 
@@ -227,6 +230,7 @@ export class CentrosPageComponent implements OnInit {
     this.modal.set(null);
     this.service.seleccionado.set(null);
     this.service.clearStatus();
+    this.pendingFoto.set(null);
     this.centroParaActivo.set(null);
     this.activosService.clearStatus();
     this.centroParaScore.set(null);
@@ -272,11 +276,15 @@ export class CentrosPageComponent implements OnInit {
     });
   }
 
-  protected crear(dto: CreateCentroDto): void   { this.service.crear(dto); }
+  protected crear(dto: CreateCentroDto): void {
+    this.service.crear(dto, this.pendingFoto());
+    this.pendingFoto.set(null);
+  }
 
   protected actualizar(dto: CreateCentroDto): void {
     const id = this.service.seleccionado()?._id;
-    if (id) this.service.actualizar(id, dto);
+    if (id) this.service.actualizar(id, dto, this.pendingFoto());
+    this.pendingFoto.set(null);
   }
 
   protected eliminar(id: string): void {
@@ -297,6 +305,7 @@ export class CentrosPageComponent implements OnInit {
 
   protected editarDesdeBuscar(centro: CentroCosto): void {
     this.service.seleccionar(centro);
+    this.pendingFoto.set(null);
     this.modal.set('editar');
   }
 }

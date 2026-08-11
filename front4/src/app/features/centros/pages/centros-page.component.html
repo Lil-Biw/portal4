@@ -43,6 +43,7 @@
         <app-centro-form
           submitLabel="Crear centro"
           [clientes]="clientesService.clientes()"
+          (fotoFile)="pendingFoto.set($event)"
           (submitted)="crear($event)">
         </app-centro-form>
       }
@@ -57,6 +58,7 @@
           [initial]="service.seleccionado()"
           [clientes]="clientesService.clientes()"
           submitLabel="Guardar cambios"
+          (fotoFile)="pendingFoto.set($event)"
           (submitted)="actualizar($event)">
         </app-centro-form>
       }

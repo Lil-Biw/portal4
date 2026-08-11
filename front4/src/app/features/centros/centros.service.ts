@@ -44,29 +44,60 @@ export class CentrosService {
     });
   }
 
-  crear(dto: CreateCentroDto): void {
+  crear(dto: CreateCentroDto, fotoFile?: File | null): void {
     const { cliente_id, ...body } = dto;
     if (!cliente_id) {
       this.setStatus({ type: 'error', text: 'Debes seleccionar una empresa.' });
       return;
     }
     this.http.post<CentroCosto>(this.api.url(`/empresas/${cliente_id}/centros`), body).subscribe({
-      next: () => { this.setStatus({ type: 'ok', text: 'Centro creado correctamente' }); this.cargar(); },
+      next: (centro) => {
+        if (fotoFile) {
+          this.subirFoto(cliente_id, centro._id, fotoFile,
+            () => { this.setStatus({ type: 'ok', text: 'Centro creado correctamente' }); this.cargar(); },
+            (msg) => { this.setStatus({ type: 'error', text: `Centro creado, pero no se pudo subir la foto: ${msg}` }); this.cargar(); },
+          );
+        } else {
+          this.setStatus({ type: 'ok', text: 'Centro creado correctamente' });
+          this.cargar();
+        }
+      },
       error: (err) => this.setError(err),
     });
   }
 
-  actualizar(id: string, dto: UpdateCentroDto): void {
+  actualizar(id: string, dto: UpdateCentroDto, fotoFile?: File | null): void {
     const empresaId = dto.cliente_id ?? this.seleccionado()?.cliente_id;
     if (!empresaId) { this.setError({ error: { message: 'No se pudo determinar la empresa del centro' } }); return; }
     const { cliente_id, ...body } = dto as CreateCentroDto;
     this.http.put<CentroCosto>(this.api.url(`/empresas/${empresaId}/centros/${id}`), body).subscribe({
       next: () => {
-        this.setStatus({ type: 'ok', text: 'Centro actualizado' });
-        this.seleccionado.set(null);
-        this.cargar();
+        if (fotoFile) {
+          this.subirFoto(String(empresaId), id, fotoFile,
+            () => { this.setStatus({ type: 'ok', text: 'Centro actualizado' }); this.seleccionado.set(null); this.cargar(); },
+            (msg) => { this.setStatus({ type: 'error', text: `Centro actualizado, pero no se pudo subir la foto: ${msg}` }); this.cargar(); },
+          );
+        } else {
+          this.setStatus({ type: 'ok', text: 'Centro actualizado' });
+          this.seleccionado.set(null);
+          this.cargar();
+        }
       },
       error: (err) => this.setError(err),
+    });
+  }
+
+  subirFoto(empresaId: string, centroId: string, file: File, onSuccess?: () => void, onError?: (msg: string) => void): void {
+    const form = new FormData();
+    form.append('archivo', file);
+    this.http.post<CentroCosto>(this.api.url(`/empresas/${empresaId}/centros/${centroId}/foto`), form).subscribe({
+      next: () => { if (onSuccess) onSuccess(); else this.cargar(); },
+      error: (err) => {
+        const raw = err?.error?.message ?? 'Error al subir la foto';
+        const msg = Array.isArray(raw) ? raw.join(', ') : raw;
+        if (onError) onError(msg);
+        else this.setStatus({ type: 'error', text: msg });
+      },
     });
   }
 
