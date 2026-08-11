@@ -849,60 +849,24 @@
           <div class="wz-seccion">
           <p class="wz-seccion-titulo">
             Documentos adjuntos
-            @if (!editingId() && docsPendientes.length > 0) {
-              <span class="wz-badge">{{ docsPendientes.length }}</span>
+            @if (!editingId() && docsPendientesTarjetas.length > 0) {
+              <span class="wz-badge">{{ docsPendientesTarjetas.length }}</span>
             }
-            @if (editingId() && service.documentosActividad().length > 0) {
-              <span class="wz-badge">{{ service.documentosActividad().length }}</span>
+            @if (editingId() && documentosTarjetas.length > 0) {
+              <span class="wz-badge">{{ documentosTarjetas.length }}</span>
             }
           </p>
           @if (!editingId()) {
-            <div class="wz-doc-list">
-              @for (doc of docsPendientes; track $index) {
-                <div class="wz-doc-row">
-                  <div class="wz-doc-info">
-                    <p class="wz-doc-nombre">{{ doc.nombre }}</p>
-                    <p class="wz-doc-detalle">{{ doc.linkUrl ? doc.linkUrl : doc.file?.name }}</p>
-                  </div>
-                  <button class="btn-danger btn-sm" style="flex-shrink:0" (click)="quitarDocPendiente($index)">Quitar</button>
-                </div>
-              }
-              @if (docsPendientes.length === 0) {
-                <p class="dest-empty" style="padding:.25rem 0">Aún no agregas documentos.</p>
-              }
-            </div>
+            <app-document-card-list
+              [documentos]="docsPendientesTarjetas"
+              (eliminar)="quitarDocPendiente($event)" />
           } @else {
-            <div class="wz-doc-list">
-              @if (service.documentosActividad().length) {
-                @for (doc of service.documentosActividad(); track doc._id) {
-                  <div class="wz-doc-row">
-                    <span class="wz-doc-nombre" style="flex:1;min-width:0">{{ doc.nombre_display }}</span>
-                    <div style="display:flex;gap:.4rem;flex-shrink:0">
-                      @if (doc.tipo_contenido === 'link') {
-                        <button class="btn-ghost btn-sm" style="display:inline-flex;align-items:center;gap:.35rem" (click)="abrirDocActividad(doc.link_url!)">
-                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
-                            <path d="M15 3h6v6"/><path d="M10 14 21 3"/>
-                          </svg>
-                          Ir a link
-                        </button>
-                      } @else {
-                        <button class="btn-ghost btn-sm" style="display:inline-flex;align-items:center;gap:.35rem" (click)="descargarDocActividad(doc._id, doc.nombre_display)">
-                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                            <polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
-                          </svg>
-                          Descargar
-                        </button>
-                      }
-                      <button class="btn-danger btn-sm" (click)="eliminarDocActividad(doc._id)">Eliminar</button>
-                    </div>
-                  </div>
-                }
-              } @else {
-                <p class="dest-empty" style="padding:.25rem 0">Sin documentos adjuntos.</p>
-              }
-            </div>
+            <app-document-card-list
+              [documentos]="documentosTarjetas"
+              (descargar)="descargarDocActividad($event)"
+              (abrirLink)="abrirDocActividad($event)"
+              (eliminar)="eliminarDocActividad($event)"
+              (renombrar)="renombrarDocActividad($event)" />
           }
           </div>
 
@@ -912,28 +876,30 @@
               <app-upload-document-form
                 style="display:block"
                 [mostrarTipoDocumento]="false"
+                [mostrarNombre]="false"
+                [ocultarBotonConfirmarArchivo]="true"
                 [modo]="pendienteModo()" (modoChange)="setPendienteModo($event)"
-                [archivo]="pendienteFileSelected" (archivoChange)="onPendienteArchivoChange($event)"
+                [archivo]="null" (archivoChange)="onPendienteArchivoChange($event)"
                 [(link)]="pendienteLinkInput"
-                [(nombre)]="pendienteNombreInput"
                 [linkInvalido]="pendienteLinkInvalido()"
                 confirmLabel="+ Agregar a la lista"
                 [showCancel]="false"
-                [confirmDisabled]="pendienteModo()==='archivo' ? !pendienteFileSelected : (!pendienteLinkInput.trim() || pendienteLinkInvalido())"
-                (confirmar)="agregarDocPendiente()" />
+                [confirmDisabled]="!pendienteLinkInput.trim() || pendienteLinkInvalido()"
+                (confirmar)="agregarDocPendienteLink()" />
             } @else {
               <app-upload-document-form
                 style="display:block"
                 [mostrarTipoDocumento]="false"
+                [mostrarNombre]="false"
+                [ocultarBotonConfirmarArchivo]="true"
                 [modo]="docModo()" (modoChange)="setDocModo($event)"
-                [archivo]="docFileSelected" (archivoChange)="onDocArchivoChange($event)"
+                [archivo]="null" (archivoChange)="onDocArchivoChange($event)"
                 [(link)]="docLinkInput"
-                [(nombre)]="docNombreInput"
                 [linkInvalido]="docLinkInvalido()"
                 confirmLabel="Adjuntar"
                 [showCancel]="false"
-                [confirmDisabled]="docModo()==='archivo' ? !docFileSelected : (!docLinkInput.trim() || docLinkInvalido())"
-                (confirmar)="subirDocActividad()" />
+                [confirmDisabled]="!docLinkInput.trim() || docLinkInvalido()"
+                (confirmar)="agregarDocLink()" />
             }
           </div>
         </div>

@@ -10,8 +10,10 @@ import { AuthService } from '../../auth/auth.service';
 
 import { StatusBannerComponent } from '../../../shared/components/status-banner/status-banner.component';
 import { UploadDocumentFormComponent } from '../../../shared/components/upload-document-form/upload-document-form.component';
+import { DocumentCardListComponent } from '../../../shared/components/document-card-list/document-card-list.component';
 import { ActividadIconoComponent } from '../components/actividad-icono/actividad-icono.component';
 import { Actividad, TipoActividad } from '../../../shared/models/actividad.model';
+import { DocumentoTarjeta } from '../../../shared/models/documento-tarjeta.model';
 import { Activo, TipoActivo } from '../../../shared/models/activo.model';
 import { asId, toDateKey, usuarioEstaSuscrito, actividadEnDia, posicionActividadEnDia, ordenarMultiDiaPrimero, barrasMultiDiaPorSemana, BarraMultiDia, layoutPorHora, BloqueHorario, rangoHora as formatRangoHora } from '../../../shared/utils';
 import { Usuario } from '../../../shared/models/usuario.model';
@@ -48,7 +50,7 @@ function emptyTipoForm(): TipoForm {
 @Component({
   selector: 'app-actividades-page',
   standalone: true,
-  imports: [FormsModule, StatusBannerComponent, ActividadIconoComponent, UploadDocumentFormComponent],
+  imports: [FormsModule, StatusBannerComponent, ActividadIconoComponent, UploadDocumentFormComponent, DocumentCardListComponent],
   templateUrl: './actividades-page.component.html',
   styleUrl: './actividades-page.component.css',
 })
@@ -433,32 +435,30 @@ export class ActividadesPageComponent implements OnInit {
   protected form          = signal<ActividadForm>(emptyForm());
   protected confirmDelete = signal<string | null>(null);
 
-  protected docsPendientes: { file?: File; linkUrl?: string; nombre: string }[] = [];
-  protected docNombreInput   = '';
-  protected docFileSelected: File | null = null;
+  protected docsPendientes: { localId: string; file?: File; linkUrl?: string; nombre: string }[] = [];
   protected docLinkInput = '';
   protected docModo = signal<'archivo' | 'link'>('archivo');
   protected subiendoDocs = false;
+  protected subiendoCards    = signal<{ id: string; nombre: string }[]>([]);
+  protected eliminandoDocIds = signal<Set<string>>(new Set());
 
-  protected pendienteFileSelected: File | null = null;
-  protected pendienteNombreInput = '';
   protected pendienteLinkInput = '';
   protected pendienteModo = signal<'archivo' | 'link'>('archivo');
+
+  private nuevoIdLocal(prefijo: string): string {
+    return `${prefijo}-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  }
 
   setPendienteModo(modo: 'archivo' | 'link'): void {
     if (this.pendienteModo() === modo) return;
     this.pendienteModo.set(modo);
-    this.pendienteFileSelected = null;
     this.pendienteLinkInput = '';
-    this.pendienteNombreInput = '';
   }
 
   setDocModo(modo: 'archivo' | 'link'): void {
     if (this.docModo() === modo) return;
     this.docModo.set(modo);
-    this.docFileSelected = null;
     this.docLinkInput = '';
-    this.docNombreInput = '';
   }
 
   pendienteLinkInvalido(): boolean {
@@ -474,54 +474,83 @@ export class ActividadesPageComponent implements OnInit {
   }
 
   onPendienteArchivoChange(file: File | null): void {
-    this.pendienteFileSelected = file;
-    if (file && !this.pendienteNombreInput)
-      this.pendienteNombreInput = file.name.replace(/\.[^/.]+$/, '');
+    if (!file) return;
+    this.docsPendientes.push({ localId: this.nuevoIdLocal('pend'), file, nombre: file.name });
   }
 
-  agregarDocPendiente(): void {
-    if (this.pendienteModo() === 'link') {
-      const link = this.pendienteLinkInput.trim();
-      if (!link || this.pendienteLinkInvalido()) return;
-      this.docsPendientes.push({ linkUrl: link, nombre: this.pendienteNombreInput || link });
-    } else {
-      if (!this.pendienteFileSelected) return;
-      this.docsPendientes.push({ file: this.pendienteFileSelected, nombre: this.pendienteNombreInput || this.pendienteFileSelected.name });
-    }
-    this.pendienteFileSelected = null;
-    this.pendienteNombreInput = '';
+  agregarDocPendienteLink(): void {
+    const link = this.pendienteLinkInput.trim();
+    if (!link || this.pendienteLinkInvalido()) return;
+    this.docsPendientes.push({ localId: this.nuevoIdLocal('pend'), linkUrl: link, nombre: link });
     this.pendienteLinkInput = '';
   }
 
-  quitarDocPendiente(index: number): void {
-    this.docsPendientes.splice(index, 1);
+  quitarDocPendiente(localId: string): void {
+    this.docsPendientes = this.docsPendientes.filter(d => d.localId !== localId);
+  }
+
+  protected get docsPendientesTarjetas(): DocumentoTarjeta[] {
+    return this.docsPendientes.map(d => ({
+      id: d.localId,
+      nombre: d.nombre,
+      tipoContenido: d.linkUrl ? 'link' : 'archivo',
+      linkUrl: d.linkUrl,
+      estado: 'pendiente' as const,
+    }));
   }
 
   onDocArchivoChange(file: File | null): void {
-    this.docFileSelected = file;
-    if (file && !this.docNombreInput) this.docNombreInput = file.name.replace(/\.[^/.]+$/, '');
-  }
-
-  subirDocActividad(): void {
+    if (!file) return;
     const id = this.editingId();
     if (!id) return;
-    if (this.docModo() === 'link') {
-      const link = this.docLinkInput.trim();
-      if (!link || this.docLinkInvalido()) return;
-      this.service.subirDocumentoLink(id, link, this.docNombreInput || undefined);
-    } else {
-      if (!this.docFileSelected) return;
-      this.service.subirDocumento(id, this.docFileSelected, this.docNombreInput || undefined);
-    }
-    this.docFileSelected = null;
-    this.docNombreInput = '';
+    const tempId = this.nuevoIdLocal('subiendo');
+    this.subiendoCards.update(list => [...list, { id: tempId, nombre: file.name }]);
+    const limpiar = () => this.subiendoCards.update(list => list.filter(c => c.id !== tempId));
+    this.service.subirDocumento(id, file, undefined, limpiar, limpiar);
+  }
+
+  agregarDocLink(): void {
+    const id = this.editingId();
+    if (!id) return;
+    const link = this.docLinkInput.trim();
+    if (!link || this.docLinkInvalido()) return;
+    this.service.subirDocumentoLink(id, link);
     this.docLinkInput = '';
+  }
+
+  protected get documentosTarjetas(): DocumentoTarjeta[] {
+    const subidos: DocumentoTarjeta[] = this.service.documentosActividad().map(doc => ({
+      id: doc._id,
+      nombre: doc.nombre_display,
+      tipoContenido: doc.tipo_contenido ?? 'archivo',
+      linkUrl: doc.link_url,
+      estado: this.eliminandoDocIds().has(doc._id) ? 'eliminando' as const : 'listo' as const,
+    }));
+    const subiendo: DocumentoTarjeta[] = this.subiendoCards().map(c => ({
+      id: c.id,
+      nombre: c.nombre,
+      tipoContenido: 'archivo' as const,
+      estado: 'subiendo' as const,
+    }));
+    return [...subidos, ...subiendo];
   }
 
   eliminarDocActividad(docId: string): void {
     const id = this.editingId();
     if (!id) return;
-    this.service.eliminarDocumento(id, docId);
+    this.eliminandoDocIds.update(set => new Set(set).add(docId));
+    const limpiar = () => this.eliminandoDocIds.update(set => {
+      const copia = new Set(set);
+      copia.delete(docId);
+      return copia;
+    });
+    this.service.eliminarDocumento(id, docId, limpiar, limpiar);
+  }
+
+  renombrarDocActividad(ev: { id: string; nuevoNombre: string }): void {
+    const id = this.editingId();
+    if (!id) return;
+    this.service.renombrarDocumento(id, ev.id, ev.nuevoNombre);
   }
 
   descargarDocActividad(docId: string, nombreDisplay?: string): void {
