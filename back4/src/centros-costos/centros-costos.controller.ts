@@ -10,7 +10,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { OPCIONES_SUBIDA } from '../common/constants/upload.constants';
 import { CentrosCostosService } from './centros-costos.service';
 import { CreateCentroCostoDto, UpdateCentroCostoDto, UpdateScoreSmartclarityDto, VencerDocumentoCentroDto } from './centros-costos.dto';
-import { EmpresaAccessGuard, Roles } from '../common/guards/guards';
+import { EmpresaAccessGuard, Roles, Public } from '../common/guards/guards';
 
 @Controller('empresas/:empresaId/centros')
 @UseGuards(EmpresaAccessGuard)
@@ -50,6 +50,24 @@ export class CentrosCostosController {
     @Body() dto: UpdateScoreSmartclarityDto,
   ) {
     return this.centrosCostosService.updateScoreSmartclarity(centroId, dto.valores);
+  }
+
+  @Post(':centroId/foto')
+  @Roles('super_admin', 'admin_smartclarity')
+  @UseInterceptors(FileInterceptor('archivo', OPCIONES_SUBIDA))
+  subirFoto(
+    @Param('centroId') centroId: string,
+    @UploadedFile() archivo: Express.Multer.File & { buffer: Buffer },
+  ) {
+    if (!archivo) throw new BadRequestException('No se proporcionó archivo');
+    return this.centrosCostosService.subirFoto(centroId, archivo);
+  }
+
+  @Get(':centroId/foto')
+  @Public()
+  async servirFoto(@Param('centroId') centroId: string, @Res() res: Response) {
+    const { buffer, tipo_mime, nombre } = await this.centrosCostosService.servirFoto(centroId);
+    sendFile(res, buffer, tipo_mime, nombre, true);
   }
 
   @Delete(':centroId')
