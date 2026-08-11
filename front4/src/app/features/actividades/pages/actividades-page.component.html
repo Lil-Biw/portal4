@@ -956,6 +956,12 @@
               <span class="wz-resumen-label">Tipo</span>
               <span class="wz-resumen-value">{{ resumenTipoNombre() }}</span>
             </div>
+            @if (liderSeleccionado()) {
+              <div class="wz-resumen-row">
+                <span class="wz-resumen-label">Líder</span>
+                <span class="wz-resumen-value">{{ liderSeleccionado()!.nombre }}</span>
+              </div>
+            }
             <div class="wz-resumen-row">
               <span class="wz-resumen-label">Fecha</span>
               <span class="wz-resumen-value">{{ form().fecha }}</span>
