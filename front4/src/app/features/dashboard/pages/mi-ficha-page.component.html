@@ -15,50 +15,60 @@
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
 
     <!-- Recuadro 1: Información general de la empresa -->
-    <div class="card">
-      <h3 style="margin:0 0 1rem;font-size:.95rem;font-weight:700;color:#1f2937">Información general</h3>
-      <dl style="margin:0;display:flex;flex-direction:column;gap:.55rem">
-        <div style="display:flex;gap:.5rem">
-          <dt style="font-size:.78rem;color:#6b7280;min-width:90px;flex-shrink:0">Razón social</dt>
-          <dd style="margin:0;font-size:.82rem;color:#1f2937;font-weight:600">{{ empresa()!.razon_social }}</dd>
-        </div>
-        <div style="display:flex;gap:.5rem">
-          <dt style="font-size:.78rem;color:#6b7280;min-width:90px;flex-shrink:0">RUT</dt>
-          <dd style="margin:0;font-size:.82rem;color:#1f2937">{{ empresa()!.rut }}</dd>
-        </div>
-        <div style="display:flex;gap:.5rem">
-          <dt style="font-size:.78rem;color:#6b7280;min-width:90px;flex-shrink:0">Email</dt>
-          <dd style="margin:0;font-size:.82rem;color:#1f2937">
-            <a [href]="'mailto:' + empresa()!.email_contacto" style="color:#0095d6;text-decoration:none">{{ empresa()!.email_contacto }}</a>
-          </dd>
-        </div>
-        @if (empresa()!.telefono) {
+    <div class="card" style="display:grid;grid-template-columns:1fr 200px;gap:1.25rem">
+      <div>
+        <h3 style="margin:0 0 1rem;font-size:.95rem;font-weight:700;color:#1f2937">Información general</h3>
+        <dl style="margin:0;display:flex;flex-direction:column;gap:.55rem">
           <div style="display:flex;gap:.5rem">
-            <dt style="font-size:.78rem;color:#6b7280;min-width:90px;flex-shrink:0">Teléfono</dt>
-            <dd style="margin:0;font-size:.82rem;color:#1f2937">{{ empresa()!.telefono }}</dd>
+            <dt style="font-size:.78rem;color:#6b7280;min-width:90px;flex-shrink:0">Razón social</dt>
+            <dd style="margin:0;font-size:.82rem;color:#1f2937;font-weight:600">{{ empresa()!.razon_social }}</dd>
           </div>
-        }
-        @if (empresa()!.direccion?.ciudad) {
           <div style="display:flex;gap:.5rem">
-            <dt style="font-size:.78rem;color:#6b7280;min-width:90px;flex-shrink:0">Ciudad</dt>
+            <dt style="font-size:.78rem;color:#6b7280;min-width:90px;flex-shrink:0">RUT</dt>
+            <dd style="margin:0;font-size:.82rem;color:#1f2937">{{ empresa()!.rut }}</dd>
+          </div>
+          <div style="display:flex;gap:.5rem">
+            <dt style="font-size:.78rem;color:#6b7280;min-width:90px;flex-shrink:0">Email</dt>
             <dd style="margin:0;font-size:.82rem;color:#1f2937">
-              {{ empresa()!.direccion!.ciudad }}{{ empresa()!.direccion!.region ? ', ' + empresa()!.direccion!.region : '' }}
+              <a [href]="'mailto:' + empresa()!.email_contacto" style="color:#0095d6;text-decoration:none">{{ empresa()!.email_contacto }}</a>
             </dd>
           </div>
-        }
-        @if (empresa()!.direccion?.calle) {
+          @if (empresa()!.telefono) {
+            <div style="display:flex;gap:.5rem">
+              <dt style="font-size:.78rem;color:#6b7280;min-width:90px;flex-shrink:0">Teléfono</dt>
+              <dd style="margin:0;font-size:.82rem;color:#1f2937">{{ empresa()!.telefono }}</dd>
+            </div>
+          }
+          @if (empresa()!.direccion?.ciudad) {
+            <div style="display:flex;gap:.5rem">
+              <dt style="font-size:.78rem;color:#6b7280;min-width:90px;flex-shrink:0">Ciudad</dt>
+              <dd style="margin:0;font-size:.82rem;color:#1f2937">
+                {{ empresa()!.direccion!.ciudad }}{{ empresa()!.direccion!.region ? ', ' + empresa()!.direccion!.region : '' }}
+              </dd>
+            </div>
+          }
+          @if (empresa()!.direccion?.calle) {
+            <div style="display:flex;gap:.5rem">
+              <dt style="font-size:.78rem;color:#6b7280;min-width:90px;flex-shrink:0">Dirección</dt>
+              <dd style="margin:0;font-size:.82rem;color:#1f2937">{{ empresa()!.direccion!.calle }}</dd>
+            </div>
+          }
           <div style="display:flex;gap:.5rem">
-            <dt style="font-size:.78rem;color:#6b7280;min-width:90px;flex-shrink:0">Dirección</dt>
-            <dd style="margin:0;font-size:.82rem;color:#1f2937">{{ empresa()!.direccion!.calle }}</dd>
+            <dt style="font-size:.78rem;color:#6b7280;min-width:90px;flex-shrink:0">Estado</dt>
+            <dd style="margin:0">
+              <span style="font-size:.72rem;font-weight:700;padding:.2rem .55rem;border-radius:999px;background:#dcfce7;color:#15803d">Activa</span>
+            </dd>
           </div>
-        }
-        <div style="display:flex;gap:.5rem">
-          <dt style="font-size:.78rem;color:#6b7280;min-width:90px;flex-shrink:0">Estado</dt>
-          <dd style="margin:0">
-            <span style="font-size:.72rem;font-weight:700;padding:.2rem .55rem;border-radius:999px;background:#dcfce7;color:#15803d">Activa</span>
-          </dd>
+        </dl>
+      </div>
+      @if (fotoUrl(); as foto) {
+        <img [src]="foto" alt="Foto de la empresa" style="width:100%;height:100%;min-height:180px;object-fit:cover;border-radius:12px;border:1px solid rgba(34,33,33,.08);display:block" />
+      } @else {
+        <div style="min-height:180px;border-radius:12px;border:1.5px dashed #d1d5db;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.4rem;color:#9ca3af">
+          <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+          <span style="font-size:.72rem;font-weight:600">Sin foto</span>
         </div>
-      </dl>
+      }
     </div>
 
     <!-- Recuadro 2: Estado documentos + Actividades recientes -->

@@ -12,6 +12,7 @@ import { SpiderChartComponent } from '../../../shared/components/spider-chart/sp
 import { ClientesService } from '../../clientes/clientes.service';
 import { CentroCosto } from '../../../shared/models/centro.model';
 import { Proyecto } from '../../../shared/models/proyecto.model';
+import { ApiService } from '../../../core/services/api.service';
 import { asId, calcularScoreDocumental, scoreChipVariantFn, scoreChipLabelFn, estadoStyleFn, porcentajeColorFn } from '../../../shared/utils';
 
 @Component({
@@ -25,6 +26,7 @@ export class MiFichaPageComponent {
   private readonly solicitudesService  = inject(SolicitudesService);
   private readonly documentosService   = inject(DocumentosService);
   private readonly centrosService      = inject(CentrosService);
+  private readonly api                 = inject(ApiService);
 
   constructor() {
     // Centros y solicitudes ya se cargan globalmente en TopbarComponent
@@ -56,6 +58,12 @@ export class MiFichaPageComponent {
   private readonly clientesService     = inject(ClientesService);
 
   protected empresa = computed(() => this.consumidorContext.empresaSeleccionada());
+
+  protected fotoUrl = computed(() => {
+    const emp = this.empresa();
+    if (!emp?._id || !emp?.logo?.tipo_mime) return null;
+    return this.api.url(`/empresas/${emp._id}/logo`);
+  });
 
   protected centrosDeEmpresa = computed(() => {
     const emp = this.consumidorContext.empresaSeleccionada();
