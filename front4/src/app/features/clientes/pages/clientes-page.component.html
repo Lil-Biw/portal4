@@ -44,6 +44,7 @@
         submitLabel="Crear empresa"
         [saving]="service.saving()"
         (logoFile)="pendingLogo.set($event)"
+        (imagenFile)="pendingImagen.set($event)"
         (submitted)="crear($event)">
       </app-cliente-form>
     }
@@ -59,6 +60,7 @@
         submitLabel="Guardar cambios"
         [saving]="service.saving()"
         (logoFile)="pendingLogo.set($event)"
+        (imagenFile)="pendingImagen.set($event)"
         (submitted)="actualizar($event)">
       </app-cliente-form>
     }

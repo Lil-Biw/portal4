@@ -168,6 +168,7 @@ export class ClientesPageComponent implements OnInit {
   protected modal            = signal<ModalMode>(null);
   protected busqueda         = signal('');
   protected pendingLogo      = signal<File | null>(null);
+  protected pendingImagen    = signal<File | null>(null);
   protected clienteParaScore = signal<Cliente | null>(null);
   protected valoresScoreEdit = signal<number[]>([5, 5, 5, 5, 5]);
   protected guardandoScore   = signal(false);
@@ -216,6 +217,7 @@ export class ClientesPageComponent implements OnInit {
     this.service.seleccionado.set(null);
     this.service.clearStatus();
     this.pendingLogo.set(null);
+    this.pendingImagen.set(null);
     this.modal.set('crear');
   }
 
@@ -228,6 +230,7 @@ export class ClientesPageComponent implements OnInit {
   protected abrirEditar(cliente: Cliente): void {
     this.service.seleccionar(cliente);
     this.pendingLogo.set(null);
+    this.pendingImagen.set(null);
     this.modal.set('editar');
   }
 
@@ -236,6 +239,7 @@ export class ClientesPageComponent implements OnInit {
     this.service.seleccionado.set(null);
     this.service.clearStatus();
     this.pendingLogo.set(null);
+    this.pendingImagen.set(null);
     this.clienteParaScore.set(null);
     this.guardandoScore.set(false);
     this.scoreError.set(null);
@@ -282,14 +286,16 @@ export class ClientesPageComponent implements OnInit {
   }
 
   protected crear(dto: CreateClienteDto): void {
-    this.service.crear(dto, this.pendingLogo());
+    this.service.crear(dto, this.pendingLogo(), this.pendingImagen());
     this.pendingLogo.set(null);
+    this.pendingImagen.set(null);
   }
 
   protected actualizar(dto: CreateClienteDto): void {
     const id = this.service.seleccionado()?._id;
-    if (id) this.service.actualizar(id, dto, this.pendingLogo());
+    if (id) this.service.actualizar(id, dto, this.pendingLogo(), this.pendingImagen());
     this.pendingLogo.set(null);
+    this.pendingImagen.set(null);
   }
 
   protected eliminar(id: string): void {
@@ -299,6 +305,7 @@ export class ClientesPageComponent implements OnInit {
   protected editarDesdeBuscar(cliente: Cliente): void {
     this.service.seleccionar(cliente);
     this.pendingLogo.set(null);
+    this.pendingImagen.set(null);
     this.modal.set('editar');
   }
 
