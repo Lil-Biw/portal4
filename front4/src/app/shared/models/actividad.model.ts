@@ -36,6 +36,9 @@ export interface Actividad {
   dias_recordatorio?: number[];
   creado_por_nombre?: string;
   creado_por_email?: string;
+  lider_id?: string;
+  lider_nombre?: string;
+  lider_email?: string;
   creado_en?: string;
   actualizado_en?: string;
 }
@@ -53,6 +56,7 @@ export interface CreateActividadDto {
   tipo_id: string;
   centro_costo_id: string;
   activo_ids?: string[];
+  lider_id?: string;
   fecha: string;
   fecha_termino?: string | null;
   hora?: string;
@@ -69,6 +73,7 @@ export interface UpdateActividadDto {
   tipo_id?: string;
   centro_costo_id?: string;
   activo_ids?: string[];
+  lider_id?: string;
   fecha?: string;
   fecha_termino?: string | null;
   hora?: string;
