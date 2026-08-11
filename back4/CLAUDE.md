@@ -48,8 +48,8 @@ Estructura de keys: `documentos/{origenTipo}/{entidadId}/{timestamp}_{rand}_{nom
 donde `origenTipo` es `empresa | centro | activo | proyecto | actividad`. Para
 adjuntos de solicitudes: `solicitudes/{solicitudId}/{timestamp}_{rand}_{nombre}`.
 
-`clientes.logo` es la única excepción: sigue guardándose como `Buffer` en Mongo, no
-pasa por S3.
+`clientes.logo` y `clientes.imagen` son la única excepción: siguen guardándose como
+`Buffer` en Mongo, no pasan por S3.
 
 **Documentos legacy:** los documentos subidos antes de esta migración no se
 movieron a S3 — siguen teniendo `contenido: Buffer` en Mongo y sin `s3_key`.
@@ -223,7 +223,8 @@ Endpoints (no siguen convención REST estándar):
 
 **Problemas de seguridad conocidos (ver `PORTAL4_problemas.md` en la raíz del repo):**
 - ✅ ~~`GET /usuarios` sin `@Roles()`~~ — **SOLUCIONADO**: ahora filtra por `cliente_id` cuando no es super_admin
-- ⚠️ **Cross-tenant leak** en documentos de centros/proyectos/actividades — `centroId` no se valida contra `empresaId` en el servicio (ver §1.1). En `actividades` es más amplio: `findOne`, `listarDocumentos` y `descargarDocumento` (`actividades.service.ts`) ignoran `centroId`/`empresaId` por completo, y los dos últimos endpoints tampoco tienen `@Roles()` — cualquier usuario autenticado puede leer/descargar actividades y documentos de otra empresa si conoce el ObjectId. Pendiente de corregir.
+- ⚠️ **Cross-tenant leak** en documentos de centros/proyectos — `centroId` no se valida contra `empresaId` en el servicio (ver §1.1). Pendiente de corregir.
+- ✅ ~~**Cross-tenant leak en actividades**~~ — **SOLUCIONADO**: `findOne`, `listarDocumentos` y `servirDocumento` (`actividades.service.ts`) ahora llaman `validarPertenencia(actividadId, centroId, empresaId)`, que verifica que el centro pertenezca a la empresa de la ruta y que la actividad pertenezca a ese centro antes de exponer datos o documentos (lanza `NotFoundException` si no calza). El controller nested (`ActividadesController`) pasa `centroId`/`empresaId` a los tres métodos.
 - ⚠️ Sin rate limiting en `POST /auth/login` (ver §1.3)
 - ✅ ~~Path traversal en módulo documentos~~ — **OBSOLETO**: módulo filesystem eliminado, documentos en MongoDB
 - ✅ ~~`getImagen()` en noticias sin `@Public()`~~ — **SOLUCIONADO**: endpoint marcado como público; las imágenes ya cargan sin JWT

@@ -94,7 +94,7 @@ export class ClientesService {
   }
 
   async subirLogo(id: string, archivo: { originalname: string; buffer: Buffer; mimetype: string }) {
-    const cliente = await this.clienteModel.findById(id).lean();
+    const cliente = await this.clienteModel.findById(id).select('_id').lean();
     if (!cliente) throw new NotFoundException(`Cliente ${id} no encontrado`);
     return this.clienteModel
       .findByIdAndUpdate(
@@ -124,7 +124,7 @@ export class ClientesService {
   }
 
   async subirImagen(id: string, archivo: { originalname: string; buffer: Buffer; mimetype: string }) {
-    const cliente = await this.clienteModel.findById(id).lean();
+    const cliente = await this.clienteModel.findById(id).select('_id').lean();
     if (!cliente) throw new NotFoundException(`Cliente ${id} no encontrado`);
     return this.clienteModel
       .findByIdAndUpdate(

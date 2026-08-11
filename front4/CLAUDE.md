@@ -25,13 +25,15 @@ src/app/
 │   │   ├── centro.model.ts          # CentroCosto, CreateCentroDto, UpdateCentroDto
 │   │   ├── proyecto.model.ts        # Proyecto, CreateProyectoDto, EstadoProyecto
 │   │   ├── usuario.model.ts         # Usuario, CreateUsuarioDto, RolUsuario, PermisoItem
-│   │   ├── mantencion.model.ts      # Mantencion, TipoMantencion, DTOs
+│   │   ├── actividad.model.ts       # Actividad, TipoActividad, DTOs
+│   │   ├── activo.model.ts          # Activo, TipoActivo, DTOs
 │   │   └── status.model.ts          # Status { type: 'ok'|'error', text: string }
 │   ├── components/
 │   │   ├── status-banner/           # <app-status-banner [status]="...">
 │   │   ├── crud-toolbar/            # <app-crud-toolbar> tabs Crear/Editar/Eliminar/Buscar
 │   │   ├── stat-chip/               # <app-stat-chip [label]="..." [variant]="ok|warning|danger|neutral">
-│   │   └── spider-chart/            # <app-spider-chart [labels]="..." [values]="..." [size]="260">
+│   │   ├── spider-chart/            # <app-spider-chart [labels]="..." [values]="..." [size]="260">
+│   │   └── image-upload/            # <app-image-upload [titulo]="..." [initialUrl]="..." (archivoSeleccionado)="...">
 │   └── utils.ts                     # asId(v), encodeQuery(params), toDateKey(d)
 │
 ├── layout/
@@ -52,19 +54,25 @@ src/app/
 │   ├── solicitudes/                 # Solo service (sin página propia)
 │   │   └── solicitudes.service.ts   # EstadoSolicitud, CRUD + adjuntar archivo
 │   ├── documentos/                  # COMPLETO — shell detecta modo, sub-componentes por modo
-│   ├── mantenciones/                # COMPLETO
-│   │   ├── mantenciones.service.ts
-│   │   ├── tipos-mantencion.service.ts
+│   ├── actividades/                 # COMPLETO
+│   │   ├── actividades.service.ts
+│   │   ├── tipos-actividad.service.ts
 │   │   └── pages/
-│   │       ├── mantenciones-page.component.*      # Admin: calendario mes/semana + CRUD modal + tipos + filtro empresa
-│   │       └── mis-mantenciones-page.component.*  # Consumidor: calendario read-only filtrado por empresa del contexto
+│   │       ├── actividades-page.component.*      # Admin: CRUD + documentos adjuntos
+│   │       └── mis-actividades-page.component.*  # Consumidor: read-only filtrado por empresa del contexto
+│   ├── activos/                     # COMPLETO
+│   │   ├── activos.service.ts
+│   │   ├── tipos-activo.service.ts
+│   │   └── pages/
+│   │       ├── activos-page.component.*      # Admin: CRUD + historial (vía actividades) + documentos
+│   │       └── mis-activos-page.component.*  # Consumidor: read-only filtrado por empresa del contexto
 │   ├── noticias/                    # Placeholder
 │   ├── ayuda/                       # Placeholder
 │   └── dashboard/
 │       └── pages/
 │           ├── inicio-page.component.*    # Dashboard consumidor
 │           ├── mi-ficha-page.component.*  # Ficha empresa consumidor
-│           └── resumen-page.component.*   # Vista agregada admin (incluye mantenciones)
+│           └── resumen-page.component.*   # Vista agregada admin (incluye actividades)
 │
 ├── app.routes.ts                    # Lazy routes → MainLayout → feature pages
 ├── app.config.ts                    # provideHttpClient, provideRouter
@@ -81,11 +89,13 @@ src/app/
 | `/mis-centros` | MisCentrosPageComponent | consumidor |
 | `/mis-proyectos` | MisProyectosPageComponent | consumidor |
 | `/mis-proyectos/:id` | MiProyectoDetallePageComponent | consumidor |
-| `/mis-mantenciones` | MisMantencionesPageComponent | consumidor |
+| `/mis-actividades` | MisActividadesPageComponent | consumidor |
+| `/mis-activos` | MisActivosPageComponent | consumidor |
 | `/empresa` | ClientesPageComponent | admin |
 | `/centros` | CentrosPageComponent | admin |
 | `/proyectos` | ProyectosPageComponent | admin |
-| `/mantenciones` | MantencionesPageComponent | admin |
+| `/actividades` | ActividadesPageComponent | admin |
+| `/activos` | ActivosPageComponent | admin |
 | `/usuarios` | UsuariosPageComponent | admin |
 | `/documentos` | DocumentosPageComponent (shell) | ambos |
 | `/noticias` | NoticiasPageComponent | ambos |
@@ -94,9 +104,11 @@ src/app/
 
 ## Sidebar — ítems por modo
 
-**Admin:** Empresas · Centro de costos · Proyectos · Mantenciones · Documentos · Noticias · Usuarios · Ayuda · Resumen general
+**Admin:** Inicio (resumen) · Empresas · Centros de costo · Proyectos · Actividades · Documentos · Activos · Usuarios · Noticias · Ayuda
 
-**Consumidor:** Inicio · Mi ficha · Centro de costos · Proyectos · Mantenciones · Documentos · Noticias · Ayuda
+**Consumidor:** Inicio · Mi ficha · Centros de costo · Proyectos · Actividades · Activos · Documentos · Noticias · Ayuda
+
+Definido en `layout/sidebar/sidebar.component.ts` (`adminGroups`/`consumidorGroups`). `admin_smartclarity` no ve "Noticias" (filtrado en `groupsAdminVisibles()`).
 
 El sidebar muestra sub-ítems contextuales bajo el ítem activo cuando hay un centro o proyecto seleccionado en `ConsumidorContextService`.
 
@@ -158,7 +170,7 @@ export class XxxService {
 }
 ```
 
-**Nota:** `MantencionesService` y `TiposMantencionService` no tienen señal `seleccionado` — el estado de edición se maneja en el componente vía `editingId` + `form` (patrón modal, no patrón detalle).
+**Nota:** `ActividadesService`/`TiposActividadService` y `ActivosService`/`TiposActivoService` no tienen señal `seleccionado` — el estado de edición se maneja en el componente vía `editingId` + `form` (patrón modal, no patrón detalle).
 
 ### Feature page — patrón estándar
 
@@ -185,24 +197,24 @@ constructor() {
 Agregar `<app-status-banner>` dentro del modal para mostrar errores sin cerrarlo.
 `abrirCrear()` y `abrirEditar()` deben llamar `service.clearStatus()` al abrir.
 
-## Patrón de calendario — mantenciones
+## Patrón de calendario — actividades
 
 ✅ ~~**Deuda técnica:** La lógica de calendario (~94 líneas) está duplicada~~. **SOLUCIONADO**: extraída a `src/app/shared/calendar-state.ts` como función `createCalendarState()`. Ambos componentes ahora delegan en `_cal = createCalendarState()`.
 
-El calendario (vista mes y semana) está implementado en `mantenciones-page.component.ts` y `mis-mantenciones-page.component.ts`.
+El calendario (vista mes y semana) está implementado en `actividades-page.component.ts` y `mis-actividades-page.component.ts`.
 
 - **`toDateKey(d: Date): string`** — exportada desde `shared/utils.ts`. Genera `YYYY-MM-DD` para comparar fechas.
-- **`mantencionesEnDia(date)`** — siempre usa `mantencionesFiltradas()`, nunca `service.mantenciones()` directamente.
-- **`filtroEmpresaId`** (admin) — signal que filtra el calendario por empresa. `centroIdsPorEmpresa` computed calcula el Set de IDs, `mantencionesFiltradas` computed aplica el filtro.
+- **`actividadesEnDia(date)`** — siempre usa `actividadesFiltradas()`, nunca `service.actividades()` directamente.
+- **`filtroEmpresaId`** (admin) — signal que filtra el calendario por empresa. `centroIdsPorEmpresa` computed calcula el Set de IDs, `actividadesFiltradas` computed aplica el filtro.
 - **Consumidor** — filtra automáticamente por `ctx.empresaSeleccionada()` vía `centroIdsPorEmpresa` computed. Sin UI de filtro.
-- **CSS compartido** — `mis-mantenciones-page.component.ts` usa `styleUrl: './mantenciones-page.component.css'`.
+- **CSS compartido** — `mis-actividades-page.component.ts` usa `styleUrl: './actividades-page.component.css'`.
 
 ## Topbar — notificaciones
 
 La campana de notificaciones (solo modo consumidor) está en `TopbarComponent`:
 
-- Filtra mantenciones por empresa seleccionada (igual que el calendario consumidor — vía `centroIdsPorEmpresa` computed).
-- Muestra mantenciones próximas en 7 días + solicitudes vencidas/rechazadas.
+- Filtra actividades por empresa seleccionada (igual que el calendario consumidor — vía `centroIdsPorEmpresa` computed).
+- Muestra actividades próximas en 7 días + solicitudes vencidas/rechazadas.
 - El dropdown usa `position: absolute; top: calc(100% + 8px); right: 0` relativo a `.notif-wrapper` (z-index 1002).
 - Backdrop en `position: fixed; z-index: 1001` para cerrar al hacer clic fuera.
 
@@ -217,7 +229,7 @@ this.http.get<{ data: T[] } | T[]>(...).subscribe({
 });
 ```
 
-`SolicitudesService`, `MantencionesService`, `TiposMantencionService` reciben siempre array plano.
+`SolicitudesService`, `ActividadesService`, `TiposActividadService`, `ActivosService`, `TiposActivoService` reciben siempre array plano.
 
 ## Solicitudes — campo empresa_id
 
@@ -230,8 +242,9 @@ Centros       → ClientesService
 Proyectos     → ClientesService + CentrosService
 Usuarios      → ClientesService + CentrosService
 Documentos    → ClientesService + CentrosService + ProyectosService + SolicitudesService
-Mantenciones  → TiposMantencionService + CentrosService + ClientesService
-Topbar        → ClientesService + CentrosService + MantencionesService + TiposMantencionService + SolicitudesService
+Actividades   → TiposActividadService + CentrosService + ClientesService + ActivosService
+Activos       → TiposActivoService + CentrosService + ClientesService
+Topbar        → ClientesService + CentrosService + ActividadesService + TiposActividadService + SolicitudesService
 Resumen       → todos los services (solo lectura)
 MisCentros/MisProyectos/MiFicha → SolicitudesService + DocumentosService
 ```
@@ -288,6 +301,6 @@ Ver `PORTAL4_problemas.md` (raíz del repo) para el listado completo. Estado act
 
 7. **Solicitudes**: estado `pendiente → revision → aprobado/rechazado/vencido`. El consumidor puede adjuntar archivos a solicitudes pendientes/rechazadas/vencidas.
 
-8. **Mantenciones**: el filtro de empresa es client-side (computed). No recargar el service al cambiar empresa — el computed reacciona automáticamente.
+8. **Actividades/Activos**: el filtro de empresa es client-side (computed). No recargar el service al cambiar empresa — el computed reacciona automáticamente.
 
 9. **Error handling en services**: siempre usar `private setError(err)` que extrae `err?.error?.message` del backend. Nunca texto hardcodeado genérico.
