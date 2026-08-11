@@ -99,3 +99,45 @@ describe('ActivosService.resetDocumentos — limpia imágenes', () => {
     expect(service.imagenesActivo().size).toBe(0);
   });
 });
+
+describe('ActivosService — documentos', () => {
+  let service: ActivosService;
+  let centrosService: CentrosService;
+  let httpMock: HttpTestingController;
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({ providers: [provideHttpClient(), provideHttpClientTesting()] });
+    service = TestBed.inject(ActivosService);
+    centrosService = TestBed.inject(CentrosService);
+    httpMock = TestBed.inject(HttpTestingController);
+    setupCentro(centrosService);
+  });
+
+  afterEach(() => httpMock.verify());
+
+  it('renombrarDocumento hace PATCH con el nuevo nombre y refresca la lista', () => {
+    service.renombrarDocumento('activo1', 'centro1', 'doc1', 'nuevo_nombre.pdf');
+    const req = httpMock.expectOne(
+      r => r.url.includes('/activos/activo1/documentos/doc1') && r.method === 'PATCH',
+    );
+    expect(req.request.body).toEqual({ nombre_display: 'nuevo_nombre.pdf' });
+    req.flush({});
+    httpMock.expectOne(r => r.url.includes('/activos/activo1/documentos') && r.method === 'GET').flush([]);
+  });
+
+  it('eliminarDocumento llama onSuccess cuando el servidor confirma', () => {
+    let called = false;
+    service.eliminarDocumento('activo1', 'centro1', 'doc1', () => { called = true; });
+    httpMock.expectOne(r => r.url.includes('/activos/activo1/documentos/doc1') && r.method === 'DELETE').flush({});
+    httpMock.expectOne(r => r.url.includes('/activos/activo1/documentos') && r.method === 'GET').flush([]);
+    expect(called).toBe(true);
+  });
+
+  it('eliminarDocumento llama onError si el servidor falla', () => {
+    let called = false;
+    service.eliminarDocumento('activo1', 'centro1', 'doc1', undefined, () => { called = true; });
+    httpMock.expectOne(r => r.url.includes('/activos/activo1/documentos/doc1') && r.method === 'DELETE')
+      .flush({ message: 'error' }, { status: 500, statusText: 'Server Error' });
+    expect(called).toBe(true);
+  });
+});

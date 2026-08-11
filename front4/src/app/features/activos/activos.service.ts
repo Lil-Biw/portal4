@@ -174,7 +174,7 @@ export class ActivosService {
     });
   }
 
-  eliminarDocumento(activoId: string, centroId: string, docId: string): void {
+  eliminarDocumento(activoId: string, centroId: string, docId: string, onSuccess?: () => void, onError?: () => void): void {
     const { empresaId } = this.resolverIds(centroId);
     if (!empresaId) { this.setError({ error: { message: 'Centro no encontrado' } }); return; }
     this.http.delete(
@@ -182,6 +182,22 @@ export class ActivosService {
     ).subscribe({
       next: () => {
         this.status.set({ type: 'ok', text: 'Documento eliminado' });
+        this.listarDocumentos(activoId, centroId);
+        onSuccess?.();
+      },
+      error: (err) => { this.setError(err); onError?.(); },
+    });
+  }
+
+  renombrarDocumento(activoId: string, centroId: string, docId: string, nuevoNombre: string): void {
+    const { empresaId } = this.resolverIds(centroId);
+    if (!empresaId) { this.setError({ error: { message: 'Centro no encontrado' } }); return; }
+    this.http.patch(
+      this.api.url(`/empresas/${empresaId}/centros/${centroId}/activos/${activoId}/documentos/${docId}`),
+      { nombre_display: nuevoNombre }
+    ).subscribe({
+      next: () => {
+        this.status.set({ type: 'ok', text: 'Documento renombrado' });
         this.listarDocumentos(activoId, centroId);
       },
       error: (err) => this.setError(err),
