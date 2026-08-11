@@ -31,6 +31,7 @@ interface ActividadForm {
   fecha_termino: string;
   hora: string;
   hora_termino: string;
+  lider_id: string;
 }
 
 interface TipoForm {
@@ -41,7 +42,7 @@ interface TipoForm {
 }
 
 function emptyForm(fecha = ''): ActividadForm {
-  return { nombre: '', descripcion: '', tipo_id: '', empresa_id: '', centro_costo_id: '', activo_ids: [], fecha, fecha_termino: '', hora: '', hora_termino: '' };
+  return { nombre: '', descripcion: '', tipo_id: '', empresa_id: '', centro_costo_id: '', activo_ids: [], fecha, fecha_termino: '', hora: '', hora_termino: '', lider_id: '' };
 }
 function emptyTipoForm(): TipoForm {
   return { nombre: '', color: '#4E9AC7', icono: 'calendario', descripcion: '' };
@@ -155,6 +156,12 @@ export class ActividadesPageComponent implements OnInit {
     this.usuariosService.usuarios().filter(u => u.rol === 'super_admin')
   );
 
+  protected lideresDisponibles = computed(() =>
+    this.usuariosService.usuarios()
+      .filter(u => u.rol === 'admin_smartclarity' || u.rol === 'super_admin')
+      .sort((a, b) => a.nombre.localeCompare(b.nombre))
+  );
+
   protected estaSuscritoAdmin(u: Usuario): boolean {
     const f = this.form();
     return usuarioEstaSuscrito(u, f.empresa_id, f.centro_costo_id);
@@ -228,14 +235,24 @@ export class ActividadesPageComponent implements OnInit {
   protected lupaDetalleDia     = signal(false);
   protected lupaDocsDia        = signal(false);
   protected tipoDropdownOpen   = signal(false);
+  protected liderDropdownOpen  = signal(false);
 
   protected tipoSeleccionado = computed(() =>
     this.tiposService.tipos().find(t => t._id === this.form().tipo_id) ?? null
   );
 
+  protected liderSeleccionado = computed(() =>
+    this.lideresDisponibles().find(u => u._id === this.form().lider_id) ?? null
+  );
+
   seleccionarTipo(tipoId: string): void {
     this.patchForm('tipo_id', tipoId);
     this.tipoDropdownOpen.set(false);
+  }
+
+  seleccionarLider(liderId: string): void {
+    this.patchForm('lider_id', liderId);
+    this.liderDropdownOpen.set(false);
   }
 
   get resumenDocumentosTexto(): string {
@@ -694,6 +711,7 @@ export class ActividadesPageComponent implements OnInit {
       fecha_termino:   a.fecha_termino ? a.fecha_termino.slice(0, 10) : '',
       hora:            a.hora ?? '',
       hora_termino:    a.hora_termino ?? '',
+      lider_id:        a.lider_id ?? '',
     });
     this.resetNotif();
     this.diasRecordatorio.set([...(a.dias_recordatorio ?? [])]);
@@ -773,6 +791,7 @@ export class ActividadesPageComponent implements OnInit {
       fecha_termino:   f.fecha_termino || null,
       hora:            f.hora || undefined,
       hora_termino:    f.hora && f.hora_termino ? f.hora_termino : undefined,
+      lider_id:        f.lider_id,
       dias_recordatorio: this.diasRecordatorio(),
       // Los docs pendientes se suben tras crear; se mandan los nombres para el correo
       documentos_nombres: !id && this.docsPendientes.length > 0
