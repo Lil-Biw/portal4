@@ -271,6 +271,12 @@
                   <span class="cal-day-field-value creado-por-tag">{{ det.creado_por_nombre }} ({{ det.creado_por_email }})</span>
                 </div>
               }
+              @if (det.lider_nombre) {
+                <div class="cal-day-field">
+                  <span class="cal-day-field-label">Líder</span>
+                  <span class="cal-day-field-value creado-por-tag">{{ det.lider_nombre }} ({{ det.lider_email }})</span>
+                </div>
+              }
               @if (det.descripcion) {
                 <div class="cal-day-field">
                   <span class="cal-day-field-label">Descripción</span>
@@ -386,6 +392,13 @@
         <div class="actividad-detalle-section">
           <p class="actividad-detalle-section-label">Creado por</p>
           <p class="actividad-detalle-descripcion creado-por-tag">{{ actividadDetalle()!.creado_por_nombre }} ({{ actividadDetalle()!.creado_por_email }})</p>
+        </div>
+      }
+
+      @if (actividadDetalle()!.lider_nombre) {
+        <div class="actividad-detalle-section">
+          <p class="actividad-detalle-section-label">Líder</p>
+          <p class="actividad-detalle-descripcion creado-por-tag">{{ actividadDetalle()!.lider_nombre }} ({{ actividadDetalle()!.lider_email }})</p>
         </div>
       }
 
