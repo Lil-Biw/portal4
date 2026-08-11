@@ -165,7 +165,7 @@ export class ActividadesService {
     });
   }
 
-  eliminarDocumento(actividadId: string, docId: string): void {
+  eliminarDocumento(actividadId: string, docId: string, onSuccess?: () => void, onError?: () => void): void {
     const centroId = this.actividades().find(a => a._id === actividadId)?.centro_costo_id;
     const empresaId = centroId ? this.getEmpresaId(centroId) : undefined;
     if (!empresaId || !centroId) { this.setError({ error: { message: 'Centro no encontrado' } }); return; }
@@ -174,6 +174,23 @@ export class ActividadesService {
     ).subscribe({
       next: () => {
         this.status.set({ type: 'ok', text: 'Documento eliminado' });
+        this.listarDocumentos(actividadId);
+        onSuccess?.();
+      },
+      error: err => { this.setError(err); onError?.(); },
+    });
+  }
+
+  renombrarDocumento(actividadId: string, docId: string, nuevoNombre: string): void {
+    const centroId = this.actividades().find(a => a._id === actividadId)?.centro_costo_id;
+    const empresaId = centroId ? this.getEmpresaId(centroId) : undefined;
+    if (!empresaId || !centroId) { this.setError({ error: { message: 'Centro no encontrado' } }); return; }
+    this.http.patch(
+      this.api.url(`/empresas/${empresaId}/centros/${centroId}/actividades/${actividadId}/documentos/${docId}`),
+      { nombre_display: nuevoNombre }
+    ).subscribe({
+      next: () => {
+        this.status.set({ type: 'ok', text: 'Documento renombrado' });
         this.listarDocumentos(actividadId);
       },
       error: err => this.setError(err),
