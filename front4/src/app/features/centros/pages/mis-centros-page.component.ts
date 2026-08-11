@@ -16,6 +16,7 @@ import { CentroCosto } from '../../../shared/models/centro.model';
 import { Activo, TipoActivo } from '../../../shared/models/activo.model';
 import { Proyecto, EstadoProyecto, ESTADO_PROYECTO_LABEL } from '../../../shared/models/proyecto.model';
 import { asId, calcularScoreDocumental, scoreChipVariantFn, scoreChipLabelFn, colorEstadoSolicitud, estadoStyleFn } from '../../../shared/utils';
+import { ApiService } from '../../../core/services/api.service';
 
 @Component({
   selector: 'app-mis-centros-page',
@@ -43,6 +44,7 @@ export class MisCentrosPageComponent implements OnInit, OnDestroy {
   protected readonly activosService     = inject(ActivosService);
   protected readonly proyectosService    = inject(ProyectosService);
   private  readonly sanitizer          = inject(DomSanitizer);
+  private readonly api = inject(ApiService);
 
   get empresa()        { return this.consumidorContext.empresaSeleccionada(); }
   get centroActivo()   { return this.consumidorContext.centroSeleccionado(); }
@@ -115,6 +117,11 @@ export class MisCentrosPageComponent implements OnInit, OnDestroy {
       .find(g => g.centroId === centroId);
     const docsActivos = grupo?.docs.length ?? 0;
     return calcularScoreDocumental(sols, docsActivos, 0);
+  }
+
+  protected fotoUrlCentro(centro: CentroCosto | null): string | null {
+    if (!centro?._id || !centro?.foto?.tipo_mime) return null;
+    return this.api.url(`/empresas/${asId(centro.cliente_id)}/centros/${asId(centro._id)}/foto`);
   }
 
   protected readonly estadoStyle = estadoStyleFn;
