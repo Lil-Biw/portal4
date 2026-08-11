@@ -8,6 +8,11 @@ export class CreateActividadDto {
   @IsString() @IsOptional() descripcion?: string;
   @IsMongoId() tipo_id: string;
   @IsMongoId() @IsOptional() centro_costo_id?: string;
+  // No usar @IsMongoId(): @IsOptional() no salta la validación para '' (solo para
+  // undefined/null), y '' es el valor que el frontend manda para "quitar el líder".
+  // El formato de ObjectId y la existencia/rol del usuario se validan en
+  // ActividadesService.resolverLider().
+  @IsOptional() @IsString() lider_id?: string;
   @IsArray() @IsMongoId({ each: true }) @IsOptional() activo_ids?: string[];
   @IsDateString() fecha: string;
   @IsDateString() @IsOptional() fecha_termino?: string | null;

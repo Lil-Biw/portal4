@@ -19,6 +19,9 @@ export class Actividad {
   @Prop({ type: Types.ObjectId, ref: 'Usuario' }) creado_por?: Types.ObjectId;
   @Prop() creado_por_nombre?: string;
   @Prop() creado_por_email?: string;
+  @Prop({ type: Types.ObjectId, ref: 'Usuario' }) lider_id?: Types.ObjectId;
+  @Prop() lider_nombre?: string;
+  @Prop() lider_email?: string;
 }
 
 export const ActividadSchema = SchemaFactory.createForClass(Actividad);
