@@ -49,7 +49,7 @@ function emptyTipoForm(): TipoForm { return { nombre: '', color: '#0095d6', icon
       border-radius: 16px;
       box-shadow: 0 20px 60px rgba(15,23,42,.18);
       width: 100%;
-      max-width: 860px;
+      max-width: 960px;
       max-height: 90vh;
       overflow-y: auto;
       padding: 1.5rem;

@@ -21,7 +21,7 @@ export interface DocPendiente { localId?: string; file?: File; linkUrl?: string;
   styles: [`
     .form-dos-col {
       display: grid;
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: minmax(300px, 360px) 1fr;
       gap: 1.25rem 2rem;
       align-items: start;
     }
