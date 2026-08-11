@@ -14,6 +14,7 @@ export interface Cliente {
   direccion?: Direccion;
   activo: boolean;
   logo?: { tipo_mime: string; nombre: string };
+  imagen?: { tipo_mime: string; nombre: string };
   score_smartclarity?: number[];
   mostrar_grafico_promedio?: boolean;
   creado_en?: string;

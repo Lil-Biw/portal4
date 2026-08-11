@@ -1,34 +1,40 @@
-import { ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, Output, inject } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, Output, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Cliente, CreateClienteDto } from '../../../../shared/models/cliente.model';
 import { ApiService } from '../../../../core/services/api.service';
+import { ImageUploadComponent } from '../../../../shared/components/image-upload/image-upload.component';
 
 @Component({
   selector: 'app-cliente-form',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, ImageUploadComponent],
   templateUrl: './cliente-form.component.html',
 })
 export class ClienteFormComponent implements OnChanges {
   private readonly api = inject(ApiService);
-  private readonly cdr = inject(ChangeDetectorRef);
 
   @Input() initial: Cliente | null = null;
   @Input() submitLabel = 'Guardar';
   @Input() saving = false;
   @Output() submitted = new EventEmitter<CreateClienteDto>();
   @Output() logoFile = new EventEmitter<File | null>();
+  @Output() imagenFile = new EventEmitter<File | null>();
 
   form: CreateClienteDto = this.empty();
-  logoPreview: string | null = null;
-  private _logoFile: File | null = null;
+  protected _logoFile: File | null = null;
+  protected _imagenFile: File | null = null;
 
-  // El backend no devuelve el binario del logo en el cliente (solo tipo_mime/nombre,
-  // ver clientes.service.ts findAll/findOne con .select('-logo.contenido')) — hay que
-  // pedirlo al endpoint dedicado GET /empresas/:id/logo (mismo patrón que sidebar.component.ts).
-  private resolveLogoUrl(cliente: Cliente | null): string | null {
+  // El backend no devuelve el binario de logo/imagen en el cliente (solo tipo_mime/nombre,
+  // ver clientes.service.ts findAll/findOne con .select('-logo.contenido -imagen.contenido'))
+  // — hay que pedirlos a los endpoints dedicados GET /empresas/:id/logo|imagen.
+  protected resolveLogoUrl(cliente: Cliente | null): string | null {
     if (!cliente?._id || !cliente?.logo?.tipo_mime) return null;
     return this.api.url(`/empresas/${cliente._id}/logo`);
+  }
+
+  protected resolveImagenUrl(cliente: Cliente | null): string | null {
+    if (!cliente?._id || !cliente?.imagen?.tipo_mime) return null;
+    return this.api.url(`/empresas/${cliente._id}/imagen`);
   }
 
   ngOnChanges(): void {
@@ -46,24 +52,13 @@ export class ClienteFormComponent implements OnChanges {
           },
         }
       : this.empty();
-    this.logoPreview = this.resolveLogoUrl(this.initial);
     this._logoFile = null;
-  }
-
-  onLogoSelected(ev: Event): void {
-    const file = (ev.target as HTMLInputElement).files?.[0] ?? null;
-    this._logoFile = file;
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (e) => { this.logoPreview = e.target?.result as string; this.cdr.markForCheck(); };
-      reader.readAsDataURL(file);
-    } else {
-      this.logoPreview = this.resolveLogoUrl(this.initial);
-    }
+    this._imagenFile = null;
   }
 
   submit(): void {
     this.logoFile.emit(this._logoFile);
+    this.imagenFile.emit(this._imagenFile);
     this.submitted.emit(this.form);
   }
 
