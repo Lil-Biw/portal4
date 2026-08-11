@@ -18,7 +18,7 @@ export class UsuariosService {
 
   cargar(): void {
     this.loading.set(true);
-    this.http.get<{ data: Usuario[] } | Usuario[]>(this.api.url('/usuarios')).subscribe({
+    this.http.get<{ data: Usuario[] } | Usuario[]>(this.api.url('/usuarios?limit=1000')).subscribe({
       next: (res) => { this.usuarios.set(Array.isArray(res) ? res : res.data); this.loading.set(false); },
       error: (err) => { this.setError(err); this.loading.set(false); },
     });
