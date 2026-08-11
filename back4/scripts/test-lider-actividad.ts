@@ -96,18 +96,39 @@ async function main() {
   check(!!error2, 'rechaza un lider_id cuyo usuario no es admin');
   check(error2?.status === 400, 'el rechazo es un BadRequestException (400)');
 
-  // Caso 3: sin lider_id → actividad se crea sin líder, sin error
+  // Caso 3: lider_id con formato de ObjectId inválido → rechazado
+  let errorFormato: any = null;
+  try {
+    await controller.create(centroId.toString(), { ...dtoBase, lider_id: 'no-es-un-objectid' }, reqSinUsuario);
+  } catch (err: any) {
+    errorFormato = err;
+  }
+  check(!!errorFormato, 'rechaza un lider_id con formato de ObjectId inválido');
+  check(errorFormato?.status === 400, 'el rechazo de formato inválido es un BadRequestException (400)');
+
+  // Caso 4: lider_id con formato válido pero sin usuario correspondiente → rechazado
+  const idInexistente = oid().toString();
+  let errorInexistente: any = null;
+  try {
+    await controller.create(centroId.toString(), { ...dtoBase, lider_id: idInexistente }, reqSinUsuario);
+  } catch (err: any) {
+    errorInexistente = err;
+  }
+  check(!!errorInexistente, 'rechaza un lider_id que no corresponde a ningún usuario');
+  check(errorInexistente?.status === 400, 'el rechazo de usuario inexistente es un BadRequestException (400)');
+
+  // Caso 5: sin lider_id → actividad se crea sin líder, sin error
   const sinLider = await controller.create(centroId.toString(), { ...dtoBase }, reqSinUsuario);
   check(!sinLider.lider_nombre, 'sin lider_id no guarda lider_nombre');
   check(!!sinLider._id, 'la actividad se crea igual sin lider_id');
 
-  // Caso 4: editar para reasignar el líder a otro admin → snapshot se actualiza
+  // Caso 6: editar para reasignar el líder a otro admin → snapshot se actualiza
   const reasignada = await controller.update(String(conLider._id), { lider_id: superAdminId.toString() });
   check(reasignada.lider_nombre === 'Super Admin Líder', 'reasigna el líder y actualiza el nombre');
   check(reasignada.lider_email === 'super-lider@example.com', 'reasigna el líder y actualiza el correo');
   check(String(reasignada.lider_id) === superAdminId.toString(), 'reasigna la referencia lider_id');
 
-  // Caso 5: editar enviando lider_id: '' → limpia el líder
+  // Caso 7: editar enviando lider_id: '' → limpia el líder
   const limpiada = await controller.update(String(conLider._id), { lider_id: '' });
   check(!limpiada.lider_nombre, "lider_id vacío limpia lider_nombre");
   check(!limpiada.lider_email, "lider_id vacío limpia lider_email");
