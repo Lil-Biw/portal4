@@ -9,13 +9,15 @@ import { Cliente } from '../../../../shared/models/cliente.model';
 import { asId } from '../../../../shared/utils';
 import { UploadDocumentFormComponent } from '../../../../shared/components/upload-document-form/upload-document-form.component';
 import { ActivoIconoComponent } from '../activo-icono/activo-icono.component';
+import { DocumentCardListComponent } from '../../../../shared/components/document-card-list/document-card-list.component';
+import { DocumentoTarjeta } from '../../../../shared/models/documento-tarjeta.model';
 
-export interface DocPendiente { file?: File; linkUrl?: string; nombre: string; }
+export interface DocPendiente { localId?: string; file?: File; linkUrl?: string; nombre: string; }
 
 @Component({
   selector: 'app-activos-form',
   standalone: true,
-  imports: [FormsModule, UploadDocumentFormComponent, ActivoIconoComponent],
+  imports: [FormsModule, UploadDocumentFormComponent, ActivoIconoComponent, DocumentCardListComponent],
   styles: [`
     .form-dos-col {
       display: grid;
@@ -31,34 +33,6 @@ export interface DocPendiente { file?: File; linkUrl?: string; nombre: string; }
       font-weight: 700;
       color: #374151;
     }
-    .doc-lista {
-      max-height: 180px;
-      overflow-y: auto;
-      border: 1px solid rgba(34,33,33,.15);
-      border-radius: 8px;
-      padding: .35rem .6rem;
-      margin-bottom: .35rem;
-    }
-    .doc-item {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: .4rem;
-      padding: .3rem 0;
-      border-bottom: 1px solid #f3f4f6;
-      font-size: .81rem;
-    }
-    .doc-item:last-child { border-bottom: none; }
-    .doc-nombre {
-      flex: 1;
-      min-width: 0;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-      color: #1f2937;
-    }
-    .doc-acciones { display: flex; gap: .3rem; flex-shrink: 0; }
-    .doc-empty { font-size: .8rem; color: #9ca3af; padding: .3rem 0; }
     .form-footer {
       display: flex;
       justify-content: flex-end;
@@ -182,57 +156,32 @@ export interface DocPendiente { file?: File; linkUrl?: string; nombre: string; }
           <h4>Documentos adjuntos</h4>
 
           @if (!editingId) {
-            <!-- Modo creación: lista pendientes -->
-            @if (docsPendientes.length > 0) {
-              <div class="doc-lista">
-                @for (doc of docsPendientes; track $index) {
-                  <div class="doc-item">
-                    <span class="doc-nombre" [title]="doc.nombre">{{ doc.nombre }}</span>
-                    <div class="doc-acciones">
-                      <button type="button" class="btn-danger btn-sm" (click)="onQuitarDoc($index)">Quitar</button>
-                    </div>
-                  </div>
-                }
-              </div>
-            } @else {
-              <p class="doc-empty">Sin documentos pendientes.</p>
-            }
+            <app-document-card-list
+              [documentos]="docsPendientesTarjetas"
+              (eliminar)="docQuitado.emit($event)" />
           } @else {
-            <!-- Modo edición: lista existentes -->
-            @if (docsExistentes.length > 0) {
-              <div class="doc-lista">
-                @for (doc of docsExistentes; track doc._id) {
-                  <div class="doc-item">
-                    <span class="doc-nombre" [title]="doc.nombre_display">{{ doc.nombre_display }}</span>
-                    <div class="doc-acciones">
-                      @if (doc.tipo_contenido === 'link') {
-                        <button type="button" class="btn-ghost btn-sm" (click)="onAbrirDoc(doc.link_url!)">↗</button>
-                      } @else {
-                        <button type="button" class="btn-ghost btn-sm" (click)="onDescargarDoc(doc._id, doc.nombre_display)">↓</button>
-                      }
-                      <button type="button" class="btn-danger btn-sm" (click)="onEliminarDoc(doc._id)">✕</button>
-                    </div>
-                  </div>
-                }
-              </div>
-            } @else {
-              <p class="doc-empty">Sin documentos adjuntos.</p>
-            }
+            <app-document-card-list
+              [documentos]="docsExistentesTarjetas"
+              (descargar)="onDescargarDocId($event)"
+              (abrirLink)="onAbrirDoc($event)"
+              (eliminar)="onEliminarDoc($event)"
+              (renombrar)="docRenombrado.emit($event)" />
           }
 
           <!-- Upload -->
           <app-upload-document-form
             style="display:block"
             [mostrarTipoDocumento]="false"
+            [mostrarNombre]="false"
+            [ocultarBotonConfirmarArchivo]="true"
             [modo]="modo()" (modoChange)="setModo($event)"
-            [archivo]="fileSelected" (archivoChange)="onArchivoChange($event)"
+            [archivo]="null" (archivoChange)="onArchivoChange($event)"
             [(link)]="linkInput"
-            [(nombre)]="nombreInput"
             [linkInvalido]="linkInvalido()"
             [confirmLabel]="editingId ? 'Adjuntar' : '+ Agregar a la lista'"
             [showCancel]="false"
-            [confirmDisabled]="modo()==='archivo' ? !fileSelected : (!linkInput.trim() || linkInvalido())"
-            (confirmar)="editingId ? subirExistente() : agregarPendiente()" />
+            [confirmDisabled]="!linkInput.trim() || linkInvalido()"
+            (confirmar)="editingId ? subirLinkExistente() : agregarLinkPendiente()" />
         </div>
 
       </div>
@@ -257,15 +206,18 @@ export class ActivosFormComponent implements OnChanges {
   @Input() editingId: string | null = null;
   @Input() docsPendientes: DocPendiente[] = [];
   @Input() docsExistentes: DocActivo[] = [];
+  @Input() subiendoCards: { id: string; nombre: string }[] = [];
+  @Input() eliminandoDocIds: Set<string> = new Set();
   @Input() submitLabel = 'Guardar activo';
 
   @Output() submitted       = new EventEmitter<CreateActivoDto>();
   @Output() cancelar        = new EventEmitter<void>();
   @Output() docAgregado     = new EventEmitter<DocPendiente>();
-  @Output() docQuitado      = new EventEmitter<number>();
+  @Output() docQuitado      = new EventEmitter<string>();
   @Output() docSubido       = new EventEmitter<DocPendiente>();
   @Output() docEliminado    = new EventEmitter<string>();
   @Output() docDescargado   = new EventEmitter<{ docId: string; nombreDisplay?: string }>();
+  @Output() docRenombrado   = new EventEmitter<{ id: string; nuevoNombre: string }>();
 
   empresaId = signal('');
   form: CreateActivoDto = { nombre: '', tipo_activo_id: '', centro_costo_id: '', descripcion: '' };
@@ -280,17 +232,13 @@ export class ActivosFormComponent implements OnChanges {
     return this._tipos().filter(t => t.nombre.toLowerCase().includes(q));
   });
 
-  fileSelected: File | null = null;
-  nombreInput = '';
   linkInput = '';
   modo = signal<'archivo' | 'link'>('archivo');
 
   setModo(modo: 'archivo' | 'link'): void {
     if (this.modo() === modo) return;
     this.modo.set(modo);
-    this.fileSelected = null;
     this.linkInput = '';
-    this.nombreInput = '';
   }
 
   linkInvalido(): boolean {
@@ -378,45 +326,67 @@ export class ActivosFormComponent implements OnChanges {
     this.form.centro_costo_id = '';
   }
 
+  private nuevoLocalId(): string {
+    return `pend-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  }
+
+  protected get docsPendientesTarjetas(): DocumentoTarjeta[] {
+    return this.docsPendientes.map(d => ({
+      id: d.localId!,
+      nombre: d.nombre,
+      tipoContenido: d.linkUrl ? 'link' : 'archivo',
+      linkUrl: d.linkUrl,
+      estado: 'pendiente' as const,
+    }));
+  }
+
+  protected get docsExistentesTarjetas(): DocumentoTarjeta[] {
+    const existentes: DocumentoTarjeta[] = this.docsExistentes.map(doc => ({
+      id: doc._id,
+      nombre: doc.nombre_display,
+      tipoContenido: doc.tipo_contenido ?? 'archivo',
+      linkUrl: doc.link_url,
+      estado: this.eliminandoDocIds.has(doc._id) ? 'eliminando' as const : 'listo' as const,
+    }));
+    const subiendo: DocumentoTarjeta[] = this.subiendoCards.map(c => ({
+      id: c.id,
+      nombre: c.nombre,
+      tipoContenido: 'archivo' as const,
+      estado: 'subiendo' as const,
+    }));
+    return [...existentes, ...subiendo];
+  }
+
   onArchivoChange(file: File | null): void {
-    this.fileSelected = file;
-    if (file && !this.nombreInput) {
-      this.nombreInput = file.name.replace(/\.[^/.]+$/, '');
+    if (!file) return;
+    if (this.editingId) {
+      this.docSubido.emit({ file, nombre: file.name });
+    } else {
+      this.docAgregado.emit({ localId: this.nuevoLocalId(), file, nombre: file.name });
     }
   }
 
-  agregarPendiente(): void {
-    if (this.modo() === 'link') {
-      const link = this.linkInput.trim();
-      if (!link || this.linkInvalido()) return;
-      this.docAgregado.emit({ linkUrl: link, nombre: this.nombreInput || link });
-    } else {
-      if (!this.fileSelected) return;
-      this.docAgregado.emit({ file: this.fileSelected, nombre: this.nombreInput || this.fileSelected.name });
-    }
-    this.fileSelected = null;
-    this.nombreInput = '';
+  agregarLinkPendiente(): void {
+    const link = this.linkInput.trim();
+    if (!link || this.linkInvalido()) return;
+    this.docAgregado.emit({ localId: this.nuevoLocalId(), linkUrl: link, nombre: link });
     this.linkInput = '';
   }
 
-  subirExistente(): void {
-    if (this.modo() === 'link') {
-      const link = this.linkInput.trim();
-      if (!link || this.linkInvalido()) return;
-      this.docSubido.emit({ linkUrl: link, nombre: this.nombreInput || link });
-    } else {
-      if (!this.fileSelected) return;
-      this.docSubido.emit({ file: this.fileSelected, nombre: this.nombreInput || this.fileSelected.name });
-    }
-    this.fileSelected = null;
-    this.nombreInput = '';
+  subirLinkExistente(): void {
+    const link = this.linkInput.trim();
+    if (!link || this.linkInvalido()) return;
+    this.docSubido.emit({ linkUrl: link, nombre: link });
     this.linkInput = '';
   }
 
-  onQuitarDoc(index: number): void    { this.docQuitado.emit(index); }
   onEliminarDoc(docId: string): void  { this.docEliminado.emit(docId); }
   onDescargarDoc(docId: string, nombreDisplay: string): void {
     this.docDescargado.emit({ docId, nombreDisplay });
+  }
+  onDescargarDocId(docId: string): void {
+    const doc = this.docsExistentes.find(d => d._id === docId);
+    this.docDescargado.emit({ docId, nombreDisplay: doc?.nombre_display });
   }
 
   enviar(): void {

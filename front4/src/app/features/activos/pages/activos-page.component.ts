@@ -304,6 +304,8 @@ export class ActivosPageComponent implements OnInit {
   protected abrirCrear(): void {
     this.editingId.set(null);
     this.docsPendientes = [];
+    this.subiendoCards.set([]);
+    this.eliminandoDocIds.set(new Set());
     this.service.seleccionado.set(null);
     this.service.clearStatus();
     this.modal.set('crear');
@@ -317,6 +319,8 @@ export class ActivosPageComponent implements OnInit {
 
   protected abrirEditar(activo: Activo): void {
     this.editingId.set(activo._id);
+    this.subiendoCards.set([]);
+    this.eliminandoDocIds.set(new Set());
     this.service.seleccionar(activo);
     this.service.listarDocumentos(activo._id, activo.centro_costo_id);
     this.modal.set('editar');
@@ -398,6 +402,8 @@ export class ActivosPageComponent implements OnInit {
   protected editarDesdeBuscar(activo: Activo): void {
     this.service.seleccionar(activo);
     this.editingId.set(activo._id);
+    this.subiendoCards.set([]);
+    this.eliminandoDocIds.set(new Set());
     this.modal.set('editar');
   }
 
@@ -405,26 +411,42 @@ export class ActivosPageComponent implements OnInit {
     this.docsPendientes = [...this.docsPendientes, doc];
   }
 
-  protected onDocQuitado(index: number): void {
-    this.docsPendientes = this.docsPendientes.filter((_, i) => i !== index);
+  protected onDocQuitado(localId: string): void {
+    this.docsPendientes = this.docsPendientes.filter(d => d.localId !== localId);
+  }
+
+  protected subiendoCards    = signal<{ id: string; nombre: string }[]>([]);
+  protected eliminandoDocIds = signal<Set<string>>(new Set());
+
+  protected onDocRenombrado(ev: { id: string; nuevoNombre: string }): void {
+    const activo = this.activoEditando;
+    if (!activo) return;
+    this.service.renombrarDocumento(activo._id, activo.centro_costo_id, ev.id, ev.nuevoNombre);
   }
 
   protected onDocSubido(doc: DocPendiente): void {
     const activo = this.activoEditando;
     if (!activo) return;
-    this.subiendoDocs = true;
-    const liberar = () => setTimeout(() => { this.subiendoDocs = false; }, 0);
+    const tempId = `subiendo-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    this.subiendoCards.update(list => [...list, { id: tempId, nombre: doc.nombre }]);
+    const limpiar = () => this.subiendoCards.update(list => list.filter(c => c.id !== tempId));
     if (doc.linkUrl) {
-      this.service.subirDocumentoLink(activo._id, activo.centro_costo_id, doc.linkUrl, doc.nombre, liberar, liberar);
+      this.service.subirDocumentoLink(activo._id, activo.centro_costo_id, doc.linkUrl, doc.nombre, limpiar, limpiar);
     } else if (doc.file) {
-      this.service.subirDocumento(activo._id, activo.centro_costo_id, doc.file, doc.nombre, liberar, liberar);
+      this.service.subirDocumento(activo._id, activo.centro_costo_id, doc.file, doc.nombre, limpiar, limpiar);
     }
   }
 
   protected onDocEliminado(docId: string): void {
     const activo = this.activoEditando;
     if (!activo) return;
-    this.service.eliminarDocumento(activo._id, activo.centro_costo_id, docId);
+    this.eliminandoDocIds.update(set => new Set(set).add(docId));
+    const limpiar = () => this.eliminandoDocIds.update(set => {
+      const copia = new Set(set);
+      copia.delete(docId);
+      return copia;
+    });
+    this.service.eliminarDocumento(activo._id, activo.centro_costo_id, docId, limpiar, limpiar);
   }
 
   protected onDocDescargado(ev: { docId: string; nombreDisplay?: string }): void {

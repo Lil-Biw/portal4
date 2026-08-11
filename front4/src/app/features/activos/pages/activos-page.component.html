@@ -132,12 +132,15 @@
           [editingId]="editingId()"
           [docsPendientes]="[]"
           [docsExistentes]="docsExistentes"
+          [subiendoCards]="subiendoCards()"
+          [eliminandoDocIds]="eliminandoDocIds()"
           submitLabel="Guardar cambios"
           (submitted)="actualizar($event)"
           (cancelar)="cerrar()"
           (docSubido)="onDocSubido($event)"
           (docEliminado)="onDocEliminado($event)"
-          (docDescargado)="onDocDescargado($event)">
+          (docDescargado)="onDocDescargado($event)"
+          (docRenombrado)="onDocRenombrado($event)">
         </app-activos-form>
       }
 

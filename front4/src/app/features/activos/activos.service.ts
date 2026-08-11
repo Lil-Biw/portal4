@@ -131,7 +131,7 @@ export class ActivosService {
     onError?: () => void,
   ): void {
     const { empresaId } = this.resolverIds(centroId);
-    if (!empresaId) { this.setError({ error: { message: 'Centro no encontrado' } }); return; }
+    if (!empresaId) { this.setError({ error: { message: 'Centro no encontrado' } }); onError?.(); return; }
     const form = new FormData();
     form.append('archivo', archivo);
     if (nombreDisplay) form.append('nombre_display', nombreDisplay);
@@ -157,7 +157,7 @@ export class ActivosService {
     onError?: () => void,
   ): void {
     const { empresaId } = this.resolverIds(centroId);
-    if (!empresaId) { this.setError({ error: { message: 'Centro no encontrado' } }); return; }
+    if (!empresaId) { this.setError({ error: { message: 'Centro no encontrado' } }); onError?.(); return; }
     const form = new FormData();
     form.append('link_url', linkUrl);
     if (nombreDisplay) form.append('nombre_display', nombreDisplay);
@@ -176,7 +176,7 @@ export class ActivosService {
 
   eliminarDocumento(activoId: string, centroId: string, docId: string, onSuccess?: () => void, onError?: () => void): void {
     const { empresaId } = this.resolverIds(centroId);
-    if (!empresaId) { this.setError({ error: { message: 'Centro no encontrado' } }); return; }
+    if (!empresaId) { this.setError({ error: { message: 'Centro no encontrado' } }); onError?.(); return; }
     this.http.delete(
       this.api.url(`/empresas/${empresaId}/centros/${centroId}/activos/${activoId}/documentos/${docId}`)
     ).subscribe({
