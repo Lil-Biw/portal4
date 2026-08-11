@@ -645,6 +645,45 @@
           </div>
           <div class="field-row">
             <div class="field">
+              <label>Líder de actividad (opcional)</label>
+              <div style="position:relative">
+                @if (liderDropdownOpen()) {
+                  <div style="position:fixed;inset:0;z-index:10" (click)="liderDropdownOpen.set(false)"></div>
+                }
+                <button type="button" class="tipo-select-btn" (click)="liderDropdownOpen.update(v => !v)">
+                  @if (liderSeleccionado()) {
+                    <span>{{ liderSeleccionado()!.nombre }}</span>
+                  } @else {
+                    <span style="color:#9ca3af">Sin líder asignado</span>
+                  }
+                  <svg style="margin-left:auto;flex-shrink:0;width:14px;height:14px;color:#6b7280;transition:transform .15s"
+                    [style.transform]="liderDropdownOpen() ? 'rotate(180deg)' : 'rotate(0)'"
+                    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="6 9 12 15 18 9"/>
+                  </svg>
+                </button>
+                @if (liderDropdownOpen()) {
+                  <div class="tipo-dropdown">
+                    <button type="button" class="tipo-option" (click)="seleccionarLider('')">
+                      Sin líder asignado
+                    </button>
+                    @for (u of lideresDisponibles(); track u._id) {
+                      <button type="button" class="tipo-option"
+                        [class.tipo-option--selected]="form().lider_id === u._id"
+                        (click)="seleccionarLider(u._id)">
+                        {{ u.nombre }} <span style="color:#9ca3af;font-size:.78rem">({{ u.rol === 'super_admin' ? 'Super admin' : 'Admin' }})</span>
+                      </button>
+                    }
+                    @if (lideresDisponibles().length === 0) {
+                      <p style="margin:0;padding:.5rem .75rem;font-size:.82rem;color:#9ca3af">Sin administradores disponibles</p>
+                    }
+                  </div>
+                }
+              </div>
+            </div>
+          </div>
+          <div class="field-row">
+            <div class="field">
               <label>Fecha inicio *</label>
               <input type="date" [ngModel]="form().fecha" (ngModelChange)="patchForm('fecha', $event)" />
             </div>
