@@ -31,44 +31,59 @@ export class ClientesService {
     });
   }
 
-  crear(dto: CreateClienteDto, logoFile?: File | null): void {
+  crear(dto: CreateClienteDto, logoFile?: File | null, imagenFile?: File | null): void {
     this.saving.set(true);
     this.http.post<Cliente>(this.api.url('/empresas'), dto).subscribe({
       next: (cliente) => {
         this.saving.set(false);
-        if (logoFile) {
-          this.subirLogo(cliente._id, logoFile,
-            () => { this.setStatus({ type: 'ok', text: 'Empresa creada correctamente' }); this.cargar(); },
-            (msg) => { this.setStatus({ type: 'error', text: `Empresa creada, pero no se pudo subir el logo: ${msg}` }); this.cargar(); },
-          );
-        } else {
-          this.setStatus({ type: 'ok', text: 'Empresa creada correctamente' });
-          this.cargar();
-        }
+        this.subirImagenesPendientes(cliente._id, logoFile, imagenFile,
+          () => { this.setStatus({ type: 'ok', text: 'Empresa creada correctamente' }); this.cargar(); },
+          (msg) => { this.setStatus({ type: 'error', text: `Empresa creada, pero no se pudo subir: ${msg}` }); this.cargar(); },
+        );
       },
       error: (err) => { this.setError(err); this.saving.set(false); },
     });
   }
 
-  actualizar(id: string, dto: UpdateClienteDto, logoFile?: File | null): void {
+  actualizar(id: string, dto: UpdateClienteDto, logoFile?: File | null, imagenFile?: File | null): void {
     this.saving.set(true);
     this.http.put<Cliente>(this.api.url(`/empresas/${id}`), dto).subscribe({
       next: () => {
         this.saving.set(false);
-        if (logoFile) {
-          this.subirLogo(id, logoFile,
-            () => { this.setStatus({ type: 'ok', text: 'Empresa actualizada' }); this.seleccionado.set(null); this.cargar(); },
-            // Deja el modal abierto (seleccionado sin limpiar) para que el status de error
-            // sea visible ahí y el admin pueda reintentar el logo sin recargar todo el form.
-            (msg) => { this.setStatus({ type: 'error', text: `Empresa actualizada, pero no se pudo subir el logo: ${msg}` }); this.cargar(); },
-          );
-        } else {
-          this.setStatus({ type: 'ok', text: 'Empresa actualizada' });
-          this.seleccionado.set(null);
-          this.cargar();
-        }
+        this.subirImagenesPendientes(id, logoFile, imagenFile,
+          () => { this.setStatus({ type: 'ok', text: 'Empresa actualizada' }); this.seleccionado.set(null); this.cargar(); },
+          (msg) => { this.setStatus({ type: 'error', text: `Empresa actualizada, pero no se pudo subir: ${msg}` }); this.cargar(); },
+        );
       },
       error: (err) => { this.setError(err); this.saving.set(false); },
+    });
+  }
+
+  // Sube logo e imagen secuencialmente (si vienen) y acumula los mensajes de error
+  // de cada subida fallida en uno solo — una subida fallida no revierte la entidad
+  // ya creada/actualizada, solo se reporta como advertencia.
+  private subirImagenesPendientes(
+    id: string,
+    logoFile: File | null | undefined,
+    imagenFile: File | null | undefined,
+    onSuccess: () => void,
+    onError: (msg: string) => void,
+  ): void {
+    if (!logoFile && !imagenFile) { onSuccess(); return; }
+    const errores: string[] = [];
+    const subirLogoSiCorresponde = (next: () => void) => {
+      if (!logoFile) { next(); return; }
+      this.subirLogo(id, logoFile, next, (msg) => { errores.push(`logo (${msg})`); next(); });
+    };
+    const subirImagenSiCorresponde = (next: () => void) => {
+      if (!imagenFile) { next(); return; }
+      this.subirImagen(id, imagenFile, next, (msg) => { errores.push(`imagen (${msg})`); next(); });
+    };
+    subirLogoSiCorresponde(() => {
+      subirImagenSiCorresponde(() => {
+        if (errores.length > 0) onError(errores.join(', '));
+        else onSuccess();
+      });
     });
   }
 
@@ -79,6 +94,20 @@ export class ClientesService {
       next: () => { if (onSuccess) onSuccess(); else this.cargar(); },
       error: (err) => {
         const raw = err?.error?.message ?? 'Error al subir el logo';
+        const msg = Array.isArray(raw) ? raw.join(', ') : raw;
+        if (onError) onError(msg);
+        else this.setStatus({ type: 'error', text: msg });
+      },
+    });
+  }
+
+  subirImagen(id: string, file: File, onSuccess?: () => void, onError?: (msg: string) => void): void {
+    const form = new FormData();
+    form.append('archivo', file);
+    this.http.post<Cliente>(this.api.url(`/empresas/${id}/imagen`), form).subscribe({
+      next: () => { if (onSuccess) onSuccess(); else this.cargar(); },
+      error: (err) => {
+        const raw = err?.error?.message ?? 'Error al subir la imagen';
         const msg = Array.isArray(raw) ? raw.join(', ') : raw;
         if (onError) onError(msg);
         else this.setStatus({ type: 'error', text: msg });
