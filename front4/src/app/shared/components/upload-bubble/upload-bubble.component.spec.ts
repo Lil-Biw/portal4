@@ -18,8 +18,8 @@ describe('UploadBubbleComponent', () => {
 
   it('renderiza una fila por item con el % para los que están subiendo', () => {
     const items: UploadItem[] = [
-      { id: '1', nombre: 'a.pdf', progreso: 40, estado: 'subiendo' },
-      { id: '2', nombre: 'b.pdf', progreso: 100, estado: 'listo' },
+      { id: '1', nombre: 'a.pdf', progreso: 40, estado: 'subiendo', kind: 'archivo' },
+      { id: '2', nombre: 'b.pdf', progreso: 100, estado: 'listo', kind: 'archivo' },
     ];
     const fixture = TestBed.createComponent(UploadBubbleComponent);
     fixture.componentRef.setInput('items', items);
@@ -34,7 +34,7 @@ describe('UploadBubbleComponent', () => {
 
   it('muestra el mensaje de error y un botón reintentar para items en error', () => {
     const items: UploadItem[] = [
-      { id: '1', nombre: 'c.pdf', progreso: 0, estado: 'error', errorMsg: 'Archivo muy grande' },
+      { id: '1', nombre: 'c.pdf', progreso: 0, estado: 'error', errorMsg: 'Archivo muy grande', kind: 'archivo' },
     ];
     const fixture = TestBed.createComponent(UploadBubbleComponent);
     fixture.componentRef.setInput('items', items);
@@ -46,7 +46,7 @@ describe('UploadBubbleComponent', () => {
 
   it('emite reintentar con el id correcto al hacer click en el botón', () => {
     const items: UploadItem[] = [
-      { id: 'x1', nombre: 'c.pdf', progreso: 0, estado: 'error', errorMsg: 'Error de red' },
+      { id: 'x1', nombre: 'c.pdf', progreso: 0, estado: 'error', errorMsg: 'Error de red', kind: 'archivo' },
     ];
     const fixture = TestBed.createComponent(UploadBubbleComponent);
     fixture.componentRef.setInput('items', items);
@@ -58,7 +58,7 @@ describe('UploadBubbleComponent', () => {
   });
 
   it('emite cerrar al hacer click en el botón de cierre', () => {
-    const items: UploadItem[] = [{ id: '1', nombre: 'a.pdf', progreso: 10, estado: 'subiendo' }];
+    const items: UploadItem[] = [{ id: '1', nombre: 'a.pdf', progreso: 10, estado: 'subiendo', kind: 'archivo' }];
     const fixture = TestBed.createComponent(UploadBubbleComponent);
     fixture.componentRef.setInput('items', items);
     fixture.detectChanges();
