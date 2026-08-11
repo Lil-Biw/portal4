@@ -102,7 +102,7 @@ export class ClientesService {
         { logo: { contenido: archivo.buffer, tipo_mime: archivo.mimetype, nombre: archivo.originalname } },
         { new: true, runValidators: false },
       )
-      .select('-logo.contenido')
+      .select('-logo.contenido -imagen.contenido')
       .lean();
   }
 
