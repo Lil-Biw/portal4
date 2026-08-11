@@ -1,4 +1,4 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { ActividadDocument } from './actividades.schema';
@@ -178,12 +178,37 @@ export class ActividadesService {
     };
   }
 
+  private async resolverLider(liderId?: string): Promise<{
+    lider_id?: Types.ObjectId | null;
+    lider_nombre?: string | null;
+    lider_email?: string | null;
+  }> {
+    if (liderId === '') {
+      return { lider_id: null, lider_nombre: null, lider_email: null };
+    }
+    if (!liderId || !Types.ObjectId.isValid(liderId)) return {};
+    const usuario = await this.usuarioModel.findById(liderId).select('nombre email rol').lean();
+    if (!usuario) {
+      throw new BadRequestException('El usuario seleccionado como líder no existe.');
+    }
+    if (usuario.rol !== 'admin_smartclarity' && usuario.rol !== 'super_admin') {
+      throw new BadRequestException('El líder de actividad debe ser un administrador.');
+    }
+    return {
+      lider_id: new Types.ObjectId(liderId),
+      lider_nombre: usuario.nombre,
+      lider_email: usuario.email,
+    };
+  }
+
   async create(dto: CreateActividadDto, creadoPorId?: string): Promise<any> {
     const { notificacion, documentos_nombres, ...actividadData } = dto;
     const autoria = await this.resolverAutoria(creadoPorId);
+    const lider = await this.resolverLider(dto.lider_id);
     const a = await new this.actividadModel({
       ...actividadData,
       ...autoria,
+      ...lider,
       tipo_id: new Types.ObjectId(actividadData.tipo_id),
       centro_costo_id: new Types.ObjectId(actividadData.centro_costo_id),
       activo_ids: (actividadData.activo_ids ?? []).map(id => new Types.ObjectId(id)),
@@ -317,6 +342,9 @@ export class ActividadesService {
     }
     if (dto.activo_ids !== undefined) {
       payload['activo_ids'] = dto.activo_ids.map(aid => new Types.ObjectId(aid));
+    }
+    if (dto.lider_id !== undefined) {
+      Object.assign(payload, await this.resolverLider(dto.lider_id));
     }
 
     const a = await this.actividadModel
