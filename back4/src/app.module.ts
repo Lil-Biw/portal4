@@ -10,6 +10,7 @@ import { UsuariosModule } from './usuarios/usuarios.module';
 import { CentrosCostosModule } from './centros-costos/centros-costos.module';
 import { ProyectosModule } from './proyectos/proyectos.module';
 import { PermisosModule } from './permisos/permisos.module';
+import { RolesModule } from './roles/roles.module';
 import { SolicitudesModule } from './solicitudes/solicitudes.module';
 import { TiposActividadModule } from './tipos-actividad/tipos-actividad.module';
 import { TiposActivoModule } from './tipos-activo/tipos-activo.module';
@@ -32,6 +33,7 @@ import { TareasModule } from './tareas/tareas.module';
     CentrosCostosModule,
     ProyectosModule,
     PermisosModule,
+    RolesModule,
     SolicitudesModule,
     TiposActividadModule,
     TiposActivoModule,
