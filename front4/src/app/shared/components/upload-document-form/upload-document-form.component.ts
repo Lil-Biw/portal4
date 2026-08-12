@@ -106,7 +106,7 @@ import { FormsModule } from '@angular/forms';
 
         <div class="udf-dropzone" [class.udf-dropzone--error]="archivoInvalido"
              (dragover)="$event.preventDefault()" (drop)="onDrop($event)" (click)="fileInput.click()">
-          <input #fileInput type="file" style="display:none" [attr.accept]="accept || null" (change)="onFileSelected($event)" />
+          <input #fileInput type="file" multiple style="display:none" [attr.accept]="accept || null" (change)="onFileSelected($event)" />
           <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" [attr.stroke]="archivoInvalido ? '#dc2626' : '#0095d6'" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="udf-dropzone-icon">
             <polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/>
             <path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/>
@@ -125,7 +125,7 @@ import { FormsModule } from '@angular/forms';
           }
         </div>
 
-        @if (mostrarTipoDocumento) {
+        @if (mostrarCamposArchivo && mostrarTipoDocumento) {
           <div class="udf-fields">
             <label class="udf-field">
               <span class="udf-label">Nombre del archivo</span>
@@ -138,7 +138,7 @@ import { FormsModule } from '@angular/forms';
               </select>
             </label>
           </div>
-        } @else if (mostrarNombre) {
+        } @else if (mostrarCamposArchivo && mostrarNombre) {
           <label class="udf-field udf-field--full">
             <span class="udf-label">Nombre del documento (opcional)</span>
             <input type="text" class="udf-input" [(ngModel)]="nombre" (ngModelChange)="nombreChange.emit($event)" placeholder="Nombre del documento" />
@@ -213,6 +213,7 @@ export class UploadDocumentFormComponent {
   @Input() categorias: readonly string[] = [];
   @Input() mostrarTipoDocumento = true;
   @Input() mostrarNombre = true;
+  @Input() mostrarCamposArchivo = true;
 
   @Input() mostrarAviso = false;
   @Input() avisoTexto = 'Al confirmar la subida, los administradores del portal serán notificados por correo electrónico.';
@@ -243,15 +244,16 @@ export class UploadDocumentFormComponent {
   }
 
   onFileSelected(ev: Event): void {
-    const file = (ev.target as HTMLInputElement).files?.[0] ?? null;
-    (ev.target as HTMLInputElement).value = '';
-    if (file) this.archivoChange.emit(file);
+    const input = ev.target as HTMLInputElement;
+    const files = input.files;
+    if (files) { for (let i = 0; i < files.length; i++) this.archivoChange.emit(files[i]); }
+    input.value = '';
   }
 
   onDrop(ev: DragEvent): void {
     ev.preventDefault();
-    const file = ev.dataTransfer?.files?.[0] ?? null;
-    if (file) this.archivoChange.emit(file);
+    const files = ev.dataTransfer?.files;
+    if (files) { for (let i = 0; i < files.length; i++) this.archivoChange.emit(files[i]); }
   }
 
   quitarArchivo(ev: Event): void {
