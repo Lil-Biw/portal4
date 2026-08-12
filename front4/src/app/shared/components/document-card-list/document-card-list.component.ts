@@ -96,7 +96,10 @@ function sinExtension(nombre: string): string {
           } @else if (doc.estado === 'eliminando') {
             <p class="dcl-nombre"><span class="dcl-spinner"></span>Eliminando...</p>
           } @else if (doc.estado === 'error') {
-            <p class="dcl-nombre">Error al subir</p>
+            <p class="dcl-nombre" [title]="doc.nombre">
+              {{ doc.nombre }}
+              <span class="dcl-tag">{{ doc.errorMsg || 'Error al subir' }}</span>
+            </p>
           } @else {
             <p class="dcl-nombre" [title]="doc.nombre">
               {{ doc.nombre }}

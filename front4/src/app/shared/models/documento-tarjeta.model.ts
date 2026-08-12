@@ -7,4 +7,5 @@ export interface DocumentoTarjeta {
   linkUrl?: string;
   estado: EstadoDocumentoTarjeta;
   categoria?: string;
+  errorMsg?: string;
 }

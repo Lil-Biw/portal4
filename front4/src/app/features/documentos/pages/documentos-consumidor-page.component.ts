@@ -400,6 +400,37 @@ export class DocumentosConsumidorPageComponent implements OnInit {
     if (estabaEnVencidos) this.cargarVencidosConsumidor();
   }
 
+  private recargarDocsC(): void {
+    const empresaId  = this.consumidorContext.empresaSeleccionada()?._id;
+    const centroId   = this.selectedCentroIdC();
+    const proyectoId = this.selectedProyectoIdC();
+    const tab = this.tabJerarquia();
+    if (!empresaId) return;
+    if (tab === 'empresa') {
+      this.service.cargarEmpresa(empresaId);
+    } else if (tab === 'centro') {
+      if (centroId === 'todos') {
+        this.service.cargarTodosCentros(empresaId, this.centrosFiltradosC);
+      } else if (centroId) {
+        this.service.cargar('centro', empresaId, centroId);
+      }
+    } else if (tab === 'proyecto') {
+      const cId = centroId !== 'todos' ? centroId : undefined;
+      const pId = proyectoId !== 'todos' ? proyectoId : undefined;
+      if (proyectoId === 'todos' && centroId === 'todos') {
+        const todos = this.proyectosService.proyectos().filter(p => asId(p.cliente_id) === asId(empresaId));
+        this.service.cargarTodosProyectos(empresaId, todos, this.centrosFiltradosC);
+      } else if (proyectoId === 'todos' && cId) {
+        const delCentro = this.proyectosService.proyectos().filter(
+          p => asId(p.cliente_id) === asId(empresaId) && (p.centro_costo_ids ?? []).some(id => asId(id) === cId)
+        );
+        this.service.cargarTodosProyectos(empresaId, delCentro, this.centrosFiltradosC);
+      } else if (pId && cId) {
+        this.service.cargar('proyecto', empresaId, cId, pId);
+      }
+    }
+  }
+
   seleccionarTabJerarquiaC(tab: 'todos' | 'empresa' | 'centro' | 'proyecto'): void {
     this.tabJerarquia.set(tab);
     this.tabConsumidorActiva.set('documentacion');
@@ -445,7 +476,9 @@ export class DocumentosConsumidorPageComponent implements OnInit {
     p.showUpload = !p.showUpload;
     if (!p.showUpload) {
       p.selectedFile = null; p.nombreInput = ''; p.linkInput = ''; p.modoUpload = 'archivo';
-      this.uploadQueue.items().filter(i => i.kind === 'archivo').forEach(i => this.uploadQueue.quitar(i.id));
+      this.uploadQueue.items()
+        .filter(i => i.kind === 'archivo' && this.retryContext.get(i.id)?.tipo === tipo)
+        .forEach(i => { this.uploadQueue.quitar(i.id); this.retryContext.delete(i.id); });
     }
   }
 
@@ -487,13 +520,14 @@ export class DocumentosConsumidorPageComponent implements OnInit {
 
   tarjetasArchivoSubiendo(tipo: DocTipo): DocumentoTarjeta[] {
     return this.uploadQueue.items()
-      .filter(i => i.kind === 'archivo')
+      .filter(i => i.kind === 'archivo' && this.retryContext.get(i.id)?.tipo === tipo)
       .map(i => ({
         id: i.id,
         nombre: i.nombre,
         tipoContenido: 'archivo' as const,
         estado: i.estado,
         categoria: i.categoria,
+        errorMsg: i.errorMsg,
       }));
   }
 
@@ -510,10 +544,11 @@ export class DocumentosConsumidorPageComponent implements OnInit {
     if (item?.estado === 'listo' && item.docUrl) {
       const empresaId = this.consumidorContext.empresaSeleccionada()?._id ?? '';
       this.service.eliminar(item.docUrl, tipo, empresaId, this.selectedCentroIdC() || undefined, this.selectedProyectoIdC() || undefined,
-        () => this.uploadQueue.quitar(id));
+        () => { this.uploadQueue.quitar(id); this.retryContext.delete(id); this.recargarDocsC(); });
       return;
     }
     this.uploadQueue.quitar(id);
+    this.retryContext.delete(id);
   }
 
   itemsLinkParaBurbuja() {
@@ -560,8 +595,9 @@ export class DocumentosConsumidorPageComponent implements OnInit {
   }
 
   cerrarUploadBubble(): void {
-    this.uploadQueue.limpiar();
-    this.retryContext.clear();
+    this.uploadQueue.items()
+      .filter(i => i.kind === 'link')
+      .forEach(i => { this.uploadQueue.quitar(i.id); this.retryContext.delete(i.id); });
   }
 
   private ejecutarSubida(id: string, ctx: UploadCtx): void {
@@ -592,7 +628,6 @@ export class DocumentosConsumidorPageComponent implements OnInit {
           } else if (event.type === HttpEventType.Response) {
             const docUrl = event.body?.url;
             this.uploadQueue.marcarListo(id, docUrl);
-            this.retryContext.delete(id);
             if (docUrl) {
               const item = this.uploadQueue.items().find(i => i.id === id);
               if (item?.categoria && item.categoria !== ctx.categoria) {

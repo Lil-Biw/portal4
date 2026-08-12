@@ -586,7 +586,9 @@ export class DocumentosAdminPageComponent implements OnInit {
     p.showUpload = !p.showUpload;
     if (!p.showUpload) {
       p.selectedFile = null; p.nombreInput = ''; p.linkInput = ''; p.modoUpload = 'archivo';
-      this.uploadQueue.items().filter(i => i.kind === 'archivo').forEach(i => this.uploadQueue.quitar(i.id));
+      this.uploadQueue.items()
+        .filter(i => i.kind === 'archivo' && this.retryContext.get(i.id)?.tipo === tipo)
+        .forEach(i => { this.uploadQueue.quitar(i.id); this.retryContext.delete(i.id); });
     }
   }
 
@@ -623,13 +625,14 @@ export class DocumentosAdminPageComponent implements OnInit {
 
   tarjetasArchivoSubiendo(tipo: DocTipo): DocumentoTarjeta[] {
     return this.uploadQueue.items()
-      .filter(i => i.kind === 'archivo')
+      .filter(i => i.kind === 'archivo' && this.retryContext.get(i.id)?.tipo === tipo)
       .map(i => ({
         id: i.id,
         nombre: i.nombre,
         tipoContenido: 'archivo' as const,
         estado: i.estado,
         categoria: i.categoria,
+        errorMsg: i.errorMsg,
       }));
   }
 
@@ -645,10 +648,11 @@ export class DocumentosAdminPageComponent implements OnInit {
     const item = this.uploadQueue.items().find(i => i.id === id);
     if (item?.estado === 'listo' && item.docUrl) {
       this.service.eliminar(item.docUrl, tipo, this.selectedEmpresaId, this.selectedCentroId || undefined, this.selectedProyectoId || undefined,
-        () => this.uploadQueue.quitar(id));
+        () => { this.uploadQueue.quitar(id); this.retryContext.delete(id); this.recargarDocs(); });
       return;
     }
     this.uploadQueue.quitar(id);
+    this.retryContext.delete(id);
   }
 
   archivoDemasiadoGrande(tipo: DocTipo): boolean {
@@ -691,8 +695,9 @@ export class DocumentosAdminPageComponent implements OnInit {
   }
 
   cerrarUploadBubble(): void {
-    this.uploadQueue.limpiar();
-    this.retryContext.clear();
+    this.uploadQueue.items()
+      .filter(i => i.kind === 'link')
+      .forEach(i => { this.uploadQueue.quitar(i.id); this.retryContext.delete(i.id); });
   }
 
   itemsLinkParaBurbuja() {
@@ -727,7 +732,6 @@ export class DocumentosAdminPageComponent implements OnInit {
           } else if (event.type === HttpEventType.Response) {
             const docUrl = event.body?.url;
             this.uploadQueue.marcarListo(id, docUrl);
-            this.retryContext.delete(id);
             if (docUrl) {
               const item = this.uploadQueue.items().find(i => i.id === id);
               if (item?.categoria && item.categoria !== ctx.categoria) {

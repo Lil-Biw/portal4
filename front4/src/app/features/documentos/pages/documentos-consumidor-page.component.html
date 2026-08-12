@@ -834,6 +834,7 @@
           style="display:block;margin-top:.5rem"
           [mostrarTipoDocumento]="false"
           [mostrarNombre]="false"
+          [multiple]="false"
           [descripcion]="'Se aceptan PDF, imágenes, Word y Excel (máx. 20 MB)'"
           [accept]="'.pdf,.jpg,.jpeg,.png,.webp,.doc,.docx,.xls,.xlsx'"
           [modo]="adjuntoModo()" (modoChange)="setAdjuntoModo($event)"
