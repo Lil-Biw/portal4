@@ -1,0 +1,30 @@
+@for (seccion of schema; track seccion.key) {
+  <div class="pf-seccion">
+    <h3 class="pf-seccion-titulo">
+      {{ seccion.titulo }}
+      @if (seccion.soloInterno) {
+        <span class="pf-seccion-nota">solo interno</span>
+      }
+    </h3>
+    <div class="perm-panel">
+      @for (row of seccion.rows; track row.key) {
+        <div class="perm-row" [class.perm-row--disabled]="!aplica(seccion, row)">
+          <div class="perm-row-text">
+            <span class="perm-row-label">{{ row.label }}</span>
+            @if (row.hint) {
+              <span class="perm-row-hint">{{ row.hint }}</span>
+            }
+          </div>
+          <button
+            type="button"
+            class="pf-switch"
+            [attr.aria-pressed]="activo(seccion.key, row.key)"
+            [attr.aria-label]="row.label"
+            [disabled]="!aplica(seccion, row)"
+            (click)="toggle(seccion.key, row.key)"
+          ></button>
+        </div>
+      }
+    </div>
+  </div>
+}
