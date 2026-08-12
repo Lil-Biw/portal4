@@ -1,4 +1,4 @@
-# Chips de dos líneas en vista mes — Actividades
+# Chips de dos líneas en vista mes, semana y día — Actividades
 
 ## Contexto
 
@@ -36,19 +36,45 @@ dos líneas + gap + botón "+N más" + padding), recalculado y ajustado visualme
 el navegador durante la implementación — el valor exacto puede variar unos px respecto
 a esta estimación.
 
+## Extensión — vista semana y día
+
+El mismo patrón línea1/línea2 (`.cal-event-chip-titulo` / `.cal-event-chip-meta`) se
+extiende a los demás elementos "recuadro de color" del calendario, reutilizando las
+mismas clases CSS en vez de duplicarlas:
+
+- **`.cal-event-chip`** en la franja "Todo el día" de Semana (actividades de un solo
+  día sin hora, admin y consumidor): antes texto plano de una línea (`a.nombre`),
+  ahora línea 1 = empresa + nombre (solo admin) y línea 2 = tipo.
+- **`.cal-time-block`** (grilla horaria de Semana y Día, admin y consumidor): antes
+  `hora` + `nombre` en una sola línea inline (spans `.cal-time-block-hora` /
+  `.cal-time-block-nombre`, sin `display:block`, uno al lado del otro). Ahora línea 1
+  = empresa + nombre (solo admin), línea 2 = hora + tipo — mismas clases
+  `.cal-event-chip-titulo` / `.cal-event-chip-meta` que el resto. Los bloques muy
+  cortos (actividades de 30 min, altura mínima ~24px) pueden recortar la línea 2 por
+  `overflow:hidden`, igual que el recorte por ancho en los demás chips.
+
+**Fuera de alcance (decisión explícita):** la barra multi-día de la franja "Todo el
+día" de Semana (`.cal-week-bar`) se deja sin cambios — es intencionalmente compacta
+(18px de alto fijo, una fila por barra, con lógica de apilado en
+`barrasMultiDiaPorSemana`) y aplicarle el mismo patrón de dos líneas requeriría
+recalcular esa altura de fila; no es un "recuadro" equivalente a los chips normales.
+La lista "Todo el día" del panel izquierdo en vista Día (`.cal-day-item`, con ícono)
+tampoco cambia — no es un recuadro de color, es una fila de lista.
+
 ## Alcance
 
 Archivos a tocar (front4 únicamente, sin cambios de backend/modelo):
 - `features/actividades/pages/actividades-page.component.html` (admin)
-- `features/actividades/pages/actividades-page.component.ts` (admin) — cap 3→2
+- `features/actividades/pages/actividades-page.component.ts` (admin) — cap 3→2,
+  nuevo método `empresaDeActividad(a)`
 - `features/actividades/pages/mis-actividades-page.component.html` (consumidor)
 - `features/actividades/pages/mis-actividades-page.component.ts` (consumidor) — cap 3→2
 - `features/actividades/pages/actividades-page.component.css` (compartido por ambas
-  páginas vía `styleUrl`) — estilos de `.cal-event-chip`, nuevas clases
-  `.cal-event-chip-titulo` / `.cal-event-chip-meta`, altura de `.cal-cell`
+  páginas vía `styleUrl`) — estilos de `.cal-event-chip`/`.cal-time-block`, clases
+  compartidas `.cal-event-chip-titulo` / `.cal-event-chip-meta`, altura de `.cal-cell`
 
-Fuera de alcance: vista semana/día (sus chips y bloques horarios no cambian), tooltip
-`[title]` (se mantiene con el texto concatenado actual como fallback accesible).
+Tooltip `[title]` se mantiene en todos los elementos como fallback accesible con el
+texto completo (empresa + nombre + hora), por si el truncado corta información.
 
 ## Testing
 

@@ -205,12 +205,12 @@
 .cal-week-bar:hover { opacity: .85; }
 
 .cal-cell {
-  /* Altura fija (no min-height): con el tope de 3 chips + "+N más" el
-     contenido siempre cabe, y así todas las filas del mes miden igual en vez
-     de estirarse según cuántas actividades tenga cada día. line-height
-     explícito en día/chip/más (ver más abajo) para que la altura sea
-     predecible: 1 línea de día + hasta 4 líneas de eventos con margen. */
-  height: 168px;
+  /* Altura fija (no min-height): con el tope de 2 chips (2 líneas c/u) +
+     "+N más" el contenido siempre cabe, y así todas las filas del mes miden
+     igual en vez de estirarse según cuántas actividades tenga cada día.
+     line-height explícito en día/chip/más (ver más abajo) para que la altura
+     sea predecible. */
+  height: 158px;
   overflow: hidden;
   padding: .4rem .35rem;
   border-right: 1px solid rgba(31,41,55,.12);
@@ -291,6 +291,24 @@
 }
 .cal-event-chip:hover { opacity: .85; }
 
+/* Nombre (+ empresa) / hora + tipo en líneas separadas, cada una con su
+   propio truncado (en vez de una sola línea concatenada). Compartidas por
+   .cal-event-chip (Mes y "Todo el día" de Semana) y .cal-time-block
+   (grilla horaria de Semana/Día). */
+.cal-event-chip-titulo,
+.cal-event-chip-meta {
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.cal-event-chip-meta {
+  font-size: .58rem;
+  font-weight: 500;
+  opacity: .82;
+  margin-top: 1px;
+}
+
 /* Actividades multi-día: bordes planos en el lado que conecta con el día
    siguiente/anterior, y margen negativo para "morder" el padding/borde de la
    celda y unirse visualmente con el chip vecino (van primero en la celda, ver
@@ -299,7 +317,7 @@
 .cal-event-chip--medio  { border-radius: 0; margin-left: -.4rem; margin-right: -.4rem; position: relative; z-index: 1; }
 .cal-event-chip--fin    { border-radius: 0 5px 5px 0; margin-left: -.4rem; position: relative; z-index: 1; }
 
-/* "+N más" — vista Mes, día con más de 3 actividades */
+/* "+N más" — vista Mes, día con más de 2 actividades */
 .cal-month-more {
   font-size: .65rem;
   line-height: 1.35;
@@ -413,12 +431,8 @@
 }
 .cal-time-block:hover { opacity: .88; }
 .cal-time-block.selected { outline: 2px solid #0095d6; outline-offset: 1px; }
-.cal-time-block-hora { opacity: .85; margin-right: .25rem; }
-.cal-time-block-nombre {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
+/* Nombre (+ empresa) / hora + tipo en líneas separadas — reutiliza las mismas
+   clases que el chip de la vista Mes (ver .cal-event-chip-titulo/-meta). */
 
 /* ── Day view ───────────────────────────────────────────────────── */
 .cal-day-layout {
@@ -1142,8 +1156,8 @@
   border: 1px solid rgba(34,33,33,.2);
   border-radius: 8px;
   background: #fff;
-  font-size: .875rem;
-  color: #374151;
+  font-size: .9rem;
+  color: #1f2937;
   cursor: pointer;
   font-family: inherit;
   text-align: left;
@@ -1172,8 +1186,8 @@
   padding: .45rem .75rem;
   background: none;
   border: none;
-  font-size: .875rem;
-  color: #374151;
+  font-size: .9rem;
+  color: #1f2937;
   cursor: pointer;
   font-family: inherit;
   text-align: left;

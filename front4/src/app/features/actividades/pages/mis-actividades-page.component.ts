@@ -177,10 +177,10 @@ export class MisActividadesPageComponent implements OnInit {
 
   // Vista Mes: las multi-día se quedan como un chip más dentro de la celda
   // (sin barra); el detalle de hora/continuidad se ve en Semana o Día. Van
-  // primero para no perderse con el tope de "primeras 3" y para que el chip
+  // primero para no perderse con el tope de "primeras 2" y para que el chip
   // conector (--inicio/--medio/--fin) quede alineado día a día.
   primerasActividadesEnDia(date: Date): Actividad[] {
-    return ordenarMultiDiaPrimero(this.actividadesEnDia(date), toDateKey(date)).slice(0, 3);
+    return ordenarMultiDiaPrimero(this.actividadesEnDia(date), toDateKey(date)).slice(0, 2);
   }
 
   posicionEnDia(a: Actividad, date: Date): 'unico' | 'inicio' | 'medio' | 'fin' {

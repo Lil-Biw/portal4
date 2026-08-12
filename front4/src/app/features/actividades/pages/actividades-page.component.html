@@ -88,14 +88,15 @@
                       [class.cal-event-chip--fin]="posicionEnDia(a, cell.date) === 'fin'"
                       [style.background]="colorDeActividad(a)"
                       (click)="$event.stopPropagation(); seleccionarActividadDia(a)"
-                      [title]="(a.hora ? rangoHora(a) + ' ' : '') + a.nombre">
-                      {{ a.hora ? rangoHora(a) + ' ' : '' }}{{ a.nombre }}
+                      [title]="(empresaDeActividad(a) ? empresaDeActividad(a) + ' — ' : '') + (a.hora ? rangoHora(a) + ' ' : '') + a.nombre">
+                      <span class="cal-event-chip-titulo">{{ empresaDeActividad(a) ? empresaDeActividad(a) + ' — ' : '' }}{{ a.nombre }}</span>
+                      <span class="cal-event-chip-meta">{{ a.hora ? rangoHora(a) + ' ' : '' }}{{ tipoDeActividad(a)?.nombre }}</span>
                     </div>
                   }
-                  @if (actividadesEnDia(cell.date).length > 3) {
+                  @if (actividadesEnDia(cell.date).length > 2) {
                     <button type="button" class="cal-month-more"
                       (click)="$event.stopPropagation(); irADetalleDia(cell.date)">
-                      +{{ actividadesEnDia(cell.date).length - 3 }} más
+                      +{{ actividadesEnDia(cell.date).length - 2 }} más
                     </button>
                   }
                 </div>
@@ -150,8 +151,9 @@
                     class="cal-event-chip"
                     [style.background]="colorDeActividad(a)"
                     (click)="$event.stopPropagation(); seleccionarActividadDia(a)"
-                    [title]="a.nombre">
-                    {{ a.nombre }}
+                    [title]="(empresaDeActividad(a) ? empresaDeActividad(a) + ' — ' : '') + a.nombre">
+                    <span class="cal-event-chip-titulo">{{ empresaDeActividad(a) ? empresaDeActividad(a) + ' — ' : '' }}{{ a.nombre }}</span>
+                    <span class="cal-event-chip-meta">{{ tipoDeActividad(a)?.nombre }}</span>
                   </div>
                 }
               </div>
@@ -182,9 +184,9 @@
                   [style.width]="(100 / b.colCount) + '%'"
                   [style.background]="colorDeActividad(b.actividad)"
                   (click)="$event.stopPropagation(); seleccionarActividadDia(b.actividad)"
-                  [title]="rangoHora(b.actividad) + ' ' + b.actividad.nombre">
-                  <span class="cal-time-block-hora">{{ rangoHora(b.actividad) }}</span>
-                  <span class="cal-time-block-nombre">{{ b.actividad.nombre }}</span>
+                  [title]="(empresaDeActividad(b.actividad) ? empresaDeActividad(b.actividad) + ' — ' : '') + b.actividad.nombre + ' · ' + rangoHora(b.actividad)">
+                  <span class="cal-event-chip-titulo">{{ empresaDeActividad(b.actividad) ? empresaDeActividad(b.actividad) + ' — ' : '' }}{{ b.actividad.nombre }}</span>
+                  <span class="cal-event-chip-meta">{{ rangoHora(b.actividad) }} {{ tipoDeActividad(b.actividad)?.nombre }}</span>
                 </div>
               }
             </div>
@@ -246,9 +248,9 @@
                     [style.width]="(100 / b.colCount) + '%'"
                     [style.background]="colorDeActividad(b.actividad)"
                     (click)="seleccionarActividadDia(b.actividad)"
-                    [title]="rangoHora(b.actividad) + ' ' + b.actividad.nombre">
-                    <span class="cal-time-block-hora">{{ rangoHora(b.actividad) }}</span>
-                    <span class="cal-time-block-nombre">{{ b.actividad.nombre }}</span>
+                    [title]="(empresaDeActividad(b.actividad) ? empresaDeActividad(b.actividad) + ' — ' : '') + b.actividad.nombre + ' · ' + rangoHora(b.actividad)">
+                    <span class="cal-event-chip-titulo">{{ empresaDeActividad(b.actividad) ? empresaDeActividad(b.actividad) + ' — ' : '' }}{{ b.actividad.nombre }}</span>
+                    <span class="cal-event-chip-meta">{{ rangoHora(b.actividad) }} {{ tipoDeActividad(b.actividad)?.nombre }}</span>
                   </div>
                 }
               </div>
@@ -439,7 +441,7 @@
 @if (actividadSeleccionadaDia() && view() !== 'day') {
   @let det = detalleActividad();
   @if (det) {
-    <div class="modal-overlay" (click)="cerrarResumen()">
+    <div class="modal-overlay">
       <div class="actividad-detalle-box" (click)="$event.stopPropagation()">
 
         <!-- Cabecera -->
@@ -553,7 +555,7 @@
 
 <!-- ══ MODAL ACTIVIDAD — WIZARD ════════════════════════════════════════ -->
 @if (showModal()) {
-  <div class="modal-overlay" (click)="cerrarModal()">
+  <div class="modal-overlay">
     <div class="modal-box modal-box--wizard" (click)="$event.stopPropagation()">
 
       <div class="wz-header">
@@ -1127,7 +1129,7 @@
 
 <!-- ══ MODAL TIPOS DE ACTIVIDAD ══════════════════════════════════════════ -->
 @if (showTiposModal()) {
-  <div class="modal-overlay" (click)="cerrarTiposModal()">
+  <div class="modal-overlay">
     <div class="modal-box modal-box--tipos" style="max-width:1000px;width:100%" (click)="$event.stopPropagation()">
 
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.25rem">

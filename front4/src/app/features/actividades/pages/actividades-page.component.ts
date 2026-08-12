@@ -364,10 +364,10 @@ export class ActividadesPageComponent implements OnInit {
 
   // Vista Mes: las multi-día se quedan como un chip más dentro de la celda
   // (sin barra); el detalle de hora/continuidad se ve en Semana o Día. Van
-  // primero para no perderse con el tope de "primeras 3" y para que el chip
+  // primero para no perderse con el tope de "primeras 2" y para que el chip
   // conector (--inicio/--medio/--fin) quede alineado día a día.
   primerasActividadesEnDia(date: Date): Actividad[] {
-    return ordenarMultiDiaPrimero(this.actividadesEnDia(date), toDateKey(date)).slice(0, 3);
+    return ordenarMultiDiaPrimero(this.actividadesEnDia(date), toDateKey(date)).slice(0, 2);
   }
 
   posicionEnDia(a: Actividad, date: Date): 'unico' | 'inicio' | 'medio' | 'fin' {
@@ -420,6 +420,17 @@ export class ActividadesPageComponent implements OnInit {
 
   rangoHora(a: Actividad): string {
     return formatRangoHora(a);
+  }
+
+  // Vista Mes: el calendario admin mezcla actividades de varias empresas, así
+  // que el chip necesita el nombre de la empresa para distinguirlas de un
+  // vistazo (a diferencia del calendario consumidor, que ya está acotado a
+  // una sola empresa por el contexto).
+  empresaDeActividad(a: Actividad): string {
+    const centroId = asId(a.centro_costo_id);
+    const centro = this.centrosService.centros().find(c => asId(c._id) === centroId);
+    if (!centro) return '';
+    return this.clientesService.clientes().find(cl => asId(cl._id) === asId(centro.cliente_id))?.razon_social ?? '';
   }
 
   tipoDeActividad(a: Actividad): TipoActividad | null {

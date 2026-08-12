@@ -73,13 +73,14 @@
                          [class.cal-event-chip--fin]="posicionEnDia(a, cell.date) === 'fin'"
                          [style.background]="colorDeActividad(a)" [title]="(a.hora ? rangoHora(a) + ' ' : '') + a.nombre"
                          style="cursor:pointer" (click)="abrirDetalle(a)">
-                      {{ a.hora ? rangoHora(a) + ' ' : '' }}{{ a.nombre }}
+                      <span class="cal-event-chip-titulo">{{ a.nombre }}</span>
+                      <span class="cal-event-chip-meta">{{ a.hora ? rangoHora(a) + ' ' : '' }}{{ tipoDeActividad(a)?.nombre }}</span>
                     </div>
                   }
-                  @if (actividadesEnDia(cell.date).length > 3) {
+                  @if (actividadesEnDia(cell.date).length > 2) {
                     <button type="button" class="cal-month-more"
                       (click)="$event.stopPropagation(); irADetalleDia(cell.date)">
-                      +{{ actividadesEnDia(cell.date).length - 3 }} más
+                      +{{ actividadesEnDia(cell.date).length - 2 }} más
                     </button>
                   }
                 </div>
@@ -133,7 +134,8 @@
                   <div class="cal-event-chip"
                        [style.background]="colorDeActividad(a)" [title]="a.nombre"
                        style="cursor:pointer" (click)="abrirDetalle(a)">
-                    {{ a.nombre }}
+                    <span class="cal-event-chip-titulo">{{ a.nombre }}</span>
+                    <span class="cal-event-chip-meta">{{ tipoDeActividad(a)?.nombre }}</span>
                   </div>
                 }
               </div>
@@ -164,9 +166,9 @@
                   [style.width]="(100 / b.colCount) + '%'"
                   [style.background]="colorDeActividad(b.actividad)"
                   (click)="abrirDetalle(b.actividad)"
-                  [title]="rangoHora(b.actividad) + ' ' + b.actividad.nombre">
-                  <span class="cal-time-block-hora">{{ rangoHora(b.actividad) }}</span>
-                  <span class="cal-time-block-nombre">{{ b.actividad.nombre }}</span>
+                  [title]="b.actividad.nombre + ' · ' + rangoHora(b.actividad)">
+                  <span class="cal-event-chip-titulo">{{ b.actividad.nombre }}</span>
+                  <span class="cal-event-chip-meta">{{ rangoHora(b.actividad) }} {{ tipoDeActividad(b.actividad)?.nombre }}</span>
                 </div>
               }
             </div>
@@ -228,9 +230,9 @@
                     [style.width]="(100 / b.colCount) + '%'"
                     [style.background]="colorDeActividad(b.actividad)"
                     (click)="seleccionarActividadDia(b.actividad)"
-                    [title]="rangoHora(b.actividad) + ' ' + b.actividad.nombre">
-                    <span class="cal-time-block-hora">{{ rangoHora(b.actividad) }}</span>
-                    <span class="cal-time-block-nombre">{{ b.actividad.nombre }}</span>
+                    [title]="b.actividad.nombre + ' · ' + rangoHora(b.actividad)">
+                    <span class="cal-event-chip-titulo">{{ b.actividad.nombre }}</span>
+                    <span class="cal-event-chip-meta">{{ rangoHora(b.actividad) }} {{ tipoDeActividad(b.actividad)?.nombre }}</span>
                   </div>
                 }
               </div>
@@ -359,7 +361,7 @@
 
 <!-- Modal de detalle de actividad -->
 @if (actividadDetalle() && view() !== 'day') {
-  <div class="modal-overlay" (click)="cerrarDetalle()">
+  <div class="modal-overlay">
     <div class="actividad-detalle-box" (click)="$event.stopPropagation()">
 
       <!-- Cabecera -->
