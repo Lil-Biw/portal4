@@ -1,6 +1,6 @@
 import {
   IsString, IsEmail, IsOptional, IsBoolean,
-  IsEnum, IsMongoId, IsArray, MinLength,
+  IsEnum, IsMongoId, IsArray, MinLength, IsObject,
 } from 'class-validator';
 import { PartialType, OmitType } from '@nestjs/mapped-types';
 
@@ -29,4 +29,8 @@ export class SuscripcionesDto {
   @IsArray() @IsMongoId({ each: true }) @IsOptional() empresas_suscritas?: string[];
   @IsArray() @IsMongoId({ each: true }) @IsOptional() centros_suscritos?: string[];
   @IsArray() @IsMongoId({ each: true }) @IsOptional() proyectos_suscritos?: string[];
+}
+
+export class ActualizarPermisosDto {
+  @IsObject() permisos: Record<string, Record<string, boolean>>;
 }

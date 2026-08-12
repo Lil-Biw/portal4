@@ -18,6 +18,7 @@ import {
   UpdateUsuarioDto,
   CambiarPasswordDto,
   SuscripcionesDto,
+  ActualizarPermisosDto,
 } from './usuarios.dto';
 import { Roles } from '../common/guards/guards';
 
@@ -110,5 +111,11 @@ export class UsuariosController {
       throw new ForbiddenException('Solo puedes editar tus propias suscripciones');
     }
     return this.usuariosService.actualizarSuscripciones(id, dto);
+  }
+
+  @Patch(':id/permisos')
+  @Roles('super_admin', 'admin_smartclarity')
+  actualizarPermisos(@Param('id') id: string, @Body() dto: ActualizarPermisosDto) {
+    return this.usuariosService.actualizarPermisos(id, dto);
   }
 }

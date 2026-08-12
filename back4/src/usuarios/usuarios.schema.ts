@@ -14,6 +14,7 @@ export class Usuario {
   // OJO: dentro de un array, el tipo debe ser SchemaTypes.ObjectId; con Types.ObjectId
   // el SchemaFactory de Nest lo degrada a Mixed sin ref y populate() no hace nada.
   @Prop({ type: [{ type: SchemaTypes.ObjectId, ref: 'CentroCosto' }], default: [] }) centros_asignados: Types.ObjectId[];
+  @Prop({ type: SchemaTypes.Mixed, default: {} }) permisos: Record<string, Record<string, boolean>>;
   @Prop({ default: true }) debe_cambiar_password: boolean;
   @Prop({ default: true }) activo: boolean;
   @Prop() ultimo_acceso?: Date;

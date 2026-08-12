@@ -15,6 +15,7 @@ import {
   UpdateUsuarioDto,
   CambiarPasswordDto,
   SuscripcionesDto,
+  ActualizarPermisosDto,
 } from './usuarios.dto';
 import { MailService } from '../mail/mail.service';
 import { CentroCostoDocument } from '../centros-costos/centros-costos.schema';
@@ -249,6 +250,14 @@ export class UsuariosService {
         },
         { new: true, runValidators: true },
       )
+      .lean();
+    if (!usuario) throw new NotFoundException(`Usuario ${id} no encontrado`);
+    return usuario;
+  }
+
+  async actualizarPermisos(id: string, dto: ActualizarPermisosDto) {
+    const usuario = await this.usuarioModel
+      .findByIdAndUpdate(id, { permisos: dto.permisos }, { new: true, runValidators: true })
       .lean();
     if (!usuario) throw new NotFoundException(`Usuario ${id} no encontrado`);
     return usuario;
