@@ -103,6 +103,7 @@ export class UsuariosListComponent {
   @Output() editado        = new EventEmitter<Usuario>();
   @Output() eliminado      = new EventEmitter<string>();
   @Output() suscripciones  = new EventEmitter<Usuario>();
+  @Output() permisos       = new EventEmitter<Usuario>();
 
   esAdmin(u: Usuario): boolean {
     return u.rol === 'admin_smartclarity' || u.rol === 'super_admin';

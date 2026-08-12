@@ -26,13 +26,6 @@
       <option *ngFor="let r of roles" [value]="r.value">{{ r.label }}</option>
     </select>
   </label>
-  <label class="field" *ngIf="isEdit">
-    <span>Permiso por defecto</span>
-    <select [(ngModel)]="form.permiso_acceso" name="permiso_acceso">
-      <option value="ver">Ver</option>
-      <option value="editar">Editar</option>
-    </select>
-  </label>
 
   <!-- Centros de costos asignados -->
   <div style="grid-column: 1/-1" *ngIf="centrosFiltrados.length > 0">
