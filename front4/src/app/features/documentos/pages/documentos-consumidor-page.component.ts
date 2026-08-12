@@ -506,15 +506,15 @@ export class DocumentosConsumidorPageComponent implements OnInit {
     if (!file) return;
     const categoria = detectarCategoriaDocumento(file.name) ?? 'Otros';
     const id = this.uploadQueue.agregar(file.name, 'archivo', categoria);
-    if (file.size > MAX_UPLOAD_SIZE_BYTES) {
-      this.uploadQueue.marcarError(id, `El archivo pesa ${formatBytes(file.size)} y supera el límite de 20 MB. Selecciona uno más liviano.`);
-      return;
-    }
     const empresaId = this.consumidorContext.empresaSeleccionada()?._id ?? '';
     const centroId = this.selectedCentroIdC() || undefined;
     const proyectoId = this.selectedProyectoIdC() || undefined;
     const ctx: UploadCtx = { kind: 'archivo', file, tipo, empresaId, centroId, proyectoId, categoria };
     this.retryContext.set(id, ctx);
+    if (file.size > MAX_UPLOAD_SIZE_BYTES) {
+      this.uploadQueue.marcarError(id, `El archivo pesa ${formatBytes(file.size)} y supera el límite de 20 MB. Selecciona uno más liviano.`);
+      return;
+    }
     this.ejecutarSubida(id, ctx);
   }
 

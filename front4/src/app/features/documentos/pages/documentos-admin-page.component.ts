@@ -611,15 +611,15 @@ export class DocumentosAdminPageComponent implements OnInit {
     if (!file) return;
     const categoria = detectarCategoriaDocumento(file.name) ?? 'Otros';
     const id = this.uploadQueue.agregar(file.name, 'archivo', categoria);
-    if (file.size > MAX_UPLOAD_SIZE_BYTES) {
-      this.uploadQueue.marcarError(id, `El archivo pesa ${formatBytes(file.size)} y supera el límite de 20 MB. Selecciona uno más liviano.`);
-      return;
-    }
     const empresaId = this.selectedEmpresaId;
     const centroId = (this.selectedCentroId && this.selectedCentroId !== 'todos') ? this.selectedCentroId : undefined;
     const proyectoId = (this.selectedProyectoId && this.selectedProyectoId !== 'todos') ? this.selectedProyectoId : undefined;
     const ctx: UploadCtx = { kind: 'archivo', file, tipo, empresaId, centroId, proyectoId, categoria };
     this.retryContext.set(id, ctx);
+    if (file.size > MAX_UPLOAD_SIZE_BYTES) {
+      this.uploadQueue.marcarError(id, `El archivo pesa ${formatBytes(file.size)} y supera el límite de 20 MB. Selecciona uno más liviano.`);
+      return;
+    }
     this.ejecutarSubida(id, ctx);
   }
 
