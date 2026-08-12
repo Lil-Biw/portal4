@@ -644,7 +644,9 @@ export class DocumentosAdminPageComponent implements OnInit {
   onEliminarTarjeta(id: string, tipo: DocTipo): void {
     const item = this.uploadQueue.items().find(i => i.id === id);
     if (item?.estado === 'listo' && item.docUrl) {
-      this.eliminar(item.docUrl, tipo);
+      this.service.eliminar(item.docUrl, tipo, this.selectedEmpresaId, this.selectedCentroId || undefined, this.selectedProyectoId || undefined,
+        () => this.uploadQueue.quitar(id));
+      return;
     }
     this.uploadQueue.quitar(id);
   }
@@ -723,8 +725,15 @@ export class DocumentosAdminPageComponent implements OnInit {
           if (event.type === HttpEventType.UploadProgress && event.total) {
             this.uploadQueue.actualizarProgreso(id, Math.round((100 * event.loaded) / event.total));
           } else if (event.type === HttpEventType.Response) {
-            this.uploadQueue.marcarListo(id, event.body?.url);
+            const docUrl = event.body?.url;
+            this.uploadQueue.marcarListo(id, docUrl);
             this.retryContext.delete(id);
+            if (docUrl) {
+              const item = this.uploadQueue.items().find(i => i.id === id);
+              if (item?.categoria && item.categoria !== ctx.categoria) {
+                this.service.actualizarCategoria(docUrl, item.categoria, ctx.tipo);
+              }
+            }
           }
         },
         error: onError,
