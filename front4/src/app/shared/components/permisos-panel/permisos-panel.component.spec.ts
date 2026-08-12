@@ -41,6 +41,17 @@ describe('PermisosPanelComponent', () => {
     expect(activos.length).toBe(1);
   });
 
+  it('con valores=undefined, al hacer click en un switch no lanza y emite el objeto esperado', () => {
+    const fixture = TestBed.createComponent(PermisosPanelComponent);
+    fixture.componentRef.setInput('valores', undefined);
+    let emitido: unknown = null;
+    fixture.componentInstance.valoresChange.subscribe((v) => (emitido = v));
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    expect(() => (el.querySelector('.pf-switch') as HTMLButtonElement).click()).not.toThrow();
+    expect(emitido).toEqual({ empresas: { crear: true } });
+  });
+
   it('al hacer click en un switch emite valoresChange con el nuevo estado', () => {
     const fixture = TestBed.createComponent(PermisosPanelComponent);
     let emitido: unknown = null;

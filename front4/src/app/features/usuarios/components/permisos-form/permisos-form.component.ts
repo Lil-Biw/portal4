@@ -2,7 +2,7 @@ import { Component, EventEmitter, Input, OnChanges, Output } from '@angular/core
 import { FormsModule } from '@angular/forms';
 import { PermisosPanelComponent } from '../../../../shared/components/permisos-panel/permisos-panel.component';
 import { Usuario, RolUsuario } from '../../../../shared/models/usuario.model';
-import { PermisosUsuario, Rol, contarPermisosActivos } from '../../../../shared/models/permisos.model';
+import { PERM_SCHEMA, PermisosUsuario, Rol, contarPermisosActivos, filaAplica } from '../../../../shared/models/permisos.model';
 
 @Component({
   selector: 'app-permisos-form',
@@ -81,7 +81,20 @@ export class PermisosFormComponent implements OnChanges {
     this.rolSeleccionadoId = rolId;
     const rol = this.roles.find((r) => r._id === rolId);
     if (!rol) return;
-    this.valores = structuredClone(rol.permisos);
+    const copia = structuredClone(rol.permisos ?? {});
+    if (!this.contextoCompleto) {
+      for (const seccion of PERM_SCHEMA) {
+        for (const row of seccion.rows) {
+          if (!filaAplica(seccion, row, false)) {
+            delete copia[seccion.key]?.[row.key];
+          }
+        }
+        if (copia[seccion.key] && Object.keys(copia[seccion.key]).length === 0) {
+          delete copia[seccion.key];
+        }
+      }
+    }
+    this.valores = copia;
   }
 
   iniciales(nombre: string): string {

@@ -72,7 +72,7 @@ export class PermisosPanelComponent {
   }
 
   toggle(seccionKey: string, rowKey: string): void {
-    const seccionActual = this.valores[seccionKey] ?? {};
+    const seccionActual = this.valores?.[seccionKey] ?? {};
     const siguiente: PermisosUsuario = {
       ...this.valores,
       [seccionKey]: { ...seccionActual, [rowKey]: !this.activo(seccionKey, rowKey) },

@@ -57,6 +57,21 @@ describe('PermisosFormComponent', () => {
     expect(fixture.componentInstance.valores).toEqual({ actividades: { crear: true, editar: true } });
   });
 
+  it('aplicarRol filtra los permisos no aplicables cuando el usuario destino es rol=usuario', () => {
+    const fixture = TestBed.createComponent(PermisosFormComponent);
+    const rol: Rol = {
+      _id: 'r1',
+      nombre: 'Administrador',
+      permisos: { actividades: { crear: true }, empresas: { crear: true, editar: true, eliminar: true } },
+    };
+    fixture.componentRef.setInput('usuario', usuario({ rol: 'usuario' }));
+    fixture.componentRef.setInput('roles', [rol]);
+    fixture.detectChanges();
+    fixture.componentInstance.aplicarRol('r1');
+    expect(fixture.componentInstance.valores['actividades']?.['crear']).toBe(true);
+    expect(fixture.componentInstance.valores['empresas']).toBeUndefined();
+  });
+
   it('al hacer click en Guardar permisos emite guardado con los valores actuales', () => {
     const fixture = TestBed.createComponent(PermisosFormComponent);
     fixture.componentRef.setInput('usuario', usuario({ permisos: { actividades: { crear: true } } }));
