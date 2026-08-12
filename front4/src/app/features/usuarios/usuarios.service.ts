@@ -2,6 +2,7 @@ import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { ApiService } from '../../core/services/api.service';
 import { Usuario, CreateUsuarioDto, UpdateUsuarioDto, SuscripcionesDto } from '../../shared/models/usuario.model';
+import { PermisosUsuario } from '../../shared/models/permisos.model';
 import { Status } from '../../shared/models/status.model';
 import { asId } from '../../shared/utils';
 
@@ -47,6 +48,16 @@ export class UsuariosService {
     this.http.patch<Usuario>(this.api.url(`/usuarios/${id}/suscripciones`), dto).subscribe({
       next: (usuario) => {
         this.status.set({ type: 'ok', text: 'Suscripciones actualizadas' });
+        this.usuarios.update((lista) => lista.map((u) => (u._id === usuario._id ? usuario : u)));
+      },
+      error: (err) => this.setError(err),
+    });
+  }
+
+  actualizarPermisos(id: string, permisos: PermisosUsuario): void {
+    this.http.patch<Usuario>(this.api.url(`/usuarios/${id}/permisos`), { permisos }).subscribe({
+      next: (usuario) => {
+        this.status.set({ type: 'ok', text: 'Permisos actualizados' });
         this.usuarios.update((lista) => lista.map((u) => (u._id === usuario._id ? usuario : u)));
       },
       error: (err) => this.setError(err),
