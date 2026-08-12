@@ -13,15 +13,28 @@ import {
 } from '../components/usuario-form/usuario-form.component';
 import { UsuariosListComponent } from '../components/usuarios-list/usuarios-list.component';
 import { SuscripcionesFormComponent } from '../components/suscripciones-form/suscripciones-form.component';
+import { RolesService } from '../roles.service';
+import { PermisosFormComponent } from '../components/permisos-form/permisos-form.component';
+import { RolesManagerComponent } from '../components/roles-manager/roles-manager.component';
+import { PermisosUsuario, CreateRolDto, UpdateRolDto } from '../../../shared/models/permisos.model';
 import { Usuario, SuscripcionesDto } from '../../../shared/models/usuario.model';
 import { asId } from '../../../shared/utils';
 
-type ModalMode = 'crear-admin' | 'crear-usuario' | 'editar' | 'suscripciones' | 'buscar' | null;
+type ModalMode = 'crear-admin' | 'crear-usuario' | 'editar' | 'suscripciones' | 'buscar' | 'permisos' | 'roles' | null;
 
 @Component({
   selector: 'app-usuarios-page',
   standalone: true,
-  imports: [NgIf, FormsModule, StatusBannerComponent, UsuarioFormComponent, UsuariosListComponent, SuscripcionesFormComponent],
+  imports: [
+    NgIf,
+    FormsModule,
+    StatusBannerComponent,
+    UsuarioFormComponent,
+    UsuariosListComponent,
+    SuscripcionesFormComponent,
+    PermisosFormComponent,
+    RolesManagerComponent,
+  ],
   templateUrl: './usuarios-page.component.html',
   styles: [
     `
@@ -130,11 +143,12 @@ export class UsuariosPageComponent implements OnInit {
   protected readonly clientesService = inject(ClientesService);
   protected readonly centrosService = inject(CentrosService);
   protected readonly proyectosService = inject(ProyectosService);
+  protected readonly rolesService = inject(RolesService);
   private readonly authService = inject(AuthService);
 
   constructor() {
     effect(() => {
-      if (this.service.status()?.type === 'ok' && this.modal() === 'suscripciones') {
+      if (this.service.status()?.type === 'ok' && (this.modal() === 'suscripciones' || this.modal() === 'permisos')) {
         this.cerrar();
       }
     });
@@ -198,6 +212,7 @@ export class UsuariosPageComponent implements OnInit {
     this.clientesService.cargar();
     this.centrosService.cargar();
     this.proyectosService.cargar();
+    this.rolesService.cargar();
   }
 
   protected abrirCrearUsuario(): void {
@@ -235,6 +250,35 @@ export class UsuariosPageComponent implements OnInit {
     const id = this.service.seleccionado()?._id;
     if (!id) return;
     this.service.actualizarSuscripciones(id, dto);
+  }
+
+  protected abrirPermisos(usuario: Usuario): void {
+    this.service.seleccionado.set(usuario);
+    this.service.clearStatus();
+    this.modal.set('permisos');
+  }
+
+  protected guardarPermisos(permisos: PermisosUsuario): void {
+    const id = this.service.seleccionado()?._id;
+    if (!id) return;
+    this.service.actualizarPermisos(id, permisos);
+  }
+
+  protected abrirRoles(): void {
+    this.rolesService.clearStatus();
+    this.modal.set('roles');
+  }
+
+  protected crearRol(dto: CreateRolDto): void {
+    this.rolesService.crear(dto);
+  }
+
+  protected actualizarRol(evento: { id: string; dto: UpdateRolDto }): void {
+    this.rolesService.actualizar(evento.id, evento.dto);
+  }
+
+  protected eliminarRol(id: string): void {
+    this.rolesService.eliminar(id);
   }
 
   protected cerrar(): void {
