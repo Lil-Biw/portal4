@@ -106,7 +106,9 @@ function sinExtension(nombre: string): string {
           @if (mostrarCategoria && (doc.estado === 'subiendo' || doc.estado === 'listo')) {
             <select class="dcl-categoria-select" [value]="doc.categoria"
                     (change)="onCategoriaChange(doc, $event)">
-              @for (cat of categorias; track cat) { <option [value]="cat">{{ cat }}</option> }
+              @for (cat of categorias; track cat) {
+                <option [value]="cat" [selected]="cat === doc.categoria">{{ cat }}</option>
+              }
             </select>
           }
           @if (doc.estado === 'error') {

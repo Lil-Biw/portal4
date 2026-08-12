@@ -191,4 +191,17 @@ describe('DocumentCardListComponent', () => {
     (fixture.nativeElement.querySelector('.dcl-retry') as HTMLButtonElement).click();
     expect(emitido).toBe('doc1');
   });
+
+  it('preselecciona la categoría correcta aunque no sea la primera de la lista', () => {
+    const documentos: DocumentoTarjeta[] = [
+      { id: 'doc1', nombre: 'a.pdf', tipoContenido: 'archivo', estado: 'listo', categoria: 'Contratos' },
+    ];
+    const fixture = TestBed.createComponent(DocumentCardListComponent);
+    fixture.componentRef.setInput('documentos', documentos);
+    fixture.componentRef.setInput('mostrarCategoria', true);
+    fixture.componentRef.setInput('categorias', ['Otros', 'Contratos', 'Certificados']);
+    fixture.detectChanges();
+    const select = fixture.nativeElement.querySelector('.dcl-categoria-select') as HTMLSelectElement;
+    expect(select.value).toBe('Contratos');
+  });
 });
