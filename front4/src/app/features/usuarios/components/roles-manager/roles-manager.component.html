@@ -1,0 +1,38 @@
+@if (vista() === 'lista') {
+  <div class="rm-lista">
+    @for (rol of roles; track rol._id) {
+      <div class="rm-row">
+        <div class="rm-row-info">
+          <div class="rm-row-nombre">{{ rol.nombre }}</div>
+          <div class="rm-row-contador">{{ contadorDe(rol).activos }}/{{ contadorDe(rol).total }} permisos activos</div>
+        </div>
+        <div class="rm-row-acciones">
+          <button type="button" class="btn-ghost btn-sm" (click)="abrirEditar(rol)">Editar</button>
+          <button type="button" class="btn-danger btn-sm" (click)="eliminar.emit(rol._id)">Eliminar</button>
+        </div>
+      </div>
+    }
+    @if (roles.length === 0) {
+      <p class="rm-empty">Sin roles creados todavía.</p>
+    }
+  </div>
+  <button type="button" class="btn-primary rm-nuevo" (click)="abrirNuevo()">Nuevo rol</button>
+}
+
+@if (vista() === 'editar') {
+  <div class="rm-nombre-field">
+    <label for="rm-nombre">Nombre del rol</label>
+    <input id="rm-nombre" type="text" [(ngModel)]="nombreForm" name="nombreForm" placeholder="Ej: Usuario auditor" />
+  </div>
+
+  <app-permisos-panel
+    [valores]="valoresForm"
+    [contextoCompleto]="true"
+    (valoresChange)="onValoresChange($event)"
+  ></app-permisos-panel>
+
+  <div class="rm-footer">
+    <button type="button" class="btn-ghost" (click)="volver()">Cancelar</button>
+    <button type="button" class="btn-primary" [disabled]="!nombreForm.trim()" (click)="guardar()">Guardar rol</button>
+  </div>
+}
