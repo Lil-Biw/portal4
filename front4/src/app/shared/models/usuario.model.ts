@@ -1,3 +1,5 @@
+import { PermisosUsuario } from './permisos.model';
+
 export type RolUsuario = 'super_admin' | 'admin_smartclarity' | 'usuario';
 export type PermisoAcceso = 'ver' | 'editar';
 
@@ -9,6 +11,7 @@ export interface Usuario {
   rol: RolUsuario;
   permiso_acceso: PermisoAcceso;
   centros_asignados: string[];
+  permisos?: PermisosUsuario;
   activo: boolean;
   ultimo_acceso?: string;
   creado_en?: string;
