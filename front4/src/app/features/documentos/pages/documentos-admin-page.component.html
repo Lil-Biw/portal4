@@ -406,7 +406,7 @@
                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0">
                       <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
                     </svg>
-                    Subir
+                    {{ panels[docTipoActual].showUpload ? 'Terminar' : 'Subir' }}
                   </button>
                 }
                 <button
@@ -564,6 +564,8 @@
                 [(nombre)]="panels[docTipo].nombreInput"
                 [(categoria)]="panels[docTipo].categoriaInput"
                 [categorias]="categorias"
+                [mostrarCamposArchivo]="false"
+                [ocultarBotonConfirmarArchivo]="true"
                 [archivoInvalido]="archivoDemasiadoGrande(docTipo)"
                 [mensajeArchivoInvalido]="mensajeArchivoDemasiadoGrande(docTipo)"
                 [linkInvalido]="linkInvalido(docTipo)"
@@ -572,6 +574,18 @@
                   : (!panels[docTipo].linkInput.trim() || linkInvalido(docTipo))"
                 (confirmar)="confirmarSubida(docTipo)"
                 (cancelar)="toggleUpload(docTipo)" />
+
+              @if (tarjetasArchivoSubiendo(docTipo).length > 0) {
+                <div style="margin-bottom:1rem">
+                  <app-document-card-list
+                    [documentos]="tarjetasArchivoSubiendo(docTipo)"
+                    [mostrarCategoria]="true"
+                    [categorias]="categorias"
+                    (categoriaChange)="onCategoriaTarjetaChange($event, docTipo)"
+                    (eliminar)="onEliminarTarjeta($event, docTipo)"
+                    (reintentar)="reintentarSubida($event)" />
+                </div>
+              }
             }
 
             <!-- Lista documentos -->
@@ -1625,7 +1639,7 @@
 }
 
 <app-upload-bubble
-  [items]="uploadQueue.items()"
+  [items]="itemsLinkParaBurbuja()"
   (cerrar)="cerrarUploadBubble()"
   (reintentar)="reintentarSubida($event)">
 </app-upload-bubble>
