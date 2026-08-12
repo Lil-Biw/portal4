@@ -12,7 +12,14 @@ ese formato.
 ## Diseño aprobado
 
 **Contenido del chip** (línea 1 / línea 2):
-- Línea 1: `a.nombre` (negrita, tamaño actual ~.67rem)
+- Línea 1: `a.nombre` (negrita, tamaño actual ~.67rem). **Solo en el calendario admin**
+  (`actividades-page.component`), se antepone el nombre de la empresa:
+  `"Empresa — Nombre actividad"` (vía nuevo método `empresaDeActividad(a)`, resuelto
+  desde `centro_costo_id` → centro → `cliente_id`). En el calendario consumidor
+  (`mis-actividades-page.component`) NO se antepone empresa: el contexto ya está
+  acotado a una sola empresa (filtro por `ConsumidorContextService`), así que
+  repetirla en cada chip sería ruido redundante; además ese componente no tiene
+  `ClientesService` inyectado.
 - Línea 2: `rangoHora(a)` (si `a.hora` está seteada) + `tipoDeActividad(a)?.nombre`,
   tamaño menor (~.6rem), peso más liviano. Como `tipo_id` es obligatorio en el modelo,
   la línea 2 nunca queda vacía.
