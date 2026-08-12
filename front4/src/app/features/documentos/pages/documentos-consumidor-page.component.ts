@@ -11,6 +11,8 @@ import { SolicitudesService, EstadoSolicitud, Solicitud } from '../../solicitude
 import { StatusBannerComponent } from '../../../shared/components/status-banner/status-banner.component';
 import { UploadBubbleComponent } from '../../../shared/components/upload-bubble/upload-bubble.component';
 import { UploadDocumentFormComponent } from '../../../shared/components/upload-document-form/upload-document-form.component';
+import { DocumentCardListComponent } from '../../../shared/components/document-card-list/document-card-list.component';
+import { DocumentoTarjeta } from '../../../shared/models/documento-tarjeta.model';
 import { createUploadQueue } from '../../../shared/upload-queue-state';
 import { asId, detectarCategoriaDocumento, formatFechaHora, formatBytes, MAX_UPLOAD_SIZE_BYTES } from '../../../shared/utils';
 
@@ -72,7 +74,7 @@ type UploadCtx =
 @Component({
   selector: 'app-documentos-consumidor-page',
   standalone: true,
-  imports: [NgTemplateOutlet, FormsModule, StatusBannerComponent, UploadBubbleComponent, UploadDocumentFormComponent],
+  imports: [NgTemplateOutlet, FormsModule, StatusBannerComponent, UploadBubbleComponent, UploadDocumentFormComponent, DocumentCardListComponent],
   templateUrl: './documentos-consumidor-page.component.html',
 })
 export class DocumentosConsumidorPageComponent implements OnInit {
@@ -441,7 +443,10 @@ export class DocumentosConsumidorPageComponent implements OnInit {
   toggleUpload(tipo: DocTipo): void {
     const p = this.panels[tipo];
     p.showUpload = !p.showUpload;
-    if (!p.showUpload) { p.selectedFile = null; p.nombreInput = ''; p.linkInput = ''; p.modoUpload = 'archivo'; }
+    if (!p.showUpload) {
+      p.selectedFile = null; p.nombreInput = ''; p.linkInput = ''; p.modoUpload = 'archivo';
+      this.uploadQueue.items().filter(i => i.kind === 'archivo').forEach(i => this.uploadQueue.quitar(i.id));
+    }
   }
 
   seleccionarCategoriaFiltro(tipo: FiltroTipoC, categoria: string): void {
@@ -465,12 +470,54 @@ export class DocumentosConsumidorPageComponent implements OnInit {
   }
 
   onArchivoChange(file: File | null, tipo: DocTipo): void {
-    const p = this.panels[tipo];
-    p.selectedFile = file;
-    if (file) {
-      if (!p.nombreInput) p.nombreInput = file.name;
-      p.categoriaInput = detectarCategoriaDocumento(file.name)!;
+    if (!file) return;
+    const categoria = detectarCategoriaDocumento(file.name) ?? 'Otros';
+    const id = this.uploadQueue.agregar(file.name, 'archivo', categoria);
+    if (file.size > MAX_UPLOAD_SIZE_BYTES) {
+      this.uploadQueue.marcarError(id, `El archivo pesa ${formatBytes(file.size)} y supera el límite de 20 MB. Selecciona uno más liviano.`);
+      return;
     }
+    const empresaId = this.consumidorContext.empresaSeleccionada()?._id ?? '';
+    const centroId = this.selectedCentroIdC() || undefined;
+    const proyectoId = this.selectedProyectoIdC() || undefined;
+    const ctx: UploadCtx = { kind: 'archivo', file, tipo, empresaId, centroId, proyectoId, categoria };
+    this.retryContext.set(id, ctx);
+    this.ejecutarSubida(id, ctx);
+  }
+
+  tarjetasArchivoSubiendo(tipo: DocTipo): DocumentoTarjeta[] {
+    return this.uploadQueue.items()
+      .filter(i => i.kind === 'archivo')
+      .map(i => ({
+        id: i.id,
+        nombre: i.nombre,
+        tipoContenido: 'archivo' as const,
+        estado: i.estado,
+        categoria: i.categoria,
+      }));
+  }
+
+  onCategoriaTarjetaChange(event: { id: string; categoria: string }, tipo: DocTipo): void {
+    this.uploadQueue.actualizarCategoria(event.id, event.categoria);
+    const item = this.uploadQueue.items().find(i => i.id === event.id);
+    if (item?.estado === 'listo' && item.docUrl) {
+      this.service.actualizarCategoria(item.docUrl, event.categoria, tipo);
+    }
+  }
+
+  onEliminarTarjeta(id: string, tipo: DocTipo): void {
+    const item = this.uploadQueue.items().find(i => i.id === id);
+    if (item?.estado === 'listo' && item.docUrl) {
+      const empresaId = this.consumidorContext.empresaSeleccionada()?._id ?? '';
+      this.service.eliminar(item.docUrl, tipo, empresaId, this.selectedCentroIdC() || undefined, this.selectedProyectoIdC() || undefined,
+        () => this.uploadQueue.quitar(id));
+      return;
+    }
+    this.uploadQueue.quitar(id);
+  }
+
+  itemsLinkParaBurbuja() {
+    return this.uploadQueue.items().filter(i => i.kind === 'link');
   }
 
   archivoDemasiadoGrande(tipo: DocTipo): boolean {
@@ -490,20 +537,12 @@ export class DocumentosConsumidorPageComponent implements OnInit {
     const centroId = this.selectedCentroIdC() || undefined;
     const proyectoId = this.selectedProyectoIdC() || undefined;
 
-    let ctx: UploadCtx;
-    let nombreParaCola: string;
-    if (p.modoUpload === 'link') {
-      const link = p.linkInput.trim();
-      if (!link || this.linkInvalido(tipo)) return;
-      ctx = { kind: 'link', linkUrl: link, tipo, empresaId, centroId, proyectoId, nombreDisplay: p.nombreInput || undefined, categoria: p.categoriaInput || undefined };
-      nombreParaCola = p.nombreInput || link;
-    } else {
-      if (!p.selectedFile || this.archivoDemasiadoGrande(tipo)) return;
-      ctx = { kind: 'archivo', file: p.selectedFile, tipo, empresaId, centroId, proyectoId, nombreDisplay: p.nombreInput || undefined, categoria: p.categoriaInput || undefined };
-      nombreParaCola = p.nombreInput || p.selectedFile.name;
-    }
+    const link = p.linkInput.trim();
+    if (!link || this.linkInvalido(tipo)) return;
+    const ctx: UploadCtx = { kind: 'link', linkUrl: link, tipo, empresaId, centroId, proyectoId, nombreDisplay: p.nombreInput || undefined, categoria: p.categoriaInput || undefined };
+    const nombreParaCola = p.nombreInput || link;
 
-    const id = this.uploadQueue.agregar(nombreParaCola);
+    const id = this.uploadQueue.agregar(nombreParaCola, 'link', ctx.categoria);
     this.retryContext.set(id, ctx);
     this.ejecutarSubida(id, ctx);
 
@@ -551,8 +590,15 @@ export class DocumentosConsumidorPageComponent implements OnInit {
           if (event.type === HttpEventType.UploadProgress && event.total) {
             this.uploadQueue.actualizarProgreso(id, Math.round((100 * event.loaded) / event.total));
           } else if (event.type === HttpEventType.Response) {
-            this.uploadQueue.marcarListo(id);
+            const docUrl = event.body?.url;
+            this.uploadQueue.marcarListo(id, docUrl);
             this.retryContext.delete(id);
+            if (docUrl) {
+              const item = this.uploadQueue.items().find(i => i.id === id);
+              if (item?.categoria && item.categoria !== ctx.categoria) {
+                this.service.actualizarCategoria(docUrl, item.categoria, ctx.tipo);
+              }
+            }
           }
         },
         error: onError,
