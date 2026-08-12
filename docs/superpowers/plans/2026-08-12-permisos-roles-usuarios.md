@@ -651,7 +651,7 @@ describe('contarPermisosActivos', () => {
 
 - [ ] **Step 2: Run it to verify it fails**
 
-Run: `cd front4 && npx vitest run src/app/shared/models/permisos.model.spec.ts`
+Run: `cd front4 && npx ng test --watch=false` (corre toda la suite; no hay forma de filtrar un solo spec con este builder)
 Expected: FAIL — `permisos.model.ts` does not exist yet.
 
 - [ ] **Step 3: Write `permisos.model.ts`**
@@ -793,7 +793,7 @@ export function contarPermisosActivos(
 
 - [ ] **Step 4: Run it to verify it passes**
 
-Run: `cd front4 && npx vitest run src/app/shared/models/permisos.model.spec.ts`
+Run: `cd front4 && npx ng test --watch=false` (corre toda la suite; no hay forma de filtrar un solo spec con este builder)
 Expected: PASS (all 8 tests).
 
 - [ ] **Step 5: Add `permisos` to the `Usuario` interface**
@@ -893,7 +893,7 @@ describe('PermisosPanelComponent', () => {
 
 - [ ] **Step 2: Run it to verify it fails**
 
-Run: `cd front4 && npx vitest run src/app/shared/components/permisos-panel/permisos-panel.component.spec.ts`
+Run: `cd front4 && npx ng test --watch=false` (corre toda la suite; no hay forma de filtrar un solo spec con este builder)
 Expected: FAIL — component does not exist yet.
 
 - [ ] **Step 3: Write the component**
@@ -1022,7 +1022,7 @@ export class PermisosPanelComponent {
 
 - [ ] **Step 4: Run it to verify it passes**
 
-Run: `cd front4 && npx vitest run src/app/shared/components/permisos-panel/permisos-panel.component.spec.ts`
+Run: `cd front4 && npx ng test --watch=false` (corre toda la suite; no hay forma de filtrar un solo spec con este builder)
 Expected: PASS (all 5 tests).
 
 - [ ] **Step 5: Commit**
@@ -1243,7 +1243,7 @@ describe('PermisosFormComponent', () => {
 
 - [ ] **Step 2: Run it to verify it fails**
 
-Run: `cd front4 && npx vitest run src/app/features/usuarios/components/permisos-form/permisos-form.component.spec.ts`
+Run: `cd front4 && npx ng test --watch=false` (corre toda la suite; no hay forma de filtrar un solo spec con este builder)
 Expected: FAIL — component does not exist yet.
 
 - [ ] **Step 3: Write the component**
@@ -1406,7 +1406,7 @@ export class PermisosFormComponent implements OnChanges {
 
 - [ ] **Step 4: Run it to verify it passes**
 
-Run: `cd front4 && npx vitest run src/app/features/usuarios/components/permisos-form/permisos-form.component.spec.ts`
+Run: `cd front4 && npx ng test --watch=false` (corre toda la suite; no hay forma de filtrar un solo spec con este builder)
 Expected: PASS (all 7 tests).
 
 - [ ] **Step 5: Commit**
@@ -1522,7 +1522,7 @@ describe('RolesManagerComponent', () => {
 
 - [ ] **Step 2: Run it to verify it fails**
 
-Run: `cd front4 && npx vitest run src/app/features/usuarios/components/roles-manager/roles-manager.component.spec.ts`
+Run: `cd front4 && npx ng test --watch=false` (corre toda la suite; no hay forma de filtrar un solo spec con este builder)
 Expected: FAIL — component does not exist yet.
 
 - [ ] **Step 3: Write the component**
@@ -1659,7 +1659,7 @@ export class RolesManagerComponent {
 
 - [ ] **Step 4: Run it to verify it passes**
 
-Run: `cd front4 && npx vitest run src/app/features/usuarios/components/roles-manager/roles-manager.component.spec.ts`
+Run: `cd front4 && npx ng test --watch=false` (corre toda la suite; no hay forma de filtrar un solo spec con este builder)
 Expected: PASS (all 7 tests).
 
 - [ ] **Step 5: Commit**
@@ -1733,7 +1733,7 @@ In `front4/src/app/features/usuarios/components/usuario-form/usuario-form.compon
 
 - [ ] **Step 4: Run the existing frontend test suite to confirm nothing broke**
 
-Run: `cd front4 && npx vitest run`
+Run: `cd front4 && npx ng test --watch=false`
 Expected: all existing specs still PASS (no spec covers these two files today, so this is a regression check for the rest of the suite).
 
 - [ ] **Step 5: Commit**
@@ -1941,7 +1941,7 @@ Add these two blocks after the "Suscripciones de notificaciones" `ng-container` 
 
 - [ ] **Step 8: Run the frontend test suite and type-check**
 
-Run: `cd front4 && npx vitest run && npx tsc --noEmit -p tsconfig.app.json`
+Run: `cd front4 && npx ng test --watch=false && npx tsc --noEmit -p tsconfig.app.json`
 Expected: all specs PASS, no type errors.
 
 - [ ] **Step 9: Manual smoke test in the browser**
