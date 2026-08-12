@@ -1,0 +1,38 @@
+@if (usuario) {
+  <div class="pfm-header">
+    <div class="pfm-avatar" [class]="'pfm-avatar-' + rolClase(usuario.rol)">{{ iniciales(usuario.nombre) }}</div>
+    <div class="pfm-identity">
+      <div class="pfm-identity-top">
+        <h3>{{ usuario.nombre }}</h3>
+        <span class="pfm-role-chip">{{ rolLabel(usuario.rol) }}</span>
+      </div>
+      <div class="pfm-identity-sub">{{ usuario.email }}</div>
+    </div>
+  </div>
+
+  @if (roles.length > 0) {
+    <div class="pfm-rol-preset">
+      <label for="pfm-rol-select">Aplicar rol como plantilla</label>
+      <select id="pfm-rol-select" [ngModel]="rolSeleccionadoId" (ngModelChange)="aplicarRol($event)" name="rolPreset">
+        <option value="">— Elegir rol —</option>
+        @for (r of roles; track r._id) {
+          <option [value]="r._id">{{ r.nombre }}</option>
+        }
+      </select>
+    </div>
+  }
+
+  <app-permisos-panel
+    [valores]="valores"
+    [contextoCompleto]="contextoCompleto"
+    (valoresChange)="onValoresChange($event)"
+  ></app-permisos-panel>
+
+  <div class="pfm-footer">
+    <div class="pfm-footer-contador"><strong>{{ contador.activos }}/{{ contador.total }}</strong> permisos activos</div>
+    <div class="pfm-footer-actions">
+      <button type="button" class="btn-ghost" (click)="cancelado.emit()">Cancelar</button>
+      <button type="button" class="btn-primary" (click)="submit()">Guardar permisos</button>
+    </div>
+  </div>
+}
