@@ -5,20 +5,24 @@
     <p class="header-subtitle">Cuentas con acceso al portal.</p>
   </div>
   <div class="header-actions">
-    @if (esSuperAdmin()) {
+    @if (authService.tienePermiso('usuarios', 'crearAdmin')) {
       <button class="btn-ghost" (click)="abrirCrearAdmin()">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:4px"><circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 1 0-16 0"/><line x1="19" y1="8" x2="23" y2="8"/><line x1="21" y1="6" x2="21" y2="10"/></svg>
         Crear admin
       </button>
+    }
+    @if (esSuperAdmin()) {
       <button class="btn-ghost" (click)="abrirRoles()">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:4px"><path d="M12 2 3 7l9 5 9-5-9-5Z"/><path d="M3 12l9 5 9-5"/><path d="M3 17l9 5 9-5"/></svg>
         Roles
       </button>
     }
-    <button class="btn-primary" (click)="abrirCrearUsuario()">
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:4px"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="23" y2="8"/><line x1="21" y1="6" x2="21" y2="10"/></svg>
-      Crear usuario
-    </button>
+    @if (authService.tienePermiso('usuarios', 'crear')) {
+      <button class="btn-primary" (click)="abrirCrearUsuario()">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:4px"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="23" y2="8"/><line x1="21" y1="6" x2="21" y2="10"/></svg>
+        Crear usuario
+      </button>
+    }
   </div>
 </div>
 
@@ -31,6 +35,8 @@
     <app-usuarios-list
       [usuarios]="grupo.usuarios"
       [usuarioActualId]="usuarioActualId()"
+      [puedeEditar]="authService.tienePermiso('usuarios', 'editar')"
+      [puedeEliminar]="authService.tienePermiso('usuarios', 'eliminar')"
       (editado)="abrirEditar($event)"
       (eliminado)="eliminar($event)"
       (suscripciones)="abrirSuscripciones($event)"
@@ -44,8 +50,8 @@
 }
 
 <!-- ── Modal ──────────────────────────────────────────── -->
-<div class="modal-backdrop" *ngIf="modal() !== null" (click)="cerrar()">
-  <div class="modal" [class.modal-ancho]="modal() === 'suscripciones' || modal() === 'permisos' || modal() === 'roles'" (click)="$event.stopPropagation()">
+<div class="modal-backdrop" *ngIf="modal() !== null">
+  <div class="modal" [class.modal-ancho]="modal() === 'suscripciones' || modal() === 'permisos' || modal() === 'roles'" [class.modal-permisos]="modal() === 'permisos'" (click)="$event.stopPropagation()">
     <!-- Crear Administrador -->
     <ng-container *ngIf="modal() === 'crear-admin'">
       <div class="modal-header">
@@ -125,6 +131,8 @@
       <app-usuarios-list
         [usuarios]="usuariosFiltrados()"
         [usuarioActualId]="usuarioActualId()"
+      [puedeEditar]="authService.tienePermiso('usuarios', 'editar')"
+      [puedeEliminar]="authService.tienePermiso('usuarios', 'eliminar')"
         (editado)="editarDesdeBuscar($event)"
         (eliminado)="eliminar($event)"
         (suscripciones)="abrirSuscripciones($event)"

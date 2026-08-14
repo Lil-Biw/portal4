@@ -84,12 +84,12 @@ function sinExtension(nombre: string): string {
     <div class="dcl-grid">
       @for (doc of documentos; track doc.id) {
         <div class="dcl-card" [class.dcl-card--dim]="doc.estado === 'eliminando'" [class.dcl-card--error]="doc.estado === 'error'">
-          @if (doc.estado === 'listo' || doc.estado === 'pendiente' || doc.estado === 'error') {
+          @if (puedeEliminar && (doc.estado === 'listo' || doc.estado === 'pendiente' || doc.estado === 'error')) {
             <button type="button" class="dcl-x" (click)="eliminar.emit(doc.id)" [attr.aria-label]="'Eliminar ' + doc.nombre"></button>
           }
           @if (renombrandoId() === doc.id) {
             <input #renameInput class="dcl-rename-input" [value]="nombreEditado()" (input)="onRenameInput($event)"
-                   (keydown.enter)="confirmarRenombre(doc)" (keydown.escape)="cancelarRenombre()" />
+                   (keydown.enter)="$event.preventDefault(); confirmarRenombre(doc)" (keydown.escape)="cancelarRenombre()" />
             <p class="dcl-rename-hint">Enter guarda · Esc cancela</p>
           } @else if (doc.estado === 'subiendo') {
             <p class="dcl-nombre"><span class="dcl-spinner"></span>Subiendo...</p>
@@ -144,6 +144,7 @@ export class DocumentCardListComponent implements AfterViewChecked {
 
   @Input() mostrarCategoria = false;
   @Input() categorias: readonly string[] = [];
+  @Input() puedeEliminar = true;
   @Output() categoriaChange = new EventEmitter<{ id: string; categoria: string }>();
   @Output() reintentar = new EventEmitter<string>();
 

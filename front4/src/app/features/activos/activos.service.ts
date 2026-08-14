@@ -78,7 +78,7 @@ export class ActivosService {
     });
   }
 
-  actualizar(id: string, dto: UpdateActivoDto): void {
+  actualizar(id: string, dto: UpdateActivoDto, onSuccess?: () => void): void {
     const centroId = dto.centro_costo_id ?? this.seleccionado()?.centro_costo_id;
     const { empresaId } = this.resolverIds(centroId ?? '');
     if (!empresaId || !centroId) { this.setError({ error: { message: 'Centro no encontrado' } }); return; }
@@ -92,6 +92,7 @@ export class ActivosService {
         this.seleccionado.set(null);
         this.cargar();
         this.saving.set(false);
+        onSuccess?.();
       },
       error: (err) => { this.setError(err); this.saving.set(false); },
     });

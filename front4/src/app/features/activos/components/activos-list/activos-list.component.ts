@@ -85,6 +85,8 @@ export class ActivosListComponent implements OnChanges {
   @Input() clientes: Cliente[]    = [];
   @Input() tipos: TipoActivo[]    = [];
   @Input() mostrarAcciones = true;
+  @Input() puedeEditar = true;
+  @Input() puedeEliminar = true;
   @Output() editado   = new EventEmitter<Activo>();
   @Output() eliminado = new EventEmitter<string>();
   @Output() revisado  = new EventEmitter<Activo>();

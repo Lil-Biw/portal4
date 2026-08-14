@@ -178,36 +178,44 @@ export class ActividadesService {
     };
   }
 
-  private async resolverLider(liderId?: string): Promise<{
+  private async resolverLider(liderId?: string, liderNombre?: string): Promise<{
     lider_id?: Types.ObjectId | null;
     lider_nombre?: string | null;
     lider_email?: string | null;
   }> {
-    if (liderId === '') {
+    if (liderId === '' || (liderId === undefined && liderNombre === '')) {
       return { lider_id: null, lider_nombre: null, lider_email: null };
     }
-    if (!liderId) return {};
-    if (!Types.ObjectId.isValid(liderId)) {
-      throw new BadRequestException('El lider_id no tiene un formato válido.');
+    if (liderId) {
+      if (!Types.ObjectId.isValid(liderId)) {
+        throw new BadRequestException('El lider_id no tiene un formato válido.');
+      }
+      const usuario = await this.usuarioModel.findById(liderId).select('nombre email rol').lean();
+      if (!usuario) {
+        throw new BadRequestException('El usuario seleccionado como líder no existe.');
+      }
+      if (usuario.rol !== 'admin_smartclarity' && usuario.rol !== 'super_admin') {
+        throw new BadRequestException('El líder de actividad debe ser un administrador.');
+      }
+      return {
+        lider_id: new Types.ObjectId(liderId),
+        lider_nombre: usuario.nombre,
+        lider_email: usuario.email,
+      };
     }
-    const usuario = await this.usuarioModel.findById(liderId).select('nombre email rol').lean();
-    if (!usuario) {
-      throw new BadRequestException('El usuario seleccionado como líder no existe.');
+    // Líder como texto libre (perfil consumidor): se guarda el nombre sin
+    // referencia a un usuario administrador.
+    const nombreLibre = (liderNombre ?? '').trim();
+    if (nombreLibre) {
+      return { lider_id: null, lider_nombre: nombreLibre, lider_email: null };
     }
-    if (usuario.rol !== 'admin_smartclarity' && usuario.rol !== 'super_admin') {
-      throw new BadRequestException('El líder de actividad debe ser un administrador.');
-    }
-    return {
-      lider_id: new Types.ObjectId(liderId),
-      lider_nombre: usuario.nombre,
-      lider_email: usuario.email,
-    };
+    return {};
   }
 
   async create(dto: CreateActividadDto, creadoPorId?: string): Promise<any> {
     const { notificacion, documentos_nombres, ...actividadData } = dto;
     const autoria = await this.resolverAutoria(creadoPorId);
-    const lider = await this.resolverLider(dto.lider_id);
+    const lider = await this.resolverLider(dto.lider_id, dto.lider_nombre);
     const a = await new this.actividadModel({
       ...actividadData,
       ...autoria,
@@ -346,8 +354,8 @@ export class ActividadesService {
     if (dto.activo_ids !== undefined) {
       payload['activo_ids'] = dto.activo_ids.map(aid => new Types.ObjectId(aid));
     }
-    if (dto.lider_id !== undefined) {
-      Object.assign(payload, await this.resolverLider(dto.lider_id));
+    if (dto.lider_id !== undefined || dto.lider_nombre !== undefined) {
+      Object.assign(payload, await this.resolverLider(dto.lider_id, dto.lider_nombre));
     }
 
     const a = await this.actividadModel

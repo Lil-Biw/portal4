@@ -19,6 +19,7 @@ import {
 } from './usuarios.dto';
 import { MailService } from '../mail/mail.service';
 import { CentroCostoDocument } from '../centros-costos/centros-costos.schema';
+import { permisosPorDefectoSegunRol } from '../common/permisos-defaults';
 
 const SALT_ROUNDS = 10;
 
@@ -100,6 +101,7 @@ export class UsuariosService {
       permiso_acceso: permisoPorDefecto,
       password_hash,
       centros_asignados: centrosIds,
+      permisos: permisosPorDefectoSegunRol(rest.rol),
     });
     const saved = await usuario.save();
 
@@ -173,7 +175,7 @@ export class UsuariosService {
     if (!usuarioActual)
       throw new NotFoundException(`Usuario ${id} no encontrado`);
 
-    const { centros_asignados, ...camposMongo } = dto;
+    const { centros_asignados, permisos, ...camposMongo } = dto;
     const payload: Record<string, unknown> = { ...camposMongo };
 
     if (centros_asignados !== undefined) {
@@ -181,6 +183,16 @@ export class UsuariosService {
         usuarioActual.cliente_id ? String(usuarioActual.cliente_id) : undefined,
         centros_asignados,
       );
+    }
+
+    // Cuando cambia el rol (y no envían permisos explícitos), reaplicar los
+    // permisos por defecto del nuevo rol para que rol ↔ permisos no queden
+    // desincronizados (mismo criterio que create). Si llegan permisos
+    // explícitos (p. ej. "personalizado"), mandan.
+    if (permisos !== undefined) {
+      payload['permisos'] = permisos;
+    } else if (camposMongo.rol && camposMongo.rol !== usuarioActual.rol) {
+      payload['permisos'] = permisosPorDefectoSegunRol(camposMongo.rol);
     }
 
     const usuario = await this.usuarioModel

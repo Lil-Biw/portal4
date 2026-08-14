@@ -1,5 +1,5 @@
 <!-- Encabezado -->
-<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;margin-bottom:1.25rem;flex-wrap:wrap">
+<div class="page-header">
   <div>
     <h2 style="margin:0 0 .25rem;font-size:1.5rem;font-weight:700;color:#1f2937">Proyectos</h2>
     <p style="margin:0;font-size:.85rem;color:#6b7280">
@@ -10,11 +10,16 @@
       }
     </p>
   </div>
-  @if (empresa && proyectos().length > 0) {
-    <button class="btn-ghost" (click)="toggleBuscar()">
-      {{ mostrarBuscar() ? 'Cerrar' : 'Buscar' }}
-    </button>
-  }
+  <div class="header-actions">
+    @if (empresa && proyectos().length > 0) {
+      <button class="btn-ghost" (click)="toggleBuscar()">
+        {{ mostrarBuscar() ? 'Cerrar' : 'Buscar' }}
+      </button>
+    }
+    @if (authService.tienePermiso('proyectos', 'crear')) {
+      <button class="btn-primary" (click)="abrirCrear()">+ Crear proyecto</button>
+    }
+  </div>
 </div>
 
 @if (mostrarBuscar()) {
@@ -48,50 +53,119 @@
           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="18"/><rect x="14" y="9" width="7" height="12"/><path d="M10 3h4v4h-4z"/></svg>
           {{ grupo.nombre }}
         </h3>
-        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:.75rem">
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:.75rem">
           @for (p of grupo.proyectos; track p._id) {
             @let sc = scoreDeProyecto(p._id);
-            <div class="card proyecto-card" (click)="verDetalle(p)" style="margin:0">
-              <!-- Cabecera: nombre + estado + donut -->
-              <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:.6rem">
+            <div class="card proyecto-card" (click)="verDetalle(p)" style="margin:0;min-width:0">
+              <div style="display:flex;align-items:stretch;gap:.75rem">
+                <!-- Contenido principal -->
                 <div style="flex:1;min-width:0">
-                  <div style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;margin-bottom:.15rem">
-                    <h3 style="margin:0;font-size:1rem;font-weight:700;color:#1f2937;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ p.nombre }}</h3>
-                    <span style="font-size:.7rem;font-weight:700;padding:.18rem .5rem;border-radius:999px;white-space:nowrap;flex-shrink:0"
-                          [style]="estadoBadgeStyle(p.estado)">{{ estadoLabel(p.estado) }}</span>
+                  <!-- Cabecera: nombre + estado + donut -->
+                  <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:.6rem">
+                    <div style="flex:1;min-width:0">
+                      <div style="display:flex;align-items:flex-start;gap:.5rem;flex-wrap:wrap;margin-bottom:.15rem">
+                        <h3 style="margin:0;font-size:1rem;font-weight:700;color:#1f2937;line-height:1.25;user-select:text;min-width:0">{{ p.nombre }}</h3>
+                        <span style="font-size:.7rem;font-weight:700;padding:.18rem .5rem;border-radius:999px;white-space:nowrap;flex-shrink:0"
+                              [style]="estadoBadgeStyle(p.estado)">{{ estadoLabel(p.estado) }}</span>
+                      </div>
+                      <p style="margin:0;font-size:.78rem;color:#6b7280">Cód. {{ p.codigo }}</p>
+                      @if (p.descripcion) {
+                        <p style="margin:.2rem 0 0;font-size:.78rem;color:#9ca3af;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ p.descripcion }}</p>
+                      }
+                    </div>
+                    <app-donut-arc [value]="sc.pct" [size]="66"></app-donut-arc>
                   </div>
-                  <p style="margin:0;font-size:.78rem;color:#6b7280">Cód. {{ p.codigo }}</p>
-                  @if (p.descripcion) {
-                    <p style="margin:.2rem 0 0;font-size:.78rem;color:#9ca3af;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ p.descripcion }}</p>
-                  }
+
+                  <!-- Separador -->
+                  <div style="height:1px;background:rgba(34,33,33,.08);margin:.75rem 0"></div>
+
+                  <!-- Contadores -->
+                  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:.5rem">
+                    <div style="display:flex;flex-direction:column;align-items:center;padding:.45rem .3rem;border-radius:8px;background:#dcfce7">
+                      <span style="font-size:1.2rem;font-weight:700;color:#15803d;line-height:1">{{ sc.aprobados }}</span>
+                      <span style="font-size:.68rem;font-weight:600;color:#15803d;margin-top:.15rem">Aprob.</span>
+                    </div>
+                    <div style="display:flex;flex-direction:column;align-items:center;padding:.45rem .3rem;border-radius:8px;background:#fef3c7">
+                      <span style="font-size:1.2rem;font-weight:700;color:#b45309;line-height:1">{{ sc.revision }}</span>
+                      <span style="font-size:.68rem;font-weight:600;color:#b45309;margin-top:.15rem">Revisi.</span>
+                    </div>
+                    <div style="display:flex;flex-direction:column;align-items:center;padding:.45rem .3rem;border-radius:8px;background:#f3f4f6">
+                      <span style="font-size:1.2rem;font-weight:700;color:#374151;line-height:1">{{ sc.pendiente }}</span>
+                      <span style="font-size:.68rem;font-weight:600;color:#374151;margin-top:.15rem">Pend.</span>
+                    </div>
+                  </div>
                 </div>
-                <app-donut-arc [value]="sc.pct" [size]="66"></app-donut-arc>
+
+                <!-- Botones de acción en columna vertical, al costado derecho -->
+                @if (authService.tienePermiso('proyectos', 'editar') || authService.tienePermiso('proyectos', 'eliminar')) {
+                  <div style="display:flex;flex-direction:column;gap:.4rem;align-items:center;justify-content:center;flex-shrink:0;padding-left:.5rem;border-left:1px solid rgba(34,33,33,.08)">
+                    @if (authService.tienePermiso('proyectos', 'editar')) {
+                      <button class="btn-icon-sq" title="Editar" (click)="$event.stopPropagation(); abrirEditar(p)">
+                        <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                          <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
+                          <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                        </svg>
+                      </button>
+                    }
+                    @if (authService.tienePermiso('proyectos', 'eliminar')) {
+                      <button class="btn-icon-sq btn-action-danger" title="Eliminar" (click)="$event.stopPropagation(); eliminarProyecto(p)">
+                        <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                          <polyline points="3 6 5 6 21 6"/>
+                          <path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6m3 0V4a1 1 0 011-1h4a1 1 0 011 1v2"/>
+                        </svg>
+                      </button>
+                    }
+                  </div>
+                }
               </div>
-
-              <!-- Separador -->
-              <div style="height:1px;background:rgba(34,33,33,.08);margin:.75rem 0"></div>
-
-              <!-- Contadores -->
-              <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:.5rem">
-                <div style="display:flex;flex-direction:column;align-items:center;padding:.45rem .3rem;border-radius:8px;background:#dcfce7">
-                  <span style="font-size:1.2rem;font-weight:700;color:#15803d;line-height:1">{{ sc.aprobados }}</span>
-                  <span style="font-size:.68rem;font-weight:600;color:#15803d;margin-top:.15rem">Aprob.</span>
-                </div>
-                <div style="display:flex;flex-direction:column;align-items:center;padding:.45rem .3rem;border-radius:8px;background:#fef3c7">
-                  <span style="font-size:1.2rem;font-weight:700;color:#b45309;line-height:1">{{ sc.revision }}</span>
-                  <span style="font-size:.68rem;font-weight:600;color:#b45309;margin-top:.15rem">Revisi.</span>
-                </div>
-                <div style="display:flex;flex-direction:column;align-items:center;padding:.45rem .3rem;border-radius:8px;background:#f3f4f6">
-                  <span style="font-size:1.2rem;font-weight:700;color:#374151;line-height:1">{{ sc.pendiente }}</span>
-                  <span style="font-size:.68rem;font-weight:600;color:#374151;margin-top:.15rem">Pend.</span>
-                </div>
-              </div>
-
-              <div style="margin-top:.65rem;font-size:.78rem;color:#0095d6;font-weight:600">Ver proyecto →</div>
             </div>
           }
         </div>
       </div>
     }
+  </div>
+}
+
+<!-- ══ MODAL CREAR/EDITAR ══════════════════════════════════════════════════ -->
+@if (modal() !== null) {
+  <div class="modal-backdrop">
+    <div class="modal" (click)="$event.stopPropagation()">
+      @if (modal() === 'crear') {
+        <div class="modal-header">
+          <h3>Nuevo proyecto</h3>
+          <button class="modal-close" (click)="cerrarModal()">&#x2715;</button>
+        </div>
+        <app-proyecto-form
+          submitLabel="Crear proyecto"
+          [status]="proyectosService.status()"
+          [clientes]="empresa ? [empresa] : []"
+          [centros]="centrosDeLaEmpresa()"
+          [tipos]="tiposService.tipos()"
+          [centrosSeleccionados]="proyectosService.centrosSeleccionados()"
+          (centroToggle)="proyectosService.toggleCentro($event.centroId, $event.checked)"
+          (clienteChange)="proyectosService.centrosSeleccionados.set([])"
+          (cancelled)="cerrarModal()"
+          (submitted)="crear($event)">
+        </app-proyecto-form>
+      }
+      @if (modal() === 'editar') {
+        <div class="modal-header">
+          <h3>Editar proyecto</h3>
+          <button class="modal-close" (click)="cerrarModal()">&#x2715;</button>
+        </div>
+        <app-proyecto-form
+          [initial]="proyectosService.seleccionado()"
+          [status]="proyectosService.status()"
+          [clientes]="empresa ? [empresa] : []"
+          [centros]="centrosDeLaEmpresa()"
+          [tipos]="tiposService.tipos()"
+          [centrosSeleccionados]="proyectosService.centrosSeleccionados()"
+          (centroToggle)="proyectosService.toggleCentro($event.centroId, $event.checked)"
+          (clienteChange)="proyectosService.centrosSeleccionados.set([])"
+          (cancelled)="cerrarModal()"
+          (submitted)="actualizar($event)">
+        </app-proyecto-form>
+      }
+    </div>
   </div>
 }

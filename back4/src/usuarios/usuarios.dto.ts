@@ -17,6 +17,7 @@ export class UpdateUsuarioDto extends PartialType(
   OmitType(CreateUsuarioDto, ['cliente_id'] as const),
 ) {
   @IsBoolean() @IsOptional() activo?: boolean;
+  @IsObject() @IsOptional() permisos?: Record<string, Record<string, boolean>>;
 }
 
 export class CambiarPasswordDto {

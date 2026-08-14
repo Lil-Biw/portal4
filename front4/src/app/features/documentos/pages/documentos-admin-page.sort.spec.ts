@@ -1,11 +1,11 @@
 import { describe, it, expect } from 'vitest';
 import { ordenarFilasTodos, FilaDocTodos, OrdenTodos } from './documentos-admin-page.component';
 
-function fila(partial: Omit<Partial<FilaDocTodos>, 'doc'> & { tipo: FilaDocTodos['tipo']; empresaNombre: string; doc: { nombre_display: string } }): FilaDocTodos {
+function fila(partial: Omit<Partial<FilaDocTodos>, 'doc'> & { tipo: FilaDocTodos['tipo']; empresaNombre: string; doc: { nombre_display: string; subido_en?: string } }): FilaDocTodos {
   return {
     empresaId: 'e1',
     ...partial,
-    doc: { _id: partial.doc.nombre_display, nombre_display: partial.doc.nombre_display, url: 'http://x' },
+    doc: { _id: partial.doc.nombre_display, nombre_display: partial.doc.nombre_display, subido_en: partial.doc.subido_en, url: 'http://x' },
   } as FilaDocTodos;
 }
 
@@ -58,6 +58,16 @@ describe('ordenarFilasTodos', () => {
     // modo nivel_proyecto: el grupo 'proyecto' va primero: dentro de él, orden por empresa, luego centro, luego proyecto, luego doc.
     const resultado = ordenarFilasTodos(filas, 'nivel_proyecto');
     expect(resultado.map(f => f.doc.nombre_display)).toEqual(['docA1', 'docA2', 'docZ']);
+  });
+
+  it('modo recientes ordena por fecha de subida descendente, documentos sin fecha al final', () => {
+    const filas = [
+      fila({ tipo: 'empresa', empresaNombre: 'Alfa', doc: { nombre_display: 'viejo.pdf', subido_en: '2026-01-01T00:00:00.000Z' } }),
+      fila({ tipo: 'centro', empresaNombre: 'Alfa', doc: { nombre_display: 'nuevo.pdf', subido_en: '2026-06-01T00:00:00.000Z' } }),
+      fila({ tipo: 'proyecto', empresaNombre: 'Alfa', doc: { nombre_display: 'sin_fecha.pdf' } }),
+    ];
+    const resultado = ordenarFilasTodos(filas, 'recientes');
+    expect(resultado.map(f => f.doc.nombre_display)).toEqual(['nuevo.pdf', 'viejo.pdf', 'sin_fecha.pdf']);
   });
 
   it('no muta el arreglo original', () => {

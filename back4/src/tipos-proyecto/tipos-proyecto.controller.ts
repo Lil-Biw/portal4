@@ -1,7 +1,7 @@
 import { Controller, Get, Post, Put, Delete, Param, Body } from '@nestjs/common';
 import { TiposProyectoService } from './tipos-proyecto.service';
 import { CreateTipoProyectoDto, UpdateTipoProyectoDto } from './tipos-proyecto.dto';
-import { Roles } from '../common/guards/guards';
+import { RequiereAccion } from '../common/guards/guards';
 
 @Controller('tipos-proyecto')
 export class TiposProyectoController {
@@ -14,16 +14,16 @@ export class TiposProyectoController {
   findOne(@Param('id') id: string) { return this.service.findOne(id); }
 
   @Post()
-  @Roles('super_admin')
+  @RequiereAccion('catalogos', 'crear')
   create(@Body() dto: CreateTipoProyectoDto) { return this.service.create(dto); }
 
   @Put(':id')
-  @Roles('super_admin')
+  @RequiereAccion('catalogos', 'editar')
   update(@Param('id') id: string, @Body() dto: UpdateTipoProyectoDto) {
     return this.service.update(id, dto);
   }
 
   @Delete(':id')
-  @Roles('super_admin')
+  @RequiereAccion('catalogos', 'eliminar')
   remove(@Param('id') id: string) { return this.service.remove(id); }
 }

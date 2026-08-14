@@ -2,7 +2,8 @@ import { Module } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ConfigModule } from '@nestjs/config';
-import { JwtAuthGuard, RolesGuard, PermisosGuard } from './common/guards/guards';
+import { JwtAuthGuard, RolesGuard, PermisosGuard, PermisoAccionGuard } from './common/guards/guards';
+import { UsuarioSchema } from './usuarios/usuarios.schema';
 import { S3Module } from './common/s3/s3.module';
 import { AuthModule } from './auth/auth.module';
 import { ClientesModule } from './clientes/clientes.module';
@@ -26,6 +27,7 @@ import { TareasModule } from './tareas/tareas.module';
   imports: [
     ConfigModule.forRoot({ isGlobal: true, envFilePath: '.env' }),
     MongooseModule.forRoot(process.env.MONGODB_URI || 'mongodb://localhost:27017/portal_clientes'),
+    MongooseModule.forFeature([{ name: 'Usuario', schema: UsuarioSchema }]),
     S3Module,
     AuthModule,
     ClientesModule,
@@ -49,6 +51,7 @@ import { TareasModule } from './tareas/tareas.module';
     { provide: APP_GUARD, useClass: JwtAuthGuard },
     { provide: APP_GUARD, useClass: RolesGuard },
     { provide: APP_GUARD, useClass: PermisosGuard },
+    { provide: APP_GUARD, useClass: PermisoAccionGuard },
   ],
 })
 export class AppModule {}

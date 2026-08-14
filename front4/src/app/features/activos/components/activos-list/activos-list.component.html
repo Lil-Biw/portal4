@@ -42,8 +42,10 @@
                   </div>
                   <div class="activo-actions">
                     <button class="btn-ghost btn-sm" (click)="revisado.emit(a)">Revisar activo</button>
-                    @if (mostrarAcciones) {
+                    @if (mostrarAcciones && puedeEditar) {
                       <button class="btn-ghost btn-sm" (click)="editado.emit(a)">Editar</button>
+                    }
+                    @if (mostrarAcciones && puedeEliminar) {
                       <button class="btn-danger btn-sm" (click)="eliminado.emit(a._id)">Eliminar</button>
                     }
                   </div>

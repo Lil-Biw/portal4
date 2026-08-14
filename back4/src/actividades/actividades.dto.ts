@@ -13,6 +13,9 @@ export class CreateActividadDto {
   // El formato de ObjectId y la existencia/rol del usuario se validan en
   // ActividadesService.resolverLider().
   @IsOptional() @IsString() lider_id?: string;
+  // Líder como texto libre (perfil consumidor). Si viene junto a un lider_id
+  // válido, el resolverLider() prioriza el usuario administrador referenciado.
+  @IsOptional() @IsString() lider_nombre?: string;
   @IsArray() @IsMongoId({ each: true }) @IsOptional() activo_ids?: string[];
   @IsDateString() fecha: string;
   @IsDateString() @IsOptional() fecha_termino?: string | null;

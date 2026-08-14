@@ -4,6 +4,8 @@ import { isPlatformBrowser } from '@angular/common';
 import { Router } from '@angular/router';
 import { ApiService } from '../../core/services/api.service';
 import { ProfileService } from '../../profile/profile.service';
+import { PermisosUsuario, permisosPorDefectoSegunRol } from '../../shared/models/permisos.model';
+import type { RolUsuario } from '../../shared/models/usuario.model';
 
 export interface UsuarioAuth {
   id: string;
@@ -12,6 +14,7 @@ export interface UsuarioAuth {
   rol: string;
   cliente_id: string | null;
   debe_cambiar_password: boolean;
+  permisos?: PermisosUsuario;
 }
 
 const TOKEN_KEY = 'auth_token';
@@ -89,6 +92,19 @@ export class AuthService {
   getToken(): string | null {
     if (!isPlatformBrowser(this.platformId)) return null;
     return localStorage.getItem(TOKEN_KEY);
+  }
+
+  // super_admin siempre tiene acceso (mismo criterio que PermisoAccionGuard en
+  // el backend). Para el resto, un valor explícito true/false en
+  // usuario.permisos manda; si la clave no está configurada, se cae al default
+  // del rol — espeja 1:1 el fallback de PermisoAccionGuard.
+  tienePermiso(seccion: string, accion: string): boolean {
+    const usuario = this.usuarioActual();
+    if (!usuario) return false;
+    if (usuario.rol === 'super_admin') return true;
+    const valor = usuario.permisos?.[seccion]?.[accion];
+    if (typeof valor === 'boolean') return valor;
+    return permisosPorDefectoSegunRol(usuario.rol as RolUsuario)?.[seccion]?.[accion] === true;
   }
 
   actualizarUsuario(cambios: Partial<UsuarioAuth>): void {

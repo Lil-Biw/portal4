@@ -9,7 +9,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { OPCIONES_SUBIDA } from '../common/constants/upload.constants';
 import { ActivosService } from './activos.service';
 import { CreateActivoDto, UpdateActivoDto } from './activos.dto';
-import { EmpresaAccessGuard, Roles } from '../common/guards/guards';
+import { EmpresaAccessGuard, Roles, RequiereAccion } from '../common/guards/guards';
 import { ActividadesService } from '../actividades/actividades.service';
 
 @Controller('empresas/:empresaId/centros/:centroId/activos')
@@ -31,19 +31,19 @@ export class ActivosController {
   }
 
   @Post()
-  @Roles('super_admin', 'admin_smartclarity')
+  @RequiereAccion('activos', 'crear')
   create(@Param('centroId') centroId: string, @Body() dto: CreateActivoDto) {
     return this.activosService.create({ ...dto, centro_costo_id: centroId });
   }
 
   @Put(':activoId')
-  @Roles('super_admin', 'admin_smartclarity')
+  @RequiereAccion('activos', 'editar')
   update(@Param('activoId') activoId: string, @Body() dto: UpdateActivoDto) {
     return this.activosService.update(activoId, dto);
   }
 
   @Delete(':activoId')
-  @Roles('super_admin', 'admin_smartclarity')
+  @RequiereAccion('activos', 'eliminar')
   remove(@Param('activoId') activoId: string) {
     return this.activosService.remove(activoId);
   }
@@ -54,7 +54,7 @@ export class ActivosController {
   }
 
   @Post(':activoId/documentos')
-  @Roles('super_admin', 'admin_smartclarity')
+  @RequiereAccion('docActivo', 'subir')
   @UseInterceptors(FileInterceptor('archivo', OPCIONES_SUBIDA))
   subirDocumento(
     @Param('activoId') activoId: string,
@@ -67,7 +67,7 @@ export class ActivosController {
   }
 
   @Delete(':activoId/documentos/:docId')
-  @Roles('super_admin', 'admin_smartclarity')
+  @RequiereAccion('docActivo', 'eliminar')
   eliminarDocumento(
     @Param('activoId') activoId: string,
     @Param('docId') docId: string,
@@ -76,7 +76,7 @@ export class ActivosController {
   }
 
   @Patch(':activoId/documentos/:docId')
-  @Roles('super_admin', 'admin_smartclarity')
+  @RequiereAccion('docActivo', 'editarCategoria')
   renombrarDocumento(
     @Param('activoId') activoId: string,
     @Param('docId') docId: string,

@@ -8,20 +8,26 @@ import { SolicitudesService } from '../../solicitudes/solicitudes.service';
 import { DocumentosService } from '../../documentos/documentos.service';
 import { ActivosService } from '../../activos/activos.service';
 import { ProyectosService } from '../../proyectos/proyectos.service';
+import { AuthService } from '../../auth/auth.service';
+import { StatusBannerComponent } from '../../../shared/components/status-banner/status-banner.component';
+import { CentroFormComponent } from '../components/centro-form/centro-form.component';
 import { SpiderChartComponent } from '../../../shared/components/spider-chart/spider-chart.component';
 import { StatChipComponent, ChipVariant } from '../../../shared/components/stat-chip/stat-chip.component';
 import { DonutArcComponent } from '../../../shared/components/donut-arc/donut-arc.component';
 import { ActivoIconoComponent } from '../../activos/components/activo-icono/activo-icono.component';
+import { CreateCentroDto } from '../../../shared/models/centro.model';
 import { CentroCosto } from '../../../shared/models/centro.model';
 import { Activo, TipoActivo } from '../../../shared/models/activo.model';
 import { Proyecto, EstadoProyecto, ESTADO_PROYECTO_LABEL } from '../../../shared/models/proyecto.model';
-import { asId, calcularScoreDocumental, scoreChipVariantFn, scoreChipLabelFn, colorEstadoSolicitud, estadoStyleFn } from '../../../shared/utils';
+import { asId, confirmarEliminacion, calcularScoreDocumental, scoreChipVariantFn, scoreChipLabelFn, colorEstadoSolicitud, estadoStyleFn } from '../../../shared/utils';
 import { ApiService } from '../../../core/services/api.service';
+
+type CentroModal = 'crear' | 'editar' | null;
 
 @Component({
   selector: 'app-mis-centros-page',
   standalone: true,
-  imports: [FormsModule, SpiderChartComponent, StatChipComponent, DonutArcComponent, ActivoIconoComponent],
+  imports: [FormsModule, SpiderChartComponent, StatChipComponent, DonutArcComponent, ActivoIconoComponent, StatusBannerComponent, CentroFormComponent],
   templateUrl: './mis-centros-page.component.html',
   styles: [`
     .centro-card {
@@ -33,6 +39,70 @@ import { ApiService } from '../../../core/services/api.service';
       box-shadow: 0 4px 16px rgba(0,149,214,.18);
       border-color: rgba(0,149,214,.35);
     }
+
+    .btn-icon-sq {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 30px;
+      height: 30px;
+      border: 1px solid #d1d5db;
+      border-radius: 7px;
+      background: none;
+      cursor: pointer;
+      color: #6b7280;
+      transition: border-color .15s, color .15s, background .15s;
+    }
+    .btn-icon-sq:hover { border-color: #0095d6; color: #0095d6; background: rgba(0,149,214,.06); }
+    .btn-action-danger { color: #f87171; }
+    .btn-action-danger:hover { color: #ef4444; background: rgba(239,68,68,.08); }
+
+    .page-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 1.25rem;
+      flex-wrap: wrap;
+    }
+    .header-actions { display: flex; gap: .6rem; align-items: center; }
+
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(15,23,42,.45);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      padding: 1rem;
+    }
+    .modal {
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 20px 60px rgba(15,23,42,.18);
+      width: 100%;
+      max-width: 640px;
+      max-height: 85vh;
+      overflow-y: auto;
+      padding: 1.5rem;
+    }
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.25rem;
+    }
+    .modal-header h3 { margin: 0; font-size: 1.1rem; font-weight: 700; }
+    .modal-close {
+      background: none;
+      border: none;
+      font-size: 1.4rem;
+      line-height: 1;
+      cursor: pointer;
+      color: #6b7280;
+      padding: 0 .25rem;
+    }
+    .modal-close:hover { color: #1f2937; }
   `],
 })
 export class MisCentrosPageComponent implements OnInit, OnDestroy {
@@ -43,8 +113,12 @@ export class MisCentrosPageComponent implements OnInit, OnDestroy {
   protected readonly documentosService  = inject(DocumentosService);
   protected readonly activosService     = inject(ActivosService);
   protected readonly proyectosService    = inject(ProyectosService);
+  protected readonly authService        = inject(AuthService);
   private  readonly sanitizer          = inject(DomSanitizer);
   private  readonly api                = inject(ApiService);
+
+  protected modal            = signal<CentroModal>(null);
+  protected pendingFoto      = signal<File | null>(null);
 
   get empresa()        { return this.consumidorContext.empresaSeleccionada(); }
   get centroActivo()   { return this.consumidorContext.centroSeleccionado(); }
@@ -154,6 +228,11 @@ export class MisCentrosPageComponent implements OnInit, OnDestroy {
       if (!emp || !centros.length) return;
       untracked(() => this.documentosService.cargarTodosCentros(emp._id, centros));
     });
+    effect(() => {
+      if (this.service.status()?.type === 'ok' && this.modal() !== null) {
+        this.cerrarModal();
+      }
+    });
   }
 
   ngOnInit(): void {
@@ -213,6 +292,47 @@ export class MisCentrosPageComponent implements OnInit, OnDestroy {
 
   volver(): void {
     this.consumidorContext.seleccionarCentro(null);
+  }
+
+  // ── Modal crear/editar ───────────────────────────────────────────────────
+  abrirCrear(): void {
+    const emp = this.empresa;
+    if (!emp) return;
+    this.service.seleccionado.set(null);
+    this.service.clearStatus();
+    this.pendingFoto.set(null);
+    this.modal.set('crear');
+  }
+
+  abrirEditar(centro: CentroCosto): void {
+    this.service.seleccionar(centro);
+    this.pendingFoto.set(null);
+    this.service.clearStatus();
+    this.modal.set('editar');
+  }
+
+  cerrarModal(): void {
+    this.modal.set(null);
+    this.service.seleccionado.set(null);
+    this.service.clearStatus();
+    this.pendingFoto.set(null);
+  }
+
+  crear(dto: CreateCentroDto): void {
+    this.service.crear(dto, this.pendingFoto());
+    this.pendingFoto.set(null);
+  }
+
+  actualizar(dto: CreateCentroDto): void {
+    const id = this.service.seleccionado()?._id;
+    if (id) this.service.actualizar(id, dto, this.pendingFoto());
+    this.pendingFoto.set(null);
+  }
+
+  eliminarCentro(centro: CentroCosto): void {
+    if (!confirmarEliminacion(centro.nombre)) return;
+    this.service.seleccionar(centro);
+    this.service.eliminar(centro._id);
   }
 
   tipoActivoNombre(a: Activo): string {

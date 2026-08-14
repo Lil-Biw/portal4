@@ -4,11 +4,18 @@ import { NgFor, NgIf } from '@angular/common';
 import { Usuario, CreateUsuarioDto, RolUsuario } from '../../../../shared/models/usuario.model';
 import { Cliente } from '../../../../shared/models/cliente.model';
 import { CentroCosto } from '../../../../shared/models/centro.model';
+import {
+  PermisosUsuario,
+  permisosIguales,
+  permisosPorDefectoSegunRol,
+} from '../../../../shared/models/permisos.model';
 import { asId } from '../../../../shared/utils';
 
 export interface UsuarioFormOutput {
   dto: CreateUsuarioDto;
 }
+
+type RolOpcion = RolUsuario | 'personalizado';
 
 @Component({
   selector: 'app-usuario-form',
@@ -30,6 +37,8 @@ export class UsuarioFormComponent implements OnChanges {
 
   form: CreateUsuarioDto = this.empty();
 
+  rolUI: RolOpcion = 'usuario';
+
   private readonly todosLosRoles: { value: RolUsuario; label: string }[] = [
     { value: 'usuario', label: 'Usuario' },
     { value: 'admin_smartclarity', label: 'Admin SmartClarity' },
@@ -41,6 +50,11 @@ export class UsuarioFormComponent implements OnChanges {
       : this.todosLosRoles;
   }
 
+  get rolOpciones(): { value: RolOpcion; label: string }[] {
+    if (!this.isEdit) return this.roles;
+    return [...this.roles, { value: 'personalizado', label: 'Personalizado' }];
+  }
+
   ngOnChanges(): void {
     if (this.initial) {
       this.form = {
@@ -49,7 +63,14 @@ export class UsuarioFormComponent implements OnChanges {
         email: this.initial.email,
         rol: this.initial.rol,
         permiso_acceso: this.initial.permiso_acceso,
+        permisos: structuredClone(this.initial.permisos ?? {}),
       };
+      // Si los permisos actuales no son los por defecto del rol, mostramos
+      // "Personalizado" para que no se reseteen al guardar sin tocar nada.
+      const actuales = this.form.permisos;
+      this.rolUI = permisosIguales(actuales, permisosPorDefectoSegunRol(this.initial.rol))
+        ? this.initial.rol
+        : 'personalizado';
     }
   }
 
@@ -62,10 +83,26 @@ export class UsuarioFormComponent implements OnChanges {
     this.clienteChange.emit(id);
   }
 
+  onRolChange(v: RolOpcion): void {
+    this.rolUI = v;
+    if (v === 'personalizado') {
+      this.form.rol = this.initial?.rol ?? 'usuario';
+      this.form.permisos = structuredClone(this.initial?.permisos ?? {});
+      return;
+    }
+    this.form.rol = v;
+    // Cambiar el rol aplica los permisos por defecto de ese rol.
+    this.form.permisos = structuredClone(permisosPorDefectoSegunRol(v));
+  }
+
   submit(): void {
-    this.submitted.emit({
-      dto: { ...this.form, centros_asignados: this.centrosSeleccionados },
-    });
+    const dto: CreateUsuarioDto = {
+      ...this.form,
+      centros_asignados: this.centrosSeleccionados,
+    };
+    // En alta el backend aplica los permisos por defecto; no enviar el campo.
+    if (!this.isEdit) delete dto.permisos;
+    this.submitted.emit({ dto });
   }
 
   private empty(): CreateUsuarioDto {

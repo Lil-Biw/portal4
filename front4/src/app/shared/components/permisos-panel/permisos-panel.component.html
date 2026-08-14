@@ -1,5 +1,5 @@
 @for (seccion of schema; track seccion.key) {
-  <div class="pf-seccion">
+  <div class="pf-seccion" [style.--pf-color]="seccion.color" [style.--pf-color-suave]="seccion.colorSuave">
     <h3 class="pf-seccion-titulo">
       {{ seccion.titulo }}
       @if (seccion.soloInterno) {

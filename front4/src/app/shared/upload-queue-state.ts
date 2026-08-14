@@ -21,6 +21,7 @@ export function createUploadQueue(): {
   marcarListo(id: string, docUrl?: string): void;
   marcarError(id: string, errorMsg: string): void;
   actualizarCategoria(id: string, categoria: string): void;
+  actualizarNombre(id: string, nombre: string): void;
   quitar(id: string): void;
   reiniciar(id: string): void;
   limpiar(): void;
@@ -50,6 +51,10 @@ export function createUploadQueue(): {
     items.update(q => q.map(i => (i.id === id ? { ...i, categoria } : i)));
   }
 
+  function actualizarNombre(id: string, nombre: string): void {
+    items.update(q => q.map(i => (i.id === id ? { ...i, nombre } : i)));
+  }
+
   function quitar(id: string): void {
     items.update(q => q.filter(i => i.id !== id));
   }
@@ -62,5 +67,5 @@ export function createUploadQueue(): {
     items.set([]);
   }
 
-  return { items, agregar, actualizarProgreso, marcarListo, marcarError, actualizarCategoria, quitar, reiniciar, limpiar };
+  return { items, agregar, actualizarProgreso, marcarListo, marcarError, actualizarCategoria, actualizarNombre, quitar, reiniciar, limpiar };
 }

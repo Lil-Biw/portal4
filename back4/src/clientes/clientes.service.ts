@@ -182,6 +182,12 @@ export class ClientesService {
     return conNombre;
   }
 
+  async renombrarDocumento(id: string, docId: string, nombreDisplay: string) {
+    const doc = await this.docsHelper.renombrar(id, docId, nombreDisplay);
+    const [conNombre] = await resolverSubidoPorNombre([doc], this.usuarioModel as any);
+    return conNombre;
+  }
+
   servirDocumento(clienteId: string, docId: string) {
     return this.docsHelper.servir(clienteId, docId);
   }

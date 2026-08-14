@@ -19,21 +19,21 @@ describe('filaAplica', () => {
   });
 
   it('permite una fila normal de una sección no interna cuando contextoCompleto es false', () => {
-    const seccionUsuarios = PERM_SCHEMA.find((s) => s.key === 'usuarios')!;
-    const filaCrear = seccionUsuarios.rows.find((r) => r.key === 'crear')!;
-    expect(filaAplica(seccionUsuarios, filaCrear, false)).toBe(true);
+    const seccionCentros = PERM_SCHEMA.find((s) => s.key === 'centros')!;
+    const filaCrear = seccionCentros.rows.find((r) => r.key === 'crear')!;
+    expect(filaAplica(seccionCentros, filaCrear, false)).toBe(true);
   });
 });
 
 describe('contarPermisosActivos', () => {
-  it('con contextoCompleto=true cuenta las 43 filas totales del catálogo', () => {
+  it('con contextoCompleto=true cuenta las 44 filas totales del catálogo', () => {
     const { total } = contarPermisosActivos({}, true);
-    expect(total).toBe(43);
+    expect(total).toBe(44);
   });
 
-  it('con contextoCompleto=false excluye secciones soloInterno y filas soloAdmin (34 filas)', () => {
+  it('con contextoCompleto=false excluye secciones soloInterno y filas soloAdmin (29 filas)', () => {
     const { total } = contarPermisosActivos({}, false);
-    expect(total).toBe(34);
+    expect(total).toBe(29);
   });
 
   it('cuenta correctamente los activos cuando todo está en true', () => {
@@ -42,7 +42,7 @@ describe('contarPermisosActivos', () => {
       valores[seccion.key] = {};
       for (const row of seccion.rows) valores[seccion.key][row.key] = true;
     }
-    expect(contarPermisosActivos(valores, true)).toEqual({ activos: 43, total: 43 });
+    expect(contarPermisosActivos(valores, true)).toEqual({ activos: 44, total: 44 });
   });
 
   it('no cuenta como activa una clave ausente en el objeto de valores', () => {

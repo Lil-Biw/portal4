@@ -22,9 +22,12 @@
   </label>
   <label class="field" *ngIf="isEdit">
     <span>Rol</span>
-    <select [(ngModel)]="form.rol" name="rol">
-      <option *ngFor="let r of roles" [value]="r.value">{{ r.label }}</option>
+    <select [(ngModel)]="rolUI" name="rol" (ngModelChange)="onRolChange($event)">
+      <option *ngFor="let r of rolOpciones" [value]="r.value">{{ r.label }}</option>
     </select>
+    <small *ngIf="form.permisos && isEdit" style="display:block; margin-top:.25rem; font-size:.74rem; color:#9ca3af">
+      Al cambiar el rol se aplican los permisos por defecto de ese rol. "Personalizado" conserva los permisos actuales.
+    </small>
   </label>
 
   <!-- Centros de costos asignados -->

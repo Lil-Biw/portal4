@@ -21,7 +21,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { OPCIONES_SUBIDA } from '../common/constants/upload.constants';
 import { ClientesService } from './clientes.service';
 import { CreateClienteDto, UpdateClienteDto, UpdateScoreSmartclarityDto, UpdateConfigGraficoDto, VencerDocumentoEmpresaDto } from './clientes.dto';
-import { Roles, Public } from '../common/guards/guards';
+import { Public, RequiereAccion } from '../common/guards/guards';
 
 interface JwtUser {
   sub: string;
@@ -42,7 +42,7 @@ export class ClientesController {
   }
 
   @Post()
-  @Roles('super_admin')
+  @RequiereAccion('empresas', 'crear')
   create(@Body() dto: CreateClienteDto) {
     return this.clientesService.create(dto);
   }
@@ -70,13 +70,13 @@ export class ClientesController {
   }
 
   @Put(':id')
-  @Roles('super_admin', 'admin_smartclarity')
+  @RequiereAccion('empresas', 'editar')
   update(@Param('id') id: string, @Body() dto: UpdateClienteDto) {
     return this.clientesService.update(id, dto);
   }
 
   @Put(':id/score-smartclarity')
-  @Roles('super_admin', 'admin_smartclarity')
+  @RequiereAccion('empresas', 'editar')
   updateScore(
     @Param('id') id: string,
     @Body() dto: UpdateScoreSmartclarityDto,
@@ -85,7 +85,7 @@ export class ClientesController {
   }
 
   @Patch(':id/config-grafico')
-  @Roles('super_admin', 'admin_smartclarity')
+  @RequiereAccion('empresas', 'editar')
   updateConfigGrafico(
     @Param('id') id: string,
     @Body() dto: UpdateConfigGraficoDto,
@@ -94,13 +94,13 @@ export class ClientesController {
   }
 
   @Delete(':id')
-  @Roles('super_admin')
+  @RequiereAccion('empresas', 'eliminar')
   remove(@Param('id') id: string) {
     return this.clientesService.remove(id);
   }
 
   @Post(':id/logo')
-  @Roles('super_admin', 'admin_smartclarity')
+  @RequiereAccion('empresas', 'editar')
   @UseInterceptors(FileInterceptor('archivo', OPCIONES_SUBIDA))
   subirLogo(
     @Param('id') id: string,
@@ -119,7 +119,7 @@ export class ClientesController {
   }
 
   @Post(':id/imagen')
-  @Roles('super_admin', 'admin_smartclarity')
+  @RequiereAccion('empresas', 'editar')
   @UseInterceptors(FileInterceptor('archivo', OPCIONES_SUBIDA))
   subirImagen(
     @Param('id') id: string,
@@ -138,7 +138,7 @@ export class ClientesController {
   }
 
   @Post(':id/documentos')
-  @Roles('super_admin', 'admin_smartclarity', 'usuario')
+  @RequiereAccion('docEmpresa', 'subir')
   @UseInterceptors(FileInterceptor('archivo', OPCIONES_SUBIDA))
   subirDocumento(
     @Param('id') id: string,
@@ -181,20 +181,25 @@ export class ClientesController {
   }
 
   @Patch(':id/documentos/:docId')
-  @Roles('super_admin', 'admin_smartclarity')
+  @RequiereAccion('docEmpresa', 'editarCategoria')
   actualizarDocumento(
     @Param('id') id: string,
     @Param('docId') docId: string,
-    @Body('categoria') categoria: string,
+    @Body('categoria') categoria: string | undefined,
+    @Body('nombre_display') nombreDisplay: string | undefined,
     @Req() req: Request,
   ) {
     this.assertEmpresaPermitida((req as any).user as JwtUser, id);
+    if (nombreDisplay !== undefined) {
+      if (!nombreDisplay.trim()) throw new BadRequestException('Debes indicar un nombre');
+      return this.clientesService.renombrarDocumento(id, docId, nombreDisplay.trim());
+    }
     if (!categoria?.trim()) throw new BadRequestException('Debes indicar una categoría');
     return this.clientesService.actualizarDocumento(id, docId, categoria.trim());
   }
 
   @Delete(':id/documentos/:docId')
-  @Roles('super_admin', 'admin_smartclarity')
+  @RequiereAccion('docEmpresa', 'eliminar')
   eliminarDocumento(
     @Param('id') id: string,
     @Param('docId') docId: string,
@@ -205,7 +210,7 @@ export class ClientesController {
   }
 
   @Patch(':id/documentos/:docId/vencer')
-  @Roles('super_admin', 'admin_smartclarity', 'usuario')
+  @RequiereAccion('docEmpresa', 'vencer')
   async vencerDocumento(
     @Param('id') id: string,
     @Param('docId') docId: string,

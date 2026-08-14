@@ -1,8 +1,16 @@
-<!-- Header (solo lectura, sin botón de creación) -->
+<!-- Header -->
 <div class="mant-header">
   <div>
-    <h2 class="mant-title">Mis actividades</h2>
+    <h2 class="mant-title">Mi calendario de actividades</h2>
     <p class="mant-subtitle">Calendario de actividades programadas</p>
+  </div>
+  <div style="display:flex;gap:.6rem;align-items:center">
+    @if (puedeGestionarTipos()) {
+      <button class="btn-ghost" (click)="abrirTiposModal()">Crear tipo de actividad</button>
+    }
+    @if (authService.tienePermiso('actividades', 'crear')) {
+      <button class="btn-primary" (click)="abrirCrear()">+ Nueva actividad</button>
+    }
   </div>
 </div>
 
@@ -470,6 +478,652 @@
         </div>
       }
 
+    </div>
+  </div>
+}
+
+<!-- ══ MODAL WIZARD ACTIVIDAD ════════════════════════════════════════════ -->
+@if (showModal()) {
+  <div class="modal-overlay">
+    <div class="modal-box modal-box--wizard" (click)="$event.stopPropagation()">
+
+      <div class="wz-header">
+      <div class="wz-header-top">
+        <h3 class="modal-title">{{ editingId() ? 'Editar actividad' : 'Nueva actividad' }}</h3>
+        <button class="wz-close" (click)="cerrarModal()">&#x2715;</button>
+      </div>
+
+      <!-- STEPPER -->
+      <div class="wizard-stepper">
+        <button class="wz-step"
+          [class.wz-step--active]="paso() === 1"
+          [class.wz-step--completed]="paso() > 1"
+          [class.wz-step--clickable]="pasoMaxAlcanzado() >= 1"
+          (click)="irAPaso(1)">
+          <div class="wz-circle">@if (paso() > 1) { ✓ } @else { 1 }</div>
+          <span class="wz-label">Información</span>
+        </button>
+        <div class="wz-line" [class.wz-line--done]="paso() > 1"></div>
+        <button class="wz-step"
+          [class.wz-step--active]="paso() === 2"
+          [class.wz-step--completed]="paso() > 2"
+          [class.wz-step--clickable]="pasoMaxAlcanzado() >= 2"
+          (click)="irAPaso(2)">
+          <div class="wz-circle">@if (paso() > 2) { ✓ } @else { 2 }</div>
+          <span class="wz-label">Notificaciones</span>
+        </button>
+        <div class="wz-line" [class.wz-line--done]="paso() > 2"></div>
+        <button class="wz-step"
+          [class.wz-step--active]="paso() === 3"
+          [class.wz-step--completed]="paso() > 3"
+          [class.wz-step--clickable]="pasoMaxAlcanzado() >= 3"
+          (click)="irAPaso(3)">
+          <div class="wz-circle">@if (paso() > 3) { ✓ } @else { 3 }</div>
+          <span class="wz-label">Documentos</span>
+        </button>
+        <div class="wz-line" [class.wz-line--done]="paso() > 3"></div>
+        <button class="wz-step"
+          [class.wz-step--active]="paso() === 4"
+          [class.wz-step--completed]="false"
+          [class.wz-step--clickable]="pasoMaxAlcanzado() >= 4"
+          (click)="irAPaso(4)">
+          <div class="wz-circle">4</div>
+          <span class="wz-label">Resumen</span>
+        </button>
+      </div>
+      </div>
+
+      <div class="wz-body">
+      <app-status-banner [status]="service.status()"></app-status-banner>
+
+      <!-- ── PASO 1: Información ──────────────────────────────────── -->
+      @if (paso() === 1) {
+        <div class="wz-secciones">
+          @if (errorPaso1()) {
+            <p class="wz-error">{{ errorPaso1() }}</p>
+          }
+          <div class="wz-seccion">
+          <p class="wz-seccion-titulo">Datos de la actividad</p>
+          <div class="field-row">
+            <div class="field">
+              <label>Nombre *</label>
+              <input type="text" [ngModel]="form().nombre" (ngModelChange)="patchForm('nombre', $event)" placeholder="Nombre de la actividad" />
+            </div>
+            <div class="field">
+              <label>Tipo *</label>
+              <div style="position:relative">
+                @if (tipoDropdownOpen()) {
+                  <div style="position:fixed;inset:0;z-index:10" (click)="tipoDropdownOpen.set(false)"></div>
+                }
+                <button type="button" class="tipo-select-btn"
+                  (click)="tipoDropdownOpen.update(v => !v)">
+                  @if (tipoSeleccionado()) {
+                    <span class="cal-legend-dot" [style.background]="tipoSeleccionado()!.color"></span>
+                    <span>{{ tipoSeleccionado()!.nombre }}</span>
+                  } @else {
+                    <span style="color:#9ca3af">Selecciona un tipo</span>
+                  }
+                  <svg style="margin-left:auto;flex-shrink:0;width:14px;height:14px;color:#6b7280;transition:transform .15s"
+                    [style.transform]="tipoDropdownOpen() ? 'rotate(180deg)' : 'rotate(0)'"
+                    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="6 9 12 15 18 9"/>
+                  </svg>
+                </button>
+                @if (tipoDropdownOpen()) {
+                  <div class="tipo-dropdown">
+                    @for (t of tiposService.tipos(); track t._id) {
+                      <button type="button" class="tipo-option"
+                        [class.tipo-option--selected]="form().tipo_id === t._id"
+                        (click)="seleccionarTipo(t._id)">
+                        <span class="cal-legend-dot" [style.background]="t.color"></span>
+                        {{ t.nombre }}
+                      </button>
+                    }
+                    @if (tiposService.tipos().length === 0) {
+                      <p style="margin:0;padding:.5rem .75rem;font-size:.82rem;color:#9ca3af">Sin tipos creados</p>
+                    }
+                  </div>
+                }
+              </div>
+            </div>
+          </div>
+          <div class="field-row">
+            <div class="field">
+              <label>Líder de actividad (opcional)</label>
+              <input type="text" placeholder="Nombre del líder" [ngModel]="form().liderNombre" (ngModelChange)="patchForm('liderNombre', $event)" />
+            </div>
+          </div>
+          <div class="field-row">
+            <div class="field">
+              <label>Fecha inicio *</label>
+              <input type="date" [ngModel]="form().fecha" (ngModelChange)="patchForm('fecha', $event)" />
+            </div>
+            <div class="field">
+              <label>Hora inicio (opcional)</label>
+              <input type="time" [ngModel]="form().hora" (ngModelChange)="patchForm('hora', $event)" />
+            </div>
+          </div>
+          <div class="field-row">
+            <div class="field">
+              <label>Fecha término</label>
+              <input type="date" [ngModel]="form().fecha_termino" [min]="form().fecha || null"
+                     (ngModelChange)="patchForm('fecha_termino', $event)" />
+            </div>
+            <div class="field">
+              <label>Hora término (opcional)</label>
+              <input type="time" [ngModel]="form().hora_termino" [min]="form().hora || null" [disabled]="!form().hora"
+                     (ngModelChange)="patchForm('hora_termino', $event)" />
+            </div>
+          </div>
+          <div class="field">
+            <label>Descripción</label>
+            <textarea rows="2" [ngModel]="form().descripcion" (ngModelChange)="patchForm('descripcion', $event)" placeholder="Descripción opcional..."></textarea>
+          </div>
+          </div>
+
+          <div class="wz-seccion">
+          <p class="wz-seccion-titulo">Empresa y centro</p>
+          <div class="field-row">
+            <div class="field">
+              <label>Empresa</label>
+              <select [ngModel]="form().empresa_id" (ngModelChange)="patchForm('empresa_id', $event); patchForm('centro_costo_id', '')">
+                <option value="">Selecciona una empresa</option>
+                @for (e of empresasContext(); track e._id) {
+                  <option [value]="e._id">{{ e.razon_social }}</option>
+                }
+              </select>
+            </div>
+            <div class="field">
+              <label>Centro de costos *</label>
+              <select [ngModel]="form().centro_costo_id" (ngModelChange)="patchForm('centro_costo_id', $event)" [disabled]="!form().empresa_id">
+                <option value="">{{ form().empresa_id ? 'Selecciona un centro' : 'Primero selecciona una empresa' }}</option>
+                @for (c of centrosParaEmpresa(); track c._id) {
+                  <option [value]="c._id">{{ c.nombre }}</option>
+                }
+              </select>
+            </div>
+          </div>
+          </div>
+
+          @if (form().centro_costo_id && activosParaCentro().length > 0) {
+            <div class="wz-seccion">
+              <p class="wz-seccion-titulo">
+                Activos (opcional)
+                @if (form().activo_ids.length > 0) {
+                  <span class="wz-badge">{{ form().activo_ids.length }} seleccionado{{ form().activo_ids.length > 1 ? 's' : '' }}</span>
+                }
+              </p>
+              <div class="dest-panel">
+                <div class="dest-search">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+                    <circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.5" y2="16.5"/>
+                  </svg>
+                  <input
+                    type="text"
+                    placeholder="Buscar activo..."
+                    [ngModel]="filtroActivo()"
+                    (ngModelChange)="filtroActivo.set($event)" />
+                </div>
+                <div class="dest-lista">
+                  @for (a of activosFiltrados(); track a._id) {
+                    <label class="dest-row" [class.dest-row--sel]="form().activo_ids.includes(a._id)">
+                      <input type="checkbox" [checked]="form().activo_ids.includes(a._id)" (change)="toggleActivo(a._id)" />
+                      <span>{{ a.nombre }}</span>
+                      <span class="dest-row-meta">{{ tipoActivoNombre(a) }}</span>
+                    </label>
+                  }
+                  @if (activosFiltrados().length === 0) {
+                    <p class="dest-empty" style="text-align:center">Sin resultados para "{{ filtroActivo() }}"</p>
+                  }
+                </div>
+              </div>
+            </div>
+          }
+        </div>
+      }
+
+      <!-- ── PASO 2: Notificaciones ──────────────────────────────── -->
+      @if (paso() === 2) {
+        <div class="wz-secciones">
+          <div class="wz-seccion">
+            <p class="wz-seccion-titulo">Aviso por correo</p>
+            @if (form().centro_costo_id) {
+              <label class="notif-toggle">
+                <span>
+                  <strong>Notificar por correo</strong>
+                  <small>Se envía un aviso al crear o modificar la actividad.</small>
+                </span>
+                <span class="wz-switch">
+                  <input type="checkbox" [checked]="notifNotificar()" (change)="toggleNotifNotificar()" />
+                  <span class="wz-switch-track"></span>
+                  <span class="wz-switch-thumb"></span>
+                </span>
+              </label>
+              @if (notifNotificar()) {
+                <div class="dest-panel">
+                  <div class="dest-tabs">
+                    <button type="button" class="dest-tab"
+                      [class.dest-tab--on]="notifTab() === 'usuarios'"
+                      (click)="notifTab.set('usuarios')">
+                      Usuarios <span class="dest-count">{{ notifUsuariosIds().length }}/{{ usuariosParaCentro().length }}</span>
+                    </button>
+                    <button type="button" class="dest-tab"
+                      [class.dest-tab--on]="notifTab() === 'admins'"
+                      (click)="notifTab.set('admins')">
+                      Admins <span class="dest-count">{{ notifAdminsIds().length }}/{{ adminsParaEmpresa().length }}</span>
+                    </button>
+                    <button type="button" class="dest-tab"
+                      [class.dest-tab--on]="notifTab() === 'super-admins'"
+                      (click)="notifTab.set('super-admins')">
+                      Super Admins
+                    </button>
+                  </div>
+                  @if (notifTab() === 'usuarios') {
+                    @if (usuariosParaCentro().length > 0) {
+                      <label class="dest-all">
+                        <input type="checkbox" [checked]="notifTodosUsuariosSeleccionados()" (change)="toggleSeleccionarTodosUsuarios()" />
+                        Seleccionar todos los usuarios
+                      </label>
+                      <div class="dest-lista">
+                        @for (u of usuariosParaCentro(); track u._id) {
+                          <label class="dest-row" [class.dest-row--sel]="notifUsuariosIds().includes(u._id)">
+                            <input type="checkbox" [checked]="notifUsuariosIds().includes(u._id)" (change)="toggleNotifUsuario(u._id)" />
+                            <span>{{ u.nombre }}</span>
+                          </label>
+                        }
+                      </div>
+                    } @else {
+                      <p class="dest-empty">No hay usuarios asignados a este centro.</p>
+                    }
+                  }
+                  @if (notifTab() === 'admins') {
+                    @if (adminsParaEmpresa().length > 0) {
+                      <label class="dest-all">
+                        <input type="checkbox" [checked]="notifTodosAdminsSeleccionados()" (change)="toggleSeleccionarTodosAdmins()" />
+                        Seleccionar todos los admins
+                      </label>
+                      <div class="dest-lista">
+                        @for (u of adminsParaEmpresa(); track u._id) {
+                          <label class="dest-row"
+                            [class.dest-row--sel]="notifAdminsIds().includes(u._id) && !estaSuscritoAdmin(u)"
+                            [class.dest-row--suscrito]="estaSuscritoAdmin(u)">
+                            <input type="checkbox" [checked]="notifAdminsIds().includes(u._id)"
+                              [disabled]="estaSuscritoAdmin(u)"
+                              (change)="toggleNotifAdmin(u._id)" />
+                            <span>{{ u.nombre }}</span>
+                            @if (estaSuscritoAdmin(u)) {
+                              <span class="dest-badge-suscrito"
+                                title="Suscrito: recibe esta notificación siempre, no se puede desmarcar">Suscrito</span>
+                            }
+                          </label>
+                        }
+                      </div>
+                    } @else {
+                      <p class="dest-empty">No hay administradores para esta empresa.</p>
+                    }
+                  }
+                  @if (notifTab() === 'super-admins') {
+                    <label class="dest-all">
+                      <input type="checkbox" [checked]="notifSuperAdmins()" (change)="notifSuperAdmins.update(v => !v)" />
+                      Notificar a todos los Super Admins
+                    </label>
+                  }
+                </div>
+              }
+            } @else {
+              <p class="dest-empty" style="padding:.25rem 0">No hay centro de costos seleccionado. Vuelve al paso 1 para seleccionarlo.</p>
+            }
+          </div>
+
+          <div class="wz-seccion">
+            <p class="wz-seccion-titulo">Recordatorios de la actividad</p>
+            <p class="wz-hint">
+              Con cuánta antelación a la fecha de la actividad se avisa por correo a los administradores suscritos (puedes marcar varias).
+            </p>
+            <div class="wz-pills">
+              @for (o of opcionesDiasRecordatorio; track o.valor) {
+                <label class="wz-pill" [class.wz-pill--on]="diasRecordatorio().includes(o.valor)">
+                  <input type="checkbox" [checked]="diasRecordatorio().includes(o.valor)"
+                    (change)="toggleDiaRecordatorio(o.valor)" />
+                  <span class="wz-pill-check">✓</span>{{ o.label }}
+                </label>
+              }
+            </div>
+          </div>
+        </div>
+      }
+
+      <!-- ── PASO 3: Documentos ──────────────────────────────────── -->
+      @if (paso() === 3) {
+        <div class="wz-secciones">
+          <div class="wz-seccion">
+          <p class="wz-seccion-titulo">
+            Documentos adjuntos
+            @if (!editingId() && docsPendientesTarjetas.length > 0) {
+              <span class="wz-badge">{{ docsPendientesTarjetas.length }}</span>
+            }
+            @if (editingId() && documentosTarjetas.length > 0) {
+              <span class="wz-badge">{{ documentosTarjetas.length }}</span>
+            }
+          </p>
+          @if (!editingId()) {
+            <app-document-card-list
+              [documentos]="docsPendientesTarjetas"
+              (eliminar)="quitarDocPendiente($event)" />
+          } @else {
+            <app-document-card-list
+              [documentos]="documentosTarjetas"
+              [puedeEliminar]="authService.tienePermiso('docActividad', 'eliminar')"
+              (descargar)="descargarDocActividadWizard($event)"
+              (abrirLink)="abrirDocActividad($event)"
+              (eliminar)="eliminarDocActividad($event)"
+              (renombrar)="renombrarDocActividad($event)" />
+          }
+          </div>
+
+          <div class="wz-seccion">
+            <p class="wz-seccion-titulo">Agregar documento</p>
+            @if (!editingId()) {
+              <app-upload-document-form
+                style="display:block"
+                [mostrarTipoDocumento]="false"
+                [mostrarNombre]="false"
+                [ocultarBotonConfirmarArchivo]="true"
+                [modo]="pendienteModo()" (modoChange)="setPendienteModo($event)"
+                [archivo]="null" (archivoChange)="onPendienteArchivoChange($event)"
+                [(link)]="pendienteLinkInput"
+                [linkInvalido]="pendienteLinkInvalido()"
+                confirmLabel="+ Agregar a la lista"
+                [showCancel]="false"
+                [confirmDisabled]="!pendienteLinkInput.trim() || pendienteLinkInvalido()"
+                (confirmar)="agregarDocPendienteLink()" />
+            } @else if (authService.tienePermiso('docActividad', 'subir')) {
+              <app-upload-document-form
+                style="display:block"
+                [mostrarTipoDocumento]="false"
+                [mostrarNombre]="false"
+                [ocultarBotonConfirmarArchivo]="true"
+                [modo]="docModo()" (modoChange)="setDocModo($event)"
+                [archivo]="null" (archivoChange)="onDocArchivoChange($event)"
+                [(link)]="docLinkInput"
+                [linkInvalido]="docLinkInvalido()"
+                confirmLabel="Adjuntar"
+                [showCancel]="false"
+                [confirmDisabled]="!docLinkInput.trim() || docLinkInvalido()"
+                (confirmar)="agregarDocLink()" />
+            }
+          </div>
+        </div>
+      }
+
+      <!-- ── PASO 4: Resumen ─────────────────────────────────────── -->
+      @if (paso() === 4) {
+        <div class="modal-fields">
+          <div class="wz-resumen">
+            <div class="wz-resumen-row">
+              <span class="wz-resumen-label">Nombre</span>
+              <span class="wz-resumen-value">{{ form().nombre }}</span>
+            </div>
+            <div class="wz-resumen-row">
+              <span class="wz-resumen-label">Tipo</span>
+              <span class="wz-resumen-value">{{ resumenTipoNombre() }}</span>
+            </div>
+            @if (form().liderNombre) {
+              <div class="wz-resumen-row">
+                <span class="wz-resumen-label">Líder</span>
+                <span class="wz-resumen-value">{{ form().liderNombre }}</span>
+              </div>
+            }
+            <div class="wz-resumen-row">
+              <span class="wz-resumen-label">Fecha</span>
+              <span class="wz-resumen-value">{{ form().fecha }}</span>
+            </div>
+            @if (form().fecha_termino) {
+              <div class="wz-resumen-row">
+                <span class="wz-resumen-label">Fecha de término</span>
+                <span class="wz-resumen-value">{{ form().fecha_termino }}</span>
+              </div>
+            }
+            @if (form().descripcion) {
+              <div class="wz-resumen-row">
+                <span class="wz-resumen-label">Descripción</span>
+                <span class="wz-resumen-value">{{ form().descripcion }}</span>
+              </div>
+            }
+            <div class="wz-resumen-row">
+              <span class="wz-resumen-label">Empresa</span>
+              <span class="wz-resumen-value">{{ resumenEmpresaNombre() }}</span>
+            </div>
+            <div class="wz-resumen-row">
+              <span class="wz-resumen-label">Centro de costos</span>
+              <span class="wz-resumen-value">{{ resumenCentroNombre() }}</span>
+            </div>
+            <div class="wz-resumen-row">
+              <span class="wz-resumen-label">Activos</span>
+              <span class="wz-resumen-value">{{ resumenActivosTexto() }}</span>
+              @if (form().activo_ids.length > 0) {
+                <button type="button" (click)="modalLupa.set('activos')"
+                  style="margin-left:auto;background:none;border:none;cursor:pointer;padding:0;color:#9ca3af;display:flex;align-items:center;flex-shrink:0"
+                  title="Ver activos">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                  </svg>
+                </button>
+              }
+            </div>
+            <div class="wz-resumen-row">
+              <span class="wz-resumen-label">Notificaciones</span>
+              <span class="wz-resumen-value">{{ resumenNotificaciones() }}</span>
+              @if (notifNotificar() && resumenNotifLista().length > 0) {
+                <button type="button" (click)="modalLupa.set('notif')"
+                  style="margin-left:auto;background:none;border:none;cursor:pointer;padding:0;color:#9ca3af;display:flex;align-items:center;flex-shrink:0"
+                  title="Ver destinatarios">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                  </svg>
+                </button>
+              }
+            </div>
+            <div class="wz-resumen-row">
+              <span class="wz-resumen-label">Documentos</span>
+              <span class="wz-resumen-value">{{ resumenDocumentosTexto }}</span>
+              @if (resumenDocumentosLista().length > 0) {
+                <button type="button" (click)="modalLupa.set('docs')"
+                  style="margin-left:auto;background:none;border:none;cursor:pointer;padding:0;color:#9ca3af;display:flex;align-items:center;flex-shrink:0"
+                  title="Ver documentos">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                  </svg>
+                </button>
+              }
+            </div>
+          </div>
+        </div>
+      }
+
+      </div>
+
+      <!-- FOOTER -->
+      <div class="wz-footer">
+        <span class="wz-paso-indicador">Paso {{ paso() }} de 4</span>
+        @if (paso() === 4 && editingId() && authService.tienePermiso('actividades', 'eliminar')) {
+          <button class="btn-danger btn-sm" (click)="eliminarActividad(editingId()!)">Eliminar</button>
+        }
+        <div style="display:flex;gap:.5rem;margin-left:auto">
+          @if (paso() === 1) {
+            <button class="btn-ghost" (click)="cerrarModal()">Cancelar</button>
+          } @else {
+            <button class="btn-ghost" (click)="retroceder()" [disabled]="service.saving() || subiendoDocs">← Anterior</button>
+          }
+          @if (paso() < 4) {
+            <button class="btn-primary" (click)="avanzar()">Siguiente →</button>
+          } @else if (editingId() ? authService.tienePermiso('actividades', 'editar') : authService.tienePermiso('actividades', 'crear')) {
+            <button class="btn-primary" [class.btn-loading]="service.saving() || subiendoDocs" (click)="guardar()" [disabled]="service.saving() || subiendoDocs"
+              style="background:#22c55e;border-color:#22c55e">
+              @if (subiendoDocs) { Subiendo... }
+              @else if (service.saving()) { Guardando... }
+              @else { Guardar ✓ }
+            </button>
+          }
+        </div>
+      </div>
+
+    </div>
+
+  <!-- Mini-modal lupa activos -->
+  @if (modalLupa() === 'activos') {
+    <div class="lupa-overlay" (click)="$event.stopPropagation(); modalLupa.set(null)">
+      <div class="lupa-box" (click)="$event.stopPropagation()">
+        <div class="lupa-header">
+          <span class="lupa-title">Activos incluidos</span>
+          <button class="lupa-close" (click)="modalLupa.set(null)">✕</button>
+        </div>
+        <div class="lupa-body">
+          @for (nombre of resumenActivosLista(); track nombre) {
+            <div class="lupa-item lupa-item--blue">· {{ nombre }}</div>
+          }
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Mini-modal lupa notificaciones -->
+  @if (modalLupa() === 'notif') {
+    <div class="lupa-overlay" (click)="$event.stopPropagation(); modalLupa.set(null)">
+      <div class="lupa-box" (click)="$event.stopPropagation()">
+        <div class="lupa-header">
+          <span class="lupa-title">Destinatarios</span>
+          <button class="lupa-close" (click)="modalLupa.set(null)">✕</button>
+        </div>
+        <div class="lupa-body">
+          @for (nombre of resumenNotifLista(); track nombre) {
+            <div class="lupa-item lupa-item--green">· {{ nombre }}</div>
+          }
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Mini-modal lupa documentos -->
+  @if (modalLupa() === 'docs') {
+    <div class="lupa-overlay" (click)="$event.stopPropagation(); modalLupa.set(null)">
+      <div class="lupa-box" (click)="$event.stopPropagation()">
+        <div class="lupa-header">
+          <span class="lupa-title">Documentos adjuntos</span>
+          <button class="lupa-close" (click)="modalLupa.set(null)">✕</button>
+        </div>
+        <div class="lupa-body">
+          @for (nombre of resumenDocumentosLista(); track nombre) {
+            <div class="lupa-item lupa-item--amber">· {{ nombre }}</div>
+          }
+        </div>
+      </div>
+    </div>
+  }
+
+  </div>
+}
+
+<!-- ══ MODAL TIPOS DE ACTIVIDAD ══════════════════════════════════════════ -->
+@if (showTiposModal()) {
+  <div class="modal-overlay">
+    <div class="modal-box modal-box--tipos" style="max-width:1000px;width:100%" (click)="$event.stopPropagation()">
+
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.25rem">
+        <h3 class="modal-title">Tipos de actividad</h3>
+        <button class="btn-ghost btn-sm" (click)="cerrarTiposModal()" style="font-size:1.2rem;padding:.1rem .4rem">✕</button>
+      </div>
+
+      <app-status-banner [status]="tiposService.status()"></app-status-banner>
+
+      <div class="tipos-modal">
+
+        <!-- Columna 1: formulario -->
+        <div>
+          <p class="tipos-col-title">{{ editingTipoId() ? 'Editar tipo' : 'Nuevo tipo' }}</p>
+          <input
+            class="tipo-input"
+            type="text"
+            placeholder="Nombre del tipo *"
+            [ngModel]="tipoForm().nombre"
+            (ngModelChange)="patchTipoForm('nombre', $event)" />
+          <input
+            class="tipo-input"
+            type="text"
+            placeholder="Descripción (opcional)"
+            [ngModel]="tipoForm().descripcion"
+            (ngModelChange)="patchTipoForm('descripcion', $event)" />
+          <p style="font-size:.78rem;color:#6b7280;margin:0 0 .4rem">Ícono</p>
+          <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:.75rem">
+            @for (clave of iconosActividad; track clave) {
+              <button type="button"
+                [title]="clave"
+                (click)="patchTipoForm('icono', clave)"
+                [style.box-shadow]="tipoForm().icono === clave ? '0 0 0 3px ' + tipoForm().color : 'none'"
+                [style.transform]="tipoForm().icono === clave ? 'scale(1.12)' : 'scale(1)'"
+                style="padding:0;border:none;background:none;cursor:pointer;
+                       border-radius:12px;transition:transform .12s,box-shadow .12s;">
+                <app-actividad-icono [icono]="clave" [color]="tipoForm().color" [size]="22"></app-actividad-icono>
+              </button>
+            }
+          </div>
+          <p style="font-size:.78rem;color:#6b7280;margin:0 0 .4rem">Color</p>
+          <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.75rem">
+            <input type="color"
+              [ngModel]="tipoForm().color"
+              (ngModelChange)="patchTipoForm('color', $event)"
+              style="width:36px;height:36px;padding:0;border:1px solid #e5e7eb;border-radius:8px;cursor:pointer" />
+            <input type="text"
+              class="tipo-input"
+              style="margin-bottom:0;max-width:110px"
+              [ngModel]="tipoForm().color"
+              (ngModelChange)="patchTipoForm('color', $event)"
+              placeholder="#4E9AC7" />
+          </div>
+          @if (editingTipoId() ? authService.tienePermiso('catalogos', 'editar') : authService.tienePermiso('catalogos', 'crear')) {
+            <div style="display:flex;gap:.5rem;margin-top:.25rem">
+              <button class="btn-primary btn-sm" (click)="guardarTipo()"
+                [disabled]="!tipoForm().nombre.trim()">
+                {{ editingTipoId() ? 'Guardar cambios' : 'Crear tipo' }}
+              </button>
+              @if (editingTipoId()) {
+                <button class="btn-ghost btn-sm" (click)="abrirNuevoTipo()">Cancelar</button>
+              }
+            </div>
+          }
+        </div>
+
+        <!-- Columna 2: lista de tipos -->
+        <div>
+          <p class="tipos-col-title">Tipos creados ({{ tiposService.tipos().length }})</p>
+          @if (tiposService.tipos().length === 0) {
+            <p class="tipos-empty">Aún no hay tipos creados.</p>
+          } @else {
+            <div class="tipos-list">
+              @for (t of tiposService.tipos(); track t._id) {
+                <div class="tipo-item">
+                  <app-actividad-icono [icono]="t.icono" [color]="t.color" [size]="16"></app-actividad-icono>
+                  <div class="tipo-texto">
+                    <span class="tipo-nombre">{{ t.nombre }}</span>
+                    @if (t.descripcion) {
+                      <span class="tipo-desc">{{ t.descripcion }}</span>
+                    }
+                  </div>
+                  <div class="tipo-actions">
+                    @if (authService.tienePermiso('catalogos', 'editar')) {
+                      <button class="btn-ghost" (click)="abrirEditarTipo(t)">Editar</button>
+                    }
+                    @if (authService.tienePermiso('catalogos', 'eliminar')) {
+                      <button class="btn-danger" (click)="eliminarTipo(t._id)">Eliminar</button>
+                    }
+                  </div>
+                </div>
+              }
+            </div>
+          }
+        </div>
+
+      </div>
     </div>
   </div>
 }

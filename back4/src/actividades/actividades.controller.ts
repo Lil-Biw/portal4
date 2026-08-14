@@ -9,7 +9,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { OPCIONES_SUBIDA } from '../common/constants/upload.constants';
 import { ActividadesService } from './actividades.service';
 import { CreateActividadDto, UpdateActividadDto } from './actividades.dto';
-import { EmpresaAccessGuard, Roles } from '../common/guards/guards';
+import { EmpresaAccessGuard, Roles, RequiereAccion } from '../common/guards/guards';
 
 @Controller('empresas/:empresaId/centros/:centroId/actividades')
 @UseGuards(EmpresaAccessGuard)
@@ -35,7 +35,7 @@ export class ActividadesController {
   }
 
   @Post()
-  @Roles('super_admin', 'admin_smartclarity')
+  @RequiereAccion('actividades', 'crear')
   create(
     @Param('centroId') centroId: string,
     @Body() dto: CreateActividadDto,
@@ -46,13 +46,13 @@ export class ActividadesController {
   }
 
   @Put(':actividadId')
-  @Roles('super_admin', 'admin_smartclarity')
+  @RequiereAccion('actividades', 'editar')
   update(@Param('actividadId') actividadId: string, @Body() dto: UpdateActividadDto) {
     return this.service.update(actividadId, dto);
   }
 
   @Delete(':actividadId')
-  @Roles('super_admin', 'admin_smartclarity')
+  @RequiereAccion('actividades', 'eliminar')
   remove(@Param('actividadId') actividadId: string) {
     return this.service.remove(actividadId);
   }
@@ -67,7 +67,7 @@ export class ActividadesController {
   }
 
   @Post(':actividadId/documentos')
-  @Roles('super_admin', 'admin_smartclarity')
+  @RequiereAccion('docActividad', 'subir')
   @UseInterceptors(FileInterceptor('archivo', OPCIONES_SUBIDA))
   subirDocumento(
     @Param('actividadId') actividadId: string,
@@ -80,7 +80,7 @@ export class ActividadesController {
   }
 
   @Delete(':actividadId/documentos/:docId')
-  @Roles('super_admin', 'admin_smartclarity')
+  @RequiereAccion('docActividad', 'eliminar')
   eliminarDocumento(
     @Param('actividadId') actividadId: string,
     @Param('docId') docId: string,

@@ -167,7 +167,7 @@ export interface DescargarActividadDocEvt {
 
     <!-- Detalle de actividad -->
     @if (actividadSeleccionada(); as act) {
-      <div class="detalle-backdrop" (click)="cerrarActividad()">
+      <div class="detalle-backdrop">
         <div class="detalle-modal" (click)="$event.stopPropagation()">
           <div class="modal-header">
             <div class="modal-title-group">

@@ -26,18 +26,18 @@ describe('PermisosFormComponent', () => {
     expect(el.textContent).toContain('camila@eclariti.com');
   });
 
-  it('con un usuario rol=usuario, el contador excluye las secciones internas (34 filas)', () => {
+  it('con un usuario rol=usuario, el contador excluye las secciones internas (29 filas)', () => {
     const fixture = TestBed.createComponent(PermisosFormComponent);
     fixture.componentRef.setInput('usuario', usuario({ rol: 'usuario' }));
     fixture.detectChanges();
-    expect(fixture.componentInstance.contador.total).toBe(34);
+    expect(fixture.componentInstance.contador.total).toBe(29);
   });
 
-  it('con un usuario admin_smartclarity, el contador incluye todo el catálogo (43 filas)', () => {
+  it('con un usuario admin_smartclarity, el contador incluye todo el catálogo (44 filas)', () => {
     const fixture = TestBed.createComponent(PermisosFormComponent);
     fixture.componentRef.setInput('usuario', usuario({ rol: 'admin_smartclarity' }));
     fixture.detectChanges();
-    expect(fixture.componentInstance.contador.total).toBe(43);
+    expect(fixture.componentInstance.contador.total).toBe(44);
   });
 
   it('parte de los permisos existentes del usuario', () => {

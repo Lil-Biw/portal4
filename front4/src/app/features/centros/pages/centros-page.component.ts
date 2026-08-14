@@ -13,7 +13,7 @@ import { ActivosService } from '../../activos/activos.service';
 import { TiposActivoService } from '../../activos/tipos-activo.service';
 import { ActivosFormComponent } from '../../activos/components/activos-form/activos-form.component';
 import { CreateActivoDto } from '../../../shared/models/activo.model';
-import { asId, calcularScoreDocumental } from '../../../shared/utils';
+import { asId, confirmarEliminacion, calcularScoreDocumental } from '../../../shared/utils';
 import { ConsumidorContextService } from '../../../profile/consumidor-context.service';
 import { ProfileService } from '../../../profile/profile.service';
 import { AuthService } from '../../auth/auth.service';
@@ -97,7 +97,7 @@ export class CentrosPageComponent implements OnInit {
   private   readonly router            = inject(Router);
   protected readonly activosService    = inject(ActivosService);
   protected readonly tiposActivoService = inject(TiposActivoService);
-  private   readonly authService       = inject(AuthService);
+  protected readonly authService       = inject(AuthService);
   private   readonly http              = inject(HttpClient);
   private   readonly api               = inject(ApiService);
 
@@ -289,6 +289,7 @@ export class CentrosPageComponent implements OnInit {
 
   protected eliminar(id: string): void {
     const centro = this.service.centros().find(c => c._id === id);
+    if (centro && !confirmarEliminacion(centro.nombre)) return;
     if (centro) this.service.seleccionar(centro);
     this.service.eliminar(id);
   }

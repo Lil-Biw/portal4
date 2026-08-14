@@ -11,7 +11,7 @@
       </svg>
       Buscar</button>
     <button class="btn-ghost" *ngIf="puedeGestionarTipos()" (click)="abrirTiposModal()">Gestionar tipos</button>
-    <button class="btn-primary" (click)="abrirCrear()">+ Crear proyecto</button>
+    <button class="btn-primary" *ngIf="authService.tienePermiso('proyectos', 'crear')" (click)="abrirCrear()">+ Crear proyecto</button>
   </div>
 </div>
 
@@ -90,12 +90,14 @@
   [clientes]="clientesService.clientes()"
   [centros]="centrosService.centros()"
   [tipos]="tiposService.tipos()"
+  [puedeEditar]="authService.tienePermiso('proyectos', 'editar')"
+  [puedeEliminar]="authService.tienePermiso('proyectos', 'eliminar')"
   (editado)="abrirEditar($event)"
   (eliminado)="eliminar($event)">
 </app-proyectos-list>
 
 <!-- ── Modal ──────────────────────────────────────────── -->
-<div class="modal-backdrop" *ngIf="modal() !== null" (click)="cerrar()">
+<div class="modal-backdrop" *ngIf="modal() !== null">
   <div class="modal" [class.modal--tipos]="modal() === 'tipos'" (click)="$event.stopPropagation()">
 
     <!-- Crear -->
@@ -166,6 +168,8 @@
           [clientes]="clientesService.clientes()"
           [centros]="centrosService.centros()"
           [tipos]="tiposService.tipos()"
+  [puedeEditar]="authService.tienePermiso('proyectos', 'editar')"
+  [puedeEliminar]="authService.tienePermiso('proyectos', 'eliminar')"
           (editado)="editarDesdeBuscar($event)"
           (eliminado)="eliminar($event)">
         </app-proyectos-list>
@@ -217,7 +221,7 @@
               (ngModelChange)="patchTipoForm('color', $event)"
               placeholder="#0095d6" />
           </div>
-          <div style="display:flex;gap:.5rem">
+          <div style="display:flex;gap:.5rem" *ngIf="editingTipoId() ? authService.tienePermiso('catalogos', 'editar') : authService.tienePermiso('catalogos', 'crear')">
             <button class="btn-primary btn-sm" (click)="guardarTipo()"
               [disabled]="!tipoForm().nombre.trim()">
               {{ editingTipoId() ? 'Guardar cambios' : 'Crear tipo' }}
@@ -239,8 +243,8 @@
                 <span class="tipo-nombre">{{ t.nombre }}</span>
               </div>
               <div class="tipo-actions">
-                <button class="btn-ghost" (click)="abrirEditarTipo(t)">Editar</button>
-                <button class="btn-danger" (click)="eliminarTipo(t._id)">Eliminar</button>
+                <button class="btn-ghost" *ngIf="authService.tienePermiso('catalogos', 'editar')" (click)="abrirEditarTipo(t)">Editar</button>
+                <button class="btn-danger" *ngIf="authService.tienePermiso('catalogos', 'eliminar')" (click)="eliminarTipo(t._id)">Eliminar</button>
               </div>
             </div>
           </div>

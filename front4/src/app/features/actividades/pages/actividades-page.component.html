@@ -1,14 +1,16 @@
 <!-- Header -->
 <div class="mant-header">
   <div>
-    <h2 class="mant-title">Actividades</h2>
+    <h2 class="mant-title">Calendario de actividades</h2>
     <p class="mant-subtitle">Calendario de actividades por centro de costos</p>
   </div>
   <div style="display:flex;gap:.6rem;align-items:center">
     @if (puedeGestionarTipos()) {
       <button class="btn-ghost" (click)="abrirTiposModal()">Crear tipo de actividad</button>
     }
-    <button class="btn-primary" (click)="abrirCrear()">+ Nueva actividad</button>
+    @if (authService.tienePermiso('actividades', 'crear')) {
+      <button class="btn-primary" (click)="abrirCrear()">+ Nueva actividad</button>
+    }
   </div>
 </div>
 
@@ -370,7 +372,9 @@
                 </div>
               </div>
               <div class="cal-day-detail-footer">
-                <button class="btn-primary btn-sm" (click)="abrirEditar(det.a)">Editar actividad</button>
+                @if (authService.tienePermiso('actividades', 'editar')) {
+                  <button class="btn-primary btn-sm" (click)="abrirEditar(det.a)">Editar actividad</button>
+                }
               </div>
             </div>
           }
@@ -545,7 +549,9 @@
 
         <!-- Footer -->
         <div class="actividad-detalle-footer">
-          <button class="btn-primary btn-sm" (click)="cerrarResumen(); abrirEditar(det.a)">Editar actividad</button>
+          @if (authService.tienePermiso('actividades', 'editar')) {
+            <button class="btn-primary btn-sm" (click)="cerrarResumen(); abrirEditar(det.a)">Editar actividad</button>
+          }
         </div>
 
       </div>
@@ -917,6 +923,7 @@
           } @else {
             <app-document-card-list
               [documentos]="documentosTarjetas"
+              [puedeEliminar]="authService.tienePermiso('docActividad', 'eliminar')"
               (descargar)="descargarDocActividad($event)"
               (abrirLink)="abrirDocActividad($event)"
               (eliminar)="eliminarDocActividad($event)"
@@ -940,7 +947,7 @@
                 [showCancel]="false"
                 [confirmDisabled]="!pendienteLinkInput.trim() || pendienteLinkInvalido()"
                 (confirmar)="agregarDocPendienteLink()" />
-            } @else {
+            } @else if (authService.tienePermiso('docActividad', 'subir')) {
               <app-upload-document-form
                 style="display:block"
                 [mostrarTipoDocumento]="false"
@@ -1049,7 +1056,7 @@
       <!-- FOOTER -->
       <div class="wz-footer">
         <span class="wz-paso-indicador">Paso {{ paso() }} de 4</span>
-        @if (paso() === 4 && editingId()) {
+        @if (paso() === 4 && editingId() && authService.tienePermiso('actividades', 'eliminar')) {
           <button class="btn-danger btn-sm" (click)="eliminarActividad(editingId()!)">Eliminar</button>
         }
         <div style="display:flex;gap:.5rem;margin-left:auto">
@@ -1060,7 +1067,7 @@
           }
           @if (paso() < 4) {
             <button class="btn-primary" (click)="avanzar()">Siguiente →</button>
-          } @else {
+          } @else if (editingId() ? authService.tienePermiso('actividades', 'editar') : authService.tienePermiso('actividades', 'crear')) {
             <button class="btn-primary" [class.btn-loading]="service.saving() || subiendoDocs" (click)="guardar()" [disabled]="service.saving() || subiendoDocs"
               style="background:#22c55e;border-color:#22c55e">
               @if (subiendoDocs) { Subiendo... }
@@ -1183,15 +1190,17 @@
               (ngModelChange)="patchTipoForm('color', $event)"
               placeholder="#4E9AC7" />
           </div>
-          <div style="display:flex;gap:.5rem;margin-top:.25rem">
-            <button class="btn-primary btn-sm" (click)="guardarTipo()"
-              [disabled]="!tipoForm().nombre.trim()">
-              {{ editingTipoId() ? 'Guardar cambios' : 'Crear tipo' }}
-            </button>
-            @if (editingTipoId()) {
-              <button class="btn-ghost btn-sm" (click)="abrirNuevoTipo()">Cancelar</button>
-            }
-          </div>
+          @if (editingTipoId() ? authService.tienePermiso('catalogos', 'editar') : authService.tienePermiso('catalogos', 'crear')) {
+            <div style="display:flex;gap:.5rem;margin-top:.25rem">
+              <button class="btn-primary btn-sm" (click)="guardarTipo()"
+                [disabled]="!tipoForm().nombre.trim()">
+                {{ editingTipoId() ? 'Guardar cambios' : 'Crear tipo' }}
+              </button>
+              @if (editingTipoId()) {
+                <button class="btn-ghost btn-sm" (click)="abrirNuevoTipo()">Cancelar</button>
+              }
+            </div>
+          }
         </div>
 
         <!-- Columna 2: lista de tipos -->
@@ -1211,8 +1220,12 @@
                     }
                   </div>
                   <div class="tipo-actions">
-                    <button class="btn-ghost" (click)="abrirEditarTipo(t)">Editar</button>
-                    <button class="btn-danger" (click)="eliminarTipo(t._id)">Eliminar</button>
+                    @if (authService.tienePermiso('catalogos', 'editar')) {
+                      <button class="btn-ghost" (click)="abrirEditarTipo(t)">Editar</button>
+                    }
+                    @if (authService.tienePermiso('catalogos', 'eliminar')) {
+                      <button class="btn-danger" (click)="eliminarTipo(t._id)">Eliminar</button>
+                    }
                   </div>
                 </div>
               }

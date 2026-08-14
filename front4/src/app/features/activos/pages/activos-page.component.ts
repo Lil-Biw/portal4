@@ -11,7 +11,7 @@ import { ActivosListComponent } from '../components/activos-list/activos-list.co
 import { ActivoIconoComponent } from '../components/activo-icono/activo-icono.component';
 import { ActivoRevisarModalComponent } from '../components/activo-revisar-modal/activo-revisar-modal.component';
 import { Activo, ActividadHistorialItem, CreateActivoDto, DocActivo, TipoActivo } from '../../../shared/models/activo.model';
-import { asId } from '../../../shared/utils';
+import { asId, confirmarEliminacion } from '../../../shared/utils';
 import { ICONOS_ACTIVO } from '../activos-icons';
 import { esImagenDoc } from '../galeria-fotos.utils';
 
@@ -157,12 +157,14 @@ export class ActivosPageComponent implements OnInit {
   protected readonly tiposService    = inject(TiposActivoService);
   protected readonly centrosService  = inject(CentrosService);
   protected readonly clientesService = inject(ClientesService);
-  private readonly authService       = inject(AuthService);
+  protected readonly authService       = inject(AuthService);
 
   protected readonly iconosActivo = ICONOS_ACTIVO;
 
   protected puedeGestionarTipos = computed(() =>
-    this.authService.usuarioActual()?.rol === 'super_admin'
+    this.authService.tienePermiso('catalogos', 'crear') ||
+    this.authService.tienePermiso('catalogos', 'editar') ||
+    this.authService.tienePermiso('catalogos', 'eliminar')
   );
 
   protected modal            = signal<ModalMode>(null);
@@ -171,7 +173,6 @@ export class ActivosPageComponent implements OnInit {
   protected activoRevisando  = signal<Activo | null>(null);
 
   protected docsPendientes: DocPendiente[] = [];
-  protected subiendoDocs = false;
 
   // ── Contexto ─────────────────────────────────────────────────────────────
   private _selectedEmpresaId   = signal('');
@@ -245,18 +246,6 @@ export class ActivosPageComponent implements OnInit {
   }
 
   constructor() {
-    effect(() => {
-      if (
-        this.service.status()?.type === 'ok' &&
-        this.modal() !== null &&
-        this.modal() !== 'buscar' &&
-        this.modal() !== 'revisar' &&
-        !this.subiendoDocs &&
-        this.docOperacionesEnCurso() === 0
-      ) {
-        this.cerrar();
-      }
-    });
     effect(() => {
       if (this.tiposService.status()?.type === 'ok' && this.showTipoForm()) {
         this.cerrarTipoForm();
@@ -344,7 +333,6 @@ export class ActivosPageComponent implements OnInit {
     this.modal.set(null);
     this.editingId.set(null);
     this.docsPendientes = [];
-    this.subiendoDocs = false;
     this.service.seleccionado.set(null);
     this.service.clearStatus();
     this.activoRevisando.set(null);
@@ -377,13 +365,13 @@ export class ActivosPageComponent implements OnInit {
   protected get modalAncho(): string {
     if (this.modal() === 'tipos') return '1000px';
     if (this.modal() === 'revisar' && this.hayImagenesGaleria()) return '1120px';
+    if (this.modal() === 'editar') return '960px';
     return '860px';
   }
 
   protected crear(dto: CreateActivoDto): void {
     this.service.crear(dto, (nuevo) => {
-      if (this.docsPendientes.length === 0) return;
-      this.subiendoDocs = true;
+      if (this.docsPendientes.length === 0) { this.cerrar(); return; }
       this.editingId.set(nuevo._id);
       this.subirDocsPendientesSecuencial(nuevo._id, dto.centro_costo_id, 0);
     });
@@ -391,11 +379,12 @@ export class ActivosPageComponent implements OnInit {
 
   protected actualizar(dto: CreateActivoDto): void {
     const id = this.service.seleccionado()?._id;
-    if (id) this.service.actualizar(id, dto);
+    if (id) this.service.actualizar(id, dto, () => this.cerrar());
   }
 
   protected eliminar(id: string): void {
     const activo = this.service.activos().find(a => a._id === id);
+    if (activo && !confirmarEliminacion(activo.nombre)) return;
     if (activo) this.service.seleccionar(activo);
     this.service.eliminar(id);
   }
@@ -418,20 +407,11 @@ export class ActivosPageComponent implements OnInit {
 
   protected subiendoCards         = signal<{ id: string; nombre: string }[]>([]);
   protected eliminandoDocIds      = signal<Set<string>>(new Set());
-  // Contador de operaciones de documentos en curso: evita que el effect() de
-  // auto-cierre del modal (que se dispara con status 'ok') cierre el modal de
-  // edición mientras hay una subida/eliminación/renombrado en vuelo.
-  protected docOperacionesEnCurso = signal(0);
 
   protected onDocRenombrado(ev: { id: string; nuevoNombre: string }): void {
     const activo = this.activoEditando;
     if (!activo) return;
-    this.docOperacionesEnCurso.update(n => n + 1);
     this.service.renombrarDocumento(activo._id, activo.centro_costo_id, ev.id, ev.nuevoNombre);
-    // renombrarDocumento no expone onSuccess/onError: se refresca sola al éxito.
-    // Diferimos el decremento a un macrotask para sobrevivir al flush síncrono
-    // del effect que ocurre justo después de status.set({type:'ok'}).
-    setTimeout(() => this.docOperacionesEnCurso.update(n => n - 1), 0);
   }
 
   protected onDocSubido(doc: DocPendiente): void {
@@ -439,11 +419,7 @@ export class ActivosPageComponent implements OnInit {
     if (!activo) return;
     const tempId = `subiendo-${Date.now()}-${Math.random().toString(36).slice(2)}`;
     this.subiendoCards.update(list => [...list, { id: tempId, nombre: doc.nombre }]);
-    this.docOperacionesEnCurso.update(n => n + 1);
-    const limpiar = () => {
-      this.subiendoCards.update(list => list.filter(c => c.id !== tempId));
-      this.docOperacionesEnCurso.update(n => n - 1);
-    };
+    const limpiar = () => this.subiendoCards.update(list => list.filter(c => c.id !== tempId));
     if (doc.linkUrl) {
       this.service.subirDocumentoLink(activo._id, activo.centro_costo_id, doc.linkUrl, doc.nombre, limpiar, limpiar);
     } else if (doc.file) {
@@ -454,16 +430,14 @@ export class ActivosPageComponent implements OnInit {
   protected onDocEliminado(docId: string): void {
     const activo = this.activoEditando;
     if (!activo) return;
+    const nombre = this.service.documentosActivo().find(d => d._id === docId)?.nombre_display;
+    if (!confirmarEliminacion(nombre ?? 'este documento')) return;
     this.eliminandoDocIds.update(set => new Set(set).add(docId));
-    this.docOperacionesEnCurso.update(n => n + 1);
-    const limpiar = () => {
-      this.eliminandoDocIds.update(set => {
-        const copia = new Set(set);
-        copia.delete(docId);
-        return copia;
-      });
-      this.docOperacionesEnCurso.update(n => n - 1);
-    };
+    const limpiar = () => this.eliminandoDocIds.update(set => {
+      const copia = new Set(set);
+      copia.delete(docId);
+      return copia;
+    });
     this.service.eliminarDocumento(activo._id, activo.centro_costo_id, docId, limpiar, limpiar);
   }
 
@@ -476,17 +450,15 @@ export class ActivosPageComponent implements OnInit {
   private subirDocsPendientesSecuencial(activoId: string, centroId: string, index: number): void {
     if (index >= this.docsPendientes.length) {
       this.docsPendientes = [];
-      this.subiendoDocs = false;
       this.cerrar();
       return;
     }
     const { file, linkUrl, nombre } = this.docsPendientes[index];
     const onSuccess = () => this.subirDocsPendientesSecuencial(activoId, centroId, index + 1);
-    const onError = () => { this.subiendoDocs = false; };
     if (linkUrl) {
-      this.service.subirDocumentoLink(activoId, centroId, linkUrl, nombre, onSuccess, onError);
+      this.service.subirDocumentoLink(activoId, centroId, linkUrl, nombre, onSuccess);
     } else if (file) {
-      this.service.subirDocumento(activoId, centroId, file, nombre, onSuccess, onError);
+      this.service.subirDocumento(activoId, centroId, file, nombre, onSuccess);
     }
   }
 
@@ -535,5 +507,9 @@ export class ActivosPageComponent implements OnInit {
     else     this.tiposService.crear(dto);
   }
 
-  eliminarTipo(id: string): void { this.tiposService.eliminar(id); }
+  eliminarTipo(id: string): void {
+    const tipo = this.tiposService.tipos().find(t => t._id === id);
+    if (tipo && !confirmarEliminacion(`el tipo de activo ${tipo.nombre}`)) return;
+    this.tiposService.eliminar(id);
+  }
 }

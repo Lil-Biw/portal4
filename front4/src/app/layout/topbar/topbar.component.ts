@@ -39,6 +39,8 @@ interface Notificacion {
   styles: [`
     :host { display:block; }
     .topbar {
+      position: relative;
+      z-index: 1003;
       height:60px;
       border-radius:0;
       border:none;

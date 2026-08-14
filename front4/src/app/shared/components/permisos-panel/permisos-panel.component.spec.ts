@@ -18,7 +18,7 @@ describe('PermisosPanelComponent', () => {
     const fixture = TestBed.createComponent(PermisosPanelComponent);
     fixture.detectChanges();
     const el = fixture.nativeElement as HTMLElement;
-    expect(el.querySelectorAll('.pf-seccion-nota').length).toBe(3);
+    expect(el.querySelectorAll('.pf-seccion-nota').length).toBe(5);
   });
 
   it('con contextoCompleto=false deshabilita los switches de secciones soloInterno y filas soloAdmin', () => {
@@ -28,7 +28,7 @@ describe('PermisosPanelComponent', () => {
     const el = fixture.nativeElement as HTMLElement;
     const switches = el.querySelectorAll<HTMLButtonElement>('.pf-switch');
     const deshabilitados = Array.from(switches).filter((s) => s.disabled);
-    expect(deshabilitados.length).toBe(9);
+    expect(deshabilitados.length).toBe(15);
   });
 
   it('refleja el estado activo de un permiso en aria-pressed', () => {

@@ -10,6 +10,7 @@ import { ActivosService } from '../../activos/activos.service';
 import { ActividadesService } from '../../actividades/actividades.service';
 import { TiposActividadService } from '../../actividades/tipos-actividad.service';
 import { NoticiasService } from '../../noticias/noticias.service';
+import { AuthService } from '../../auth/auth.service';
 import { Actividad } from '../../../shared/models/actividad.model';
 import { CentroCosto } from '../../../shared/models/centro.model';
 import { SeccionNoticia } from '../../../shared/models/noticia.model';
@@ -42,8 +43,18 @@ export class InicioPageComponent implements OnInit {
   protected readonly actividadesService  = inject(ActividadesService);
   protected readonly tiposActividadService = inject(TiposActividadService);
   protected readonly noticiasService     = inject(NoticiasService);
+  private readonly authService            = inject(AuthService);
 
   readonly fecha = new Date().toLocaleDateString('es-CL', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+
+  protected readonly saludo = computed(() => {
+    const h = new Date().getHours();
+    return h < 12 ? 'Buen día' : h < 19 ? 'Buenas tardes' : 'Buenas noches';
+  });
+
+  protected readonly nombreUsuario = computed(() =>
+    this.authService.usuarioActual()?.nombre ?? ''
+  );
 
   protected empresaSeleccionada = computed(() => this.consumidorContext.empresaSeleccionada());
 

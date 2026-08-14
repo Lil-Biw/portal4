@@ -7,24 +7,29 @@ import { PERM_SCHEMA, PermisoRow, PermisoSeccion, PermisosUsuario, filaAplica } 
   imports: [],
   templateUrl: './permisos-panel.component.html',
   styles: [`
-    .pf-seccion { display: flex; flex-direction: column; gap: .7rem; }
+    .pf-seccion {
+      display: flex; flex-direction: column; gap: .7rem;
+      --pf-color: #0075a8;
+      --pf-color-suave: #82c3e0;
+    }
     .pf-seccion + .pf-seccion { margin-top: 1.4rem; }
     .pf-seccion-titulo {
       margin: 0;
       font-size: .7rem; font-weight: 700;
       letter-spacing: .08em; text-transform: uppercase;
-      color: #0075a8;
+      color: var(--pf-color);
       display: flex; align-items: center; gap: .6rem;
     }
-    .pf-seccion-titulo::after { content: ""; flex: 1; height: 1px; background: rgba(0,149,214,.18); }
+    .pf-seccion-titulo::after { content: ""; flex: 1; height: 1px; background: var(--pf-color-suave); opacity: .55; }
     .pf-seccion-nota {
       font-size: .68rem; font-weight: 700; letter-spacing: .02em;
-      color: #9ca3af; text-transform: none;
-      padding: .05rem .5rem; border: 1px dashed #d1d5db; border-radius: 999px;
+      color: var(--pf-color); text-transform: none;
+      padding: .05rem .5rem; border: 1px dashed var(--pf-color-suave); border-radius: 999px;
     }
 
     .perm-panel {
       border: 1px solid rgba(34,33,33,.1);
+      border-left: 3px solid var(--pf-color-suave);
       border-radius: 10px;
       background: #f8fafc;
       overflow: hidden;
@@ -50,10 +55,10 @@ import { PERM_SCHEMA, PermisoRow, PermisoSeccion, PermisosUsuario, filaAplica } 
       background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,.25);
       transition: transform .16s;
     }
-    .pf-switch[aria-pressed="true"] { background: #0095d6; }
+    .pf-switch[aria-pressed="true"] { background: var(--pf-color); }
     .pf-switch[aria-pressed="true"]::after { transform: translateX(18px); }
     .pf-switch:disabled { cursor: not-allowed; opacity: .55; }
-    .pf-switch:focus-visible { outline: 2px solid #0095d6; outline-offset: 2px; }
+    .pf-switch:focus-visible { outline: 2px solid var(--pf-color); outline-offset: 2px; }
   `],
 })
 export class PermisosPanelComponent {

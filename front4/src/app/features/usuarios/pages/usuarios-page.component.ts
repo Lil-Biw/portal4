@@ -18,7 +18,7 @@ import { PermisosFormComponent } from '../components/permisos-form/permisos-form
 import { RolesManagerComponent } from '../components/roles-manager/roles-manager.component';
 import { PermisosUsuario, CreateRolDto, UpdateRolDto } from '../../../shared/models/permisos.model';
 import { Usuario, SuscripcionesDto } from '../../../shared/models/usuario.model';
-import { asId } from '../../../shared/utils';
+import { asId, confirmarEliminacion } from '../../../shared/utils';
 
 type ModalMode = 'crear-admin' | 'crear-usuario' | 'editar' | 'suscripciones' | 'buscar' | 'permisos' | 'roles' | null;
 
@@ -85,6 +85,28 @@ type ModalMode = 'crear-admin' | 'crear-usuario' | 'editar' | 'suscripciones' | 
       .modal.modal-ancho {
         max-width: 900px;
       }
+      .modal.modal-permisos {
+        display: flex;
+        flex-direction: column;
+        padding: 0;
+        max-height: 85vh;
+        overflow: hidden;
+      }
+      .modal.modal-permisos .modal-header {
+        margin-bottom: 0;
+        padding: 1.1rem 1.5rem;
+        border-bottom: 1px solid rgba(34,33,33,.07);
+        flex-shrink: 0;
+      }
+      .modal.modal-permisos app-status-banner {
+        flex-shrink: 0;
+      }
+      .modal.modal-permisos app-permisos-form {
+        flex: 1;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+      }
       .modal-header {
         display: flex;
         align-items: center;
@@ -144,7 +166,7 @@ export class UsuariosPageComponent implements OnInit {
   protected readonly centrosService = inject(CentrosService);
   protected readonly proyectosService = inject(ProyectosService);
   protected readonly rolesService = inject(RolesService);
-  private readonly authService = inject(AuthService);
+  protected readonly authService = inject(AuthService);
 
   constructor() {
     effect(() => {
@@ -262,6 +284,9 @@ export class UsuariosPageComponent implements OnInit {
     const id = this.service.seleccionado()?._id;
     if (!id) return;
     this.service.actualizarPermisos(id, permisos);
+    if (id === this.usuarioActualId()) {
+      this.authService.actualizarUsuario({ permisos });
+    }
   }
 
   protected abrirRoles(): void {
@@ -278,6 +303,8 @@ export class UsuariosPageComponent implements OnInit {
   }
 
   protected eliminarRol(id: string): void {
+    const rol = this.rolesService.roles().find(r => r._id === id);
+    if (rol && !confirmarEliminacion(`el rol ${rol.nombre}`)) return;
     this.rolesService.eliminar(id);
   }
 
@@ -311,10 +338,13 @@ export class UsuariosPageComponent implements OnInit {
       rol: this.esAdminSmartclarity() ? 'usuario' : output.dto.rol,
       permiso_acceso: output.dto.permiso_acceso,
       centros_asignados: output.dto.centros_asignados,
+      permisos: output.dto.permisos,
     });
   }
 
   protected eliminar(id: string): void {
+    const usuario = this.service.usuarios().find(u => u._id === id);
+    if (usuario && !confirmarEliminacion(usuario.nombre)) return;
     this.service.eliminar(id);
   }
 

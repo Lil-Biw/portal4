@@ -5,7 +5,9 @@
     @if (puedeGestionarTipos()) {
       <button class="btn-ghost" (click)="abrirTiposModal()">Crear tipo de activo</button>
     }
-    <button class="btn-primary" (click)="abrirCrear()">+ Crear</button>
+    @if (authService.tienePermiso('activos', 'crear')) {
+      <button class="btn-primary" (click)="abrirCrear()">+ Crear</button>
+    }
   </div>
 </div>
 
@@ -85,6 +87,8 @@
   [centros]="centrosService.centros()"
   [clientes]="clientesService.clientes()"
   [tipos]="tiposService.tipos()"
+  [puedeEditar]="authService.tienePermiso('activos', 'editar')"
+  [puedeEliminar]="authService.tienePermiso('activos', 'eliminar')"
   (editado)="abrirEditar($event)"
   (eliminado)="eliminar($event)"
   (revisado)="abrirRevisar($event)">
@@ -92,7 +96,7 @@
 
 <!-- Modales -->
 @if (modal() !== null) {
-  <div class="modal-backdrop" (click)="cerrar()">
+  <div class="modal-backdrop">
     <div class="modal" [style.max-width]="modalAncho" (click)="$event.stopPropagation()">
 
       <!-- Crear activo -->
@@ -233,15 +237,17 @@
                 (ngModelChange)="patchTipoForm('color', $event)"
                 placeholder="#0095d6" />
             </div>
-            <div style="display:flex;gap:.5rem">
-              <button class="btn-primary btn-sm" (click)="guardarTipo()"
-                [disabled]="!tipoForm().nombre.trim()">
-                {{ editingTipoId() ? 'Guardar cambios' : 'Crear tipo' }}
-              </button>
-              @if (editingTipoId()) {
-                <button class="btn-ghost btn-sm" (click)="abrirNuevoTipo()">Cancelar</button>
-              }
-            </div>
+            @if (editingTipoId() ? authService.tienePermiso('catalogos', 'editar') : authService.tienePermiso('catalogos', 'crear')) {
+              <div style="display:flex;gap:.5rem">
+                <button class="btn-primary btn-sm" (click)="guardarTipo()"
+                  [disabled]="!tipoForm().nombre.trim()">
+                  {{ editingTipoId() ? 'Guardar cambios' : 'Crear tipo' }}
+                </button>
+                @if (editingTipoId()) {
+                  <button class="btn-ghost btn-sm" (click)="abrirNuevoTipo()">Cancelar</button>
+                }
+              </div>
+            }
           </div>
 
           <!-- Columna 2: lista de tipos -->
@@ -258,8 +264,12 @@
                       <span class="tipo-nombre">{{ t.nombre }}</span>
                     </div>
                     <div class="tipo-actions">
-                      <button class="btn-ghost" (click)="abrirEditarTipo(t)">Editar</button>
-                      <button class="btn-danger" (click)="eliminarTipo(t._id)">Eliminar</button>
+                      @if (authService.tienePermiso('catalogos', 'editar')) {
+                        <button class="btn-ghost" (click)="abrirEditarTipo(t)">Editar</button>
+                      }
+                      @if (authService.tienePermiso('catalogos', 'eliminar')) {
+                        <button class="btn-danger" (click)="eliminarTipo(t._id)">Eliminar</button>
+                      }
                     </div>
                   </div>
                 }

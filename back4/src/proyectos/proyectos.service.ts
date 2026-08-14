@@ -57,6 +57,53 @@ export class ProyectosService {
     return proyectos.map(p => ({ ...p, dias_recordatorio: mapa.get(String(p._id)) ?? [] }));
   }
 
+  // Valida que el centro pertenezca a empresaId (evita fugas cross-tenant vía
+  // centroId) y, si el solicitante tiene rol 'usuario', que el centro esté
+  // entre sus centros_asignados.
+  private async autorizarCentro(
+    centroId: string,
+    empresaId: string,
+    solicitante?: { sub: string; rol: string },
+  ): Promise<void> {
+    const centro = await this.centroCostoModel.findById(centroId).select('cliente_id').lean() as unknown as { cliente_id: Types.ObjectId } | null;
+    if (!centro || String(centro.cliente_id) !== String(empresaId)) {
+      throw new NotFoundException(`Centro de costos ${centroId} no encontrado`);
+    }
+    if (solicitante?.rol === 'usuario') {
+      const usuario = await this.usuarioModel.findById(solicitante.sub).select('centros_asignados').lean();
+      const asignados = (usuario?.centros_asignados ?? []).map((c) => String(c));
+      if (!asignados.includes(String(centroId))) {
+        throw new NotFoundException(`Centro de costos ${centroId} no encontrado`);
+      }
+    }
+  }
+
+  // Valida que el proyecto pertenezca a empresaId y (si se indica) que
+  // centroId esté entre sus centro_costo_ids. Si el solicitante tiene rol
+  // 'usuario', exige que al menos uno de los centros del proyecto esté entre
+  // sus centros_asignados.
+  private async autorizarProyecto(
+    proyectoId: string,
+    empresaId: string,
+    centroId?: string,
+    solicitante?: { sub: string; rol: string },
+  ): Promise<void> {
+    const proyecto = await this.proyectoModel.findById(proyectoId).select('cliente_id centro_costo_ids').lean();
+    if (!proyecto || String(proyecto.cliente_id) !== String(empresaId)) {
+      throw new NotFoundException(`Proyecto ${proyectoId} no encontrado`);
+    }
+    const centroIds = (proyecto.centro_costo_ids ?? []).map((c) => String(c));
+    if (centroId && !centroIds.includes(String(centroId))) {
+      throw new NotFoundException(`Proyecto ${proyectoId} no encontrado`);
+    }
+    if (solicitante?.rol === 'usuario') {
+      const usuario = await this.usuarioModel.findById(solicitante.sub).select('centros_asignados').lean();
+      const asignados = (usuario?.centros_asignados ?? []).map((c) => String(c));
+      const tieneAcceso = centroIds.some((c) => asignados.includes(c));
+      if (!tieneAcceso) throw new NotFoundException(`Proyecto ${proyectoId} no encontrado`);
+    }
+  }
+
   private async validarCentrosEnCliente(cliente_id: string, centro_costo_ids: string[]) {
     const count = await this.centroCostoModel.countDocuments({
       _id: { $in: centro_costo_ids.map((id) => this.toObjectId(id)) },
@@ -112,11 +159,15 @@ export class ProyectosService {
     return { data: await this.adjuntarDiasRecordatorio(data), total, page, pages: Math.ceil(total / limit) };
   }
 
-  async findAllByCliente(cliente_id: string, page = 1, limit = 500) {
-    const filter = {
+  async findAllByCliente(cliente_id: string, page = 1, limit = 500, solicitante?: { sub: string; rol: string }) {
+    const filter: Record<string, unknown> = {
       cliente_id: new Types.ObjectId(cliente_id),
       estado: { $ne: 'eliminado' },
     };
+    if (solicitante?.rol === 'usuario') {
+      const usuario = await this.usuarioModel.findById(solicitante.sub).select('centros_asignados').lean();
+      filter['centro_costo_ids'] = { $in: usuario?.centros_asignados ?? [] };
+    }
     const [data, total] = await Promise.all([
       this.proyectoModel.find(filter).populate('tipo_proyecto_id').sort({ nombre: 1 }).skip((page - 1) * limit).limit(limit).lean(),
       this.proyectoModel.countDocuments(filter),
@@ -124,7 +175,14 @@ export class ProyectosService {
     return { data: await this.adjuntarDiasRecordatorio(data), total, page, pages: Math.ceil(total / limit) };
   }
 
-  async findAllByCentro(centro_costo_id: string, page = 1, limit = 500) {
+  async findAllByCentro(
+    centro_costo_id: string,
+    page = 1,
+    limit = 500,
+    empresaId?: string,
+    solicitante?: { sub: string; rol: string },
+  ) {
+    if (empresaId) await this.autorizarCentro(centro_costo_id, empresaId, solicitante);
     const filter = {
       centro_costo_ids: new Types.ObjectId(centro_costo_id),
       estado: { $ne: 'eliminado' },
@@ -136,14 +194,16 @@ export class ProyectosService {
     return { data: await this.adjuntarDiasRecordatorio(data), total, page, pages: Math.ceil(total / limit) };
   }
 
-  async findOne(id: string): Promise<any> {
+  async findOne(id: string, empresaId?: string, centroId?: string, solicitante?: { sub: string; rol: string }): Promise<any> {
+    if (empresaId) await this.autorizarProyecto(id, empresaId, centroId, solicitante);
     const proyecto = await this.proyectoModel.findById(id).populate('tipo_proyecto_id').lean();
     if (!proyecto) throw new NotFoundException(`Proyecto ${id} no encontrado`);
     const dias_recordatorio = await this.recordatoriosService.obtenerDias('proyecto', proyecto._id);
     return { ...proyecto, dias_recordatorio };
   }
 
-  async update(id: string, dto: UpdateProyectoDto): Promise<any> {
+  async update(id: string, dto: UpdateProyectoDto, empresaId?: string, centroId?: string): Promise<any> {
+    if (empresaId) await this.autorizarProyecto(id, empresaId, centroId);
     const proyectoActual = await this.proyectoModel.findById(id).lean();
     if (!proyectoActual) throw new NotFoundException(`Proyecto ${id} no encontrado`);
     const clienteId = dto.cliente_id || proyectoActual.cliente_id.toString();
@@ -192,7 +252,8 @@ export class ProyectosService {
     return dias;
   }
 
-  async remove(id: string) {
+  async remove(id: string, empresaId?: string, centroId?: string) {
+    if (empresaId) await this.autorizarProyecto(id, empresaId, centroId);
     const proyecto = await this.proyectoModel
       .findByIdAndUpdate(id, { estado: 'eliminado' }, { new: true })
       .populate('cliente_id', 'razon_social')
@@ -227,7 +288,17 @@ export class ProyectosService {
     });
   }
 
-  async agregarDocumento(id: string, input: DocumentoInput, nombreDisplay?: string, categoria?: string, usuarioId?: string, rolUploader?: string) {
+  async agregarDocumento(
+    id: string,
+    input: DocumentoInput,
+    nombreDisplay?: string,
+    categoria?: string,
+    usuarioId?: string,
+    rolUploader?: string,
+    empresaId?: string,
+    centroId?: string,
+  ) {
+    if (empresaId) await this.autorizarProyecto(id, empresaId, centroId, usuarioId ? { sub: usuarioId, rol: rolUploader ?? '' } : undefined);
     const result = await this.docsHelper.agregar(id, input, nombreDisplay, categoria, usuarioId);
     if (rolUploader === 'usuario') {
       this.notificarSubidaDocumento(id, result['nombre_display'] as string, result['categoria'] as string | undefined, usuarioId)
@@ -259,22 +330,33 @@ export class ProyectosService {
     });
   }
 
-  async listarDocumentos(id: string) {
+  async listarDocumentos(id: string, empresaId?: string, centroId?: string, solicitante?: { sub: string; rol: string }) {
+    if (empresaId) await this.autorizarProyecto(id, empresaId, centroId, solicitante);
     const docs = await this.docsHelper.listar(id);
     return resolverSubidoPorNombre(docs, this.usuarioModel as any);
   }
 
-  async actualizarDocumento(id: string, docId: string, categoria: string) {
+  async actualizarDocumento(id: string, docId: string, categoria: string, empresaId?: string, centroId?: string, solicitante?: { sub: string; rol: string }) {
+    if (empresaId) await this.autorizarProyecto(id, empresaId, centroId, solicitante);
     const doc = await this.docsHelper.actualizarCategoria(id, docId, categoria);
     const [conNombre] = await resolverSubidoPorNombre([doc], this.usuarioModel as any);
     return conNombre;
   }
 
-  servirDocumento(proyectoId: string, docId: string) {
+  async renombrarDocumento(id: string, docId: string, nombreDisplay: string, empresaId?: string, centroId?: string, solicitante?: { sub: string; rol: string }) {
+    if (empresaId) await this.autorizarProyecto(id, empresaId, centroId, solicitante);
+    const doc = await this.docsHelper.renombrar(id, docId, nombreDisplay);
+    const [conNombre] = await resolverSubidoPorNombre([doc], this.usuarioModel as any);
+    return conNombre;
+  }
+
+  async servirDocumento(proyectoId: string, docId: string, empresaId?: string, centroId?: string, solicitante?: { sub: string; rol: string }) {
+    if (empresaId) await this.autorizarProyecto(proyectoId, empresaId, centroId, solicitante);
     return this.docsHelper.servir(proyectoId, docId);
   }
 
-  eliminarDocumento(proyectoId: string, docId: string) {
+  async eliminarDocumento(proyectoId: string, docId: string, empresaId?: string, centroId?: string, solicitante?: { sub: string; rol: string }) {
+    if (empresaId) await this.autorizarProyecto(proyectoId, empresaId, centroId, solicitante);
     return this.docsHelper.eliminar(proyectoId, docId);
   }
 
@@ -284,6 +366,7 @@ export class ProyectosService {
     empresaNombre?: string, centroNombre?: string, proyectoNombre?: string,
     notificacion?: NotificacionOpcionesDto,
   ) {
+    await this.autorizarProyecto(proyectoId, empresaId, centroId);
     const proyecto = await this.proyectoModel
       .findById(proyectoId)
       .populate('cliente_id', 'razon_social')

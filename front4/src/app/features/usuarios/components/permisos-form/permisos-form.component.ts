@@ -10,7 +10,13 @@ import { PERM_SCHEMA, PermisosUsuario, Rol, contarPermisosActivos, filaAplica } 
   imports: [FormsModule, PermisosPanelComponent],
   templateUrl: './permisos-form.component.html',
   styles: [`
-    .pfm-header { display: flex; align-items: center; gap: .85rem; margin-bottom: 1.1rem; }
+    :host {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      min-height: 0;
+    }
+    .pfm-header { display: flex; align-items: center; gap: .85rem; margin-bottom: .6rem; }
     .pfm-avatar {
       width: 40px; height: 40px; border-radius: 999px; flex-shrink: 0;
       display: flex; align-items: center; justify-content: center;
@@ -29,9 +35,28 @@ import { PERM_SCHEMA, PermisosUsuario, Rol, contarPermisosActivos, filaAplica } 
     }
     .pfm-identity-sub { font-size: .78rem; color: #6b7280; }
 
+    .pfm-fijos-top {
+      flex-shrink: 0;
+      padding: 1.1rem 1.5rem .9rem;
+      background: #fff;
+      border-bottom: 1px solid rgba(34,33,33,.07);
+    }
+    .pfm-fijos-bottom {
+      flex-shrink: 0;
+      padding: .8rem 1.5rem 1.2rem;
+      background: #fff;
+      border-top: 1px solid rgba(34,33,33,.07);
+    }
+    .pfm-body {
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+      padding: .6rem 1.5rem 1.2rem;
+    }
+
     .pfm-rol-preset {
       display: flex; align-items: center; gap: .6rem;
-      padding: .6rem .8rem; margin-bottom: 1.1rem;
+      padding: .6rem .8rem; margin-bottom: .4rem;
       background: rgba(0,149,214,.06); border-radius: 10px;
       font-size: .82rem; font-weight: 600; color: #374151;
     }
@@ -40,11 +65,11 @@ import { PERM_SCHEMA, PermisosUsuario, Rol, contarPermisosActivos, filaAplica } 
       border: 1px solid rgba(34,33,33,.18); font-family: inherit; font-size: .84rem;
       background: #fff; color: #1f2937;
     }
+    .pfm-rol-preset select:disabled { background: #f3f4f6; color: #9ca3af; cursor: not-allowed; }
 
     .pfm-footer {
       display: flex; align-items: center; justify-content: space-between; gap: 1rem;
-      margin-top: 1.4rem; padding-top: .9rem;
-      border-top: 1px solid rgba(34,33,33,.1);
+      margin-top: .4rem;
     }
     .pfm-footer-contador { font-size: .82rem; color: #374151; }
     .pfm-footer-contador strong { font-variant-numeric: tabular-nums; color: #111827; }

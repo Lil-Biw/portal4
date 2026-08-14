@@ -10,7 +10,14 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { OPCIONES_SUBIDA } from '../common/constants/upload.constants';
 import { CentrosCostosService } from './centros-costos.service';
 import { CreateCentroCostoDto, UpdateCentroCostoDto, UpdateScoreSmartclarityDto, VencerDocumentoCentroDto } from './centros-costos.dto';
-import { EmpresaAccessGuard, Roles, Public } from '../common/guards/guards';
+import { EmpresaAccessGuard, Roles, Public, RequiereAccion } from '../common/guards/guards';
+
+interface JwtUser {
+  sub: string;
+  email: string;
+  rol: string;
+  cliente_id?: string;
+}
 
 @Controller('empresas/:empresaId/centros')
 @UseGuards(EmpresaAccessGuard)
@@ -18,7 +25,7 @@ export class CentrosCostosController {
   constructor(private readonly centrosCostosService: CentrosCostosService) {}
 
   @Post()
-  @Roles('super_admin', 'admin_smartclarity')
+  @RequiereAccion('centros', 'crear')
   create(@Param('empresaId') empresaId: string, @Body() dto: CreateCentroCostoDto) {
     return this.centrosCostosService.create({ ...dto, cliente_id: empresaId });
   }
@@ -28,39 +35,44 @@ export class CentrosCostosController {
     @Param('empresaId') empresaId: string,
     @Query('page') page = '1',
     @Query('limit') limit = '20',
+    @Req() req?: Request,
   ) {
-    return this.centrosCostosService.findAllByCliente(empresaId, +page, +limit);
+    const user = (req as any)?.user as JwtUser;
+    return this.centrosCostosService.findAllByCliente(empresaId, +page, +limit, user && { sub: user.sub, rol: user.rol });
   }
 
   @Get(':centroId')
-  findOne(@Param('centroId') centroId: string) {
-    return this.centrosCostosService.findOne(centroId);
+  findOne(@Param('empresaId') empresaId: string, @Param('centroId') centroId: string, @Req() req: Request) {
+    const user = (req as any)?.user as JwtUser;
+    return this.centrosCostosService.findOne(centroId, empresaId, user && { sub: user.sub, rol: user.rol });
   }
 
   @Put(':centroId')
-  @Roles('super_admin', 'admin_smartclarity')
-  update(@Param('centroId') centroId: string, @Body() dto: UpdateCentroCostoDto) {
-    return this.centrosCostosService.update(centroId, dto);
+  @RequiereAccion('centros', 'editar')
+  update(@Param('empresaId') empresaId: string, @Param('centroId') centroId: string, @Body() dto: UpdateCentroCostoDto) {
+    return this.centrosCostosService.update(centroId, dto, empresaId);
   }
 
   @Put(':centroId/score-smartclarity')
-  @Roles('super_admin', 'admin_smartclarity')
+  @RequiereAccion('centros', 'editar')
   updateScore(
+    @Param('empresaId') empresaId: string,
     @Param('centroId') centroId: string,
     @Body() dto: UpdateScoreSmartclarityDto,
   ) {
-    return this.centrosCostosService.updateScoreSmartclarity(centroId, dto.valores);
+    return this.centrosCostosService.updateScoreSmartclarity(centroId, dto.valores, empresaId);
   }
 
   @Post(':centroId/foto')
-  @Roles('super_admin', 'admin_smartclarity')
+  @RequiereAccion('centros', 'editar')
   @UseInterceptors(FileInterceptor('archivo', OPCIONES_SUBIDA))
   subirFoto(
+    @Param('empresaId') empresaId: string,
     @Param('centroId') centroId: string,
     @UploadedFile() archivo: Express.Multer.File & { buffer: Buffer },
   ) {
     if (!archivo) throw new BadRequestException('No se proporcionó archivo');
-    return this.centrosCostosService.subirFoto(centroId, archivo);
+    return this.centrosCostosService.subirFoto(centroId, archivo, empresaId);
   }
 
   @Get(':centroId/foto')
@@ -71,15 +83,16 @@ export class CentrosCostosController {
   }
 
   @Delete(':centroId')
-  @Roles('super_admin', 'admin_smartclarity')
-  remove(@Param('centroId') centroId: string) {
-    return this.centrosCostosService.remove(centroId);
+  @RequiereAccion('centros', 'eliminar')
+  remove(@Param('empresaId') empresaId: string, @Param('centroId') centroId: string) {
+    return this.centrosCostosService.remove(centroId, empresaId);
   }
 
   @Post(':centroId/documentos')
-  @Roles('super_admin', 'admin_smartclarity', 'usuario')
+  @RequiereAccion('docCentro', 'subir')
   @UseInterceptors(FileInterceptor('archivo', OPCIONES_SUBIDA))
   subirDocumento(
+    @Param('empresaId') empresaId: string,
     @Param('centroId') centroId: string,
     @UploadedFile() archivo: Express.Multer.File & { buffer: Buffer },
     @Body('nombre_display') nombreDisplay?: string,
@@ -90,46 +103,62 @@ export class CentrosCostosController {
     if (!archivo && !linkUrl) throw new BadRequestException('Debes adjuntar un archivo o un link');
     const rolUploader = (req as any)?.user?.rol as string | undefined;
     const usuarioId  = (req as any)?.user?.sub as string | undefined;
-    return this.centrosCostosService.agregarDocumento(centroId, { archivo, linkUrl }, nombreDisplay, categoria, usuarioId, rolUploader);
+    return this.centrosCostosService.agregarDocumento(centroId, { archivo, linkUrl }, nombreDisplay, categoria, usuarioId, rolUploader, empresaId);
   }
 
   @Get(':centroId/documentos')
-  listarDocumentos(@Param('centroId') centroId: string) {
-    return this.centrosCostosService.listarDocumentos(centroId);
+  listarDocumentos(@Param('empresaId') empresaId: string, @Param('centroId') centroId: string, @Req() req: Request) {
+    const user = (req as any)?.user as JwtUser;
+    return this.centrosCostosService.listarDocumentos(centroId, empresaId, user && { sub: user.sub, rol: user.rol });
   }
 
   @Get(':centroId/documentos/:docId')
   async descargarDocumento(
+    @Param('empresaId') empresaId: string,
     @Param('centroId') centroId: string,
     @Param('docId') docId: string,
+    @Req() req: Request,
     @Res() res: Response,
   ) {
-    const { buffer, tipo_mime, nombre_display } = await this.centrosCostosService.servirDocumento(centroId, docId);
+    const user = (req as any)?.user as JwtUser;
+    const { buffer, tipo_mime, nombre_display } = await this.centrosCostosService.servirDocumento(centroId, docId, empresaId, user && { sub: user.sub, rol: user.rol });
     sendFile(res, buffer, tipo_mime, nombre_display);
   }
 
   @Patch(':centroId/documentos/:docId')
-  @Roles('super_admin', 'admin_smartclarity')
+  @RequiereAccion('docCentro', 'editarCategoria')
   actualizarDocumento(
+    @Param('empresaId') empresaId: string,
     @Param('centroId') centroId: string,
     @Param('docId') docId: string,
-    @Body('categoria') categoria: string,
+    @Body('categoria') categoria: string | undefined,
+    @Body('nombre_display') nombreDisplay: string | undefined,
+    @Req() req: Request,
   ) {
+    const user = (req as any)?.user as JwtUser;
+    const solicitante = user && { sub: user.sub, rol: user.rol };
+    if (nombreDisplay !== undefined) {
+      if (!nombreDisplay.trim()) throw new BadRequestException('Debes indicar un nombre');
+      return this.centrosCostosService.renombrarDocumento(centroId, docId, nombreDisplay.trim(), empresaId, solicitante);
+    }
     if (!categoria?.trim()) throw new BadRequestException('Debes indicar una categoría');
-    return this.centrosCostosService.actualizarDocumento(centroId, docId, categoria.trim());
+    return this.centrosCostosService.actualizarDocumento(centroId, docId, categoria.trim(), empresaId, solicitante);
   }
 
   @Delete(':centroId/documentos/:docId')
-  @Roles('super_admin', 'admin_smartclarity', 'usuario')
+  @RequiereAccion('docCentro', 'eliminar')
   eliminarDocumento(
+    @Param('empresaId') empresaId: string,
     @Param('centroId') centroId: string,
     @Param('docId') docId: string,
+    @Req() req: Request,
   ) {
-    return this.centrosCostosService.eliminarDocumento(centroId, docId);
+    const user = (req as any)?.user as JwtUser;
+    return this.centrosCostosService.eliminarDocumento(centroId, docId, empresaId, user && { sub: user.sub, rol: user.rol });
   }
 
   @Patch(':centroId/documentos/:docId/vencer')
-  @Roles('super_admin', 'admin_smartclarity')
+  @RequiereAccion('docCentro', 'vencer')
   vencerDocumento(
     @Param('empresaId') empresaId: string,
     @Param('centroId') centroId: string,

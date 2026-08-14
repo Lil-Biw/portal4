@@ -86,6 +86,9 @@ export class CentrosListComponent implements OnChanges {
   @Input() clientes: Cliente[] = [];
   @Input() seleccionadoId: string | null = null;
   @Input() scoresPorCentro: Map<string, number> = new Map();
+  @Input() puedeEditar = true;
+  @Input() puedeEliminar = true;
+  @Input() puedeAgregarActivo = true;
   @Output() editado       = new EventEmitter<CentroCosto>();
   @Output() eliminado     = new EventEmitter<string>();
   @Output() verCentro     = new EventEmitter<CentroCosto>();

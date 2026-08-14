@@ -8,13 +8,14 @@ import { CentrosService } from '../../centros/centros.service';
 import { ProyectosService } from '../../proyectos/proyectos.service';
 import { ConsumidorContextService } from '../../../profile/consumidor-context.service';
 import { SolicitudesService, EstadoSolicitud, Solicitud } from '../../solicitudes/solicitudes.service';
+import { AuthService } from '../../auth/auth.service';
 import { StatusBannerComponent } from '../../../shared/components/status-banner/status-banner.component';
 import { UploadBubbleComponent } from '../../../shared/components/upload-bubble/upload-bubble.component';
 import { UploadDocumentFormComponent } from '../../../shared/components/upload-document-form/upload-document-form.component';
 import { DocumentCardListComponent } from '../../../shared/components/document-card-list/document-card-list.component';
 import { DocumentoTarjeta } from '../../../shared/models/documento-tarjeta.model';
 import { createUploadQueue } from '../../../shared/upload-queue-state';
-import { asId, detectarCategoriaDocumento, formatFechaHora, formatBytes, MAX_UPLOAD_SIZE_BYTES } from '../../../shared/utils';
+import { asId, confirmarEliminacion, detectarCategoriaDocumento, formatFechaHora, formatBytes, MAX_UPLOAD_SIZE_BYTES, ordenarPorDocumento, OrdenDocumentos } from '../../../shared/utils';
 
 interface PanelState {
   showUpload: boolean;
@@ -43,9 +44,9 @@ interface FilaDocTodosC {
 // Igual que en admin (documentos-admin-page.component.ts), pero sin nivel
 // empresa como criterio de desempate: en consumidor todas las filas son de
 // la misma empresa, así que no hace falta compararla.
-type OrdenTodosC = 'alfabetico' | 'nivel_empresa' | 'nivel_centro' | 'nivel_proyecto';
+type OrdenTodosC = 'alfabetico' | 'recientes' | 'nivel_empresa' | 'nivel_centro' | 'nivel_proyecto';
 
-const RANGOS_POR_MODO_C: Record<Exclude<OrdenTodosC, 'alfabetico'>, DocTipo[]> = {
+const RANGOS_POR_MODO_C: Record<Exclude<OrdenTodosC, 'alfabetico' | 'recientes'>, DocTipo[]> = {
   nivel_empresa:  ['empresa', 'centro', 'proyecto'],
   nivel_centro:   ['centro', 'proyecto', 'empresa'],
   nivel_proyecto: ['proyecto', 'empresa', 'centro'],
@@ -55,6 +56,13 @@ function ordenarFilasTodosC(filas: FilaDocTodosC[], modo: OrdenTodosC): FilaDocT
   const resultado = [...filas];
   if (modo === 'alfabetico') {
     resultado.sort((a, b) => collatorNombreC.compare(a.doc.nombre_display, b.doc.nombre_display));
+    return resultado;
+  }
+  if (modo === 'recientes') {
+    resultado.sort((a, b) => {
+      const da = a.doc.subido_en, db = b.doc.subido_en;
+      return (db ? Date.parse(db) : 0) - (da ? Date.parse(da) : 0);
+    });
     return resultado;
   }
   const rango = RANGOS_POR_MODO_C[modo];
@@ -83,15 +91,16 @@ export class DocumentosConsumidorPageComponent implements OnInit {
   protected readonly proyectosService   = inject(ProyectosService);
   protected readonly consumidorContext  = inject(ConsumidorContextService);
   protected readonly solicitudesService = inject(SolicitudesService);
-  private  readonly route               = inject(ActivatedRoute);
+  protected readonly authService          = inject(AuthService);
+  private  readonly route                 = inject(ActivatedRoute);
 
   private _pendingCentroId   = signal<string | null>(null);
   private _pendingProyectoId = signal<string | null>(null);
 
   protected readonly categorias = CATEGORIAS_DOCUMENTO;
 
-  protected selectedCentroIdC   = signal('');
-  protected selectedProyectoIdC = signal('');
+  protected selectedCentroIdC   = signal('todos');
+  protected selectedProyectoIdC = signal('todos');
   protected filtroEstado              = signal<EstadoSolicitud | ''>('');
   protected filtroTipoSolicitud       = signal('');
   protected busquedaEmpresa           = signal('');
@@ -101,6 +110,13 @@ export class DocumentosConsumidorPageComponent implements OnInit {
   protected tabDocConsumidor          = signal<'activos' | 'vencidos'>('activos');
   protected tabJerarquia              = signal<'todos' | 'empresa' | 'centro' | 'proyecto'>('todos');
   protected ordenTodosC               = signal<OrdenTodosC>('alfabetico');
+  protected ordenEmpresaC             = signal<OrdenDocumentos>('alfabetico');
+  protected ordenCentroC              = signal<OrdenDocumentos>('alfabetico');
+  protected ordenProyectoC            = signal<OrdenDocumentos>('alfabetico');
+
+  protected ordenParaTipoC(tipo: FiltroTipoC) {
+    return tipo === 'empresa' ? this.ordenEmpresaC : tipo === 'centro' ? this.ordenCentroC : this.ordenProyectoC;
+  }
 
   private busquedaTodosDebounceTimer?: ReturnType<typeof setTimeout>;
 
@@ -151,6 +167,16 @@ export class DocumentosConsumidorPageComponent implements OnInit {
     return this.tabJerarquia() === 'empresa' ? 'empresa'
       : this.tabJerarquia() === 'centro' ? 'centro'
       : 'proyecto';
+  }
+
+  private seccionDoc(tipo?: DocTipo): 'docEmpresa' | 'docCentro' | 'docProyecto' {
+    if (tipo === 'empresa') return 'docEmpresa';
+    if (tipo === 'proyecto') return 'docProyecto';
+    return 'docCentro';
+  }
+
+  protected puedeDoc(tipo: DocTipo | undefined, accion: 'subir' | 'editarCategoria' | 'vencer' | 'eliminar'): boolean {
+    return this.authService.tienePermiso(this.seccionDoc(tipo), accion);
   }
 
   get puedeGestionarDocumento(): boolean {
@@ -285,8 +311,8 @@ export class DocumentosConsumidorPageComponent implements OnInit {
   constructor() {
     effect(() => {
       const empresa = this.consumidorContext.empresaSeleccionada();
-      this.selectedCentroIdC.set('');
-      this.selectedProyectoIdC.set('');
+      this.selectedCentroIdC.set('todos');
+      this.selectedProyectoIdC.set('todos');
       this.tabDocConsumidor.set('activos');
       this.service.documentosVencidos.set([]);
       if (empresa) {
@@ -344,7 +370,7 @@ export class DocumentosConsumidorPageComponent implements OnInit {
   onCentroChangeC(id: string): void {
     const estabaEnVencidos = this.tabDocConsumidor() === 'vencidos';
     this.selectedCentroIdC.set(id);
-    this.selectedProyectoIdC.set('');
+    this.selectedProyectoIdC.set('todos');
     if (!estabaEnVencidos) this.tabDocConsumidor.set('activos');
     this.service.documentosVencidos.set([]);
     if (id) this.tabJerarquia.set('centro');
@@ -438,6 +464,7 @@ export class DocumentosConsumidorPageComponent implements OnInit {
     this.filtroEstado.set('');
     if (this.tabDocConsumidor() === 'vencidos') this.cargarVencidosConsumidor();
     this.refrescarBusquedaCascada();
+    if (tab === 'centro' || tab === 'proyecto') this.recargarDocsC();
   }
 
   refrescarBusquedaCascada(): void {
@@ -464,9 +491,18 @@ export class DocumentosConsumidorPageComponent implements OnInit {
     if (tipo === 'todos') this.refrescarBusquedaCascada();
   }
 
-  eliminarEnTodos(docUrl: string): void {
+  eliminarEnTodos(docUrl: string, nombre?: string): void {
+    if (nombre !== undefined && !confirmarEliminacion(nombre)) return;
     const empresaId = asId(this.consumidorContext.empresaSeleccionada()?._id) ?? '';
     this.service.eliminar(docUrl, 'empresa', empresaId, undefined, undefined, () => this.refrescarBusquedaCascada());
+  }
+
+  marcarVencidoConsumidor(docUrl: string, tipo: DocTipo): void {
+    const empresaId = asId(this.consumidorContext.empresaSeleccionada()?._id) ?? '';
+    const centroId   = this.selectedCentroIdC()   !== 'todos' ? this.selectedCentroIdC()   : undefined;
+    const proyectoId = this.selectedProyectoIdC() !== 'todos' ? this.selectedProyectoIdC() : undefined;
+    const onSuccess = this.tabJerarquia() === 'todos' ? () => this.refrescarBusquedaCascada() : undefined;
+    this.service.marcarVencido(docUrl, tipo, empresaId, centroId, proyectoId, undefined, undefined, undefined, undefined, onSuccess);
   }
 
   // ─── upload panels ────────────────────────────────────────────────────────
@@ -539,9 +575,18 @@ export class DocumentosConsumidorPageComponent implements OnInit {
     }
   }
 
+  onRenombrarTarjeta(event: { id: string; nuevoNombre: string }, tipo: DocTipo): void {
+    const item = this.uploadQueue.items().find(i => i.id === event.id);
+    if (item?.estado === 'listo' && item.docUrl) {
+      this.service.renombrarDocumento(item.docUrl, event.nuevoNombre, tipo,
+        () => this.uploadQueue.actualizarNombre(event.id, event.nuevoNombre));
+    }
+  }
+
   onEliminarTarjeta(id: string, tipo: DocTipo): void {
     const item = this.uploadQueue.items().find(i => i.id === id);
     if (item?.estado === 'listo' && item.docUrl) {
+      if (!confirmarEliminacion(item.nombre ?? 'este documento')) return;
       const empresaId = this.consumidorContext.empresaSeleccionada()?._id ?? '';
       this.service.eliminar(item.docUrl, tipo, empresaId, this.selectedCentroIdC() || undefined, this.selectedProyectoIdC() || undefined,
         () => { this.uploadQueue.quitar(id); this.retryContext.delete(id); this.recargarDocsC(); });
@@ -626,7 +671,9 @@ export class DocumentosConsumidorPageComponent implements OnInit {
           if (event.type === HttpEventType.UploadProgress && event.total) {
             this.uploadQueue.actualizarProgreso(id, Math.round((100 * event.loaded) / event.total));
           } else if (event.type === HttpEventType.Response) {
-            const docUrl = event.body?.url;
+            const docUrl = event.body?._id
+              ? this.service.docUrl(ctx.tipo, event.body._id, ctx.empresaId, ctx.centroId, ctx.proyectoId)
+              : undefined;
             this.uploadQueue.marcarListo(id, docUrl);
             if (docUrl) {
               const item = this.uploadQueue.items().find(i => i.id === id);
@@ -643,12 +690,16 @@ export class DocumentosConsumidorPageComponent implements OnInit {
   filteredDocsPorCentro() {
     const { busqueda, categoriaFiltro } = this.panels['centro'];
     const term = busqueda.trim().toLowerCase();
+    const orden = this.ordenCentroC();
     return this.service.documentosPorCentro()
       .map(item => ({
         ...item,
-        docs: item.docs
-          .filter(d => !categoriaFiltro || d.categoria === categoriaFiltro)
-          .filter(d => !term || d.nombre_display.toLowerCase().includes(term)),
+        docs: ordenarPorDocumento(
+          item.docs
+            .filter(d => !categoriaFiltro || d.categoria === categoriaFiltro)
+            .filter(d => !term || d.nombre_display.toLowerCase().includes(term)),
+          orden, d => d,
+        ),
       }))
       .filter(item => item.docs.length > 0);
   }
@@ -656,12 +707,16 @@ export class DocumentosConsumidorPageComponent implements OnInit {
   filteredDocsPorProyecto() {
     const { busqueda, categoriaFiltro } = this.panels['proyecto'];
     const term = busqueda.trim().toLowerCase();
+    const orden = this.ordenProyectoC();
     return this.service.documentosPorProyecto()
       .map(item => ({
         ...item,
-        docs: item.docs
-          .filter(d => !categoriaFiltro || d.categoria === categoriaFiltro)
-          .filter(d => !term || d.nombre_display.toLowerCase().includes(term)),
+        docs: ordenarPorDocumento(
+          item.docs
+            .filter(d => !categoriaFiltro || d.categoria === categoriaFiltro)
+            .filter(d => !term || d.nombre_display.toLowerCase().includes(term)),
+          orden, d => d,
+        ),
       }))
       .filter(item => item.docs.length > 0);
   }
@@ -672,14 +727,32 @@ export class DocumentosConsumidorPageComponent implements OnInit {
       : this.service.documentosProyecto();
     const { busqueda, categoriaFiltro } = this.panels[tipo];
     const term = busqueda.trim().toLowerCase();
-    return docs
+    const filtrados = docs
       .filter(d => !categoriaFiltro || d.categoria === categoriaFiltro)
       .filter(d => !term || d.nombre_display.toLowerCase().includes(term));
+    return ordenarPorDocumento(filtrados, this.ordenParaTipoC(tipo)(), d => d);
   }
 
-  eliminar(docUrl: string, tipo: DocTipo): void {
+  eliminar(docUrl: string, tipo: DocTipo, nombre?: string): void {
+    if (nombre !== undefined && !confirmarEliminacion(nombre)) return;
     const empresaId = asId(this.consumidorContext.empresaSeleccionada()?._id) ?? '';
     this.service.eliminar(docUrl, tipo, empresaId, this.selectedCentroIdC() || undefined, this.selectedProyectoIdC() || undefined);
+  }
+
+  protected categoriaMenuAbierto = signal<string | null>(null);
+
+  toggleCategoriaMenu(docId: string): void {
+    this.categoriaMenuAbierto.update(actual => actual === docId ? null : docId);
+  }
+
+  seleccionarCategoriaC(docUrl: string, categoria: string, tipo: DocTipo): void {
+    this.categoriaMenuAbierto.set(null);
+    this.service.actualizarCategoria(docUrl, categoria, tipo);
+  }
+
+  seleccionarCategoriaTodosC(docUrl: string, categoria: string): void {
+    this.categoriaMenuAbierto.set(null);
+    this.service.actualizarCategoria(docUrl, categoria, 'empresa', () => this.refrescarBusquedaCascada());
   }
 
   abrirDocumento(d: { tipo_contenido?: 'archivo' | 'link'; link_url?: string; url: string; nombre_display: string }): void {

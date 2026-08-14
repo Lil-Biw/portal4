@@ -70,6 +70,8 @@ export class ClientesListComponent {
   @Input() seleccionadoId: string | null = null;
   @Input() mostrarVerFicha = true;
   @Input() scoresPorEmpresa: Map<string, number> = new Map();
+  @Input() puedeEditar = true;
+  @Input() puedeEliminar = true;
   @Output() editado      = new EventEmitter<Cliente>();
   @Output() eliminado    = new EventEmitter<string>();
   @Output() verFicha     = new EventEmitter<Cliente>();

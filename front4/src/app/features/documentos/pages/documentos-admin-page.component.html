@@ -147,6 +147,14 @@
             <span style="font-size:.72rem;font-weight:600;color:#6b7280;margin-right:.15rem">Ordenar por:</span>
             <button
               style="padding:.3rem .65rem;border-style:solid;border-width:1px;border-radius:999px;font-size:.75rem;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap"
+              [style.background]="ordenTodos() === 'recientes' ? 'rgba(124,58,237,.08)' : 'transparent'"
+              [style.color]="ordenTodos() === 'recientes' ? '#7c3aed' : '#6b7280'"
+              [style.borderColor]="ordenTodos() === 'recientes' ? 'rgba(124,58,237,.3)' : '#e5e7eb'"
+              (click)="ordenTodos.set('recientes')">
+              Recientes
+            </button>
+            <button
+              style="padding:.3rem .65rem;border-style:solid;border-width:1px;border-radius:999px;font-size:.75rem;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap"
               [style.background]="ordenTodos() === 'alfabetico' ? 'rgba(124,58,237,.08)' : 'transparent'"
               [style.color]="ordenTodos() === 'alfabetico' ? '#7c3aed' : '#6b7280'"
               [style.borderColor]="ordenTodos() === 'alfabetico' ? 'rgba(124,58,237,.3)' : '#e5e7eb'"
@@ -186,37 +194,43 @@
     @if (tabJerarquia() === 'empresa') {
       <div style="padding:1rem;display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1rem">
         @if (selectedEmpresaId === 'todos') {
-          <div style="border-left:4px solid #0095d6;border-radius:8px;background:#fafbfc;padding:.75rem .85rem;display:flex;align-items:center;gap:.75rem">
-            <div style="width:38px;height:38px;border-radius:9px;background:rgba(0,149,214,.1);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#0095d6">
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"/>
-                <path d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"/>
-                <path d="M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2"/>
-                <path d="M10 6h4"/><path d="M10 10h4"/><path d="M10 14h4"/><path d="M10 18h4"/>
-              </svg>
+          <div style="border-left:4px solid #0095d6;border-radius:8px;background:#fafbfc;padding:.75rem .85rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.75rem">
+            <div style="display:flex;align-items:center;gap:.75rem">
+              <div style="width:38px;height:38px;border-radius:9px;background:rgba(0,149,214,.1);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#0095d6">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"/>
+                  <path d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"/>
+                  <path d="M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2"/>
+                  <path d="M10 6h4"/><path d="M10 10h4"/><path d="M10 14h4"/><path d="M10 18h4"/>
+                </svg>
+              </div>
+              <div>
+                <p style="margin:0 0 .15rem;font-size:.9rem;font-weight:700;color:#1f2937">Documentación total de empresas</p>
+                <p style="margin:0;font-size:.75rem;color:#6b7280">{{ clientesService.clientes().length }} empresas</p>
+              </div>
             </div>
-            <div>
-              <p style="margin:0 0 .15rem;font-size:.9rem;font-weight:700;color:#1f2937">Documentación total de empresas</p>
-              <p style="margin:0;font-size:.75rem;color:#6b7280">{{ clientesService.clientes().length }} empresas</p>
-            </div>
+            <ng-container *ngTemplateOutlet="ordenEmpresaChips"></ng-container>
           </div>
         } @else if (empresaSeleccionadaObj) {
-          <div style="border-left:4px solid #0095d6;border-radius:8px;background:#fafbfc;padding:.75rem .85rem;display:flex;align-items:center;gap:.75rem">
-            <div style="width:38px;height:38px;border-radius:9px;background:rgba(0,149,214,.1);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#0095d6">
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"/>
-                <path d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"/>
-                <path d="M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2"/>
-                <path d="M10 6h4"/><path d="M10 10h4"/><path d="M10 14h4"/><path d="M10 18h4"/>
-              </svg>
+          <div style="border-left:4px solid #0095d6;border-radius:8px;background:#fafbfc;padding:.75rem .85rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.75rem">
+            <div style="display:flex;align-items:center;gap:.75rem">
+              <div style="width:38px;height:38px;border-radius:9px;background:rgba(0,149,214,.1);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#0095d6">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"/>
+                  <path d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"/>
+                  <path d="M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2"/>
+                  <path d="M10 6h4"/><path d="M10 10h4"/><path d="M10 14h4"/><path d="M10 18h4"/>
+                </svg>
+              </div>
+              <div>
+                <p style="margin:0 0 .15rem;font-size:.9rem;font-weight:700;color:#1f2937">{{ empresaNombre }}</p>
+                <p style="margin:0;font-size:.75rem;color:#6b7280">
+                  RUT: {{ empresaSeleccionadaObj.rut }}
+                  @if (empresaSeleccionadaObj.direccion?.ciudad) { · {{ empresaSeleccionadaObj.direccion!.ciudad }} }
+                </p>
+              </div>
             </div>
-            <div>
-              <p style="margin:0 0 .15rem;font-size:.9rem;font-weight:700;color:#1f2937">{{ empresaNombre }}</p>
-              <p style="margin:0;font-size:.75rem;color:#6b7280">
-                RUT: {{ empresaSeleccionadaObj.rut }}
-                @if (empresaSeleccionadaObj.direccion?.ciudad) { · {{ empresaSeleccionadaObj.direccion!.ciudad }} }
-              </p>
-            </div>
+            <ng-container *ngTemplateOutlet="ordenEmpresaChips"></ng-container>
           </div>
         } @else {
           <div style="border-left:4px solid #e5e7eb;border-radius:8px;background:#f9fafb;padding:.75rem .85rem;display:flex;align-items:center">
@@ -243,37 +257,43 @@
             <p style="margin:0;color:#9ca3af;font-size:.875rem">Selecciona un centro de costos para ver su documentación.</p>
           </div>
         } @else if (selectedCentroId === 'todos') {
-          <div style="border-left:4px solid #10b981;border-radius:8px;background:#fafbfc;padding:.75rem .85rem;display:flex;align-items:center;gap:.75rem">
-            <div style="width:38px;height:38px;border-radius:9px;background:rgba(16,185,129,.1);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#059669">
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <polygon points="12 2 2 7 12 12 22 7 12 2"/>
-                <polyline points="2 17 12 22 22 17"/>
-                <polyline points="2 12 12 17 22 12"/>
-              </svg>
+          <div style="border-left:4px solid #10b981;border-radius:8px;background:#fafbfc;padding:.75rem .85rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.75rem">
+            <div style="display:flex;align-items:center;gap:.75rem">
+              <div style="width:38px;height:38px;border-radius:9px;background:rgba(16,185,129,.1);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#059669">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polygon points="12 2 2 7 12 12 22 7 12 2"/>
+                  <polyline points="2 17 12 22 22 17"/>
+                  <polyline points="2 12 12 17 22 12"/>
+                </svg>
+              </div>
+              <div>
+                <p style="margin:0 0 .15rem;font-size:.9rem;font-weight:700;color:#1f2937">Documentación total de centros de costos</p>
+                <p style="margin:0;font-size:.75rem;color:#6b7280">{{ centrosFiltrados.length }} centros de costos</p>
+              </div>
             </div>
-            <div>
-              <p style="margin:0 0 .15rem;font-size:.9rem;font-weight:700;color:#1f2937">Documentación total de centros de costos</p>
-              <p style="margin:0;font-size:.75rem;color:#6b7280">{{ centrosFiltrados.length }} centros de costos</p>
-            </div>
+            <ng-container *ngTemplateOutlet="ordenCentroChips"></ng-container>
           </div>
         } @else {
-          <div style="border-left:4px solid #10b981;border-radius:8px;background:#fafbfc;padding:.75rem .85rem;display:flex;align-items:center;gap:.75rem">
-            <div style="width:38px;height:38px;border-radius:9px;background:rgba(16,185,129,.1);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#059669">
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <polygon points="12 2 2 7 12 12 22 7 12 2"/>
-                <polyline points="2 17 12 22 22 17"/>
-                <polyline points="2 12 12 17 22 12"/>
-              </svg>
+          <div style="border-left:4px solid #10b981;border-radius:8px;background:#fafbfc;padding:.75rem .85rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.75rem">
+            <div style="display:flex;align-items:center;gap:.75rem">
+              <div style="width:38px;height:38px;border-radius:9px;background:rgba(16,185,129,.1);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#059669">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polygon points="12 2 2 7 12 12 22 7 12 2"/>
+                  <polyline points="2 17 12 22 22 17"/>
+                  <polyline points="2 12 12 17 22 12"/>
+                </svg>
+              </div>
+              <div>
+                <p style="margin:0 0 .15rem;font-size:.9rem;font-weight:700;color:#1f2937">{{ centroNombre }}</p>
+                @if (centroSeleccionado) {
+                  <p style="margin:0;font-size:.75rem;color:#6b7280">
+                    Código: {{ centroSeleccionado.codigo }}
+                    @if (centroSeleccionado.ubicacion_ciudad) { · {{ centroSeleccionado.ubicacion_ciudad }}@if (centroSeleccionado.ubicacion_region) {, {{ centroSeleccionado.ubicacion_region }}} }
+                  </p>
+                }
+              </div>
             </div>
-            <div>
-              <p style="margin:0 0 .15rem;font-size:.9rem;font-weight:700;color:#1f2937">{{ centroNombre }}</p>
-              @if (centroSeleccionado) {
-                <p style="margin:0;font-size:.75rem;color:#6b7280">
-                  Código: {{ centroSeleccionado.codigo }}
-                  @if (centroSeleccionado.ubicacion_ciudad) { · {{ centroSeleccionado.ubicacion_ciudad }}@if (centroSeleccionado.ubicacion_region) {, {{ centroSeleccionado.ubicacion_region }}} }
-                </p>
-              }
-            </div>
+            <ng-container *ngTemplateOutlet="ordenCentroChips"></ng-container>
           </div>
         }
         <label class="field" style="margin:0;justify-content:center">
@@ -302,41 +322,47 @@
             <p style="margin:0;color:#9ca3af;font-size:.875rem">Selecciona un proyecto para ver su documentación.</p>
           </div>
         } @else if (selectedProyectoId === 'todos') {
-          <div style="border-left:4px solid #f59e0b;border-radius:8px;background:#fafbfc;padding:.75rem .85rem;display:flex;align-items:center;gap:.75rem">
-            <div style="width:38px;height:38px;border-radius:9px;background:rgba(245,158,11,.1);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#d97706">
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
-              </svg>
-            </div>
-            <div>
-              @if (selectedCentroId === 'todos') {
-                <p style="margin:0 0 .15rem;font-size:.9rem;font-weight:700;color:#1f2937">Todos los proyectos</p>
-                <p style="margin:0;font-size:.75rem;color:#6b7280">Todos los centros de costos</p>
-              } @else {
-                <p style="margin:0 0 .15rem;font-size:.9rem;font-weight:700;color:#1f2937">Todos los proyectos de: {{ centroNombre }}</p>
-                @if (centroSeleccionado) {
-                  <p style="margin:0;font-size:.75rem;color:#6b7280">Código: {{ centroSeleccionado.codigo }}</p>
+          <div style="border-left:4px solid #f59e0b;border-radius:8px;background:#fafbfc;padding:.75rem .85rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.75rem">
+            <div style="display:flex;align-items:center;gap:.75rem">
+              <div style="width:38px;height:38px;border-radius:9px;background:rgba(245,158,11,.1);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#d97706">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+                </svg>
+              </div>
+              <div>
+                @if (selectedCentroId === 'todos') {
+                  <p style="margin:0 0 .15rem;font-size:.9rem;font-weight:700;color:#1f2937">Todos los proyectos</p>
+                  <p style="margin:0;font-size:.75rem;color:#6b7280">Todos los centros de costos</p>
+                } @else {
+                  <p style="margin:0 0 .15rem;font-size:.9rem;font-weight:700;color:#1f2937">Todos los proyectos de: {{ centroNombre }}</p>
+                  @if (centroSeleccionado) {
+                    <p style="margin:0;font-size:.75rem;color:#6b7280">Código: {{ centroSeleccionado.codigo }}</p>
+                  }
                 }
-              }
+              </div>
             </div>
+            <ng-container *ngTemplateOutlet="ordenProyectoChips"></ng-container>
           </div>
         } @else {
-          <div style="border-left:4px solid #f59e0b;border-radius:8px;background:#fafbfc;padding:.75rem .85rem;display:flex;align-items:center;gap:.75rem">
-            <div style="width:38px;height:38px;border-radius:9px;background:rgba(245,158,11,.1);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#d97706">
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
-              </svg>
+          <div style="border-left:4px solid #f59e0b;border-radius:8px;background:#fafbfc;padding:.75rem .85rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.75rem">
+            <div style="display:flex;align-items:center;gap:.75rem">
+              <div style="width:38px;height:38px;border-radius:9px;background:rgba(245,158,11,.1);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#d97706">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+                </svg>
+              </div>
+              <div>
+                <p style="margin:0 0 .15rem;font-size:.9rem;font-weight:700;color:#1f2937">{{ proyectoNombre }}</p>
+                @if (proyectoSeleccionado) {
+                  <p style="margin:0;font-size:.75rem;color:#6b7280">
+                    Código: {{ proyectoSeleccionado.codigo }}
+                    @if (proyectoSeleccionado.fecha_inicio) { · Inicio: {{ formatFecha(proyectoSeleccionado.fecha_inicio) }} }
+                    @if (proyectoSeleccionado.fecha_fin) { — Término: {{ formatFecha(proyectoSeleccionado.fecha_fin) }} }
+                  </p>
+                }
+              </div>
             </div>
-            <div>
-              <p style="margin:0 0 .15rem;font-size:.9rem;font-weight:700;color:#1f2937">{{ proyectoNombre }}</p>
-              @if (proyectoSeleccionado) {
-                <p style="margin:0;font-size:.75rem;color:#6b7280">
-                  Código: {{ proyectoSeleccionado.codigo }}
-                  @if (proyectoSeleccionado.fecha_inicio) { · Inicio: {{ formatFecha(proyectoSeleccionado.fecha_inicio) }} }
-                  @if (proyectoSeleccionado.fecha_fin) { — Término: {{ formatFecha(proyectoSeleccionado.fecha_fin) }} }
-                </p>
-              }
-            </div>
+            <ng-container *ngTemplateOutlet="ordenProyectoChips"></ng-container>
           </div>
         }
         <label class="field" style="margin:0;justify-content:center">
@@ -356,6 +382,73 @@
     }
 
   </div> <!-- fin tarjeta A -->
+
+  <!-- Chips "Ordenar por" reutilizados dentro de las tarjetas de resumen de Empresa/Centro/Proyecto -->
+  <ng-template #ordenEmpresaChips>
+    <div style="display:flex;align-items:center;gap:.35rem;flex-wrap:wrap">
+      <span style="font-size:.72rem;font-weight:600;color:#6b7280;margin-right:.15rem">Ordenar por:</span>
+      <button
+        style="padding:.3rem .65rem;border-style:solid;border-width:1px;border-radius:999px;font-size:.75rem;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap"
+        [style.background]="ordenEmpresa() === 'recientes' ? 'rgba(0,149,214,.08)' : 'transparent'"
+        [style.color]="ordenEmpresa() === 'recientes' ? '#0095d6' : '#6b7280'"
+        [style.borderColor]="ordenEmpresa() === 'recientes' ? 'rgba(0,149,214,.3)' : '#e5e7eb'"
+        (click)="ordenEmpresa.set('recientes')">
+        Recientes
+      </button>
+      <button
+        style="padding:.3rem .65rem;border-style:solid;border-width:1px;border-radius:999px;font-size:.75rem;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap"
+        [style.background]="ordenEmpresa() === 'alfabetico' ? 'rgba(0,149,214,.08)' : 'transparent'"
+        [style.color]="ordenEmpresa() === 'alfabetico' ? '#0095d6' : '#6b7280'"
+        [style.borderColor]="ordenEmpresa() === 'alfabetico' ? 'rgba(0,149,214,.3)' : '#e5e7eb'"
+        (click)="ordenEmpresa.set('alfabetico')">
+        Alfabético
+      </button>
+    </div>
+  </ng-template>
+
+  <ng-template #ordenCentroChips>
+    <div style="display:flex;align-items:center;gap:.35rem;flex-wrap:wrap">
+      <span style="font-size:.72rem;font-weight:600;color:#6b7280;margin-right:.15rem">Ordenar por:</span>
+      <button
+        style="padding:.3rem .65rem;border-style:solid;border-width:1px;border-radius:999px;font-size:.75rem;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap"
+        [style.background]="ordenCentro() === 'recientes' ? 'rgba(16,185,129,.08)' : 'transparent'"
+        [style.color]="ordenCentro() === 'recientes' ? '#059669' : '#6b7280'"
+        [style.borderColor]="ordenCentro() === 'recientes' ? 'rgba(16,185,129,.3)' : '#e5e7eb'"
+        (click)="ordenCentro.set('recientes')">
+        Recientes
+      </button>
+      <button
+        style="padding:.3rem .65rem;border-style:solid;border-width:1px;border-radius:999px;font-size:.75rem;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap"
+        [style.background]="ordenCentro() === 'alfabetico' ? 'rgba(16,185,129,.08)' : 'transparent'"
+        [style.color]="ordenCentro() === 'alfabetico' ? '#059669' : '#6b7280'"
+        [style.borderColor]="ordenCentro() === 'alfabetico' ? 'rgba(16,185,129,.3)' : '#e5e7eb'"
+        (click)="ordenCentro.set('alfabetico')">
+        Alfabético
+      </button>
+    </div>
+  </ng-template>
+
+  <ng-template #ordenProyectoChips>
+    <div style="display:flex;align-items:center;gap:.35rem;flex-wrap:wrap">
+      <span style="font-size:.72rem;font-weight:600;color:#6b7280;margin-right:.15rem">Ordenar por:</span>
+      <button
+        style="padding:.3rem .65rem;border-style:solid;border-width:1px;border-radius:999px;font-size:.75rem;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap"
+        [style.background]="ordenProyecto() === 'recientes' ? 'rgba(245,158,11,.08)' : 'transparent'"
+        [style.color]="ordenProyecto() === 'recientes' ? '#d97706' : '#6b7280'"
+        [style.borderColor]="ordenProyecto() === 'recientes' ? 'rgba(245,158,11,.3)' : '#e5e7eb'"
+        (click)="ordenProyecto.set('recientes')">
+        Recientes
+      </button>
+      <button
+        style="padding:.3rem .65rem;border-style:solid;border-width:1px;border-radius:999px;font-size:.75rem;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap"
+        [style.background]="ordenProyecto() === 'alfabetico' ? 'rgba(245,158,11,.08)' : 'transparent'"
+        [style.color]="ordenProyecto() === 'alfabetico' ? '#d97706' : '#6b7280'"
+        [style.borderColor]="ordenProyecto() === 'alfabetico' ? 'rgba(245,158,11,.3)' : '#e5e7eb'"
+        (click)="ordenProyecto.set('alfabetico')">
+        Alfabético
+      </button>
+    </div>
+  </ng-template>
 
   <!-- ══════════════════════════════════════════════════════════════
        TARJETA B: Sub-tabs + contenido
@@ -436,7 +529,7 @@
               }
             </div>
             <div style="flex:1;display:flex;justify-content:center">
-              @if (tabAdminActiva() === 'solicitudes' && selectedEmpresaId !== 'todos') {
+              @if (tabAdminActiva() === 'solicitudes' && selectedEmpresaId !== 'todos' && authService.tienePermiso('solicitudes', 'crear')) {
                 <button class="btn-success" style="width:100%;font-size:.8rem;padding:.4rem .9rem;white-space:nowrap;display:inline-flex;align-items:center;justify-content:center;gap:.35rem" (click)="abrirSolicitudForm()">
                   <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0">
                     <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/>
@@ -524,18 +617,20 @@
                           </div>
                         }
                       </div>
-                      @if (puedeVencer()) {
+                      @if (puedeDoc(fila.tipo, 'vencer')) {
                       <button (click)="abrirModalVencer(fila.doc, fila.centroId, fila.proyectoId, fila.empresaId, fila.tipo)"
                               style="padding:.35rem .65rem;border-radius:7px;border:none;background:#fffbeb;color:#d97706;cursor:pointer;display:inline-flex;align-items:center;gap:.35rem;font-size:.72rem;font-weight:600;white-space:nowrap">
                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                         Marcar vencido
                       </button>
                       }
-                      <button (click)="eliminarEnTodos(fila.doc.url)"
+                      @if (puedeDoc(fila.tipo, 'eliminar')) {
+                      <button (click)="eliminarEnTodos(fila.doc.url, fila.doc.nombre_display)"
                               style="padding:.35rem .65rem;border-radius:7px;border:none;background:#fef2f2;color:#dc2626;cursor:pointer;display:inline-flex;align-items:center;gap:.35rem;font-size:.72rem;font-weight:600;white-space:nowrap">
                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
                         Eliminar
                       </button>
+                      }
                     </div>
                   </div>
                 }
@@ -583,7 +678,8 @@
                     [categorias]="categorias"
                     (categoriaChange)="onCategoriaTarjetaChange($event, docTipo)"
                     (eliminar)="onEliminarTarjeta($event, docTipo)"
-                    (reintentar)="reintentarSubida($event)" />
+                    (reintentar)="reintentarSubida($event)"
+                    (renombrar)="onRenombrarTarjeta($event, docTipo)" />
                 </div>
               }
             }
@@ -653,18 +749,20 @@
                           </div>
                         }
                       </div>
-                      @if (puedeVencer()) {
+                      @if (puedeDoc(docTipo, 'vencer')) {
                       <button (click)="abrirModalVencer(d)"
                               style="padding:.35rem .65rem;border-radius:7px;border:none;background:#fffbeb;color:#d97706;cursor:pointer;display:inline-flex;align-items:center;gap:.35rem;font-size:.72rem;font-weight:600;white-space:nowrap">
                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                         Marcar vencido
                       </button>
                       }
-                      <button (click)="eliminar(d.url, docTipo)"
+                      @if (puedeDoc(docTipo, 'eliminar')) {
+                      <button (click)="eliminar(d.url, docTipo, d.nombre_display)"
                               style="padding:.35rem .65rem;border-radius:7px;border:none;background:#fef2f2;color:#dc2626;cursor:pointer;display:inline-flex;align-items:center;gap:.35rem;font-size:.72rem;font-weight:600;white-space:nowrap">
                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
                         Eliminar
                       </button>
+                      }
                     </div>
                   </div>
                 }
@@ -733,18 +831,20 @@
                           </div>
                         }
                       </div>
-                      @if (puedeVencer()) {
+                      @if (puedeDoc('empresa', 'vencer')) {
                       <button (click)="abrirModalVencer(fila.doc, undefined, undefined, fila.empresaId, 'empresa')"
                               style="padding:.35rem .65rem;border-radius:7px;border:none;background:#fffbeb;color:#d97706;cursor:pointer;display:inline-flex;align-items:center;gap:.35rem;font-size:.72rem;font-weight:600;white-space:nowrap">
                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                         Marcar vencido
                       </button>
                       }
-                      <button (click)="eliminarEnTodasEmpresas(fila.doc.url, fila.empresaId)"
+                      @if (puedeDoc('empresa', 'eliminar')) {
+                      <button (click)="eliminarEnTodasEmpresas(fila.doc.url, fila.empresaId, fila.doc.nombre_display)"
                               style="padding:.35rem .65rem;border-radius:7px;border:none;background:#fef2f2;color:#dc2626;cursor:pointer;display:inline-flex;align-items:center;gap:.35rem;font-size:.72rem;font-weight:600;white-space:nowrap">
                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
                         Eliminar
                       </button>
+                      }
                     </div>
                   </div>
                 }
@@ -816,18 +916,20 @@
                             </div>
                           }
                         </div>
-                        @if (puedeVencer()) {
+                        @if (puedeDoc('centro', 'vencer')) {
                         <button (click)="abrirModalVencer(d, item.centroId)"
                                 style="padding:.35rem .65rem;border-radius:7px;border:none;background:#fffbeb;color:#d97706;cursor:pointer;display:inline-flex;align-items:center;gap:.35rem;font-size:.72rem;font-weight:600;white-space:nowrap">
                           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                           Marcar vencido
                         </button>
                         }
-                        <button (click)="eliminarEnTodosCentros(d.url)"
+                        @if (puedeDoc('centro', 'eliminar')) {
+                        <button (click)="eliminarEnTodosCentros(d.url, d.nombre_display)"
                                 style="padding:.35rem .65rem;border-radius:7px;border:none;background:#fef2f2;color:#dc2626;cursor:pointer;display:inline-flex;align-items:center;gap:.35rem;font-size:.72rem;font-weight:600;white-space:nowrap">
                           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
                           Eliminar
                         </button>
+                        }
                       </div>
                     </div>
                   }
@@ -898,18 +1000,20 @@
                           </div>
                         }
                       </div>
-                      @if (puedeVencer()) {
+                      @if (puedeDoc('centro', 'vencer')) {
                       <button (click)="abrirModalVencer(fila.doc, fila.centroId, undefined, fila.empresaId, 'centro')"
                               style="padding:.35rem .65rem;border-radius:7px;border:none;background:#fffbeb;color:#d97706;cursor:pointer;display:inline-flex;align-items:center;gap:.35rem;font-size:.72rem;font-weight:600;white-space:nowrap">
                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                         Marcar vencido
                       </button>
                       }
-                      <button (click)="eliminarCentroEnTodasEmpresas(fila.doc.url, fila.empresaId, fila.centroId)"
+                      @if (puedeDoc('centro', 'eliminar')) {
+                      <button (click)="eliminarCentroEnTodasEmpresas(fila.doc.url, fila.empresaId, fila.centroId, fila.doc.nombre_display)"
                               style="padding:.35rem .65rem;border-radius:7px;border:none;background:#fef2f2;color:#dc2626;cursor:pointer;display:inline-flex;align-items:center;gap:.35rem;font-size:.72rem;font-weight:600;white-space:nowrap">
                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
                         Eliminar
                       </button>
+                      }
                     </div>
                   </div>
                 }
@@ -984,18 +1088,20 @@
                             </div>
                           }
                         </div>
-                        @if (puedeVencer()) {
+                        @if (puedeDoc('proyecto', 'vencer')) {
                         <button (click)="abrirModalVencer(d, undefined, item.proyectoId)"
                                 style="padding:.35rem .65rem;border-radius:7px;border:none;background:#fffbeb;color:#d97706;cursor:pointer;display:inline-flex;align-items:center;gap:.35rem;font-size:.72rem;font-weight:600;white-space:nowrap">
                           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                           Marcar vencido
                         </button>
                         }
-                        <button (click)="eliminarEnTodosProyectos(d.url)"
+                        @if (puedeDoc('proyecto', 'eliminar')) {
+                        <button (click)="eliminarEnTodosProyectos(d.url, d.nombre_display)"
                                 style="padding:.35rem .65rem;border-radius:7px;border:none;background:#fef2f2;color:#dc2626;cursor:pointer;display:inline-flex;align-items:center;gap:.35rem;font-size:.72rem;font-weight:600;white-space:nowrap">
                           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
                           Eliminar
                         </button>
+                        }
                       </div>
                     </div>
                   }
@@ -1067,18 +1173,20 @@
                           </div>
                         }
                       </div>
-                      @if (puedeVencer()) {
+                      @if (puedeDoc('proyecto', 'vencer')) {
                       <button (click)="abrirModalVencer(fila.doc, fila.centroId, fila.proyectoId, fila.empresaId, 'proyecto')"
                               style="padding:.35rem .65rem;border-radius:7px;border:none;background:#fffbeb;color:#d97706;cursor:pointer;display:inline-flex;align-items:center;gap:.35rem;font-size:.72rem;font-weight:600;white-space:nowrap">
                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                         Marcar vencido
                       </button>
                       }
-                      <button (click)="eliminarProyectoEnTodasEmpresas(fila.doc.url, fila.empresaId, fila.centroId, fila.proyectoId)"
+                      @if (puedeDoc('proyecto', 'eliminar')) {
+                      <button (click)="eliminarProyectoEnTodasEmpresas(fila.doc.url, fila.empresaId, fila.centroId, fila.proyectoId, fila.doc.nombre_display)"
                               style="padding:.35rem .65rem;border-radius:7px;border:none;background:#fef2f2;color:#dc2626;cursor:pointer;display:inline-flex;align-items:center;gap:.35rem;font-size:.72rem;font-weight:600;white-space:nowrap">
                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
                         Eliminar
                       </button>
+                      }
                     </div>
                   </div>
                 }
@@ -1341,21 +1449,25 @@
                     </div>
 
                     <div style="margin-left:auto;flex-shrink:0;display:flex;flex-direction:row;flex-wrap:wrap;justify-content:flex-end;gap:.35rem">
-                      <button (click)="abrirCambioEstado(s._id)"
-                              style="padding:.35rem .6rem;border-radius:7px;border:none;background:#eff6ff;color:#0095d6;cursor:pointer;display:flex;align-items:center;gap:.4rem;font-size:.78rem;font-weight:600;font-family:inherit;white-space:nowrap">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="m17 2 4 4-4 4"/><path d="M3 11v-1a4 4 0 0 1 4-4h14"/><path d="m7 22-4-4 4-4"/><path d="M21 13v1a4 4 0 0 1-4 4H3"/></svg>
-                        Cambiar estado
-                      </button>
+                      @if (authService.tienePermiso('solicitudes', 'cambiarEstado')) {
+                        <button (click)="abrirCambioEstado(s._id)"
+                                style="padding:.35rem .6rem;border-radius:7px;border:none;background:#eff6ff;color:#0095d6;cursor:pointer;display:flex;align-items:center;gap:.4rem;font-size:.78rem;font-weight:600;font-family:inherit;white-space:nowrap">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="m17 2 4 4-4 4"/><path d="M3 11v-1a4 4 0 0 1 4-4h14"/><path d="m7 22-4-4 4-4"/><path d="M21 13v1a4 4 0 0 1-4 4H3"/></svg>
+                          Cambiar estado
+                        </button>
+                      }
                       <button (click)="abrirEditarSolicitud(s)"
                               style="padding:.35rem .6rem;border-radius:7px;border:none;background:#f3f4f6;color:#374151;cursor:pointer;display:flex;align-items:center;gap:.4rem;font-size:.78rem;font-weight:600;font-family:inherit;white-space:nowrap">
                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/><path d="m15 5 4 4"/></svg>
                         Editar
                       </button>
-                      <button (click)="eliminarSolicitud(s._id)"
-                              style="padding:.35rem .6rem;border-radius:7px;border:none;background:#fef2f2;color:#dc2626;cursor:pointer;display:flex;align-items:center;gap:.4rem;font-size:.78rem;font-weight:600;font-family:inherit;white-space:nowrap">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
-                        Eliminar
-                      </button>
+                      @if (authService.tienePermiso('solicitudes', 'eliminar')) {
+                        <button (click)="eliminarSolicitud(s._id)"
+                                style="padding:.35rem .6rem;border-radius:7px;border:none;background:#fef2f2;color:#dc2626;cursor:pointer;display:flex;align-items:center;gap:.4rem;font-size:.78rem;font-weight:600;font-family:inherit;white-space:nowrap">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                          Eliminar
+                        </button>
+                      }
                     </div>
                   </div>
 
@@ -1410,8 +1522,7 @@
 
 <!-- ── Modal vencer documento ──────────────────────────────────────────── -->
 @if (modalVencer() !== null) {
-  <div style="position:fixed;inset:0;background:rgba(15,23,42,.45);display:flex;align-items:center;justify-content:center;z-index:200;padding:1rem"
-       (click)="cerrarModalVencer()">
+  <div style="position:fixed;inset:0;background:rgba(15,23,42,.45);display:flex;align-items:center;justify-content:center;z-index:200;padding:1rem">
     <div style="background:#fff;border-radius:16px;box-shadow:0 20px 60px rgba(15,23,42,.18);width:100%;max-width:480px;max-height:85vh;overflow-y:auto;padding:1.5rem"
          (click)="$event.stopPropagation()">
 
@@ -1532,8 +1643,7 @@
 
 <!-- Modal motivo de rechazo -->
 @if (rechazandoId()) {
-  <div style="position:fixed;inset:0;background:rgba(15,23,42,.45);display:flex;align-items:center;justify-content:center;z-index:200;padding:1rem"
-       (click)="cancelarRechazo()">
+  <div style="position:fixed;inset:0;background:rgba(15,23,42,.45);display:flex;align-items:center;justify-content:center;z-index:200;padding:1rem">
     <div style="background:#fff;border-radius:16px;box-shadow:0 20px 60px rgba(15,23,42,.18);width:100%;max-width:460px;padding:1.5rem"
          (click)="$event.stopPropagation()">
       <h3 style="margin:0 0 .5rem;font-size:1rem;font-weight:700;color:#111827">Rechazar solicitud</h3>

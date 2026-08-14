@@ -249,6 +249,13 @@ export class DocumentosService {
     return null;
   }
 
+  // El backend no devuelve un campo `url` al subir un documento (solo el POST de listado
+  // lo agrega vía addUrl()); hay que reconstruirlo a partir del mismo path base + el _id creado.
+  docUrl(tipo: DocTipo, docId: string, empresaId?: string, centroId?: string, proyectoId?: string): string | undefined {
+    const base = this.documentosUrl(tipo, empresaId, centroId, proyectoId);
+    return base ? `${base}/${docId}` : undefined;
+  }
+
   private recargarTras(tipo: DocTipo, empresaId: string, centroId?: string, proyectoId?: string): void {
     if (tipo === 'empresa') this.cargarEmpresa(empresaId);
     else if (tipo === 'centro' && centroId) this.cargarCentro(empresaId, centroId);
@@ -323,6 +330,25 @@ export class DocumentosService {
       },
       error: (err) => {
         this.setUploadStatus(tipo, { type: 'error', text: err?.error?.message ?? 'Error al cambiar la categoría' });
+        onError?.();
+      },
+    });
+  }
+
+  renombrarDocumento(docUrl: string, nuevoNombre: string, tipo: DocTipo, onSuccess?: () => void, onError?: () => void): void {
+    this.http.patch<DocumentoItem>(docUrl, { nombre_display: nuevoNombre }).subscribe({
+      next: (actualizado) => {
+        const patch = (list: DocumentoItem[]) =>
+          list.map(d => d._id === actualizado._id ? { ...d, nombre_display: actualizado.nombre_display } : d);
+        this.documentosEmpresa.update(patch);
+        this.documentosCentro.update(patch);
+        this.documentosProyecto.update(patch);
+        this.documentosPorCentro.update(grupos => grupos.map(g => ({ ...g, docs: patch(g.docs) })));
+        this.documentosPorProyecto.update(grupos => grupos.map(g => ({ ...g, docs: patch(g.docs) })));
+        onSuccess?.();
+      },
+      error: (err) => {
+        this.setUploadStatus(tipo, { type: 'error', text: err?.error?.message ?? 'Error al renombrar el documento' });
         onError?.();
       },
     });

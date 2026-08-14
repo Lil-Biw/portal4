@@ -64,7 +64,9 @@
 
   <!-- Zona derecha: acciones -->
   <div class="actions">
-    <span class="mode-chip">{{ modeLabel }}</span>
+    <span class="mode-chip">
+      {{ modeLabel }}@if (authService.usuarioActual()?.nombre) { : {{ authService.usuarioActual()!.nombre }} }
+    </span>
 
     @if (esAdmin && mode === 'admin') {
       <button class="toggle-btn" (click)="activarVistaConsumidor()" title="Previsualizar como consumidor">

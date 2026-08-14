@@ -15,7 +15,7 @@ import { ProfileService } from '../../../profile/profile.service';
 import { ConsumidorContextService } from '../../../profile/consumidor-context.service';
 import { SpiderChartComponent } from '../../../shared/components/spider-chart/spider-chart.component';
 import { Solicitud } from '../../solicitudes/solicitudes.service';
-import { asId, calcularScoreDocumental } from '../../../shared/utils';
+import { asId, confirmarEliminacion, calcularScoreDocumental } from '../../../shared/utils';
 
 type ModalMode = 'crear' | 'editar' | 'buscar' | 'score' | null;
 
@@ -106,7 +106,7 @@ export class ClientesPageComponent implements OnInit {
   private  readonly profileService        = inject(ProfileService);
   private  readonly consumidorContext     = inject(ConsumidorContextService);
   private  readonly router                = inject(Router);
-  private  readonly authService           = inject(AuthService);
+  protected readonly authService           = inject(AuthService);
   private  readonly http                  = inject(HttpClient);
   private  readonly api                   = inject(ApiService);
 
@@ -195,8 +195,6 @@ export class ClientesPageComponent implements OnInit {
   protected campoFuera(v: number): boolean {
     return !Number.isInteger(v) || v < 1 || v > 10;
   }
-
-  protected esAdminCliente = computed(() => this.authService.usuarioActual()?.rol === 'admin_smartclarity');
 
   protected clientesFiltrados = computed(() => {
     const base = this.service.clientes();
@@ -299,6 +297,8 @@ export class ClientesPageComponent implements OnInit {
   }
 
   protected eliminar(id: string): void {
+    const cliente = this.service.clientes().find(c => c._id === id);
+    if (cliente && !confirmarEliminacion(cliente.razon_social)) return;
     this.service.eliminar(id);
   }
 

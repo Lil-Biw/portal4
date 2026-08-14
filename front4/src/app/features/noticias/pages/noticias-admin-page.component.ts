@@ -3,6 +3,8 @@ import { FormsModule } from '@angular/forms';
 import { NoticiasService } from '../noticias.service';
 import { StatusBannerComponent } from '../../../shared/components/status-banner/status-banner.component';
 import { SECCIONES, SeccionNoticia, Noticia } from '../../../shared/models/noticia.model';
+import { AuthService } from '../../auth/auth.service';
+import { confirmarEliminacion } from '../../../shared/utils';
 
 @Component({
   selector: 'app-noticias-admin-page',
@@ -13,6 +15,7 @@ import { SECCIONES, SeccionNoticia, Noticia } from '../../../shared/models/notic
 })
 export class NoticiasAdminPageComponent implements OnInit {
   protected readonly service  = inject(NoticiasService);
+  protected readonly authService = inject(AuthService);
   protected readonly secciones = SECCIONES;
 
   protected showModal     = signal(false);
@@ -84,6 +87,8 @@ export class NoticiasAdminPageComponent implements OnInit {
 
   eliminar(event: MouseEvent, id: string): void {
     event.stopPropagation();
+    const noticia = this.service.noticias().find(n => n._id === id);
+    if (noticia && !confirmarEliminacion(noticia.titulo)) return;
     this.service.eliminar(id);
   }
 

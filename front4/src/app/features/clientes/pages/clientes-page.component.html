@@ -11,7 +11,7 @@
       </svg>
       Buscar
     </button>
-    @if (!esAdminCliente()) {
+    @if (authService.tienePermiso('empresas', 'crear')) {
       <button class="btn-primary" (click)="abrirCrear()">+ Crear empresa</button>
     }
   </div>
@@ -23,6 +23,8 @@
 <app-clientes-list
   [clientes]="clientesFiltrados()"
   [scoresPorEmpresa]="scoresPorEmpresa()"
+  [puedeEditar]="authService.tienePermiso('empresas', 'editar')"
+  [puedeEliminar]="authService.tienePermiso('empresas', 'eliminar')"
   (editado)="abrirEditar($event)"
   (eliminado)="eliminar($event)"
   (verFicha)="irAFicha($event)"
@@ -31,7 +33,7 @@
 
 <!-- ── Modal ──────────────────────────────────────────── -->
 @if (modal() !== null) {
-  <div class="modal-backdrop" (click)="cerrar()">
+  <div class="modal-backdrop">
     <div class="modal" (click)="$event.stopPropagation()">
 
     @if (modal() === 'crear') {
@@ -165,6 +167,8 @@
       <app-clientes-list
         [clientes]="clientesFiltrados()"
         [scoresPorEmpresa]="scoresPorEmpresa()"
+  [puedeEditar]="authService.tienePermiso('empresas', 'editar')"
+  [puedeEliminar]="authService.tienePermiso('empresas', 'eliminar')"
         (editado)="editarDesdeBuscar($event)"
         (eliminado)="eliminar($event)"
         (verFicha)="irAFicha($event)">

@@ -192,6 +192,32 @@ export function layoutPorHora<T extends { hora?: string | null; hora_termino?: s
   return out;
 }
 
+// ── Orden de listas de documentos (Recientes / Alfabético) ──────────────────
+// Compartido entre documentos-admin-page y documentos-consumidor-page: ambos
+// tienen varios métodos que arman listas (planas o agrupadas) de documentos
+// y necesitan el mismo criterio de orden sin duplicar el comparador en cada uno.
+
+export type OrdenDocumentos = 'alfabetico' | 'recientes';
+
+const collatorNombreDoc = new Intl.Collator('es', { sensitivity: 'base', numeric: true });
+
+export function ordenarPorDocumento<T>(
+  items: T[],
+  orden: OrdenDocumentos,
+  getDoc: (item: T) => { nombre_display: string; subido_en?: string },
+): T[] {
+  const resultado = [...items];
+  if (orden === 'recientes') {
+    resultado.sort((a, b) => {
+      const da = getDoc(a).subido_en, db = getDoc(b).subido_en;
+      return (db ? Date.parse(db) : 0) - (da ? Date.parse(da) : 0);
+    });
+  } else {
+    resultado.sort((a, b) => collatorNombreDoc.compare(getDoc(a).nombre_display, getDoc(b).nombre_display));
+  }
+  return resultado;
+}
+
 // ── Límite de tamaño de archivo (documentos) ─────────────────────────────────
 // Debe coincidir con el límite aplicado en el backend (S3Service / multer).
 
@@ -200,6 +226,14 @@ export const MAX_UPLOAD_SIZE_BYTES = 20 * 1024 * 1024;
 export function formatBytes(bytes: number): string {
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+// ── Confirmación de eliminaciones ────────────────────────────────────────────
+// Todos los botones de borrar del portal deben pasar por aquí antes de disparar
+// la llamada HTTP, para que el usuario confirme explícitamente la acción.
+
+export function confirmarEliminacion(nombre: string): boolean {
+  return window.confirm(`¿Seguro que desea eliminar "${nombre}"? Esta acción es permanente.`);
 }
 
 export function encodeQuery(params: Record<string, unknown>): string {

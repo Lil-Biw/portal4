@@ -148,7 +148,8 @@ import { FormsModule } from '@angular/forms';
         <label class="udf-field udf-link-block">
           <span class="udf-label">Link (Google Drive u otro)</span>
           <input type="url" class="udf-input" [class.udf-input--error]="linkInvalido"
-                 [(ngModel)]="link" (ngModelChange)="linkChange.emit($event)" placeholder="https://drive.google.com/…" />
+                 [(ngModel)]="link" (ngModelChange)="linkChange.emit($event)" placeholder="https://drive.google.com/…"
+                 (keydown.enter)="$event.preventDefault()" />
           @if (linkInvalido) {
             <span class="udf-error" style="margin-top:0">⚠ {{ mensajeLinkInvalido }}</span>
           }

@@ -10,7 +10,7 @@ import { ProyectoFormComponent } from '../components/proyecto-form/proyecto-form
 import { ProyectosListComponent } from '../components/proyectos-list/proyectos-list.component';
 import { ProyectoIconoComponent } from '../components/proyecto-icono/proyecto-icono.component';
 import { Proyecto, CreateProyectoDto, TipoProyecto } from '../../../shared/models/proyecto.model';
-import { asId } from '../../../shared/utils';
+import { asId, confirmarEliminacion } from '../../../shared/utils';
 import { AuthService } from '../../auth/auth.service';
 import { ICONOS_PROYECTO } from '../proyectos-icons';
 
@@ -176,12 +176,14 @@ export class ProyectosPageComponent implements OnInit {
   protected readonly tiposService     = inject(TiposProyectoService);
   protected readonly clientesService  = inject(ClientesService);
   protected readonly centrosService   = inject(CentrosService);
-  private readonly authService        = inject(AuthService);
+  protected readonly authService        = inject(AuthService);
 
   protected readonly iconosProyecto = ICONOS_PROYECTO;
 
   protected puedeGestionarTipos = computed(() =>
-    this.authService.usuarioActual()?.rol === 'super_admin'
+    this.authService.tienePermiso('catalogos', 'crear') ||
+    this.authService.tienePermiso('catalogos', 'editar') ||
+    this.authService.tienePermiso('catalogos', 'eliminar')
   );
 
   constructor() {
@@ -352,6 +354,7 @@ export class ProyectosPageComponent implements OnInit {
 
   protected eliminar(id: string): void {
     const proyecto = this.service.proyectos().find(p => p._id === id);
+    if (proyecto && !confirmarEliminacion(proyecto.nombre)) return;
     if (proyecto) this.service.seleccionar(proyecto);
     this.service.eliminar(id);
   }
@@ -406,5 +409,9 @@ export class ProyectosPageComponent implements OnInit {
     else     this.tiposService.crear(dto);
   }
 
-  protected eliminarTipo(id: string): void { this.tiposService.eliminar(id); }
+  protected eliminarTipo(id: string): void {
+    const tipo = this.tiposService.tipos().find(t => t._id === id);
+    if (tipo && !confirmarEliminacion(`el tipo de proyecto ${tipo.nombre}`)) return;
+    this.tiposService.eliminar(id);
+  }
 }

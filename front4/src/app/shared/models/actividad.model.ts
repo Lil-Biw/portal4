@@ -57,6 +57,7 @@ export interface CreateActividadDto {
   centro_costo_id: string;
   activo_ids?: string[];
   lider_id?: string;
+  lider_nombre?: string;
   fecha: string;
   fecha_termino?: string | null;
   hora?: string;
@@ -74,6 +75,7 @@ export interface UpdateActividadDto {
   centro_costo_id?: string;
   activo_ids?: string[];
   lider_id?: string;
+  lider_nombre?: string;
   fecha?: string;
   fecha_termino?: string | null;
   hora?: string;

@@ -4,16 +4,21 @@ import { ActivosService } from '../activos.service';
 import { TiposActivoService } from '../tipos-activo.service';
 import { CentrosService } from '../../centros/centros.service';
 import { ConsumidorContextService } from '../../../profile/consumidor-context.service';
+import { AuthService } from '../../auth/auth.service';
 import { ActivosListComponent } from '../components/activos-list/activos-list.component';
+import { ActivosFormComponent, DocPendiente } from '../components/activos-form/activos-form.component';
 import { ActivoRevisarModalComponent } from '../components/activo-revisar-modal/activo-revisar-modal.component';
-import { Activo, ActividadHistorialItem } from '../../../shared/models/activo.model';
-import { asId } from '../../../shared/utils';
+import { StatusBannerComponent } from '../../../shared/components/status-banner/status-banner.component';
+import { Activo, ActividadHistorialItem, CreateActivoDto, DocActivo } from '../../../shared/models/activo.model';
+import { asId, confirmarEliminacion } from '../../../shared/utils';
 import { esImagenDoc } from '../galeria-fotos.utils';
+
+type ActivoModal = 'crear' | 'editar' | null;
 
 @Component({
   selector: 'app-mis-activos-page',
   standalone: true,
-  imports: [FormsModule, ActivosListComponent, ActivoRevisarModalComponent],
+  imports: [FormsModule, StatusBannerComponent, ActivosListComponent, ActivoRevisarModalComponent, ActivosFormComponent],
   template: `
     <div class="page-header">
       <h2>Mis activos</h2>
@@ -26,9 +31,14 @@ import { esImagenDoc } from '../galeria-fotos.utils';
           (ngModelChange)="busqueda.set($event)"
           autofocus />
       }
-      <button class="btn-ghost" (click)="busquedaVisible.set(!busquedaVisible())">
-        {{ busquedaVisible() ? 'Cerrar' : 'Buscar' }}
-      </button>
+      <div class="header-actions">
+        <button class="btn-ghost" (click)="busquedaVisible.set(!busquedaVisible())">
+          {{ busquedaVisible() ? 'Cerrar' : 'Buscar' }}
+        </button>
+        @if (authService.tienePermiso('activos', 'crear')) {
+          <button class="btn-primary" (click)="abrirCrear()">+ Crear activo</button>
+        }
+      </div>
     </div>
 
     @if (service.loading()) {
@@ -39,14 +49,17 @@ import { esImagenDoc } from '../galeria-fotos.utils';
         [centros]="centrosService.centros()"
         [clientes]="clientes()"
         [tipos]="tiposService.tipos()"
-        [mostrarAcciones]="false"
+        [puedeEditar]="authService.tienePermiso('activos', 'editar')"
+        [puedeEliminar]="authService.tienePermiso('activos', 'eliminar')"
+        (editado)="abrirEditar($event)"
+        (eliminado)="eliminar($event)"
         (revisado)="abrirRevisar($event)">
       </app-activos-list>
     }
 
     @if (activoRevisando()) {
-      <div class="modal-backdrop" (click)="cerrarRevisar()">
-        <div class="modal" [style.max-width]="anchoModalRevisar" (click)="$event.stopPropagation()">
+      <div class="modal-backdrop">
+        <div class="modal modal-revisar" [style.max-width]="anchoModalRevisar" (click)="$event.stopPropagation()">
           <app-activo-revisar-modal
             [activo]="activoRevisando()"
             [historial]="service.historialActivo()"
@@ -64,6 +77,38 @@ import { esImagenDoc } from '../galeria-fotos.utils';
         </div>
       </div>
     }
+
+    @if (modal() !== null) {
+      <div class="modal-backdrop">
+        <div class="modal modal-form" (click)="$event.stopPropagation()">
+          <div class="modal-header">
+            <h3>{{ modal() === 'crear' ? 'Nuevo activo' : 'Editar activo' }}</h3>
+            <button class="modal-close" (click)="cerrarModal()">&#x2715;</button>
+          </div>
+          <app-status-banner [status]="service.status()"></app-status-banner>
+          <app-activos-form
+            [initial]="activoEditando()"
+            [clientes]="clientes()"
+            [centros]="centrosService.centros()"
+            [tipos]="tiposService.tipos()"
+            [editingId]="editingId()"
+            [docsPendientes]="docsPendientes"
+            [docsExistentes]="docsExistentes"
+            [subiendoCards]="subiendoCards()"
+            [eliminandoDocIds]="eliminandoDocIds()"
+            [submitLabel]="modal() === 'crear' ? 'Crear activo' : 'Guardar activo'"
+            (submitted)="onFormSubmitted($event)"
+            (cancelar)="cerrarModal()"
+            (docAgregado)="onDocAgregado($event)"
+            (docQuitado)="onDocQuitado($event)"
+            (docSubido)="onDocSubido($event)"
+            (docEliminado)="onDocEliminado($event)"
+            (docDescargado)="onDocDescargado($event)"
+            (docRenombrado)="onDocRenombrado($event)">
+          </app-activos-form>
+        </div>
+      </div>
+    }
   `,
   styles: [`
     .page-header {
@@ -73,6 +118,7 @@ import { esImagenDoc } from '../galeria-fotos.utils';
       margin-bottom: 1.25rem;
     }
     .page-header h2 { margin: 0; font-size: 1.25rem; font-weight: 700; color: #1f2937; flex: 1; }
+    .header-actions { display: flex; gap: .6rem; align-items: center; }
     .search-input {
       padding: .55rem .9rem;
       border-radius: 8px;
@@ -93,17 +139,45 @@ import { esImagenDoc } from '../galeria-fotos.utils';
       box-shadow: 0 20px 60px rgba(15,23,42,.18);
       width: 100%; max-height: 90vh; overflow-y: auto; padding: 1.5rem;
     }
+    .modal-revisar { max-width: 960px; }
+    .modal-form { max-width: 960px; }
+    .modal-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 1.25rem;
+    }
+    .modal-header h3 { margin: 0; font-size: 1.1rem; font-weight: 700; }
+    .modal-close {
+      background: none; border: none; font-size: 1.4rem; line-height: 1;
+      cursor: pointer; color: #6b7280; padding: 0 .25rem;
+    }
+    .modal-close:hover { color: #1f2937; }
   `],
 })
 export class MisActivosPageComponent implements OnInit {
   protected readonly service        = inject(ActivosService);
   protected readonly tiposService   = inject(TiposActivoService);
   protected readonly centrosService = inject(CentrosService);
+  protected readonly authService    = inject(AuthService);
   private   readonly ctx            = inject(ConsumidorContextService);
 
   protected busqueda        = signal('');
   protected busquedaVisible = signal(false);
   protected activoRevisando = signal<Activo | null>(null);
+
+  protected modal           = signal<ActivoModal>(null);
+  protected editingId       = signal<string | null>(null);
+  protected docsPendientes: DocPendiente[] = [];
+  protected subiendoCards   = signal<{ id: string; nombre: string }[]>([]);
+  protected eliminandoDocIds = signal<Set<string>>(new Set());
+
+  protected activoEditando = computed<Activo | null>(() => {
+    const id = this.editingId();
+    return id ? this.service.activos().find(a => a._id === id) ?? null : null;
+  });
+
+  protected get docsExistentes(): DocActivo[] {
+    return this.service.documentosActivo();
+  }
 
   protected get anchoModalRevisar(): string {
     const hayImagenes = this.service.documentosActivo().some(esImagenDoc);
@@ -184,5 +258,125 @@ export class MisActivosPageComponent implements OnInit {
     this.service.descargarDocumentoActividad(ev.actividadId, ev.centroId, ev.docId, ev.nombreDisplay);
   }
 
-  ngOnInit(): void {}
+  ngOnInit(): void {
+    this.tiposService.cargar();
+  }
+
+  // ── Modal crear/editar ───────────────────────────────────────────────────
+  abrirCrear(): void {
+    this.editingId.set(null);
+    this.docsPendientes = [];
+    this.subiendoCards.set([]);
+    this.eliminandoDocIds.set(new Set());
+    this.service.seleccionado.set(null);
+    this.service.clearStatus();
+    this.modal.set('crear');
+  }
+
+  abrirEditar(activo: Activo): void {
+    this.editingId.set(activo._id);
+    this.docsPendientes = [];
+    this.subiendoCards.set([]);
+    this.eliminandoDocIds.set(new Set());
+    this.service.seleccionar(activo);
+    this.service.listarDocumentos(activo._id, activo.centro_costo_id);
+    this.service.clearStatus();
+    this.modal.set('editar');
+  }
+
+  cerrarModal(): void {
+    this.modal.set(null);
+    this.editingId.set(null);
+    this.docsPendientes = [];
+    this.subiendoCards.set([]);
+    this.eliminandoDocIds.set(new Set());
+    this.service.seleccionado.set(null);
+    this.service.clearStatus();
+    this.service.resetDocumentos();
+  }
+
+  eliminar(id: string): void {
+    const activo = this.service.activos().find(a => a._id === id);
+    if (activo && !confirmarEliminacion(activo.nombre)) return;
+    if (activo) this.service.seleccionar(activo);
+    this.service.eliminar(id);
+  }
+
+  protected onFormSubmitted(dto: CreateActivoDto): void {
+    if (this.modal() === 'crear') {
+      this.service.crear(dto, (nuevo) => {
+        this.editingId.set(nuevo._id);
+        if (this.docsPendientes.length > 0) {
+          this.subirDocsPendientesSecuencial(nuevo._id, dto.centro_costo_id, 0);
+        } else {
+          this.cerrarModal();
+        }
+      });
+      return;
+    }
+    const id = this.service.seleccionado()?._id;
+    if (id) this.service.actualizar(id, dto, () => this.cerrarModal());
+  }
+
+  protected onDocAgregado(doc: DocPendiente): void {
+    this.docsPendientes = [...this.docsPendientes, doc];
+  }
+
+  protected onDocQuitado(localId: string): void {
+    this.docsPendientes = this.docsPendientes.filter(d => d.localId !== localId);
+  }
+
+  protected onDocSubido(doc: DocPendiente): void {
+    const activo = this.activoEditando();
+    if (!activo) return;
+    const tempId = `subiendo-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    this.subiendoCards.update(list => [...list, { id: tempId, nombre: doc.nombre }]);
+    const limpiar = () => this.subiendoCards.update(list => list.filter(c => c.id !== tempId));
+    if (doc.linkUrl) {
+      this.service.subirDocumentoLink(activo._id, activo.centro_costo_id, doc.linkUrl, doc.nombre, limpiar, limpiar);
+    } else if (doc.file) {
+      this.service.subirDocumento(activo._id, activo.centro_costo_id, doc.file, doc.nombre, limpiar, limpiar);
+    }
+  }
+
+  protected onDocEliminado(docId: string): void {
+    const activo = this.activoEditando();
+    if (!activo) return;
+    const nombre = this.service.documentosActivo().find(d => d._id === docId)?.nombre_display;
+    if (!confirmarEliminacion(nombre ?? 'este documento')) return;
+    this.eliminandoDocIds.update(set => new Set(set).add(docId));
+    const limpiar = () => this.eliminandoDocIds.update(set => {
+      const copia = new Set(set);
+      copia.delete(docId);
+      return copia;
+    });
+    this.service.eliminarDocumento(activo._id, activo.centro_costo_id, docId, limpiar, limpiar);
+  }
+
+  protected onDocDescargado(ev: { docId: string; nombreDisplay?: string }): void {
+    const activo = this.activoEditando();
+    if (!activo) return;
+    this.service.descargarDocumento(activo._id, activo.centro_costo_id, ev.docId, ev.nombreDisplay);
+  }
+
+  protected onDocRenombrado(ev: { id: string; nuevoNombre: string }): void {
+    const activo = this.activoEditando();
+    if (!activo) return;
+    this.service.renombrarDocumento(activo._id, activo.centro_costo_id, ev.id, ev.nuevoNombre);
+  }
+
+  private subirDocsPendientesSecuencial(activoId: string, centroId: string, index: number): void {
+    if (index >= this.docsPendientes.length) {
+      this.docsPendientes = [];
+      this.cerrarModal();
+      return;
+    }
+    const { file, linkUrl, nombre } = this.docsPendientes[index];
+    const onSuccess = () => this.subirDocsPendientesSecuencial(activoId, centroId, index + 1);
+    if (linkUrl) {
+      this.service.subirDocumentoLink(activoId, centroId, linkUrl, nombre, onSuccess);
+    } else if (file) {
+      this.service.subirDocumento(activoId, centroId, file, nombre, onSuccess);
+    }
+  }
 }

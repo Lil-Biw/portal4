@@ -20,13 +20,14 @@ import {
   SuscripcionesDto,
   ActualizarPermisosDto,
 } from './usuarios.dto';
-import { Roles } from '../common/guards/guards';
+import { Roles, RequiereAccion } from '../common/guards/guards';
 
 interface JwtUser {
   sub: string;
   email: string;
   rol: string;
   cliente_id?: string;
+  permisos?: Record<string, Record<string, boolean>>;
 }
 
 @Controller('usuarios')
@@ -34,12 +35,13 @@ export class UsuariosController {
   constructor(private readonly usuariosService: UsuariosService) {}
 
   @Post()
-  @Roles('super_admin', 'admin_smartclarity')
+  @RequiereAccion('usuarios', 'crear')
   create(@Body() dto: CreateUsuarioDto, @Req() req: Request) {
     const user = (req as any).user as JwtUser;
-    if (user?.rol === 'admin_smartclarity') {
+    const puedeCrearAdmin = user?.rol === 'super_admin' || user?.permisos?.usuarios?.crearAdmin === true;
+    if (!puedeCrearAdmin) {
       if (dto.rol && dto.rol !== 'usuario') {
-        throw new ForbiddenException('Solo puedes crear usuarios con rol "usuario"');
+        throw new ForbiddenException('No tienes permiso para crear usuarios con ese rol');
       }
       return this.usuariosService.create({ ...dto, rol: 'usuario' });
     }
@@ -64,16 +66,17 @@ export class UsuariosController {
   }
 
   @Put(':id')
-  @Roles('super_admin', 'admin_smartclarity')
+  @RequiereAccion('usuarios', 'editar')
   update(
     @Param('id') id: string,
     @Body() dto: UpdateUsuarioDto,
     @Req() req: Request,
   ) {
     const user = (req as any).user as JwtUser;
-    if (user?.rol === 'admin_smartclarity') {
+    const puedeCrearAdmin = user?.rol === 'super_admin' || user?.permisos?.usuarios?.crearAdmin === true;
+    if (!puedeCrearAdmin) {
       if (dto.rol && dto.rol !== 'usuario') {
-        throw new ForbiddenException('Solo puedes asignar el rol "usuario"');
+        throw new ForbiddenException('No tienes permiso para asignar ese rol');
       }
       return this.usuariosService.update(id, { ...dto, rol: 'usuario' });
     }
@@ -81,7 +84,7 @@ export class UsuariosController {
   }
 
   @Delete(':id')
-  @Roles('super_admin', 'admin_smartclarity')
+  @RequiereAccion('usuarios', 'eliminar')
   remove(@Param('id') id: string) {
     return this.usuariosService.remove(id);
   }

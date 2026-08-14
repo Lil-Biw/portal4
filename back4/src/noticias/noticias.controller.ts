@@ -7,7 +7,7 @@ import { OPCIONES_SUBIDA } from '../common/constants/upload.constants';
 import { Response } from 'express';
 import { NoticiasService } from './noticias.service';
 import { CreateNoticiaDto } from './noticias.dto';
-import { Roles, Public } from '../common/guards/guards';
+import { Public, RequiereAccion } from '../common/guards/guards';
 
 @Controller('noticias')
 export class NoticiasController {
@@ -32,13 +32,13 @@ export class NoticiasController {
   }
 
   @Post()
-  @Roles('super_admin')
+  @RequiereAccion('noticias', 'crear')
   create(@Body() dto: CreateNoticiaDto) {
     return this.noticiasService.create(dto);
   }
 
   @Post(':id/imagen')
-  @Roles('super_admin')
+  @RequiereAccion('noticias', 'crear')
   @UseInterceptors(FileInterceptor('imagen', OPCIONES_SUBIDA))
   subirImagen(
     @Param('id') id: string,
@@ -48,7 +48,7 @@ export class NoticiasController {
   }
 
   @Delete(':id')
-  @Roles('super_admin')
+  @RequiereAccion('noticias', 'eliminar')
   remove(@Param('id') id: string) {
     return this.noticiasService.remove(id);
   }

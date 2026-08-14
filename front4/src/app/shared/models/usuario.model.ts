@@ -36,6 +36,7 @@ export interface CreateUsuarioDto {
   rol?: RolUsuario;
   permiso_acceso?: PermisoAcceso;
   centros_asignados?: string[];
+  permisos?: PermisosUsuario;
 }
 
 export interface UpdateUsuarioDto {
@@ -44,4 +45,5 @@ export interface UpdateUsuarioDto {
   rol?: RolUsuario;
   permiso_acceso?: PermisoAcceso;
   centros_asignados?: string[];
+  permisos?: PermisosUsuario;
 }

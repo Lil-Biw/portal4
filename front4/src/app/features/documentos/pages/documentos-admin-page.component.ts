@@ -1,4 +1,5 @@
 import { Component, OnInit, inject, signal, computed, effect } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpEvent, HttpEventType } from '@angular/common/http';
 import { DocumentosService, DocTipo, CATEGORIAS_DOCUMENTO, DocumentoItem, DocumentoVencidoItem, DocBusquedaItem } from '../documentos.service';
@@ -14,7 +15,7 @@ import { UploadDocumentFormComponent } from '../../../shared/components/upload-d
 import { DocumentCardListComponent } from '../../../shared/components/document-card-list/document-card-list.component';
 import { DocumentoTarjeta } from '../../../shared/models/documento-tarjeta.model';
 import { createUploadQueue } from '../../../shared/upload-queue-state';
-import { asId, detectarCategoriaDocumento, formatFechaHora, formatBytes, MAX_UPLOAD_SIZE_BYTES, usuarioEstaSuscrito } from '../../../shared/utils';
+import { asId, confirmarEliminacion, detectarCategoriaDocumento, formatFechaHora, formatBytes, MAX_UPLOAD_SIZE_BYTES, usuarioEstaSuscrito, ordenarPorDocumento, OrdenDocumentos } from '../../../shared/utils';
 import { Usuario } from '../../../shared/models/usuario.model';
 
 interface PanelState {
@@ -43,9 +44,9 @@ export interface FilaDocTodos {
   doc: DocBusquedaItem;
 }
 
-export type OrdenTodos = 'alfabetico' | 'nivel_empresa' | 'nivel_centro' | 'nivel_proyecto';
+export type OrdenTodos = 'alfabetico' | 'recientes' | 'nivel_empresa' | 'nivel_centro' | 'nivel_proyecto';
 
-const RANGOS_POR_MODO: Record<Exclude<OrdenTodos, 'alfabetico'>, DocTipo[]> = {
+const RANGOS_POR_MODO: Record<Exclude<OrdenTodos, 'alfabetico' | 'recientes'>, DocTipo[]> = {
   nivel_empresa:  ['empresa', 'centro', 'proyecto'],
   nivel_centro:   ['centro', 'proyecto', 'empresa'],
   nivel_proyecto: ['proyecto', 'empresa', 'centro'],
@@ -55,6 +56,13 @@ export function ordenarFilasTodos(filas: FilaDocTodos[], modo: OrdenTodos): Fila
   const resultado = [...filas];
   if (modo === 'alfabetico') {
     resultado.sort((a, b) => collatorNombre.compare(a.doc.nombre_display, b.doc.nombre_display));
+    return resultado;
+  }
+  if (modo === 'recientes') {
+    resultado.sort((a, b) => {
+      const da = a.doc.subido_en, db = b.doc.subido_en;
+      return (db ? Date.parse(db) : 0) - (da ? Date.parse(da) : 0);
+    });
     return resultado;
   }
   const rango = RANGOS_POR_MODO[modo];
@@ -82,7 +90,7 @@ export interface EstadoDestino {
 @Component({
   selector: 'app-documentos-admin-page',
   standalone: true,
-  imports: [FormsModule, StatusBannerComponent, UploadBubbleComponent, UploadDocumentFormComponent, DocumentCardListComponent],
+  imports: [NgTemplateOutlet, FormsModule, StatusBannerComponent, UploadBubbleComponent, UploadDocumentFormComponent, DocumentCardListComponent],
   templateUrl: './documentos-admin-page.component.html',
 })
 export class DocumentosAdminPageComponent implements OnInit {
@@ -92,12 +100,17 @@ export class DocumentosAdminPageComponent implements OnInit {
   protected readonly proyectosService   = inject(ProyectosService);
   protected readonly solicitudesService = inject(SolicitudesService);
   protected readonly usuariosService    = inject(UsuariosService);
-  private  readonly authService         = inject(AuthService);
+  protected readonly authService         = inject(AuthService);
 
-  protected readonly puedeVencer = computed(() => {
-    const rol = this.authService.usuarioActual()?.rol ?? '';
-    return rol === 'super_admin' || rol === 'admin_smartclarity';
-  });
+  private seccionDoc(tipo?: DocTipo): 'docEmpresa' | 'docCentro' | 'docProyecto' {
+    if (tipo === 'empresa') return 'docEmpresa';
+    if (tipo === 'proyecto') return 'docProyecto';
+    return 'docCentro';
+  }
+
+  protected puedeDoc(tipo: DocTipo | undefined, accion: 'subir' | 'editarCategoria' | 'vencer' | 'eliminar'): boolean {
+    return this.authService.tienePermiso(this.seccionDoc(tipo), accion);
+  }
 
   protected readonly categorias = CATEGORIAS_DOCUMENTO;
 
@@ -116,8 +129,15 @@ export class DocumentosAdminPageComponent implements OnInit {
 
   protected tabJerarquia    = signal<'todos' | 'empresa' | 'centro' | 'proyecto'>('todos');
   protected ordenTodos      = signal<OrdenTodos>('alfabetico');
+  protected ordenEmpresa    = signal<OrdenDocumentos>('alfabetico');
+  protected ordenCentro     = signal<OrdenDocumentos>('alfabetico');
+  protected ordenProyecto   = signal<OrdenDocumentos>('alfabetico');
   protected tabAdminActiva  = signal<'documentacion' | 'solicitudes'>('documentacion');
   protected tabDocAdmin     = signal<'activos' | 'vencidos'>('activos');
+
+  protected ordenParaTipo(tipo: FiltroTipo) {
+    return tipo === 'empresa' ? this.ordenEmpresa : tipo === 'centro' ? this.ordenCentro : this.ordenProyecto;
+  }
 
   protected showSolicitudForm   = signal(false);
   protected creandoSolicitud    = signal(false);
@@ -644,9 +664,18 @@ export class DocumentosAdminPageComponent implements OnInit {
     }
   }
 
+  onRenombrarTarjeta(event: { id: string; nuevoNombre: string }, tipo: DocTipo): void {
+    const item = this.uploadQueue.items().find(i => i.id === event.id);
+    if (item?.estado === 'listo' && item.docUrl) {
+      this.service.renombrarDocumento(item.docUrl, event.nuevoNombre, tipo,
+        () => this.uploadQueue.actualizarNombre(event.id, event.nuevoNombre));
+    }
+  }
+
   onEliminarTarjeta(id: string, tipo: DocTipo): void {
     const item = this.uploadQueue.items().find(i => i.id === id);
     if (item?.estado === 'listo' && item.docUrl) {
+      if (!confirmarEliminacion(item.nombre ?? 'este documento')) return;
       this.service.eliminar(item.docUrl, tipo, this.selectedEmpresaId, this.selectedCentroId || undefined, this.selectedProyectoId || undefined,
         () => { this.uploadQueue.quitar(id); this.retryContext.delete(id); this.recargarDocs(); });
       return;
@@ -730,7 +759,9 @@ export class DocumentosAdminPageComponent implements OnInit {
           if (event.type === HttpEventType.UploadProgress && event.total) {
             this.uploadQueue.actualizarProgreso(id, Math.round((100 * event.loaded) / event.total));
           } else if (event.type === HttpEventType.Response) {
-            const docUrl = event.body?.url;
+            const docUrl = event.body?._id
+              ? this.service.docUrl(ctx.tipo, event.body._id, ctx.empresaId, ctx.centroId, ctx.proyectoId)
+              : undefined;
             this.uploadQueue.marcarListo(id, docUrl);
             if (docUrl) {
               const item = this.uploadQueue.items().find(i => i.id === id);
@@ -767,12 +798,16 @@ export class DocumentosAdminPageComponent implements OnInit {
   filteredDocsPorCentro() {
     const { busqueda, filtrosCategorias } = this.panels['centro'];
     const term = busqueda.trim().toLowerCase();
+    const orden = this.ordenCentro();
     return this.service.documentosPorCentro()
       .map(item => ({
         ...item,
-        docs: item.docs
-          .filter(d => !filtrosCategorias.length || filtrosCategorias.includes(d.categoria ?? ''))
-          .filter(d => !term || d.nombre_display.toLowerCase().includes(term)),
+        docs: ordenarPorDocumento(
+          item.docs
+            .filter(d => !filtrosCategorias.length || filtrosCategorias.includes(d.categoria ?? ''))
+            .filter(d => !term || d.nombre_display.toLowerCase().includes(term)),
+          orden, d => d,
+        ),
       }))
       .filter(item => item.docs.length > 0);
   }
@@ -780,12 +815,16 @@ export class DocumentosAdminPageComponent implements OnInit {
   filteredDocsPorProyecto() {
     const { busqueda, filtrosCategorias } = this.panels['proyecto'];
     const term = busqueda.trim().toLowerCase();
+    const orden = this.ordenProyecto();
     return this.service.documentosPorProyecto()
       .map(item => ({
         ...item,
-        docs: item.docs
-          .filter(d => !filtrosCategorias.length || filtrosCategorias.includes(d.categoria ?? ''))
-          .filter(d => !term || d.nombre_display.toLowerCase().includes(term)),
+        docs: ordenarPorDocumento(
+          item.docs
+            .filter(d => !filtrosCategorias.length || filtrosCategorias.includes(d.categoria ?? ''))
+            .filter(d => !term || d.nombre_display.toLowerCase().includes(term)),
+          orden, d => d,
+        ),
       }))
       .filter(item => item.docs.length > 0);
   }
@@ -804,9 +843,10 @@ export class DocumentosAdminPageComponent implements OnInit {
       : this.service.documentosProyecto();
     const { filtrosCategorias, busqueda } = this.panels[tipo];
     const term = busqueda.trim().toLowerCase();
-    return docs
+    const filtrados = docs
       .filter(d => !filtrosCategorias.length || filtrosCategorias.includes(d.categoria ?? ''))
       .filter(d => !term || d.nombre_display.toLowerCase().includes(term));
+    return ordenarPorDocumento(filtrados, this.ordenParaTipo(tipo)(), d => d);
   }
 
   docsEmpresaTodas(): { doc: DocBusquedaItem; empresaId: string; empresaNombre: string }[] {
@@ -816,9 +856,10 @@ export class DocumentosAdminPageComponent implements OnInit {
     for (const empresa of this.service.documentosTodasEmpresas()) {
       for (const doc of empresa.documentos) filas.push({ doc, empresaId: empresa._id, empresaNombre: empresa.nombre });
     }
-    return filas
+    const filtradas = filas
       .filter(f => !filtrosCategorias.length || filtrosCategorias.includes(f.doc.categoria ?? ''))
       .filter(f => !term || f.doc.nombre_display.toLowerCase().includes(term));
+    return ordenarPorDocumento(filtradas, this.ordenEmpresa(), f => f.doc);
   }
 
   docsCentroTodas(): { doc: DocBusquedaItem; empresaId: string; empresaNombre: string; centroId: string; centroNombre: string }[] {
@@ -832,9 +873,10 @@ export class DocumentosAdminPageComponent implements OnInit {
         }
       }
     }
-    return filas
+    const filtradas = filas
       .filter(f => !filtrosCategorias.length || filtrosCategorias.includes(f.doc.categoria ?? ''))
       .filter(f => !term || f.doc.nombre_display.toLowerCase().includes(term));
+    return ordenarPorDocumento(filtradas, this.ordenCentro(), f => f.doc);
   }
 
   docsProyectoTodas(): { doc: DocBusquedaItem; empresaId: string; empresaNombre: string; centroId: string; centroNombre: string; proyectoId: string; proyectoNombre: string }[] {
@@ -854,12 +896,14 @@ export class DocumentosAdminPageComponent implements OnInit {
         }
       }
     }
-    return filas
+    const filtradas = filas
       .filter(f => !filtrosCategorias.length || filtrosCategorias.includes(f.doc.categoria ?? ''))
       .filter(f => !term || f.doc.nombre_display.toLowerCase().includes(term));
+    return ordenarPorDocumento(filtradas, this.ordenProyecto(), f => f.doc);
   }
 
-  eliminar(docUrl: string, tipo: DocTipo): void {
+  eliminar(docUrl: string, tipo: DocTipo, nombre?: string): void {
+    if (nombre !== undefined && !confirmarEliminacion(nombre)) return;
     this.service.eliminar(docUrl, tipo, this.selectedEmpresaId, this.selectedCentroId || undefined, this.selectedProyectoId || undefined);
   }
 
@@ -889,34 +933,40 @@ export class DocumentosAdminPageComponent implements OnInit {
     else this.service.descargar(d.url, d.nombre_display);
   }
 
-  eliminarEnTodosCentros(docUrl: string): void {
+  eliminarEnTodosCentros(docUrl: string, nombre?: string): void {
+    if (nombre !== undefined && !confirmarEliminacion(nombre)) return;
     const empresaId = this.selectedEmpresaId;
     this.service.eliminar(docUrl, 'centro', empresaId, undefined, undefined,
       () => this.service.cargarTodosCentros(empresaId, this.centrosFiltrados));
   }
 
-  eliminarEnTodosProyectos(docUrl: string): void {
+  eliminarEnTodosProyectos(docUrl: string, nombre?: string): void {
+    if (nombre !== undefined && !confirmarEliminacion(nombre)) return;
     const empresaId = this.selectedEmpresaId;
     const todos = this.proyectosService.proyectos().filter(p => asId(p.cliente_id) === empresaId);
     this.service.eliminar(docUrl, 'proyecto', empresaId, undefined, undefined,
       () => this.service.cargarTodosProyectos(empresaId, todos, this.centrosFiltrados));
   }
 
-  eliminarEnTodos(docUrl: string): void {
+  eliminarEnTodos(docUrl: string, nombre?: string): void {
+    if (nombre !== undefined && !confirmarEliminacion(nombre)) return;
     this.service.eliminar(docUrl, 'empresa', '', undefined, undefined, () => this.refrescarBusquedaCascada());
   }
 
-  eliminarEnTodasEmpresas(docUrl: string, empresaId: string): void {
+  eliminarEnTodasEmpresas(docUrl: string, empresaId: string, nombre?: string): void {
+    if (nombre !== undefined && !confirmarEliminacion(nombre)) return;
     this.service.eliminar(docUrl, 'empresa', empresaId, undefined, undefined,
       () => this.service.cargarTodasEmpresas());
   }
 
-  eliminarCentroEnTodasEmpresas(docUrl: string, empresaId: string, centroId: string): void {
+  eliminarCentroEnTodasEmpresas(docUrl: string, empresaId: string, centroId: string, nombre?: string): void {
+    if (nombre !== undefined && !confirmarEliminacion(nombre)) return;
     this.service.eliminar(docUrl, 'centro', empresaId, centroId, undefined,
       () => this.service.cargarTodasEmpresas());
   }
 
-  eliminarProyectoEnTodasEmpresas(docUrl: string, empresaId: string, centroId: string, proyectoId: string): void {
+  eliminarProyectoEnTodasEmpresas(docUrl: string, empresaId: string, centroId: string, proyectoId: string, nombre?: string): void {
+    if (nombre !== undefined && !confirmarEliminacion(nombre)) return;
     this.service.eliminar(docUrl, 'proyecto', empresaId, centroId, proyectoId,
       () => this.service.cargarTodasEmpresas());
   }
@@ -1118,7 +1168,11 @@ export class DocumentosAdminPageComponent implements OnInit {
     this.solicitudEditando.set(null);
   }
 
-  eliminarSolicitud(id: string): void { this.solicitudesService.eliminarSolicitud(id); }
+  eliminarSolicitud(id: string): void {
+    const solicitud = this.solicitudesService.solicitudes().find(s => s._id === id);
+    if (solicitud && !confirmarEliminacion(solicitud.nombre)) return;
+    this.solicitudesService.eliminarSolicitud(id);
+  }
 
   estadosDestino(actual: EstadoSolicitud): EstadoDestino[] {
     const map: Record<EstadoSolicitud, EstadoDestino[]> = {

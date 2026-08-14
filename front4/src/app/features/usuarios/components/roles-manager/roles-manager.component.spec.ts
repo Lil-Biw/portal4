@@ -18,7 +18,7 @@ describe('RolesManagerComponent', () => {
     fixture.detectChanges();
     const el = fixture.nativeElement as HTMLElement;
     expect(el.textContent).toContain('Administrador');
-    expect(el.textContent).toContain('1/43 permisos activos');
+    expect(el.textContent).toContain('1/44 permisos activos');
   });
 
   it('muestra el mensaje vacío cuando no hay roles', () => {

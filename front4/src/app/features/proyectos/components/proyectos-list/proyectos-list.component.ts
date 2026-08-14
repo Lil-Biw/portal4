@@ -145,6 +145,8 @@ export class ProyectosListComponent {
   @Input() centros:   CentroCosto[] = [];
   @Input() tipos:     TipoProyecto[] = [];
   @Input() seleccionadoId: string | null = null;
+  @Input() puedeEditar = true;
+  @Input() puedeEliminar = true;
   @Output() editado   = new EventEmitter<Proyecto>();
   @Output() eliminado = new EventEmitter<string>();
 

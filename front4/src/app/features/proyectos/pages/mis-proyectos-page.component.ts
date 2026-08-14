@@ -1,18 +1,23 @@
-import { Component, inject, computed, signal, effect } from '@angular/core';
+import { Component, OnInit, inject, computed, signal, effect } from '@angular/core';
 import { Router } from '@angular/router';
 import { ProyectosService } from '../proyectos.service';
 import { CentrosService } from '../../centros/centros.service';
 import { SolicitudesService } from '../../solicitudes/solicitudes.service';
 import { DocumentosService } from '../../documentos/documentos.service';
+import { TiposProyectoService } from '../tipos-proyecto.service';
 import { ConsumidorContextService } from '../../../profile/consumidor-context.service';
 import { DonutArcComponent } from '../../../shared/components/donut-arc/donut-arc.component';
-import { Proyecto, EstadoProyecto, ESTADO_PROYECTO_LABEL } from '../../../shared/models/proyecto.model';
-import { asId, calcularScoreDocumental } from '../../../shared/utils';
+import { ProyectoFormComponent } from '../components/proyecto-form/proyecto-form.component';
+import { AuthService } from '../../auth/auth.service';
+import { Proyecto, EstadoProyecto, ESTADO_PROYECTO_LABEL, CreateProyectoDto } from '../../../shared/models/proyecto.model';
+import { asId, confirmarEliminacion, calcularScoreDocumental } from '../../../shared/utils';
+
+type ProyectoModal = 'crear' | 'editar' | null;
 
 @Component({
   selector: 'app-mis-proyectos-page',
   standalone: true,
-  imports: [DonutArcComponent],
+  imports: [DonutArcComponent, ProyectoFormComponent],
   templateUrl: './mis-proyectos-page.component.html',
   styles: [`
     .proyecto-card {
@@ -24,20 +29,94 @@ import { asId, calcularScoreDocumental } from '../../../shared/utils';
       box-shadow: 0 4px 16px rgba(0,149,214,.18);
       border-color: rgba(0,149,214,.35);
     }
+
+    .btn-icon-sq {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 30px;
+      height: 30px;
+      border: 1px solid #d1d5db;
+      border-radius: 7px;
+      background: none;
+      cursor: pointer;
+      color: #6b7280;
+      transition: border-color .15s, color .15s, background .15s;
+    }
+    .btn-icon-sq:hover { border-color: #0095d6; color: #0095d6; background: rgba(0,149,214,.06); }
+    .btn-action-danger { color: #f87171; }
+    .btn-action-danger:hover { color: #ef4444; background: rgba(239,68,68,.08); }
+
+    .page-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 1rem;
+      margin-bottom: 1.25rem;
+      flex-wrap: wrap;
+    }
+    .header-actions { display: flex; gap: .6rem; align-items: center; }
+
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(15,23,42,.45);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      padding: 1rem;
+    }
+    .modal {
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 20px 60px rgba(15,23,42,.18);
+      width: 100%;
+      max-width: 640px;
+      max-height: 85vh;
+      overflow-y: auto;
+      padding: 1.5rem;
+    }
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.25rem;
+    }
+    .modal-header h3 { margin: 0; font-size: 1.1rem; font-weight: 700; }
+    .modal-close {
+      background: none;
+      border: none;
+      font-size: 1.4rem;
+      line-height: 1;
+      cursor: pointer;
+      color: #6b7280;
+      padding: 0 .25rem;
+    }
+    .modal-close:hover { color: #1f2937; }
   `],
 })
-export class MisProyectosPageComponent {
+export class MisProyectosPageComponent implements OnInit {
   private  readonly consumidorContext   = inject(ConsumidorContextService);
   private  readonly router              = inject(Router);
   protected readonly proyectosService   = inject(ProyectosService);
   protected readonly centrosService     = inject(CentrosService);
   protected readonly solicitudesService = inject(SolicitudesService);
   private  readonly documentosService   = inject(DocumentosService);
+  protected readonly tiposService       = inject(TiposProyectoService);
+  protected readonly authService        = inject(AuthService);
 
+  protected modal            = signal<ProyectoModal>(null);
   protected mostrarBuscar = signal(false);
   protected busqueda      = signal('');
 
   get empresa() { return this.consumidorContext.empresaSeleccionada(); }
+
+  protected centrosDeLaEmpresa = computed(() => {
+    const emp = this.empresa;
+    if (!emp) return [];
+    return this.centrosService.centros().filter(c => asId(c.cliente_id) === asId(emp._id));
+  });
 
   protected proyectos = computed(() => {
     const emp = this.consumidorContext.empresaSeleccionada();
@@ -101,6 +180,7 @@ export class MisProyectosPageComponent {
       const emp = this.consumidorContext.empresaSeleccionada();
       if (emp) {
         this.proyectosService.cargarPorEmpresa(emp._id);
+        this.centrosService.cargarPorEmpresa(emp._id);
         this.solicitudesService.cargar(emp._id);
       }
     });
@@ -113,6 +193,16 @@ export class MisProyectosPageComponent {
       if (!emp) return;
       this.documentosService.cargarTodosProyectos(emp._id, proyectos, centros);
     });
+
+    effect(() => {
+      if (this.proyectosService.status()?.type === 'ok' && this.modal() !== null) {
+        this.cerrarModal();
+      }
+    });
+  }
+
+  ngOnInit(): void {
+    this.tiposService.cargar();
   }
 
 
@@ -128,5 +218,41 @@ export class MisProyectosPageComponent {
   verDetalle(proyecto: Proyecto): void {
     this.consumidorContext.seleccionarProyecto(proyecto);
     this.router.navigate(['/mis-proyectos', proyecto._id]);
+  }
+
+  // ── Modal crear/editar ───────────────────────────────────────────────────
+  abrirCrear(): void {
+    const emp = this.empresa;
+    if (!emp) return;
+    this.proyectosService.seleccionado.set(null);
+    this.proyectosService.centrosSeleccionados.set([]);
+    this.proyectosService.clearStatus();
+    this.modal.set('crear');
+  }
+
+  abrirEditar(proyecto: Proyecto): void {
+    this.proyectosService.seleccionar(proyecto);
+    this.proyectosService.clearStatus();
+    this.modal.set('editar');
+  }
+
+  cerrarModal(): void {
+    this.modal.set(null);
+    this.proyectosService.seleccionado.set(null);
+    this.proyectosService.centrosSeleccionados.set([]);
+    this.proyectosService.clearStatus();
+  }
+
+  crear(dto: CreateProyectoDto): void { this.proyectosService.crear(dto); }
+
+  actualizar(dto: CreateProyectoDto): void {
+    const id = this.proyectosService.seleccionado()?._id;
+    if (id) this.proyectosService.actualizar(id, dto);
+  }
+
+  eliminarProyecto(proyecto: Proyecto): void {
+    if (!confirmarEliminacion(proyecto.nombre)) return;
+    this.proyectosService.seleccionar(proyecto);
+    this.proyectosService.eliminar(proyecto._id);
   }
 }

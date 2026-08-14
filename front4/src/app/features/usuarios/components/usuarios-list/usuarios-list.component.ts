@@ -100,6 +100,8 @@ export class UsuariosListComponent {
   @Input() usuarios: Usuario[] = [];
   @Input() seleccionadoId: string | null = null;
   @Input() usuarioActualId: string | null = null;
+  @Input() puedeEditar = true;
+  @Input() puedeEliminar = true;
   @Output() editado        = new EventEmitter<Usuario>();
   @Output() eliminado      = new EventEmitter<string>();
   @Output() suscripciones  = new EventEmitter<Usuario>();

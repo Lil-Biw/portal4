@@ -9,7 +9,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { OPCIONES_SUBIDA } from '../common/constants/upload.constants';
 import { SolicitudesService } from './solicitudes.service';
 import { CreateSolicitudDto, UpdateSolicitudDto, CambiarEstadoDto } from './solicitudes.dto';
-import { EmpresaAccessGuard, Roles } from '../common/guards/guards';
+import { EmpresaAccessGuard, Roles, RequiereAccion } from '../common/guards/guards';
 
 interface JwtUser {
   sub: string;
@@ -22,7 +22,7 @@ export class SolicitudesController {
   constructor(private readonly solicitudesService: SolicitudesService) {}
 
   @Post()
-  @Roles('super_admin', 'admin_smartclarity')
+  @RequiereAccion('solicitudes', 'crear')
   create(@Param('empresaId') empresaId: string, @Body() dto: CreateSolicitudDto) {
     return this.solicitudesService.create({ ...dto, empresa_id: empresaId });
   }
@@ -48,13 +48,13 @@ export class SolicitudesController {
   }
 
   @Delete(':solicitudId')
-  @Roles('super_admin', 'admin_smartclarity')
+  @RequiereAccion('solicitudes', 'eliminar')
   remove(@Param('empresaId') empresaId: string, @Param('solicitudId') solicitudId: string) {
     return this.solicitudesService.remove(solicitudId, empresaId);
   }
 
   @Put(':solicitudId/estado')
-  @Roles('super_admin', 'admin_smartclarity')
+  @RequiereAccion('solicitudes', 'cambiarEstado')
   cambiarEstado(
     @Param('empresaId') empresaId: string,
     @Param('solicitudId') solicitudId: string,

@@ -15,7 +15,7 @@ import { ActividadIconoComponent } from '../components/actividad-icono/actividad
 import { Actividad, TipoActividad } from '../../../shared/models/actividad.model';
 import { DocumentoTarjeta } from '../../../shared/models/documento-tarjeta.model';
 import { Activo, TipoActivo } from '../../../shared/models/activo.model';
-import { asId, toDateKey, usuarioEstaSuscrito, actividadEnDia, posicionActividadEnDia, ordenarMultiDiaPrimero, barrasMultiDiaPorSemana, BarraMultiDia, layoutPorHora, BloqueHorario, rangoHora as formatRangoHora } from '../../../shared/utils';
+import { asId, confirmarEliminacion, toDateKey, usuarioEstaSuscrito, actividadEnDia, posicionActividadEnDia, ordenarMultiDiaPrimero, barrasMultiDiaPorSemana, BarraMultiDia, layoutPorHora, BloqueHorario, rangoHora as formatRangoHora } from '../../../shared/utils';
 import { Usuario } from '../../../shared/models/usuario.model';
 import { createCalendarState, CalendarView, CALENDAR_DAYS, CALENDAR_MONTHS, DayCell } from '../../../shared/calendar-state';
 import { ICONOS_ACTIVIDAD } from '../actividades-icons';
@@ -62,12 +62,14 @@ export class ActividadesPageComponent implements OnInit {
   protected readonly clientesService  = inject(ClientesService);
   protected readonly activosService   = inject(ActivosService);
   protected readonly usuariosService  = inject(UsuariosService);
-  private readonly authService        = inject(AuthService);
+  protected readonly authService        = inject(AuthService);
 
   protected readonly iconosActividad = ICONOS_ACTIVIDAD;
 
   protected puedeGestionarTipos = computed(() =>
-    this.authService.usuarioActual()?.rol === 'super_admin'
+    this.authService.tienePermiso('catalogos', 'crear') ||
+    this.authService.tienePermiso('catalogos', 'editar') ||
+    this.authService.tienePermiso('catalogos', 'eliminar')
   );
 
   constructor() {
@@ -566,6 +568,8 @@ export class ActividadesPageComponent implements OnInit {
   eliminarDocActividad(docId: string): void {
     const id = this.editingId();
     if (!id) return;
+    const nombre = this.service.documentosActividad().find(d => d._id === docId)?.nombre_display;
+    if (!confirmarEliminacion(nombre ?? 'este documento')) return;
     this.eliminandoDocIds.update(set => new Set(set).add(docId));
     const limpiar = () => this.eliminandoDocIds.update(set => {
       const copia = new Set(set);
@@ -826,6 +830,8 @@ export class ActividadesPageComponent implements OnInit {
   }
 
   eliminarActividad(id: string): void {
+    const act = this.service.actividades().find(a => a._id === id);
+    if (act && !confirmarEliminacion(act.nombre)) return;
     this.service.eliminar(id);
     this.confirmDelete.set(null);
     this.cerrarModal();
@@ -882,7 +888,11 @@ export class ActividadesPageComponent implements OnInit {
     else     this.tiposService.crear(dto);
   }
 
-  eliminarTipo(id: string): void { this.tiposService.eliminar(id); }
+  eliminarTipo(id: string): void {
+    const tipo = this.tiposService.tipos().find(t => t._id === id);
+    if (tipo && !confirmarEliminacion(`el tipo de actividad ${tipo.nombre}`)) return;
+    this.tiposService.eliminar(id);
+  }
 
   ngOnInit(): void {
     this.service.cargar();

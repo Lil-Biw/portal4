@@ -8,10 +8,17 @@ import { AsignarPermisoDto } from './permisos.dto';
 export class PermisosService {
   private readonly logger = new Logger(PermisosService.name);
 
-  constructor(@InjectModel('Permiso') private permisoModel: Model<PermisoDocument>) {}
+  constructor(
+    @InjectModel('Permiso') private permisoModel: Model<PermisoDocument>,
+    @InjectModel('CentroCosto') private centroCostoModel: Model<any>,
+  ) {}
 
-  async asignar(dto: AsignarPermisoDto, asignadoPor?: string, clienteId?: string) {
+  async asignar(dto: AsignarPermisoDto, asignadoPor: string) {
     this.logger.log(`asignar: usuario=${dto.usuario_id} centro=${dto.centro_costo_id} tipo=${dto.tipo}`);
+
+    const centro = await this.centroCostoModel.findById(dto.centro_costo_id).select('cliente_id').lean() as unknown as { cliente_id: Types.ObjectId } | null;
+    if (!centro) throw new NotFoundException(`Centro de costos ${dto.centro_costo_id} no encontrado`);
+
     const existe = await this.permisoModel.findOne({
       usuario_id: new Types.ObjectId(dto.usuario_id),
       centro_costo_id: new Types.ObjectId(dto.centro_costo_id),
@@ -25,10 +32,11 @@ export class PermisosService {
       ).lean();
     }
 
-    const doc: any = { ...dto };
-    if (clienteId) doc.cliente_id = new Types.ObjectId(clienteId);
-    if (asignadoPor) doc.asignado_por = new Types.ObjectId(asignadoPor);
-    return new this.permisoModel(doc).save();
+    return new this.permisoModel({
+      ...dto,
+      cliente_id: centro.cliente_id,
+      asignado_por: new Types.ObjectId(asignadoPor),
+    }).save();
   }
 
   async findByUsuario(usuario_id: string) {

@@ -40,6 +40,27 @@ export class CentrosCostosService {
     return new Types.ObjectId(value);
   }
 
+  // Valida que el centro pertenezca a empresaId (evita fugas cross-tenant vía
+  // centroId) y, si el solicitante tiene rol 'usuario', que el centro esté
+  // entre sus centros_asignados (acota el alcance dentro de la propia empresa).
+  private async autorizarCentro(
+    centroId: string,
+    empresaId: string,
+    solicitante?: { sub: string; rol: string },
+  ): Promise<void> {
+    const centro = await this.centroCostoModel.findById(centroId).select('cliente_id').lean();
+    if (!centro || String(centro.cliente_id) !== String(empresaId)) {
+      throw new NotFoundException(`Centro de costos ${centroId} no encontrado`);
+    }
+    if (solicitante?.rol === 'usuario') {
+      const usuario = await this.usuarioModel.findById(solicitante.sub).select('centros_asignados').lean();
+      const asignados = (usuario?.centros_asignados ?? []).map((c) => String(c));
+      if (!asignados.includes(String(centroId))) {
+        throw new NotFoundException(`Centro de costos ${centroId} no encontrado`);
+      }
+    }
+  }
+
   async create(dto: CreateCentroCostoDto) {
     const existe = await this.centroCostoModel.findOne({
       cliente_id: this.toObjectId(dto.cliente_id!),
@@ -68,8 +89,17 @@ export class CentrosCostosService {
     return { data, total, page, pages: Math.ceil(total / limit) };
   }
 
-  async findAllByCliente(cliente_id: string, page = 1, limit = 20) {
-    const filter = { cliente_id: new Types.ObjectId(cliente_id), activo: true };
+  async findAllByCliente(
+    cliente_id: string,
+    page = 1,
+    limit = 20,
+    solicitante?: { sub: string; rol: string },
+  ) {
+    const filter: Record<string, unknown> = { cliente_id: new Types.ObjectId(cliente_id), activo: true };
+    if (solicitante?.rol === 'usuario') {
+      const usuario = await this.usuarioModel.findById(solicitante.sub).select('centros_asignados').lean();
+      filter['_id'] = { $in: usuario?.centros_asignados ?? [] };
+    }
     const [data, total] = await Promise.all([
       this.centroCostoModel.find(filter).select('-foto.contenido').sort({ nombre: 1 }).skip((page - 1) * limit).limit(limit).lean(),
       this.centroCostoModel.countDocuments(filter),
@@ -84,13 +114,15 @@ export class CentrosCostosService {
       .lean();
   }
 
-  async findOne(id: string) {
+  async findOne(id: string, empresaId?: string, solicitante?: { sub: string; rol: string }) {
+    if (empresaId) await this.autorizarCentro(id, empresaId, solicitante);
     const centro = await this.centroCostoModel.findById(id).select('-foto.contenido').lean();
     if (!centro) throw new NotFoundException(`Centro de costos ${id} no encontrado`);
     return centro;
   }
 
-  async update(id: string, dto: UpdateCentroCostoDto) {
+  async update(id: string, dto: UpdateCentroCostoDto, empresaId?: string) {
+    if (empresaId) await this.autorizarCentro(id, empresaId);
     const payload: Record<string, unknown> = { ...dto };
     if (dto.cliente_id) payload['cliente_id'] = this.toObjectId(dto.cliente_id);
     const centro = await this.centroCostoModel
@@ -101,7 +133,8 @@ export class CentrosCostosService {
     return centro;
   }
 
-  async remove(id: string) {
+  async remove(id: string, empresaId?: string) {
+    if (empresaId) await this.autorizarCentro(id, empresaId);
     const centro = await this.centroCostoModel
       .findByIdAndUpdate(id, { activo: false }, { new: true })
       .select('-foto.contenido')
@@ -110,7 +143,8 @@ export class CentrosCostosService {
     return { message: 'Centro desactivado', id };
   }
 
-  async updateScoreSmartclarity(centroId: string, valores: number[]) {
+  async updateScoreSmartclarity(centroId: string, valores: number[], empresaId?: string) {
+    if (empresaId) await this.autorizarCentro(centroId, empresaId);
     const centro = await this.centroCostoModel
       .findByIdAndUpdate(centroId, { score_smartclarity: valores }, { new: true, runValidators: true })
       .select('-foto.contenido')
@@ -119,7 +153,8 @@ export class CentrosCostosService {
     return centro;
   }
 
-  async subirFoto(id: string, archivo: { originalname: string; buffer: Buffer; mimetype: string }) {
+  async subirFoto(id: string, archivo: { originalname: string; buffer: Buffer; mimetype: string }, empresaId?: string) {
+    if (empresaId) await this.autorizarCentro(id, empresaId);
     const centro = await this.centroCostoModel.findById(id).lean();
     if (!centro) throw new NotFoundException(`Centro de costos ${id} no encontrado`);
     return this.centroCostoModel
@@ -149,7 +184,16 @@ export class CentrosCostosService {
     return { buffer, tipo_mime: centro.foto.tipo_mime, nombre: centro.foto.nombre };
   }
 
-  async agregarDocumento(id: string, input: DocumentoInput, nombreDisplay?: string, categoria?: string, usuarioId?: string, rolUploader?: string) {
+  async agregarDocumento(
+    id: string,
+    input: DocumentoInput,
+    nombreDisplay?: string,
+    categoria?: string,
+    usuarioId?: string,
+    rolUploader?: string,
+    empresaId?: string,
+  ) {
+    if (empresaId) await this.autorizarCentro(id, empresaId, usuarioId ? { sub: usuarioId, rol: rolUploader ?? '' } : undefined);
     const result = await this.docsHelper.agregar(id, input, nombreDisplay, categoria, usuarioId);
     if (rolUploader === 'usuario') {
       this.notificarSubidaDocumento(id, result['nombre_display'] as string, result['categoria'] as string | undefined, usuarioId)
@@ -179,22 +223,33 @@ export class CentrosCostosService {
     });
   }
 
-  async listarDocumentos(id: string) {
+  async listarDocumentos(id: string, empresaId?: string, solicitante?: { sub: string; rol: string }) {
+    if (empresaId) await this.autorizarCentro(id, empresaId, solicitante);
     const docs = await this.docsHelper.listar(id);
     return resolverSubidoPorNombre(docs, this.usuarioModel as any);
   }
 
-  async actualizarDocumento(id: string, docId: string, categoria: string) {
+  async actualizarDocumento(id: string, docId: string, categoria: string, empresaId?: string, solicitante?: { sub: string; rol: string }) {
+    if (empresaId) await this.autorizarCentro(id, empresaId, solicitante);
     const doc = await this.docsHelper.actualizarCategoria(id, docId, categoria);
     const [conNombre] = await resolverSubidoPorNombre([doc], this.usuarioModel as any);
     return conNombre;
   }
 
-  servirDocumento(centroId: string, docId: string) {
+  async renombrarDocumento(id: string, docId: string, nombreDisplay: string, empresaId?: string, solicitante?: { sub: string; rol: string }) {
+    if (empresaId) await this.autorizarCentro(id, empresaId, solicitante);
+    const doc = await this.docsHelper.renombrar(id, docId, nombreDisplay);
+    const [conNombre] = await resolverSubidoPorNombre([doc], this.usuarioModel as any);
+    return conNombre;
+  }
+
+  async servirDocumento(centroId: string, docId: string, empresaId?: string, solicitante?: { sub: string; rol: string }) {
+    if (empresaId) await this.autorizarCentro(centroId, empresaId, solicitante);
     return this.docsHelper.servir(centroId, docId);
   }
 
-  eliminarDocumento(centroId: string, docId: string) {
+  async eliminarDocumento(centroId: string, docId: string, empresaId?: string, solicitante?: { sub: string; rol: string }) {
+    if (empresaId) await this.autorizarCentro(centroId, empresaId, solicitante);
     return this.docsHelper.eliminar(centroId, docId);
   }
 
@@ -208,6 +263,9 @@ export class CentrosCostosService {
       .populate('cliente_id', 'razon_social')
       .lean() as any;
     if (!centro) throw new NotFoundException(`Centro ${centroId} no encontrado`);
+    if (empresaId && String(centro.cliente_id?._id ?? centro.cliente_id) !== String(empresaId)) {
+      throw new NotFoundException(`Centro ${centroId} no encontrado`);
+    }
 
     const doc = await this.docCentroCostoModel.findOne({
       _id: new Types.ObjectId(docId),

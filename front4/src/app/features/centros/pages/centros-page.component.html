@@ -11,7 +11,9 @@
       </svg>
       Buscar
     </button>
-    <button class="btn-primary" (click)="abrirCrear()">+ Crear centro</button>
+    @if (authService.tienePermiso('centros', 'crear')) {
+      <button class="btn-primary" (click)="abrirCrear()">+ Crear centro</button>
+    }
   </div>
 </div>
 
@@ -22,6 +24,9 @@
   [centros]="service.centros()"
   [clientes]="clientesService.clientes()"
   [scoresPorCentro]="scoresPorCentro()"
+  [puedeEditar]="authService.tienePermiso('centros', 'editar')"
+  [puedeEliminar]="authService.tienePermiso('centros', 'eliminar')"
+  [puedeAgregarActivo]="authService.tienePermiso('activos', 'crear')"
   (editado)="abrirEditar($event)"
   (eliminado)="eliminar($event)"
   (verCentro)="irACentro($event)"
@@ -31,7 +36,7 @@
 
 <!-- ── Modal ──────────────────────────────────────────── -->
 @if (modal() !== null) {
-  <div class="modal-backdrop" (click)="cerrar()">
+  <div class="modal-backdrop">
     <div class="modal" (click)="$event.stopPropagation()">
 
       @if (modal() === 'crear') {
@@ -78,6 +83,8 @@
         <app-centros-list
           [centros]="centrosFiltrados()"
           [clientes]="clientesService.clientes()"
+          [puedeEditar]="authService.tienePermiso('centros', 'editar')"
+          [puedeEliminar]="authService.tienePermiso('centros', 'eliminar')"
           (editado)="editarDesdeBuscar($event)"
           (eliminado)="eliminar($event)"
           (verCentro)="irACentro($event)">
