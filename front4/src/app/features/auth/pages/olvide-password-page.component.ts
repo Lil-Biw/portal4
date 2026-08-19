@@ -14,36 +14,36 @@ import { ApiService } from '../../../core/services/api.service';
       display: flex;
       align-items: center;
       justify-content: center;
-      background: #f9fafb;
+      background: var(--bg-1);
       padding: 1rem;
     }
     .card {
-      background: #fff;
+      background: var(--bg-0);
       border-radius: 16px;
-      box-shadow: 0 4px 24px rgba(15,23,42,.1);
+      box-shadow: var(--shadow-3);
       padding: 2rem;
       width: 100%;
       max-width: 400px;
     }
-    h2 { margin: 0 0 .5rem; color: #1f2937; font-size: 1.3rem; }
-    p.sub { color: #6b7280; font-size: .9rem; margin: 0 0 1.5rem; }
-    label { display: block; margin-bottom: 1rem; font-size: .875rem; font-weight: 500; color: #374151; }
+    h2 { margin: 0 0 .5rem; color: var(--fg-2); font-size: 1.3rem; }
+    p.sub { color: var(--fg-4); font-size: .9rem; margin: 0 0 1.5rem; }
+    label { display: block; margin-bottom: 1rem; font-size: .875rem; font-weight: 500; color: var(--fg-2); }
     input {
       display: block;
       width: 100%;
       margin-top: .35rem;
       padding: .6rem .8rem;
-      border: 1px solid #d1d5db;
+      border: 1px solid var(--border-default);
       border-radius: 8px;
       font-size: .9rem;
       font-family: inherit;
       box-sizing: border-box;
     }
-    input:focus { outline: none; border-color: #0095d6; }
+    input:focus { outline: none; border-color: var(--sc-cyan); }
     .btn { width: 100%; margin-top: .5rem; }
-    .error { color: #dc2626; font-size: .85rem; margin: .75rem 0 0; }
-    .ok    { color: #16a34a; font-size: .85rem; margin: .75rem 0 0; }
-    .volver { display: block; text-align: center; margin-top: 1.25rem; font-size: .85rem; color: #0095d6; text-decoration: none; }
+    .error { color: var(--danger); font-size: .85rem; margin: .75rem 0 0; }
+    .ok    { color: var(--ok); font-size: .85rem; margin: .75rem 0 0; }
+    .volver { display: block; text-align: center; margin-top: 1.25rem; font-size: .85rem; color: var(--sc-cyan); text-decoration: none; }
     .volver:hover { text-decoration: underline; }
   `],
   template: `
