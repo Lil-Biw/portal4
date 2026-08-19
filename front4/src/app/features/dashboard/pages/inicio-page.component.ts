@@ -144,8 +144,8 @@ export class InicioPageComponent implements OnInit {
   }
 
   protected tareaColor(estado: string): string {
-    if (estado === 'rechazado') return '#ef4444';
-    return '#0095d6';
+    if (estado === 'rechazado') return '#E5484D';
+    return '#00AEEF';
   }
 
   protected tareaLabel(estado: string): string {
@@ -266,19 +266,19 @@ export class InicioPageComponent implements OnInit {
 
   protected actividadColorTipo(a: Actividad): string {
     if (typeof a.tipo_id === 'object' && a.tipo_id !== null) {
-      return (a.tipo_id as { color: string }).color ?? '#9ca3af';
+      return (a.tipo_id as { color: string }).color ?? '#A6AFB8';
     }
     const tipoId = a.tipo_id as string;
-    return this.tiposActividadService.tipos().find(t => t._id === tipoId)?.color ?? '#9ca3af';
+    return this.tiposActividadService.tipos().find(t => t._id === tipoId)?.color ?? '#A6AFB8';
   }
 
   protected noticiaIconConfig(seccion: SeccionNoticia): { bg: string; color: string; tipo: 'carrito' | 'documento' | 'megafono' } {
     const map: Record<SeccionNoticia, { bg: string; color: string; tipo: 'carrito' | 'documento' | 'megafono' }> = {
       novedades:  { bg: '#dbeafe', color: '#1d4ed8', tipo: 'carrito' },
-      normativas: { bg: '#fef3c7', color: '#b45309', tipo: 'documento' },
-      anuncios:   { bg: '#dcfce7', color: '#15803d', tipo: 'megafono' },
+      normativas: { bg: '#FEF3C7', color: '#B45309', tipo: 'documento' },
+      anuncios:   { bg: '#E7F6EE', color: '#2EAE6E', tipo: 'megafono' },
     };
-    return map[seccion] ?? { bg: '#f1f5f9', color: '#64748b', tipo: 'carrito' };
+    return map[seccion] ?? { bg: '#EEF2F5', color: '#7A8590', tipo: 'carrito' };
   }
 
 }

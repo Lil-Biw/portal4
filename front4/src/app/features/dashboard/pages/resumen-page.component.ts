@@ -52,8 +52,8 @@ export interface ScoreEmpresa {
     .page { display: flex; flex-direction: column; gap: 1.5rem; }
 
     /* ── Saludo ─────────────────────────────────────── */
-    .greeting h1 { margin: 0 0 .25rem; font-size: 1.75rem; font-weight: 800; color: #111827; }
-    .greeting p  { margin: 0; font-size: .95rem; color: #6b7280; }
+    .greeting h1 { margin: 0 0 .25rem; font-size: 1.75rem; font-weight: 800; color: var(--fg-1); }
+    .greeting p  { margin: 0; font-size: .95rem; color: var(--fg-4); }
 
     /* ── Stats ──────────────────────────────────────── */
     .stats {
@@ -62,8 +62,8 @@ export interface ScoreEmpresa {
       gap: 1rem;
     }
     .stat {
-      background: #fff;
-      border: 1px solid rgba(34,33,33,.08);
+      background: var(--bg-0);
+      border: 1px solid var(--border-subtle);
       border-radius: 16px;
       padding: 1.1rem 1.25rem;
       display: flex; flex-direction: column; gap: .5rem;
@@ -78,12 +78,12 @@ export interface ScoreEmpresa {
       font-size: .72rem; font-weight: 700;
       padding: .2rem .55rem; border-radius: 999px; white-space: nowrap;
     }
-    .stat-badge.blue   { background: rgba(0,149,214,.1);  color: #0095d6; }
-    .stat-badge.green  { background: rgba(22,163,74,.1);  color: #16a34a; }
+    .stat-badge.blue   { background: var(--sc-cyan-tint-6);  color: var(--sc-cyan); }
+    .stat-badge.green  { background: var(--ok-bg);  color: var(--ok); }
     .stat-badge.purple { background: rgba(99,102,241,.1); color: #6366f1; }
-    .stat-badge.amber  { background: rgba(245,158,11,.12); color: #d97706; }
-    .stat-num   { font-size: 2rem; font-weight: 800; color: #111827; line-height: 1; }
-    .stat-label { font-size: .82rem; color: #6b7280; font-weight: 500; }
+    .stat-badge.amber  { background: var(--warn-bg); color: var(--warn); }
+    .stat-num   { font-size: 2rem; font-weight: 800; color: var(--fg-1); line-height: 1; }
+    .stat-label { font-size: .82rem; color: var(--fg-4); font-weight: 500; }
 
     /* ── Grid de paneles ─────────────────────────────── */
     .panels {
@@ -96,8 +96,8 @@ export interface ScoreEmpresa {
 
     /* ── Panel ───────────────────────────────────────── */
     .panel {
-      background: #fff;
-      border: 1px solid rgba(34,33,33,.08);
+      background: var(--bg-0);
+      border: 1px solid var(--border-subtle);
       border-radius: 16px;
       padding: 1.25rem;
       display: flex;
@@ -109,15 +109,15 @@ export interface ScoreEmpresa {
       display: flex; align-items: center; justify-content: space-between;
       margin-bottom: 1rem; flex-shrink: 0;
     }
-    .panel-head h2 { margin: 0; font-size: 1rem; font-weight: 700; color: #111827; }
+    .panel-head h2 { margin: 0; font-size: 1rem; font-weight: 700; color: var(--fg-1); }
     .panel-body {
       flex: 1; overflow-y: auto; min-height: 0; padding-right: 2px;
-      scrollbar-width: thin; scrollbar-color: rgba(0,0,0,.13) transparent;
+      scrollbar-width: thin; scrollbar-color: var(--border-strong) transparent;
     }
     .panel-body::-webkit-scrollbar       { width: 4px; }
     .panel-body::-webkit-scrollbar-track { background: transparent; }
-    .panel-body::-webkit-scrollbar-thumb { background: rgba(0,0,0,.15); border-radius: 4px; }
-    .ver-todo { font-size: .82rem; font-weight: 600; color: #0095d6; text-decoration: none; }
+    .panel-body::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 4px; }
+    .ver-todo { font-size: .82rem; font-weight: 600; color: var(--sc-cyan); text-decoration: none; }
     .ver-todo:hover { text-decoration: underline; }
 
     /* ── Atención ────────────────────────────────────── */
@@ -125,7 +125,7 @@ export interface ScoreEmpresa {
     .aten-item {
       display: flex; align-items: center; gap: .85rem;
       padding: .65rem .75rem; border-radius: 10px;
-      background: #fafafa; border: 1px solid rgba(34,33,33,.06);
+      background: var(--bg-1); border: 1px solid var(--border-subtle);
     }
     .aten-icon {
       width: 38px; height: 38px; border-radius: 10px;
@@ -133,34 +133,34 @@ export interface ScoreEmpresa {
       flex-shrink: 0; opacity: .9;
     }
     .aten-body { flex: 1; min-width: 0; }
-    .aten-title { font-size: .875rem; font-weight: 600; color: #111827; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .aten-sub   { font-size: .78rem; color: #9ca3af; margin-top: .1rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .aten-title { font-size: .875rem; font-weight: 600; color: var(--fg-1); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .aten-sub   { font-size: .78rem; color: var(--fg-5); margin-top: .1rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
     /* ── Badges ──────────────────────────────────────── */
     .badge { font-size: .72rem; font-weight: 700; padding: .25rem .6rem; border-radius: 999px; white-space: nowrap; flex-shrink: 0; }
-    .badge-gray   { background: #f3f4f6; color: #6b7280; }
-    .badge-orange { background: rgba(245,158,11,.12); color: #d97706; }
-    .badge-red    { background: rgba(239,68,68,.1); color: #dc2626; }
-    .badge-green  { background: rgba(22,163,74,.1); color: #16a34a; }
+    .badge-gray   { background: var(--bg-2); color: var(--fg-4); }
+    .badge-orange { background: var(--warn-bg); color: var(--warn); }
+    .badge-red    { background: var(--danger-bg); color: var(--danger); }
+    .badge-green  { background: var(--ok-bg); color: var(--ok); }
 
     /* ── Próximas ────────────────────────────────────── */
     .prox-list { display: flex; flex-direction: column; gap: .6rem; }
     .prox-item { display: flex; align-items: flex-start; gap: .85rem; }
     .prox-fecha { display: flex; flex-direction: column; align-items: center; min-width: 36px; }
-    .prox-dia { font-size: 1.15rem; font-weight: 800; color: #111827; line-height: 1; }
-    .prox-mes { font-size: .65rem; font-weight: 700; color: #9ca3af; text-transform: uppercase; letter-spacing: .04em; }
+    .prox-dia { font-size: 1.15rem; font-weight: 800; color: var(--fg-1); line-height: 1; }
+    .prox-mes { font-size: .65rem; font-weight: 700; color: var(--fg-5); text-transform: uppercase; letter-spacing: .04em; }
     .prox-bar { width: 3px; border-radius: 3px; min-height: 32px; flex-shrink: 0; margin-top: .15rem; }
     .prox-body { min-width: 0; }
-    .prox-nombre { font-size: .875rem; font-weight: 600; color: #111827; }
-    .prox-lugar  { font-size: .78rem; color: #9ca3af; margin-top: .05rem; }
+    .prox-nombre { font-size: .875rem; font-weight: 600; color: var(--fg-1); }
+    .prox-lugar  { font-size: .78rem; color: var(--fg-5); margin-top: .05rem; }
 
     /* ── Score ───────────────────────────────────────── */
     .score-list { display: flex; flex-direction: column; gap: .9rem; }
     .score-row  { display: flex; flex-direction: column; gap: .3rem; }
     .score-head { display: flex; justify-content: space-between; align-items: baseline; }
-    .score-nom  { font-size: .82rem; font-weight: 700; color: #111827; }
+    .score-nom  { font-size: .82rem; font-weight: 700; color: var(--fg-1); }
     .score-num  { font-size: .95rem; font-weight: 800; }
-    .score-track { height: 6px; background: #f3f4f6; border-radius: 999px; overflow: hidden; }
+    .score-track { height: 6px; background: var(--bg-2); border-radius: 999px; overflow: hidden; }
     .score-fill  { height: 100%; border-radius: 999px; transition: width .4s ease; }
 
     /* ── Noticias ────────────────────────────────────── */
@@ -171,10 +171,10 @@ export interface ScoreEmpresa {
       display: flex; align-items: center; justify-content: center; flex-shrink: 0;
     }
     .news-body  { min-width: 0; flex: 1; }
-    .news-title { font-size: .88rem; font-weight: 600; color: #111827; line-height: 1.35; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-    .news-date  { font-size: .75rem; color: #9ca3af; margin-top: .25rem; }
+    .news-title { font-size: .88rem; font-weight: 600; color: var(--fg-1); line-height: 1.35; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .news-date  { font-size: .75rem; color: var(--fg-5); margin-top: .25rem; }
 
-    .empty { font-size: .85rem; color: #9ca3af; text-align: center; padding: 1rem 0; }
+    .empty { font-size: .85rem; color: var(--fg-5); text-align: center; padding: 1rem 0; }
 
     @media (max-width: 1100px) {
       .stats  { grid-template-columns: repeat(2,1fr); }
@@ -260,8 +260,8 @@ export class ResumenPageComponent implements OnInit {
 
     const PRIORIDAD: Record<string, number> = { pendiente: 0, revision: 1 };
     const BADGE: Record<string, { label: string; cls: string; color: string }> = {
-      pendiente: { label: 'Pendiente',   cls: 'badge-orange', color: '#f59e0b' },
-      revision:  { label: 'En revisión', cls: 'badge-gray',   color: '#6b7280' },
+      pendiente: { label: 'Pendiente',   cls: 'badge-orange', color: '#F5A524' },
+      revision:  { label: 'En revisión', cls: 'badge-gray',   color: '#7A8590' },
     };
 
     return this.todasSolicitudes()
@@ -341,7 +341,7 @@ export class ResumenPageComponent implements OnInit {
   );
 
   protected noticiaColor(seccion: string): string {
-    return SECCIONES.find(s => s.value === seccion)?.color ?? '#6b7280';
+    return SECCIONES.find(s => s.value === seccion)?.color ?? '#7A8590';
   }
 
   protected noticiaFecha(iso: string): string {
@@ -367,9 +367,9 @@ export class ResumenPageComponent implements OnInit {
 
   private colorTipo(a: Actividad): string {
     if (a.tipo_id && typeof a.tipo_id === 'object') {
-      return (a.tipo_id as TipoActividad).color ?? '#0095d6';
+      return (a.tipo_id as TipoActividad).color ?? 'var(--sc-cyan)';
     }
-    return '#0095d6';
+    return 'var(--sc-cyan)';
   }
 
   // ── Ciclo de vida ────────────────────────────────────────────────────────

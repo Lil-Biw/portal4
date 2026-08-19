@@ -1,18 +1,18 @@
 <!-- Header -->
 <div style="margin-bottom:1.25rem;display:flex;align-items:center;gap:.75rem">
   @if (logoUrl(); as logo) {
-    <img [src]="logo" alt="Logo de la empresa" style="width:40px;height:40px;object-fit:contain;border-radius:8px;border:1px solid rgba(34,33,33,.08);background:#fff;flex-shrink:0" />
+    <img [src]="logo" alt="Logo de la empresa" style="width:40px;height:40px;object-fit:contain;border-radius:8px;border:1px solid var(--border-subtle);background:var(--bg-0);flex-shrink:0" />
   }
   <div>
-    <h2 style="margin:0 0 .25rem;font-size:1.55rem;font-weight:700;color:#1f2937">Mi ficha</h2>
-    <p style="margin:0;font-size:.85rem;color:#6b7280">
+    <h2 style="margin:0 0 .25rem;font-size:1.55rem;font-weight:700;color:var(--fg-2)">Mi ficha</h2>
+    <p style="margin:0;font-size:.85rem;color:var(--fg-4)">
       {{ empresa()?.razon_social ?? 'Selecciona una empresa' }}
     </p>
   </div>
 </div>
 
 @if (!empresa()) {
-  <div class="card" style="text-align:center;padding:3rem;color:#9ca3af">
+  <div class="card" style="text-align:center;padding:3rem;color:var(--fg-5)">
     Selecciona una empresa en la barra superior para ver tu ficha.
   </div>
 } @else {
@@ -22,54 +22,54 @@
     <!-- Recuadro 1: Información general de la empresa -->
     <div class="card" style="display:grid;grid-template-columns:1fr 200px;gap:1.25rem">
       <div>
-        <h3 style="margin:0 0 1rem;font-size:.95rem;font-weight:700;color:#1f2937">Información general</h3>
+        <h3 style="margin:0 0 1rem;font-size:.95rem;font-weight:700;color:var(--fg-2)">Información general</h3>
         <dl style="margin:0;display:flex;flex-direction:column;gap:.55rem">
           <div style="display:flex;gap:.5rem">
-            <dt style="font-size:.78rem;color:#6b7280;min-width:90px;flex-shrink:0">Razón social</dt>
-            <dd style="margin:0;font-size:.82rem;color:#1f2937;font-weight:600">{{ empresa()!.razon_social }}</dd>
+            <dt style="font-size:.78rem;color:var(--fg-4);min-width:90px;flex-shrink:0">Razón social</dt>
+            <dd style="margin:0;font-size:.82rem;color:var(--fg-2);font-weight:600">{{ empresa()!.razon_social }}</dd>
           </div>
           <div style="display:flex;gap:.5rem">
-            <dt style="font-size:.78rem;color:#6b7280;min-width:90px;flex-shrink:0">RUT</dt>
-            <dd style="margin:0;font-size:.82rem;color:#1f2937">{{ empresa()!.rut }}</dd>
+            <dt style="font-size:.78rem;color:var(--fg-4);min-width:90px;flex-shrink:0">RUT</dt>
+            <dd style="margin:0;font-size:.82rem;color:var(--fg-2)">{{ empresa()!.rut }}</dd>
           </div>
           <div style="display:flex;gap:.5rem">
-            <dt style="font-size:.78rem;color:#6b7280;min-width:90px;flex-shrink:0">Email</dt>
-            <dd style="margin:0;font-size:.82rem;color:#1f2937">
-              <a [href]="'mailto:' + empresa()!.email_contacto" style="color:#0095d6;text-decoration:none">{{ empresa()!.email_contacto }}</a>
+            <dt style="font-size:.78rem;color:var(--fg-4);min-width:90px;flex-shrink:0">Email</dt>
+            <dd style="margin:0;font-size:.82rem;color:var(--fg-2)">
+              <a [href]="'mailto:' + empresa()!.email_contacto" style="color:var(--sc-cyan);text-decoration:none">{{ empresa()!.email_contacto }}</a>
             </dd>
           </div>
           @if (empresa()!.telefono) {
             <div style="display:flex;gap:.5rem">
-              <dt style="font-size:.78rem;color:#6b7280;min-width:90px;flex-shrink:0">Teléfono</dt>
-              <dd style="margin:0;font-size:.82rem;color:#1f2937">{{ empresa()!.telefono }}</dd>
+              <dt style="font-size:.78rem;color:var(--fg-4);min-width:90px;flex-shrink:0">Teléfono</dt>
+              <dd style="margin:0;font-size:.82rem;color:var(--fg-2)">{{ empresa()!.telefono }}</dd>
             </div>
           }
           @if (empresa()!.direccion?.ciudad) {
             <div style="display:flex;gap:.5rem">
-              <dt style="font-size:.78rem;color:#6b7280;min-width:90px;flex-shrink:0">Ciudad</dt>
-              <dd style="margin:0;font-size:.82rem;color:#1f2937">
+              <dt style="font-size:.78rem;color:var(--fg-4);min-width:90px;flex-shrink:0">Ciudad</dt>
+              <dd style="margin:0;font-size:.82rem;color:var(--fg-2)">
                 {{ empresa()!.direccion!.ciudad }}{{ empresa()!.direccion!.region ? ', ' + empresa()!.direccion!.region : '' }}
               </dd>
             </div>
           }
           @if (empresa()!.direccion?.calle) {
             <div style="display:flex;gap:.5rem">
-              <dt style="font-size:.78rem;color:#6b7280;min-width:90px;flex-shrink:0">Dirección</dt>
-              <dd style="margin:0;font-size:.82rem;color:#1f2937">{{ empresa()!.direccion!.calle }}</dd>
+              <dt style="font-size:.78rem;color:var(--fg-4);min-width:90px;flex-shrink:0">Dirección</dt>
+              <dd style="margin:0;font-size:.82rem;color:var(--fg-2)">{{ empresa()!.direccion!.calle }}</dd>
             </div>
           }
           <div style="display:flex;gap:.5rem">
-            <dt style="font-size:.78rem;color:#6b7280;min-width:90px;flex-shrink:0">Estado</dt>
+            <dt style="font-size:.78rem;color:var(--fg-4);min-width:90px;flex-shrink:0">Estado</dt>
             <dd style="margin:0">
-              <span style="font-size:.72rem;font-weight:700;padding:.2rem .55rem;border-radius:999px;background:#dcfce7;color:#15803d">Activa</span>
+              <span style="font-size:.72rem;font-weight:700;padding:.2rem .55rem;border-radius:999px;background:var(--ok-bg);color:var(--ok)">Activa</span>
             </dd>
           </div>
         </dl>
       </div>
       @if (imagenUrl(); as imagen) {
-        <img [src]="imagen" alt="Imagen de la empresa" style="width:100%;height:100%;min-height:180px;object-fit:cover;border-radius:12px;border:1px solid rgba(34,33,33,.08);display:block" />
+        <img [src]="imagen" alt="Imagen de la empresa" style="width:100%;height:100%;min-height:180px;object-fit:cover;border-radius:12px;border:1px solid var(--border-subtle);display:block" />
       } @else {
-        <div style="min-height:180px;border-radius:12px;border:1.5px dashed #d1d5db;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.4rem;color:#9ca3af">
+        <div style="min-height:180px;border-radius:12px;border:1.5px dashed var(--border-default);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.4rem;color:var(--fg-5)">
           <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
           <span style="font-size:.72rem;font-weight:600">Sin imagen</span>
         </div>
@@ -82,19 +82,19 @@
       <!-- Estado documentos -->
       <div>
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.55rem">
-          <h3 style="margin:0;font-size:.95rem;font-weight:700;color:#1f2937">Estado documentos</h3>
+          <h3 style="margin:0;font-size:.95rem;font-weight:700;color:var(--fg-2)">Estado documentos</h3>
           @if (solicitudesEmpresa().length > 3) {
-            <button class="btn-ghost btn-sm" style="font-size:.74rem;padding:.2rem .5rem;color:#0095d6;border:none" (click)="irADocumentosEmpresa()">
+            <button class="btn-ghost btn-sm" style="font-size:.74rem;padding:.2rem .5rem;color:var(--sc-cyan);border:none" (click)="irADocumentosEmpresa()">
               Ver todos ({{ solicitudesEmpresa().length }})
             </button>
           }
         </div>
         @if (solicitudesEmpresa().length === 0) {
-          <p style="font-size:.78rem;color:#9ca3af;margin:0">Sin solicitudes registradas.</p>
+          <p style="font-size:.78rem;color:var(--fg-5);margin:0">Sin solicitudes registradas.</p>
         } @else {
           @for (s of solicitudesEmpresa().slice(0,3); track s._id; let last = $last) {
             <div style="display:flex;align-items:center;justify-content:space-between;padding:.35rem 0" [style.border-bottom]="last ? 'none' : '1px solid rgba(34,33,33,.06)'">
-              <span style="font-size:.79rem;font-weight:500;color:#1f2937;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:60%">{{ s.nombre }}</span>
+              <span style="font-size:.79rem;font-weight:500;color:var(--fg-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:60%">{{ s.nombre }}</span>
               <span style="font-size:.68rem;font-weight:700;padding:.14rem .42rem;border-radius:999px;white-space:nowrap;flex-shrink:0" [style]="estadoStyle(s.estado)">{{ s.estado }}</span>
             </div>
           }
@@ -102,21 +102,21 @@
       </div>
 
       <!-- Actividades recientes -->
-      <div style="border-top:1px solid rgba(34,33,33,.07);padding-top:.75rem">
-        <h3 style="margin:0 0 .55rem;font-size:.95rem;font-weight:700;color:#1f2937">Actividades recientes</h3>
+      <div style="border-top:1px solid var(--border-subtle);padding-top:.75rem">
+        <h3 style="margin:0 0 .55rem;font-size:.95rem;font-weight:700;color:var(--fg-2)">Actividades recientes</h3>
         @if (actividadesDeEmpresa().length === 0) {
-          <p style="font-size:.78rem;color:#9ca3af;margin:0">Sin actividades registradas.</p>
+          <p style="font-size:.78rem;color:var(--fg-5);margin:0">Sin actividades registradas.</p>
         } @else {
           <div style="display:flex;flex-direction:column;gap:.25rem">
             @for (m of actividadesDeEmpresa(); track m._id; let last = $last) {
               <div style="display:flex;align-items:center;justify-content:space-between;padding:.35rem 0" [style.border-bottom]="last ? 'none' : '1px solid rgba(34,33,33,.06)'">
                 <div style="overflow:hidden">
-                  <p style="margin:0;font-size:.79rem;font-weight:500;color:#1f2937;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ m.nombre }}</p>
-                  <span style="font-size:.71rem;color:#9ca3af">{{ formatFechaShort(m.fecha) }}</span>
+                  <p style="margin:0;font-size:.79rem;font-weight:500;color:var(--fg-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ m.nombre }}</p>
+                  <span style="font-size:.71rem;color:var(--fg-5)">{{ formatFechaShort(m.fecha) }}</span>
                 </div>
                 <span style="font-size:.68rem;font-weight:700;padding:.14rem .42rem;border-radius:999px;white-space:nowrap;flex-shrink:0;margin-left:.4rem"
-                  [style.background]="esPasada(m.fecha) ? '#dcfce7' : '#fef3c7'"
-                  [style.color]="esPasada(m.fecha) ? '#15803d' : '#b45309'">
+                  [style.background]="esPasada(m.fecha) ? 'var(--ok-bg)' : 'var(--revision-bg)'"
+                  [style.color]="esPasada(m.fecha) ? 'var(--ok)' : 'var(--revision)'">
                   {{ esPasada(m.fecha) ? 'Realizada' : 'Programada' }}
                 </span>
               </div>
@@ -129,7 +129,7 @@
     <!-- Recuadro 3: Score documental con donut chart -->
     <div class="card">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem">
-        <h3 style="margin:0;font-size:.95rem;font-weight:700;color:#1f2937">Score 1 — Cumplimiento documental</h3>
+        <h3 style="margin:0;font-size:.95rem;font-weight:700;color:var(--fg-2)">Score 1 — Cumplimiento documental</h3>
         <app-stat-chip [label]="scoreChipLabel()" [variant]="scoreChipVariant()"></app-stat-chip>
       </div>
       <div style="display:flex;flex-direction:column;align-items:center">
@@ -137,7 +137,7 @@
         <!-- Donut arc chart -->
         <svg viewBox="0 0 200 155" style="width:170px;display:block">
           <!-- Background track (270° arc) -->
-          <circle cx="100" cy="90" r="70" fill="none" stroke="#e5e7eb" stroke-width="16"
+          <circle cx="100" cy="90" r="70" fill="none" stroke="var(--border-subtle)" stroke-width="16"
             stroke-dasharray="330 440" stroke-linecap="round"
             transform="rotate(135 100 90)"/>
           <!-- Score arc -->
@@ -153,34 +153,34 @@
         </svg>
 
         @if (scoreDocumental().total > 0) {
-          <p style="margin:.1rem 0 .75rem;font-size:.8rem;color:#6b7280;text-align:center">
+          <p style="margin:.1rem 0 .75rem;font-size:.8rem;color:var(--fg-4);text-align:center">
             {{ scoreDocumental().aprobados }} de {{ scoreDocumental().total }} documentos aprobados
           </p>
         } @else {
-          <p style="margin:.1rem 0 .75rem;font-size:.8rem;color:#9ca3af;text-align:center">Sin solicitudes registradas</p>
+          <p style="margin:.1rem 0 .75rem;font-size:.8rem;color:var(--fg-5);text-align:center">Sin solicitudes registradas</p>
         }
 
         <!-- Recuadros de estado -->
         <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:.4rem;width:100%">
-          <div style="padding:.5rem .3rem;border-radius:9px;text-align:center;background:#dcfce7">
-            <p style="margin:0 0 .1rem;font-size:1.3rem;font-weight:700;color:#15803d;line-height:1">{{ scoreDocumental().aprobados }}</p>
-            <p style="margin:0;font-size:.62rem;font-weight:600;color:#15803d">Aprobados</p>
+          <div style="padding:.5rem .3rem;border-radius:9px;text-align:center;background:var(--ok-bg)">
+            <p style="margin:0 0 .1rem;font-size:1.3rem;font-weight:700;color:var(--ok);line-height:1">{{ scoreDocumental().aprobados }}</p>
+            <p style="margin:0;font-size:.62rem;font-weight:600;color:var(--ok)">Aprobados</p>
           </div>
-          <div style="padding:.5rem .3rem;border-radius:9px;text-align:center;background:#fef3c7">
-            <p style="margin:0 0 .1rem;font-size:1.3rem;font-weight:700;color:#b45309;line-height:1">{{ scoreDocumental().revision }}</p>
-            <p style="margin:0;font-size:.62rem;font-weight:600;color:#b45309">Revisión</p>
+          <div style="padding:.5rem .3rem;border-radius:9px;text-align:center;background:var(--revision-bg)">
+            <p style="margin:0 0 .1rem;font-size:1.3rem;font-weight:700;color:var(--revision);line-height:1">{{ scoreDocumental().revision }}</p>
+            <p style="margin:0;font-size:.62rem;font-weight:600;color:var(--revision)">Revisión</p>
           </div>
-          <div style="padding:.5rem .3rem;border-radius:9px;text-align:center;background:#fee2e2">
-            <p style="margin:0 0 .1rem;font-size:1.3rem;font-weight:700;color:#dc2626;line-height:1">{{ scoreDocumental().vencido }}</p>
-            <p style="margin:0;font-size:.62rem;font-weight:600;color:#dc2626">Vencidos</p>
+          <div style="padding:.5rem .3rem;border-radius:9px;text-align:center;background:var(--danger-bg)">
+            <p style="margin:0 0 .1rem;font-size:1.3rem;font-weight:700;color:var(--danger);line-height:1">{{ scoreDocumental().vencido }}</p>
+            <p style="margin:0;font-size:.62rem;font-weight:600;color:var(--danger)">Vencidos</p>
           </div>
-          <div style="padding:.5rem .3rem;border-radius:9px;text-align:center;background:#fce7f3">
-            <p style="margin:0 0 .1rem;font-size:1.3rem;font-weight:700;color:#9d174d;line-height:1">{{ scoreDocumental().rechazado }}</p>
-            <p style="margin:0;font-size:.62rem;font-weight:600;color:#9d174d">Rechazados</p>
+          <div style="padding:.5rem .3rem;border-radius:9px;text-align:center;background:var(--rechazado-bg)">
+            <p style="margin:0 0 .1rem;font-size:1.3rem;font-weight:700;color:var(--rechazado);line-height:1">{{ scoreDocumental().rechazado }}</p>
+            <p style="margin:0;font-size:.62rem;font-weight:600;color:var(--rechazado)">Rechazados</p>
           </div>
-          <div style="padding:.5rem .3rem;border-radius:9px;text-align:center;background:#f0f9ff">
-            <p style="margin:0 0 .1rem;font-size:1.3rem;font-weight:700;color:#0369a1;line-height:1">{{ scoreDocumental().pendiente }}</p>
-            <p style="margin:0;font-size:.62rem;font-weight:600;color:#0369a1">Pendiente</p>
+          <div style="padding:.5rem .3rem;border-radius:9px;text-align:center;background:var(--info-bg)">
+            <p style="margin:0 0 .1rem;font-size:1.3rem;font-weight:700;color:var(--info);line-height:1">{{ scoreDocumental().pendiente }}</p>
+            <p style="margin:0;font-size:.62rem;font-weight:600;color:var(--info)">Pendiente</p>
           </div>
         </div>
       </div>
@@ -189,8 +189,8 @@
     <!-- Recuadro 4: Score gráfica de araña nivel empresa -->
     <div class="card" style="display:flex;flex-direction:column">
       <div style="margin-bottom:.5rem">
-        <h3 style="margin:0 0 .2rem;font-size:.95rem;font-weight:700;color:#1f2937">Score 2 — Evaluación SmartClarity</h3>
-        <p style="margin:0;font-size:.78rem;color:#6b7280">Nivel empresa</p>
+        <h3 style="margin:0 0 .2rem;font-size:.95rem;font-weight:700;color:var(--fg-2)">Score 2 — Evaluación SmartClarity</h3>
+        <p style="margin:0;font-size:.78rem;color:var(--fg-4)">Nivel empresa</p>
       </div>
       <div style="flex:1;display:flex;align-items:center;justify-content:center">
         <app-spider-chart
@@ -208,7 +208,7 @@
   <div class="card" style="margin-top:1rem">
     <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:.9rem;flex-wrap:wrap;gap:.5rem">
       <div>
-        <h3 style="margin:0 0 .2rem;font-size:.95rem;font-weight:700;color:#1f2937">Solicitudes de documentos a nivel empresa</h3>
+        <h3 style="margin:0 0 .2rem;font-size:.95rem;font-weight:700;color:var(--fg-2)">Solicitudes de documentos a nivel empresa</h3>
       </div>
       <button
         class="btn-primary btn-sm"
@@ -224,15 +224,15 @@
     </div>
 
     @if (docsNivelEmpresa().length === 0) {
-      <p style="color:#9ca3af;font-size:.85rem;padding:.25rem 0">Sin documentos registrados a nivel empresa.</p>
+      <p style="color:var(--fg-5);font-size:.85rem;padding:.25rem 0">Sin documentos registrados a nivel empresa.</p>
     } @else {
       <div style="display:flex;flex-direction:column;gap:.35rem">
         @for (s of docsNivelEmpresa(); track s._id) {
-          <div style="display:flex;align-items:center;gap:.75rem;padding:.55rem .7rem;border-radius:8px;border:1px solid rgba(34,33,33,.08)">
+          <div style="display:flex;align-items:center;gap:.75rem;padding:.55rem .7rem;border-radius:8px;border:1px solid var(--border-subtle)">
             <!-- Ícono tipo archivo -->
             <svg width="30" height="36" viewBox="0 0 30 36" fill="none" style="flex-shrink:0">
               <path d="M3 0h16l11 11v25H3V0z"
-                [attr.fill]="s.adjunto?.tipo_mime === 'application/pdf' ? '#ef4444' : '#0095d6'"/>
+                [attr.fill]="s.adjunto?.tipo_mime === 'application/pdf' ? 'var(--danger)' : 'var(--sc-cyan)'"/>
               <path d="M19 0v11h11" fill="white" opacity=".25"/>
               <rect x="7" y="16" width="16" height="1.8" rx=".9" fill="white" opacity=".7"/>
               <rect x="7" y="20.5" width="12" height="1.8" rx=".9" fill="white" opacity=".7"/>
@@ -240,8 +240,8 @@
             </svg>
             <!-- Nombre y meta -->
             <div style="flex:1;min-width:0">
-              <p style="margin:0 0 .1rem;font-size:.84rem;font-weight:600;color:#1f2937;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ s.nombre }}</p>
-              <p style="margin:0;font-size:.73rem;color:#6b7280">{{ s.tipo }} · {{ formatFechaShort(s.creado_en) }}</p>
+              <p style="margin:0 0 .1rem;font-size:.84rem;font-weight:600;color:var(--fg-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ s.nombre }}</p>
+              <p style="margin:0;font-size:.73rem;color:var(--fg-4)">{{ s.tipo }} · {{ formatFechaShort(s.creado_en) }}</p>
             </div>
             <!-- Estado -->
             <span style="font-size:.7rem;font-weight:700;padding:.18rem .5rem;border-radius:999px;white-space:nowrap;flex-shrink:0"
@@ -257,22 +257,22 @@
   <!-- Centros de costos -->
   <div class="card" style="margin-top:1rem">
     <div style="margin-bottom:.9rem">
-      <h3 style="margin:0 0 .2rem;font-size:.95rem;font-weight:700;color:#1f2937">Centros de costos</h3>
-      <p style="margin:0;font-size:.78rem;color:#6b7280">
+      <h3 style="margin:0 0 .2rem;font-size:.95rem;font-weight:700;color:var(--fg-2)">Centros de costos</h3>
+      <p style="margin:0;font-size:.78rem;color:var(--fg-4)">
         {{ centrosDeEmpresa().length }} centro{{ centrosDeEmpresa().length !== 1 ? 's' : '' }} activo{{ centrosDeEmpresa().length !== 1 ? 's' : '' }} · haz clic para ver el detalle
       </p>
     </div>
     @if (centrosDeEmpresa().length === 0) {
-      <p style="color:#9ca3af;font-size:.875rem;padding:.25rem 0">Esta empresa no tiene centros de costos registrados.</p>
+      <p style="color:var(--fg-5);font-size:.875rem;padding:.25rem 0">Esta empresa no tiene centros de costos registrados.</p>
     } @else {
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:.5rem">
         @for (c of centrosDeEmpresa(); track c._id) {
           <div style="border:1px solid rgba(34,33,33,.1);border-radius:10px;padding:.85rem 1rem">
-            <strong style="display:block;font-size:.88rem;color:#1f2937;margin-bottom:.2rem">{{ c.nombre }}</strong>
-            <span style="display:block;font-size:.74rem;color:#9ca3af;margin-bottom:.5rem">{{ resumenCentro(c._id) }}</span>
+            <strong style="display:block;font-size:.88rem;color:var(--fg-2);margin-bottom:.2rem">{{ c.nombre }}</strong>
+            <span style="display:block;font-size:.74rem;color:var(--fg-5);margin-bottom:.5rem">{{ resumenCentro(c._id) }}</span>
             <button
               class="btn-ghost btn-sm"
-              style="font-size:.76rem;padding:.2rem 0;color:#0095d6;border:none;background:none;cursor:pointer"
+              style="font-size:.76rem;padding:.2rem 0;color:var(--sc-cyan);border:none;background:none;cursor:pointer"
               (click)="irACentro(c)">
               Ver →
             </button>
