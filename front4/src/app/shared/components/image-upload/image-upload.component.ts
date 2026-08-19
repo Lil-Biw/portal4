@@ -10,7 +10,7 @@ import { ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, Output, S
         @if (preview) {
           <img [src]="preview" [alt]="titulo" [style.object-fit]="objectFit" />
         } @else {
-          <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+          <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--fg-5)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
         }
       </div>
       <input [id]="inputId" type="file" accept="image/*" (change)="onFileChange($event)" class="image-upload-input" />
@@ -22,18 +22,18 @@ import { ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, Output, S
   `,
   styles: [`
     .image-upload {
-      border: 1px solid rgba(34,33,33,.12);
+      border: 1px solid var(--border-default);
       border-radius: 10px;
       padding: .85rem;
       display: flex;
       flex-direction: column;
       gap: .65rem;
-      background: #f9fafb;
+      background: var(--bg-1);
     }
     .image-upload-label {
       font-size: .75rem;
       font-weight: 700;
-      color: #6b7280;
+      color: var(--fg-3);
       text-transform: uppercase;
       letter-spacing: .03em;
     }
@@ -41,8 +41,8 @@ import { ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, Output, S
       width: 100%;
       border-radius: 10px;
       overflow: hidden;
-      border: 1px solid #e5e7eb;
-      background: #fff;
+      border: 1px solid var(--border-subtle);
+      background: var(--bg-0);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -55,15 +55,15 @@ import { ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, Output, S
       text-align: center;
       font-size: .78rem;
       font-weight: 600;
-      color: #0095d6;
-      border: 1px solid rgba(0,149,214,.35);
-      background: rgba(0,149,214,.06);
+      color: var(--sc-cyan);
+      border: 1px solid rgba(0,174,239,.35);
+      background: var(--sc-cyan-tint-6);
       border-radius: 8px;
       padding: .5rem;
       cursor: pointer;
     }
     .image-upload-input:focus-visible + .image-upload-btn {
-      outline: 2px solid #0095d6;
+      outline: 2px solid var(--sc-cyan);
       outline-offset: 2px;
     }
     .image-upload-input {
@@ -80,7 +80,7 @@ import { ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, Output, S
     .image-upload-hint {
       margin: 0;
       font-size: .7rem;
-      color: #9ca3af;
+      color: var(--fg-5);
       text-align: center;
       line-height: 1.4;
     }

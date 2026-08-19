@@ -9,11 +9,11 @@ interface Point { x: number; y: number; }
   template: `
     <div style="display:inline-block">
       @if (isDefault) {
-        <div style="width:{{size}}px;height:{{size}}px;display:flex;flex-direction:column;align-items:center;justify-content:center;border:2px dashed #e5e7eb;border-radius:12px;gap:.5rem">
-          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#d1d5db" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <div style="width:{{size}}px;height:{{size}}px;display:flex;flex-direction:column;align-items:center;justify-content:center;border:2px dashed var(--border-subtle);border-radius:12px;gap:.5rem">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="color:var(--fg-5)">
             <path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
           </svg>
-          <span style="font-size:.78rem;font-weight:600;color:#9ca3af;text-align:center;padding:0 1rem">Evaluación aún<br>no realizada</span>
+          <span style="font-size:.78rem;font-weight:600;color:var(--fg-5);text-align:center;padding:0 1rem">Evaluación aún<br>no realizada</span>
         </div>
       } @else {
         <svg [attr.viewBox]="'0 0 ' + size + ' ' + size" [attr.width]="size" [attr.height]="size" style="display:block;margin:auto;overflow:visible">
@@ -22,7 +22,7 @@ interface Point { x: number; y: number; }
             <polygon
               [attr.points]="polygonPoints(level)"
               fill="none"
-              stroke="rgba(34,33,33,.1)"
+              stroke="rgba(11,15,20,.08)"
               stroke-width="1" />
           }
 
@@ -31,21 +31,21 @@ interface Point { x: number; y: number; }
             <line
               [attr.x1]="cx" [attr.y1]="cy"
               [attr.x2]="ax.tip.x" [attr.y2]="ax.tip.y"
-              stroke="rgba(34,33,33,.12)"
+              stroke="rgba(11,15,20,.1)"
               stroke-width="1" />
           }
 
           <!-- Data polygon -->
           <polygon
             [attr.points]="dataPoints"
-            fill="rgba(0,149,214,.18)"
-            stroke="#0095d6"
+            fill="rgba(0,174,239,.18)"
+            stroke="#00AEEF"
             stroke-width="2"
             stroke-linejoin="round" />
 
           <!-- Data dots -->
           @for (pt of dataCoords; track $index) {
-            <circle [attr.cx]="pt.x" [attr.cy]="pt.y" r="4" fill="#0095d6" />
+            <circle [attr.cx]="pt.x" [attr.cy]="pt.y" r="4" fill="#00AEEF" />
           }
 
           <!-- Promedio polygon (solo si no está en estado pendiente) -->
@@ -72,7 +72,7 @@ interface Point { x: number; y: number; }
               dominant-baseline="middle"
               font-size="10"
               font-family="inherit"
-              fill="#374151"
+              fill="#2A323B"
               font-weight="500">
               {{ ax.label }}
             </text>
@@ -83,7 +83,7 @@ interface Point { x: number; y: number; }
               dominant-baseline="middle"
               font-size="9"
               font-family="inherit"
-              fill="#0095d6"
+              fill="#00AEEF"
               font-weight="700">
               {{ scaleDisplay(values[i]) }}
             </text>
@@ -93,17 +93,17 @@ interface Point { x: number; y: number; }
         @if (valuesPromedio?.length) {
           <div style="display:flex;gap:14px;justify-content:center;margin-top:8px">
             <div style="display:flex;align-items:center;gap:5px">
-              <svg width="18" height="6"><line x1="0" y1="3" x2="18" y2="3" stroke="#0095d6" stroke-width="2"/></svg>
-              <span style="font-size:9px;color:#374151;font-family:inherit">Configurado</span>
+              <svg width="18" height="6"><line x1="0" y1="3" x2="18" y2="3" stroke="#00AEEF" stroke-width="2"/></svg>
+              <span style="font-size:9px;color:#2A323B;font-family:inherit">Configurado</span>
             </div>
             @if (isPromedioDefault) {
               <div style="display:flex;align-items:center;gap:5px">
-                <span style="font-size:9px;color:#9ca3af;font-family:inherit;font-style:italic">Promedio centros: pendiente</span>
+                <span style="font-size:9px;color:#A6AFB8;font-family:inherit;font-style:italic">Promedio centros: pendiente</span>
               </div>
             } @else {
               <div style="display:flex;align-items:center;gap:5px">
                 <svg width="18" height="6"><line x1="0" y1="3" x2="18" y2="3" stroke="#22c55e" stroke-width="2" stroke-dasharray="4,2"/></svg>
-                <span style="font-size:9px;color:#374151;font-family:inherit">Promedio centros</span>
+                <span style="font-size:9px;color:#2A323B;font-family:inherit">Promedio centros</span>
               </div>
             }
           </div>

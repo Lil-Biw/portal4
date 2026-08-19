@@ -11,7 +11,7 @@ import { porcentajeColorFn } from '../../utils';
       <!-- Track -->
       <circle
         [attr.cx]="half" [attr.cy]="half" [attr.r]="r"
-        fill="none" stroke="#e5e7eb" [attr.stroke-width]="sw"/>
+        fill="none" stroke="var(--border-subtle)" [attr.stroke-width]="sw"/>
       @if (value > 0) {
         <!-- Arc desde arriba (-90°) -->
         <circle
@@ -25,7 +25,7 @@ import { porcentajeColorFn } from '../../utils';
           [attr.transform]="'rotate(-90 '+half+' '+half+')'"/>
       } @else {
         <!-- Punto rojo en la cima para 0% -->
-        <circle [attr.cx]="half" [attr.cy]="half - r" r="4" fill="#dc2626"/>
+        <circle [attr.cx]="half" [attr.cy]="half - r" r="4" fill="var(--danger)"/>
       }
       <!-- Texto central -->
       <text
@@ -35,7 +35,7 @@ import { porcentajeColorFn } from '../../utils';
         [attr.font-size]="fontSize"
         font-weight="700"
         font-family="inherit"
-        [attr.fill]="value > 0 ? arcColor : '#9ca3af'">{{ value }}%</text>
+        [attr.fill]="value > 0 ? arcColor : 'var(--fg-5)'">{{ value }}%</text>
     </svg>
   `,
 })

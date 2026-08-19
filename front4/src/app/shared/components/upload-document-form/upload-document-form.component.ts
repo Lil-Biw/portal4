@@ -12,10 +12,10 @@ import { FormsModule } from '@angular/forms';
   imports: [FormsModule],
   styles: [`
     .udf-card {
-      border: 1.5px dashed #bfdbfe;
+      border: 1.5px dashed var(--sc-cyan-tint-12);
       border-radius: 10px;
       padding: 1.25rem;
-      background: #f0f9ff;
+      background: var(--sc-cyan-tint-6);
     }
     .udf-aviso {
       display: flex;
@@ -23,11 +23,11 @@ import { FormsModule } from '@angular/forms';
       gap: .6rem;
       padding: .75rem 1rem;
       margin-bottom: 1rem;
-      background: #fef9c3;
-      border: 1px solid #fde68a;
+      background: var(--warn-bg);
+      border: 1px solid var(--warn-bg);
       border-radius: 8px;
     }
-    .udf-aviso p { margin: 0; font-size: .8rem; color: #92400e; line-height: 1.4; }
+    .udf-aviso p { margin: 0; font-size: .8rem; color: var(--warn); line-height: 1.4; }
     .udf-tabs { display: flex; gap: .4rem; margin-bottom: 1rem; }
     .udf-tab {
       flex: 1;
@@ -36,43 +36,43 @@ import { FormsModule } from '@angular/forms';
       font-size: .82rem;
       font-weight: 600;
       cursor: pointer;
-      border: 1px solid #d1d5db;
-      background: #fff;
-      color: #374151;
+      border: 1px solid var(--border-default);
+      background: var(--bg-0);
+      color: var(--fg-2);
     }
-    .udf-tab--active { background: #0095d6; color: #fff; border-color: #0095d6; }
-    .udf-descripcion { margin: 0 0 .5rem; font-size: .78rem; color: #6b7280; }
+    .udf-tab--active { background: var(--sc-cyan); color: var(--bg-0); border-color: var(--sc-cyan); }
+    .udf-descripcion { margin: 0 0 .5rem; font-size: .78rem; color: var(--fg-3); }
     .udf-dropzone {
       position: relative;
-      border: 1.5px dashed #93c5fd;
+      border: 1.5px dashed var(--sc-cyan-tint-12);
       border-radius: 8px;
-      background: #fff;
+      background: var(--bg-0);
       padding: 2rem 1rem;
       text-align: center;
       cursor: pointer;
       transition: border-color .15s, background-color .15s;
     }
-    .udf-dropzone--error { border-color: #f87171; background: #fef2f2; }
+    .udf-dropzone--error { border-color: var(--danger); background: var(--danger-bg); }
     .udf-dropzone-icon { margin: 0 auto .75rem; display: block; }
-    .udf-dropzone-text { margin: 0 0 .25rem; font-size: .9rem; color: #374151; }
-    .udf-dropzone-link { color: #0095d6; font-weight: 600; cursor: pointer; text-decoration: underline; }
-    .udf-filename { margin: .35rem 0 0; font-size: .8rem; color: #6b7280; font-style: italic; }
-    .udf-quitar { color: #0095d6; font-weight: 600; cursor: pointer; text-decoration: underline; font-style: normal; }
-    .udf-error { margin: .5rem 0 0; font-size: .8rem; color: #dc2626; font-weight: 600; }
+    .udf-dropzone-text { margin: 0 0 .25rem; font-size: .9rem; color: var(--fg-2); }
+    .udf-dropzone-link { color: var(--sc-cyan); font-weight: 600; cursor: pointer; text-decoration: underline; }
+    .udf-filename { margin: .35rem 0 0; font-size: .8rem; color: var(--fg-3); font-style: italic; }
+    .udf-quitar { color: var(--sc-cyan); font-weight: 600; cursor: pointer; text-decoration: underline; font-style: normal; }
+    .udf-error { margin: .5rem 0 0; font-size: .8rem; color: var(--danger); font-weight: 600; }
     .udf-fields { display: grid; grid-template-columns: 1fr auto; gap: .75rem; margin-top: 1rem; align-items: end; }
     .udf-field { display: flex; flex-direction: column; gap: .3rem; }
     .udf-field--full { margin-top: 1rem; }
-    .udf-label { font-size: .7rem; font-weight: 700; color: #6b7280; letter-spacing: .06em; text-transform: uppercase; }
+    .udf-label { font-size: .7rem; font-weight: 700; color: var(--fg-3); letter-spacing: .06em; text-transform: uppercase; }
     .udf-input, .udf-select {
       padding: .55rem .75rem;
-      border: 1px solid #d1d5db;
+      border: 1px solid var(--border-default);
       border-radius: 7px;
       font-size: .875rem;
       font-family: inherit;
       outline: none;
-      background: #fff;
+      background: var(--bg-0);
     }
-    .udf-input--error { border-color: #f87171; }
+    .udf-input--error { border-color: var(--danger); }
     .udf-select { min-width: 200px; }
     .udf-link-block { display: flex; flex-direction: column; gap: .3rem; }
     .udf-buttons { display: flex; gap: .5rem; margin-top: 1rem; }
@@ -89,7 +89,7 @@ import { FormsModule } from '@angular/forms';
     <div class="udf-card">
       @if (mostrarAviso) {
         <div class="udf-aviso">
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#92400e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-top:1px"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--warn)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-top:1px"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
           <p><strong>Aviso:</strong> {{ avisoTexto }}</p>
         </div>
       }
@@ -107,7 +107,7 @@ import { FormsModule } from '@angular/forms';
         <div class="udf-dropzone" [class.udf-dropzone--error]="archivoInvalido"
              (dragover)="$event.preventDefault()" (drop)="onDrop($event)" (click)="fileInput.click()">
           <input #fileInput type="file" [attr.multiple]="multiple || null" style="display:none" [attr.accept]="accept || null" (change)="onFileSelected($event)" />
-          <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" [attr.stroke]="archivoInvalido ? '#dc2626' : '#0095d6'" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="udf-dropzone-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" [attr.stroke]="archivoInvalido ? 'var(--danger)' : 'var(--sc-cyan)'" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="udf-dropzone-icon">
             <polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/>
             <path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/>
           </svg>

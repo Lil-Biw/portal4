@@ -9,8 +9,8 @@ import { PERM_SCHEMA, PermisoRow, PermisoSeccion, PermisosUsuario, filaAplica } 
   styles: [`
     .pf-seccion {
       display: flex; flex-direction: column; gap: .7rem;
-      --pf-color: #0075a8;
-      --pf-color-suave: #82c3e0;
+      --pf-color: var(--sc-cyan-pressed);
+      --pf-color-suave: var(--sc-cyan-tint-12);
     }
     .pf-seccion + .pf-seccion { margin-top: 1.4rem; }
     .pf-seccion-titulo {
@@ -28,31 +28,31 @@ import { PERM_SCHEMA, PermisoRow, PermisoSeccion, PermisosUsuario, filaAplica } 
     }
 
     .perm-panel {
-      border: 1px solid rgba(34,33,33,.1);
+      border: 1px solid var(--border-default);
       border-left: 3px solid var(--pf-color-suave);
       border-radius: 10px;
-      background: #f8fafc;
+      background: var(--bg-1);
       overflow: hidden;
     }
     .perm-row { display: flex; align-items: center; gap: 1rem; padding: .68rem .9rem; }
-    .perm-row + .perm-row { border-top: 1px solid rgba(34,33,33,.07); }
+    .perm-row + .perm-row { border-top: 1px solid var(--border-subtle); }
     .perm-row-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: .1rem; }
-    .perm-row-label { font-size: .86rem; font-weight: 600; color: #1f2937; }
-    .perm-row-hint { font-size: .76rem; color: #6b7280; line-height: 1.4; }
-    .perm-row--disabled .perm-row-label { color: #9ca3af; }
-    .perm-row--disabled .perm-row-hint { color: #c1c7d0; }
+    .perm-row-label { font-size: .86rem; font-weight: 600; color: var(--fg-1); }
+    .perm-row-hint { font-size: .76rem; color: var(--fg-3); line-height: 1.4; }
+    .perm-row--disabled .perm-row-label { color: var(--fg-5); }
+    .perm-row--disabled .perm-row-hint { color: var(--fg-5); }
 
     .pf-switch {
       position: relative; flex-shrink: 0;
       width: 40px; height: 22px; border-radius: 999px;
       border: none; padding: 0; cursor: pointer;
-      background: #dfe3e7;
+      background: var(--bg-3);
       transition: background .16s;
     }
     .pf-switch::after {
       content: ""; position: absolute; top: 2px; left: 2px;
       width: 18px; height: 18px; border-radius: 999px;
-      background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,.25);
+      background: var(--bg-0); box-shadow: var(--shadow-1);
       transition: transform .16s;
     }
     .pf-switch[aria-pressed="true"] { background: var(--pf-color); }

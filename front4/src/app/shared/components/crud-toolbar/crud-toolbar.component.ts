@@ -21,12 +21,12 @@ export type CrudAction = 'crear' | 'editar' | 'eliminar' | 'buscar';
     </div>
   `,
   styles: [`
-    .toolbar { display:flex; align-items:center; justify-content:space-between; gap:1rem; margin-bottom:1.25rem; padding-bottom:1rem; border-bottom:1px solid rgba(34,33,33,.1); }
-    .title { margin:0; font-size:1.5rem; font-weight:700; color:#1f2937; }
+    .toolbar { display:flex; align-items:center; justify-content:space-between; gap:1rem; margin-bottom:1.25rem; padding-bottom:1rem; border-bottom:1px solid var(--border-subtle); }
+    .title { margin:0; font-size:1.5rem; font-weight:700; color:var(--fg-1); }
     .actions { display:flex; gap:.5rem; flex-wrap:wrap; }
-    .btn { padding:.55rem 1rem; border-radius:8px; border:1px solid rgba(34,33,33,.2); background:transparent; cursor:pointer; font-weight:600; font-size:.875rem; color:#374151; transition:all .15s ease; }
-    .btn:hover { border-color:rgba(34,33,33,.4); background:rgba(255,255,255,.5); }
-    .btn.active { background:var(--accent,#0095d6); color:#fff; border-color:var(--accent,#0095d6); }
+    .btn { padding:.55rem 1rem; border-radius:8px; border:1px solid var(--border-default); background:transparent; cursor:pointer; font-weight:600; font-size:.875rem; color:var(--fg-2); transition:all .15s ease; }
+    .btn:hover { border-color:var(--border-strong); background:var(--bg-1); }
+    .btn.active { background:var(--sc-cyan); color:var(--fg-inverse); border-color:var(--sc-cyan); }
   `],
 })
 export class CrudToolbarComponent {

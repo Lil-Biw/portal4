@@ -283,9 +283,9 @@ export function calcularScoreDocumental(
 // Mismos cortes (75/50) y mismos colores en las tres piezas — antes divergían
 // (donut usaba 75/50/25 con azul intermedio, chip usaba 80/50 con 'ok' azul).
 export function porcentajeColorFn(pct: number): string {
-  if (pct >= 75) return '#16a34a';
-  if (pct >= 50) return '#d97706';
-  return '#ef4444';
+  if (pct >= 75) return '#2EAE6E';
+  if (pct >= 50) return '#F5A524';
+  return '#E5484D';
 }
 
 export function scoreChipVariantFn(pct: number): 'ok' | 'warning' | 'danger' {
@@ -341,19 +341,19 @@ export function detectarCategoriaDocumento(nombreArchivo: string): string | null
 
 export function colorEstadoSolicitud(estado: string): string {
   const map: Record<string, string> = {
-    pendiente: '#0095d6', revision: '#f59e0b', aprobado: '#22c55e',
-    rechazado: '#ef4444', vencido:  '#9ca3af',
+    pendiente: '#00AEEF', revision: '#F5A524', aprobado: '#2EAE6E',
+    rechazado: '#E5484D', vencido:  '#A6AFB8',
   };
-  return map[estado] ?? '#9ca3af';
+  return map[estado] ?? '#A6AFB8';
 }
 
 export function estadoStyleFn(estado: string): string {
   const map: Record<string, string> = {
-    pendiente: 'background:#fef3c7;color:#b45309',
-    revision:  'background:#dbeafe;color:#1e40af',
-    aprobado:  'background:#dcfce7;color:#15803d',
-    rechazado: 'background:#fee2e2;color:#dc2626',
-    vencido:   'background:#f3f4f6;color:#374151',
+    pendiente: 'background:var(--revision-bg);color:var(--revision)',
+    revision:  'background:#dbeafe;color:#1e40af', // excepción — ver Global Constraints #6
+    aprobado:  'background:var(--ok-bg);color:var(--ok)',
+    rechazado: 'background:var(--danger-bg);color:var(--danger)',
+    vencido:   'background:var(--bg-2);color:var(--fg-2)',
   };
-  return map[estado] ?? 'background:#f3f4f6;color:#374151';
+  return map[estado] ?? 'background:var(--bg-2);color:var(--fg-2)';
 }

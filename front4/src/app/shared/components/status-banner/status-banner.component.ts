@@ -14,16 +14,16 @@ import { Status } from '../../models/status.model';
   styles: [`
     .banner {
       padding: .75rem 1rem;
-      border-radius: 8px;
-      background: rgba(34,197,98,.08);
-      color: #16a34a;
-      border: 1px solid rgba(34,197,98,.2);
+      border-radius: var(--radius-sm);
+      background: var(--ok-bg);
+      color: var(--ok);
+      border: 1px solid var(--ok);
       font-size: .875rem;
     }
     .banner.error {
-      background: rgba(239,68,68,.08);
-      color: #ef4444;
-      border-color: rgba(239,68,68,.2);
+      background: var(--danger-bg);
+      color: var(--danger);
+      border-color: var(--danger);
     }
   `],
 })
