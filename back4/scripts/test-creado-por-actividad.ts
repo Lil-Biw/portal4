@@ -68,6 +68,7 @@ async function main() {
   // Caso 1: usuario autenticado válido → guarda snapshot
   const conCreador = await controller.create(
     centroId.toString(),
+    empresaId.toString(),
     { ...dtoBase },
     { user: { sub: usuarioId.toString() } } as any,
   );
@@ -75,19 +76,22 @@ async function main() {
   check(conCreador.creado_por_email === 'admin-creador@example.com', 'guarda creado_por_email del usuario autenticado');
   check(String(conCreador.creado_por) === usuarioId.toString(), 'guarda la referencia creado_por');
 
-  // Caso 2: sin usuario autenticado (req sin user) → crea igual, sin campos de autoría
-  const sinCreador = await controller.create(
-    centroId.toString(),
-    { ...dtoBase },
-    { user: undefined } as any,
-  );
-  check(!sinCreador.creado_por_nombre, 'sin req.user no guarda creado_por_nombre');
-  check(!!sinCreador._id, 'la actividad se crea igual sin req.user');
+  // Caso 2: sin usuario autenticado (req sin user) → se rechaza (fail-closed).
+  // Antes creaba igual; ahora create exige un usuario (JwtAuthGuard siempre lo
+  // provee en la API real) y autorizarCreacion bloquea sin solicitante.
+  let rechazoSinUser = false;
+  try {
+    await controller.create(centroId.toString(), empresaId.toString(), { ...dtoBase }, { user: undefined } as any);
+  } catch (e: any) {
+    rechazoSinUser = e?.response?.statusCode === 403 || e?.status === 403;
+  }
+  check(rechazoSinUser, 'sin req.user la creación es rechazada (403 Forbidden)');
 
   // Caso 3: creadoPorId que no matchea ningún usuario → crea igual, sin campos de autoría
   const idInexistente = oid().toString();
   const creadorInexistente = await controller.create(
     centroId.toString(),
+    empresaId.toString(),
     { ...dtoBase },
     { user: { sub: idInexistente } } as any,
   );
@@ -97,6 +101,7 @@ async function main() {
   // Caso 4: creadoPorId con formato inválido (no es un ObjectId válido) → crea igual, sin campos de autoría
   const creadorInvalido = await controller.create(
     centroId.toString(),
+    empresaId.toString(),
     { ...dtoBase },
     { user: { sub: 'no-soy-un-objectid' } } as any,
   );

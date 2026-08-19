@@ -80,7 +80,7 @@ async function main() {
       codigo: 'PRJ-001',
       nombre: 'Proyecto Prueba',
       descripcion: 'Proyecto para pruebas E2E',
-      estado: 'borrador',
+      estado: 'nuevo_sin_oc',
       documentos: [],
       creado_por: adminId,
     };

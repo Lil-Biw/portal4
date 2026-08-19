@@ -1,7 +1,9 @@
 # Permisos granulares por usuario + Roles (presets)
 
 **Fecha:** 2026-08-12
-**Estado:** Aprobado, pendiente de implementación
+**Estado:** Implementado (modelo de datos + UI + enforcement en backend, ver
+adenda al final del documento — el enforcement se agregó el mismo día, más
+tarde de lo que dice la sección "Fuera de alcance" más abajo).
 
 ## Contexto
 
@@ -26,15 +28,54 @@ como plantillas de esos permisos, editable solo por `super_admin`.
    solo plantillas que rellenan el objeto `permisos` de un usuario — no hay vínculo vivo ni se
    guarda qué rol se aplicó.
 
-## Fuera de alcance (explícito)
+## Fuera de alcance (explícito, ver adenda — esto ya NO aplica)
 
-- **No se conecta el enforcement** de estos permisos a los guards de los demás módulos
+- ~~**No se conecta el enforcement** de estos permisos a los guards de los demás módulos
   (actividades, documentos, centros, etc.). Esta entrega es modelo de datos + UI de gestión
   únicamente. Cablear cada endpoint de la app a estos permisos es una iniciativa aparte,
-  significativamente más grande (toca todos los controllers).
-- No se reemplaza `RolesGuard`/`PermisosGuard` existentes ni el enum `rol`.
+  significativamente más grande (toca todos los controllers).~~ **Implementado el mismo día
+  (adenda más abajo)**: se agregó `PermisoAccionGuard` + `@RequiereAccion()` y se cableó en
+  todos los controllers relevantes.
+- No se reemplaza `RolesGuard`/`PermisosGuard` existentes ni el enum `rol` — esto sigue vigente,
+  `rol` sigue controlando login/modo admin-consumidor y `super_admin` sigue con bypass total.
 - `@RequierePermiso`/`permiso_acceso` no se usan en ningún guard activo hoy (verificado por
-  grep) — se puede dejar de editar sin riesgo de romper autorización.
+  grep) — se puede dejar de editar sin riesgo de romper autorización. (Esto sigue sin cambios;
+  es un sistema distinto al de esta adenda.)
+
+## Adenda 2026-08-12 (tarde) — Enforcement real
+
+Se detectó en uso real que sacarle permisos a un `admin_smartclarity` desde el modal no
+bloqueaba nada (seguía pudiendo crear/editar/eliminar igual, porque `@Roles()` seguía siendo
+lo único que gateaba cada endpoint). Se decidió, con el usuario, conectar el catálogo de
+verdad:
+
+- **Semántica:** para cada acción del catálogo (`PERM_SCHEMA`), `permisos.<seccion>.<accion>`
+  pasa a ser la única fuente de verdad — reemplaza al `@Roles()` que tenía antes ese endpoint
+  puntual, para **los tres roles por igual** (incluyendo `usuario`: si se le otorga
+  `actividades.crear`, puede crear actividades aunque su rol antes no se lo permitiera).
+  `super_admin` sigue con bypass total incondicional (mismo criterio que el resto de los guards).
+- **Guard nuevo:** `PermisoAccionGuard` + decorador `@RequiereAccion(seccion, accion)` en
+  `common/guards/guards.ts`, registrado como `APP_GUARD` global en `app.module.ts` (después de
+  `RolesGuard`/`PermisosGuard`). Si el endpoint no tiene `@RequiereAccion()`, no hace nada (ese
+  endpoint se sigue rigiendo solo por `@Roles()`, sin cambios).
+- **Qué se convirtió:** los endpoints de crear/editar/eliminar/subir/vencer/editarCategoria de
+  `empresas`+`docEmpresa`, `centros`+`docCentro`, `proyectos`+`docProyecto`,
+  `actividades`+`docActividad`, `activos`+`docActivo`, `catalogos` (tipos-actividad/activo/
+  proyecto), `solicitudes` (crear/cambiarEstado/eliminar), `usuarios` (crear/editar/eliminar) y
+  `noticias`. Los endpoints de solo lectura (`GET`) no se tocaron — el catálogo no modela "ver".
+- **Caso especial `usuarios.crearAdmin`:** `UsuariosController.create()`/`update()` ya no
+  hardcodean "si sos `admin_smartclarity`, forzar rol a 'usuario'" — ahora chequean
+  `permisos.usuarios.crearAdmin === true` (el guard deja `req.user.permisos` cacheado tras
+  resolverlo, para no repetir la consulta a Mongo).
+- **Migración de cuentas existentes:** `back4/scripts/migrate-backfill-permisos-existentes.js`
+  — rellena `permisos` para cuentas `admin_smartclarity`/`usuario` que nunca pasaron por el
+  modal (campo vacío), con el equivalente EXACTO de lo que su rol permitía antes del guard
+  nuevo (no el preset "Administrador" completo, que les daría más de lo que tenían). Sin este
+  backfill, cualquier cuenta sin `permisos` configurado quedaba bloqueada de golpe en todo.
+  Ya se corrió una vez contra la base real (`test`) el 2026-08-12.
+- **Test de regresión:** `back4/scripts/test-permisos-seguridad.ts` (sección 7) cubre: acción
+  bloqueada por permiso en false, acción de `usuario` habilitada por permiso pese al rol,
+  default-deny para cuentas sin permisos configurados.
 
 ## Modelo de datos
 

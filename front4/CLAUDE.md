@@ -59,7 +59,9 @@ src/app/
 │   │   ├── tipos-actividad.service.ts
 │   │   └── pages/
 │   │       ├── actividades-page.component.*      # Admin: CRUD + documentos adjuntos
-│   │       └── mis-actividades-page.component.*  # Consumidor: read-only filtrado por empresa del contexto
+│   │       └── mis-actividades-page.component.*  # Consumidor: filtrado por empresa del contexto;
+│   │                                             # editar/eliminar por actividad vía flags
+│   │                                             # puede_editar/puede_eliminar del backend
 │   ├── activos/                     # COMPLETO
 │   │   ├── activos.service.ts
 │   │   ├── tipos-activo.service.ts

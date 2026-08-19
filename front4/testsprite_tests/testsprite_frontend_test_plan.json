@@ -1,0 +1,2007 @@
+[
+  {
+    "id": "TC001",
+    "title": "Bloquear la navegación protegida sin sesión",
+    "description": "Verifica que un usuario sin sesión no puede acceder al layout protegido y es redirigido al acceso.",
+    "category": "Layout y navegación",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the login screen is displayed"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify protected navigation is blocked"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the login screen is displayed"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC002",
+    "title": "Iniciar sesión y ver el dashboard correcto",
+    "description": "Verifica que un usuario con credenciales válidas inicia sesión, carga su perfil y llega al dashboard correspondiente a su rol.",
+    "category": "Autenticación y control de sesión",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the username field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the user lands on the appropriate dashboard for their role"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the contextual layout for the signed-in user is displayed"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC003",
+    "title": "Ver resumen inicial del admin",
+    "description": "Verifica que un usuario administrador autenticado accede al resumen inicial con métricas y estado documental visibles.",
+    "category": "Dashboard",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the login username field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the login password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Click the dashboard summary link"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the admin dashboard summary is displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify document and request information is displayed"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC004",
+    "title": "Renderizar la navegación contextual tras iniciar sesión",
+    "description": "Verifica que un usuario autenticado carga su perfil y ve el layout protegido correspondiente a su rol y contexto.",
+    "category": "Layout y navegación",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the login field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the contextual layout is displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the user dashboard for the current role is displayed"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC005",
+    "title": "Ver mi ficha del consumidor",
+    "description": "Verifica que un usuario consumidor autenticado accede a su ficha personal con contexto y accesos correctos.",
+    "category": "Dashboard",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the login username field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the login password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Click the personal dashboard link"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the consumer profile dashboard is displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify context and quick access information is displayed"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC006",
+    "title": "Bloquear el acceso con credenciales inválidas",
+    "description": "Verifica que un intento de inicio de sesión con credenciales incorrectas no permite acceder al portal y muestra un error de autenticación.",
+    "category": "Autenticación y control de sesión",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the username field with invalid.user@example.com"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with invalid-password"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify an authentication error is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the user remains on the login screen"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC007",
+    "title": "Seleccionar contexto de empresa, centro y proyecto",
+    "description": "Verifica que un usuario consumidor puede guardar su contexto activo de empresa, centro y proyecto.",
+    "category": "Perfil y contexto consumidor",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the login field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Open the consumer profile context settings"
+      },
+      {
+        "type": "action",
+        "description": "Select a company, cost center, and project"
+      },
+      {
+        "type": "action",
+        "description": "Save the selected context"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the selected consumer context is displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the consumer layout remains accessible"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC008",
+    "title": "Crear una empresa cliente y verla en el listado",
+    "description": "Verifica que un admin puede crear una empresa cliente nueva y verla reflejada en el listado de empresas.",
+    "category": "Empresas (Clientes)",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the username field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Open the companies section"
+      },
+      {
+        "type": "action",
+        "description": "Start creating a new company"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the company name field with Cliente Test Norte"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the remaining required company fields with valid values"
+      },
+      {
+        "type": "action",
+        "description": "Submit the company form"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the new company appears in the companies list"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the company detail view is available"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC009",
+    "title": "Subir un documento válido y verlo en el listado",
+    "description": "Verifies that a user can upload a valid document, see it in the documents list, and open its detail view.",
+    "category": "Documentos",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the username field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to the documents section"
+      },
+      {
+        "type": "action",
+        "description": "Start a new document upload"
+      },
+      {
+        "type": "action",
+        "description": "Attach a valid file and complete the required metadata"
+      },
+      {
+        "type": "action",
+        "description": "Submit the document upload"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the uploaded document appears in the list"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the document detail view is available"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC010",
+    "title": "Crear un proyecto asociado a una empresa",
+    "description": "Verifica que un admin pueda crear un proyecto válido para una empresa y verlo reflejado en el listado de proyectos de esa empresa.",
+    "category": "Proyectos",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to the projects management view"
+      },
+      {
+        "type": "action",
+        "description": "Create a new project with valid data for an existing company"
+      },
+      {
+        "type": "action",
+        "description": "Open the company project list"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the created project appears in the company project list"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC011",
+    "title": "Crear actividad futura visible en el calendario",
+    "description": "Verifies that an admin can create a future activity and then see it in the activity detail view.",
+    "category": "Actividades",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the username field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to the activities section"
+      },
+      {
+        "type": "action",
+        "description": "Create a new activity with a valid future date and valid reminder days"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the created activity details are displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the activity appears in the calendar or activity list"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC012",
+    "title": "Crear un centro de costo dentro de una empresa",
+    "description": "Verifica que un admin puede crear un centro de costo asociado a una empresa y verlo en su detalle.",
+    "category": "Centros de costo",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the username field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Open the companies section"
+      },
+      {
+        "type": "action",
+        "description": "Open an existing company"
+      },
+      {
+        "type": "action",
+        "description": "Open the cost centers section"
+      },
+      {
+        "type": "action",
+        "description": "Start creating a new cost center"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the cost center name field with Centro Test Operativo"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the remaining required cost center fields with valid values"
+      },
+      {
+        "type": "action",
+        "description": "Submit the cost center form"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the new cost center appears in the cost centers list"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the cost center detail view is available"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC013",
+    "title": "Ver el detalle de un proyecto como consumidor",
+    "description": "Verifica que un usuario consumidor pueda abrir el detalle de un proyecto permitido y ver su contexto jerárquico.",
+    "category": "Proyectos",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to the consumer projects view"
+      },
+      {
+        "type": "action",
+        "description": "Open an accessible project from the list"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the project detail view is displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the hierarchical context for the project is displayed"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC014",
+    "title": "Ver noticias publicadas",
+    "description": "Verifica que un usuario autenticado puede consultar el listado de noticias publicadas.",
+    "category": "Noticias",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the login username field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the login password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Click the news section link"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify published news items are displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the news list is visible"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC015",
+    "title": "Crear solicitud de documento en estado pendiente",
+    "description": "Verifies that an admin can create a document request for a company and see it in the requests list as pending.",
+    "category": "Solicitudes",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the username field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to the requests section"
+      },
+      {
+        "type": "action",
+        "description": "Create a new request for a company with valid data"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the request is shown as pending"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the request appears in the requests list"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC016",
+    "title": "Actualizar una empresa cliente existente",
+    "description": "Verifica que un admin puede editar una empresa cliente ya creada y ver los cambios en el detalle.",
+    "category": "Empresas (Clientes)",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the username field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Open the companies section"
+      },
+      {
+        "type": "action",
+        "description": "Open an existing company created during the test"
+      },
+      {
+        "type": "action",
+        "description": "Start editing the company"
+      },
+      {
+        "type": "action",
+        "description": "Update the company name with Cliente Test Norte Actualizado"
+      },
+      {
+        "type": "action",
+        "description": "Submit the company form"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the updated company appears in the company detail view"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the companies list reflects the updated company"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC017",
+    "title": "Crear un usuario administrativo",
+    "description": "Verifica que un superadmin o gestor de usuarios pueda crear un usuario nuevo y verlo en el listado paginado.",
+    "category": "Usuarios",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to the users management view"
+      },
+      {
+        "type": "action",
+        "description": "Create a new user with valid data and an allowed role"
+      },
+      {
+        "type": "action",
+        "description": "Open the users list"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the created user appears in the users list"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC018",
+    "title": "Mostrar notificaciones en la navegación contextual",
+    "description": "Verifica que el área de navegación muestra el estado de notificaciones disponible para un usuario autenticado.",
+    "category": "Layout y navegación",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the login field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify notification information is displayed in the navigation"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the contextual shell remains visible"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC019",
+    "title": "Ver los activos asociados a un centro como consumidor",
+    "description": "Verifica que un usuario consumidor pueda abrir sus activos permitidos desde un centro de costo y ver el listado correcto.",
+    "category": "Activos",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to the consumer assets view"
+      },
+      {
+        "type": "action",
+        "description": "Open a permitted center of cost"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the associated assets are displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify only permitted assets are displayed"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC020",
+    "title": "Mover un documento a papelera",
+    "description": "Verifies that a user can delete a document and see it moved to the deleted documents area.",
+    "category": "Documentos",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the username field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to the documents section"
+      },
+      {
+        "type": "action",
+        "description": "Open an existing document"
+      },
+      {
+        "type": "action",
+        "description": "Delete the document"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the document is removed from the active list"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the document appears in the deleted documents area"
+      }
+    ],
+    "priority": "Medium"
+  },
+  {
+    "id": "TC021",
+    "title": "Actualizar la información de un proyecto",
+    "description": "Verifica que un admin pueda editar un proyecto existente y ver los cambios reflejados en su detalle.",
+    "category": "Proyectos",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to the projects management view"
+      },
+      {
+        "type": "action",
+        "description": "Open an existing project for editing"
+      },
+      {
+        "type": "action",
+        "description": "Update the project data with valid values"
+      },
+      {
+        "type": "action",
+        "description": "Save the project changes"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the updated project details are displayed"
+      }
+    ],
+    "priority": "Medium"
+  },
+  {
+    "id": "TC022",
+    "title": "Consultar centros de costo de una empresa",
+    "description": "Verifica que un usuario con acceso a una empresa puede ver el listado de centros de costo asociados.",
+    "category": "Centros de costo",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the username field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Open the companies section"
+      },
+      {
+        "type": "action",
+        "description": "Open an existing company with centers"
+      },
+      {
+        "type": "action",
+        "description": "Open the cost centers section"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the cost centers list is displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the selected company context is shown"
+      }
+    ],
+    "priority": "Medium"
+  },
+  {
+    "id": "TC023",
+    "title": "Crear una noticia desde admin",
+    "description": "Verifica que un administrador puede crear una noticia con contenido e imagen válidos y verla en el detalle.",
+    "category": "Noticias",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the login username field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the login password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Click the news management link"
+      },
+      {
+        "type": "action",
+        "description": "Click the create news action"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the news title field with Automated news title"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the news content field with Automated news content"
+      },
+      {
+        "type": "action",
+        "description": "Select a valid image for the news cover"
+      },
+      {
+        "type": "action",
+        "description": "Submit the news form"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the created news item is displayed in the detail view"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify a creation confirmation is visible"
+      }
+    ],
+    "priority": "Medium"
+  },
+  {
+    "id": "TC024",
+    "title": "Mantener el contexto activo al recargar el perfil",
+    "description": "Verifica que el contexto guardado del consumidor se conserva y se muestra al volver a abrir el perfil.",
+    "category": "Perfil y contexto consumidor",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the login field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Open the consumer profile context settings"
+      },
+      {
+        "type": "action",
+        "description": "Verify the current company, cost center, and project are shown"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the current consumer context is displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the context selection controls are available"
+      }
+    ],
+    "priority": "Medium"
+  },
+  {
+    "id": "TC025",
+    "title": "Actualizar el rol de un usuario",
+    "description": "Verifica que un gestor de usuarios pueda editar un usuario existente y cambiar su rol o datos de acceso.",
+    "category": "Usuarios",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to the users management view"
+      },
+      {
+        "type": "action",
+        "description": "Open an existing user for editing"
+      },
+      {
+        "type": "action",
+        "description": "Change the user role to a different allowed role"
+      },
+      {
+        "type": "action",
+        "description": "Save the user changes"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the updated user role is displayed"
+      }
+    ],
+    "priority": "Medium"
+  },
+  {
+    "id": "TC026",
+    "title": "Actualizar un activo existente",
+    "description": "Verifica que un admin pueda editar un activo y ver su información modificada en el detalle o listado.",
+    "category": "Activos",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to the assets management view"
+      },
+      {
+        "type": "action",
+        "description": "Open an existing asset for editing"
+      },
+      {
+        "type": "action",
+        "description": "Update the asset information with valid values"
+      },
+      {
+        "type": "action",
+        "description": "Save the asset changes"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the updated asset details are displayed"
+      }
+    ],
+    "priority": "Medium"
+  },
+  {
+    "id": "TC027",
+    "title": "Actualizar una noticia existente",
+    "description": "Verifica que un administrador puede modificar una noticia existente y ver los cambios reflejados.",
+    "category": "Noticias",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the login username field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the login password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Click the news management link"
+      },
+      {
+        "type": "action",
+        "description": "Open an existing news item"
+      },
+      {
+        "type": "action",
+        "description": "Click the edit news action"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the news title field with Updated automated news title"
+      },
+      {
+        "type": "action",
+        "description": "Submit the news form"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the updated news item is displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify a successful update confirmation is visible"
+      }
+    ],
+    "priority": "Medium"
+  },
+  {
+    "id": "TC028",
+    "title": "Cambiar una solicitud de pendiente a revisión",
+    "description": "Verifies that an admin can update an existing request from pending to review and see the new state reflected.",
+    "category": "Solicitudes",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the username field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to the requests section"
+      },
+      {
+        "type": "action",
+        "description": "Open an existing pending request"
+      },
+      {
+        "type": "action",
+        "description": "Change the request state to review"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the request state is shown as review"
+      }
+    ],
+    "priority": "Medium"
+  },
+  {
+    "id": "TC029",
+    "title": "Cerrar un proyecto y verlo como inactivo",
+    "description": "Verifica que un admin pueda cerrar un proyecto existente y que después deje de mostrarse como activo.",
+    "category": "Proyectos",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to the projects management view"
+      },
+      {
+        "type": "action",
+        "description": "Open an existing active project"
+      },
+      {
+        "type": "action",
+        "description": "Change the project status to closed"
+      },
+      {
+        "type": "action",
+        "description": "Save the project changes"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the project is shown as closed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the project is no longer shown as active"
+      }
+    ],
+    "priority": "Medium"
+  },
+  {
+    "id": "TC030",
+    "title": "Actualizar una actividad existente",
+    "description": "Verifies that an admin can update an existing activity and see the updated schedule and reminders reflected in the UI.",
+    "category": "Actividades",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the username field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to the activities section"
+      },
+      {
+        "type": "action",
+        "description": "Open an existing activity"
+      },
+      {
+        "type": "action",
+        "description": "Update the activity date and reminder settings"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the updated activity details are displayed"
+      }
+    ],
+    "priority": "Medium"
+  },
+  {
+    "id": "TC031",
+    "title": "Actualizar un centro de costo existente",
+    "description": "Verifica que un admin puede editar un centro de costo existente y ver la información actualizada en el detalle.",
+    "category": "Centros de costo",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the username field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Open the companies section"
+      },
+      {
+        "type": "action",
+        "description": "Open an existing company"
+      },
+      {
+        "type": "action",
+        "description": "Open the cost centers section"
+      },
+      {
+        "type": "action",
+        "description": "Open an existing cost center"
+      },
+      {
+        "type": "action",
+        "description": "Start editing the cost center"
+      },
+      {
+        "type": "action",
+        "description": "Update the cost center name with Centro Test Operativo Actualizado"
+      },
+      {
+        "type": "action",
+        "description": "Submit the cost center form"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the updated cost center appears in the detail view"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the cost centers list reflects the updated cost center"
+      }
+    ],
+    "priority": "Medium"
+  },
+  {
+    "id": "TC032",
+    "title": "Aprobar una solicitud y ver la notificación asociada",
+    "description": "Verifies that an admin can approve a request and see the approval reflected in the UI along with an associated notification.",
+    "category": "Solicitudes",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the username field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to the requests section"
+      },
+      {
+        "type": "action",
+        "description": "Open an existing request in review state"
+      },
+      {
+        "type": "action",
+        "description": "Approve the request"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the request is shown as approved"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify an approval notification is visible"
+      }
+    ],
+    "priority": "Medium"
+  },
+  {
+    "id": "TC033",
+    "title": "Eliminar una noticia existente",
+    "description": "Verifica que un administrador puede eliminar una noticia existente y que deja de aparecer en el detalle.",
+    "category": "Noticias",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the login username field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the login password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Click the news management link"
+      },
+      {
+        "type": "action",
+        "description": "Open an existing news item"
+      },
+      {
+        "type": "action",
+        "description": "Click the delete news action"
+      },
+      {
+        "type": "action",
+        "description": "Confirm the deletion"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the news item is no longer available"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify a deletion confirmation is visible"
+      }
+    ],
+    "priority": "Medium"
+  },
+  {
+    "id": "TC034",
+    "title": "Rechazar una empresa cliente duplicada",
+    "description": "Verifica que el sistema no permite crear dos empresas con el mismo nombre y muestra un error de duplicidad.",
+    "category": "Empresas (Clientes)",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the username field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Open the companies section"
+      },
+      {
+        "type": "action",
+        "description": "Start creating a new company"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the company name field with Cliente Duplicado"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the remaining required company fields with valid values"
+      },
+      {
+        "type": "action",
+        "description": "Submit the company form"
+      },
+      {
+        "type": "action",
+        "description": "Start creating another company"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the company name field with Cliente Duplicado"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the remaining required company fields with valid values"
+      },
+      {
+        "type": "action",
+        "description": "Submit the company form"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify a duplicate company validation error is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify only one company with that name is present"
+      }
+    ],
+    "priority": "Medium"
+  },
+  {
+    "id": "TC035",
+    "title": "Eliminar una actividad existente",
+    "description": "Verifies that an admin can delete an activity and no longer see it in the activities list.",
+    "category": "Actividades",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the username field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to the activities section"
+      },
+      {
+        "type": "action",
+        "description": "Open an existing activity"
+      },
+      {
+        "type": "action",
+        "description": "Delete the activity"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the activity is no longer displayed in the list"
+      }
+    ],
+    "priority": "Medium"
+  },
+  {
+    "id": "TC036",
+    "title": "Bloquear la selección de un contexto no autorizado",
+    "description": "Verifica que un usuario no puede guardar una empresa fuera de su alcance autorizado.",
+    "category": "Perfil y contexto consumidor",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the login field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Open the consumer profile context settings"
+      },
+      {
+        "type": "action",
+        "description": "Select an unauthorized company"
+      },
+      {
+        "type": "action",
+        "description": "Save the selected context"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify an access denied validation is displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the previously active context remains unchanged"
+      }
+    ],
+    "priority": "Low"
+  },
+  {
+    "id": "TC037",
+    "title": "Cambiar la contraseña con credenciales actuales incorrectas",
+    "description": "Verifica que un usuario autenticado no puede cambiar su contraseña cuando la contraseña actual es incorrecta y ve una validación de credenciales.",
+    "category": "Autenticación y control de sesión",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the username field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Click the profile or security settings entry"
+      },
+      {
+        "type": "action",
+        "description": "Open the change password form"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the current password field with invalid-password"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the new password field with a valid new password"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password confirmation field with the same valid new password"
+      },
+      {
+        "type": "action",
+        "description": "Submit the password change form"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify a password validation error is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the password is not changed"
+      }
+    ],
+    "priority": "Low"
+  },
+  {
+    "id": "TC038",
+    "title": "Rechazar la creación de un proyecto con referencia inválida",
+    "description": "Verifica que el formulario no permita crear un proyecto cuando se usa una referencia de centro de costo inexistente o inválida.",
+    "category": "Proyectos",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to the projects management view"
+      },
+      {
+        "type": "action",
+        "description": "Start creating a new project"
+      },
+      {
+        "type": "action",
+        "description": "Fill the project form with a valid name and an invalid center of cost reference"
+      },
+      {
+        "type": "action",
+        "description": "Submit the project form"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify a validation error is displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the project is not created"
+      }
+    ],
+    "priority": "Low"
+  },
+  {
+    "id": "TC039",
+    "title": "Bloquear subida de documento demasiado grande",
+    "description": "Verifies that the document upload form rejects a file larger than the allowed size and shows a validation message.",
+    "category": "Documentos",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the username field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to the documents section"
+      },
+      {
+        "type": "action",
+        "description": "Start a new document upload"
+      },
+      {
+        "type": "action",
+        "description": "Attach a file larger than the allowed size"
+      },
+      {
+        "type": "action",
+        "description": "Submit the document upload"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify a file size validation error is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the document is not added to the list"
+      }
+    ],
+    "priority": "Low"
+  },
+  {
+    "id": "TC040",
+    "title": "Consultar la ayuda estática",
+    "description": "Verifica que el usuario puede abrir la sección de ayuda y ver su contenido estático.",
+    "category": "Ayuda",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the login username field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the login password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Click the help section link"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify help content is displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the help page shows static guidance"
+      }
+    ],
+    "priority": "Low"
+  },
+  {
+    "id": "TC041",
+    "title": "Ver el acceso denegado a un centro de costo fuera de permisos",
+    "description": "Verifica que un usuario sin permisos para una empresa no puede acceder a centros de costo fuera de su contexto.",
+    "category": "Centros de costo",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the username field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Open a company outside the user's allowed context"
+      },
+      {
+        "type": "action",
+        "description": "Open the cost centers section"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify an access denied message is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the restricted section is not available"
+      }
+    ],
+    "priority": "Low"
+  },
+  {
+    "id": "TC042",
+    "title": "Bloquear la creación de un usuario con un rol no permitido",
+    "description": "Verifica que el sistema impida crear un usuario con un rol restringido para el perfil de administración actual.",
+    "category": "Usuarios",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to the users management view"
+      },
+      {
+        "type": "action",
+        "description": "Start creating a new user"
+      },
+      {
+        "type": "action",
+        "description": "Fill the user form with valid data and a restricted role"
+      },
+      {
+        "type": "action",
+        "description": "Submit the user form"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify an access or validation error is displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the user is not created"
+      }
+    ],
+    "priority": "Low"
+  },
+  {
+    "id": "TC043",
+    "title": "Crear actividad con referencia inválida",
+    "description": "Verifies that the app blocks creating an activity when a related center or asset reference is invalid and shows a validation error.",
+    "category": "Actividades",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the username field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to the activities section"
+      },
+      {
+        "type": "action",
+        "description": "Start creating a new activity"
+      },
+      {
+        "type": "action",
+        "description": "Provide an invalid center or asset reference"
+      },
+      {
+        "type": "action",
+        "description": "Submit the activity form"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify a validation error is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the activity is not created"
+      }
+    ],
+    "priority": "Low"
+  },
+  {
+    "id": "TC044",
+    "title": "Validar creación de noticia con datos incompletos",
+    "description": "Verifica que el formulario de creación de noticias muestra validación cuando faltan datos obligatorios o la imagen no es válida.",
+    "category": "Noticias",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the login username field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the login password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Click the news management link"
+      },
+      {
+        "type": "action",
+        "description": "Click the create news action"
+      },
+      {
+        "type": "action",
+        "description": "Submit the news form without filling required fields"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify a form validation error is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the news is not created"
+      }
+    ],
+    "priority": "Low"
+  },
+  {
+    "id": "TC045",
+    "title": "Ver contenido de ayuda no existente",
+    "description": "Verifica que una ruta de ayuda incorrecta muestra un estado de recurso no encontrado.",
+    "category": "Ayuda",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the login username field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the login password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Click an incorrect help route"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify a not found state is displayed"
+      }
+    ],
+    "priority": "Low"
+  }
+]

@@ -1,0 +1,202 @@
+version: "2"
+type: frontend
+tech_stack:
+  - TypeScript
+  - Angular 21 (standalone components, signals)
+  - Angular Forms (template-driven, ngModel)
+  - REST API client (fetch-based HttpClient)
+routes:
+  - path: /login-admin
+    file: src/app/features/auth/pages/login-admin-page.component.ts
+    auth_required: false
+    description: Login page for admin roles (super_admin, admin_smartclarity)
+  - path: /login-consumidor
+    file: src/app/features/auth/pages/login-consumidor-page.component.ts
+    auth_required: false
+    description: Login page for client users (rol usuario)
+  - path: /cambiar-password
+    file: src/app/features/auth/pages/cambiar-password-page.component.ts
+    auth_required: true
+    description: Force password change flow
+  - path: /inicio
+    file: src/app/features/dashboard/pages/inicio-page.component.ts
+    auth_required: true
+    description: Consumidor home dashboard
+  - path: /mi-ficha
+    file: src/app/features/dashboard/pages/mi-ficha-page.component.ts
+    auth_required: true
+    description: Consumidor company profile/score page
+  - path: /resumen
+    file: src/app/features/dashboard/pages/resumen-page.component.ts
+    auth_required: true
+    description: Admin summary dashboard
+  - path: /empresa
+    file: src/app/features/clientes/pages/clientes-page.component.ts
+    auth_required: true
+    description: Admin CRUD of client companies
+  - path: /centros
+    file: src/app/features/centros/pages/centros-page.component.ts
+    auth_required: true
+    description: Admin CRUD of cost centers
+  - path: /proyectos
+    file: src/app/features/proyectos/pages/proyectos-page.component.ts
+    auth_required: true
+    description: Admin CRUD of projects
+  - path: /usuarios
+    file: src/app/features/usuarios/pages/usuarios-page.component.ts
+    auth_required: true
+    description: Admin CRUD of users + notification subscriptions
+  - path: /activos
+    file: src/app/features/activos/pages/activos-page.component.ts
+    auth_required: true
+    description: Admin CRUD of assets
+  - path: /mis-centros
+    file: src/app/features/centros/pages/mis-centros-page.component.ts
+    auth_required: true
+    description: Consumidor read-only cost centers view
+  - path: /mis-proyectos
+    file: src/app/features/proyectos/pages/mis-proyectos-page.component.ts
+    auth_required: true
+    description: Consumidor projects list
+  - path: /mis-proyectos/:id
+    file: src/app/features/proyectos/pages/mi-proyecto-detalle-page.component.ts
+    auth_required: true
+    description: Consumidor project detail
+  - path: /mis-actividades
+    file: src/app/features/actividades/pages/mis-actividades-page.component.ts
+    auth_required: true
+    description: Consumidor read-only activities calendar (month/week/day views)
+  - path: /mis-activos
+    file: src/app/features/activos/pages/mis-activos-page.component.ts
+    auth_required: true
+    description: Consumidor assets list
+  - path: /actividades
+    file: src/app/features/actividades/pages/actividades-page.component.ts
+    auth_required: true
+    description: >
+      Admin activities calendar (month/week/day views) with a create/edit
+      wizard modal. TODAY'S CHANGE: activities now support an optional start
+      time (hora) AND an optional end time (hora_termino), shown as two
+      time inputs in the wizard's first step, and rendered in the week/day
+      time-grid as a block whose height is proportional to the real duration
+      (hora -> hora_termino) instead of a fixed 60-minute block. Chips/blocks
+      show "HH:mm-HH:mm" when both are set.
+  - path: /documentos
+    file: src/app/features/documentos/documentos-shell.component.ts
+    auth_required: true
+    description: >
+      Shell that renders documentos-admin-page.component.ts (admin mode) or
+      documentos-consumidor-page.component.ts (consumidor mode) depending on
+      profile mode.
+  - path: /noticias
+    file: src/app/features/noticias/noticias-shell.component.ts
+    auth_required: true
+    description: News shell (admin/consumidor)
+  - path: /ayuda
+    file: src/app/features/ayuda/pages/ayuda-page.component.ts
+    auth_required: true
+    description: Static help content
+features:
+  - name: Login (admin)
+    description: Authenticate as super_admin or admin_smartclarity to reach admin-only pages.
+    files:
+      - src/app/features/auth/pages/login-admin-page.component.ts
+      - src/app/features/auth/auth.service.ts
+    entry_route: /login-admin
+    user_interactions:
+      - Fill in email field
+      - Fill in password field
+      - Click "Iniciar sesión" button
+      - Get redirected to /resumen (super_admin) or /usuarios (admin_smartclarity) on success
+    api_calls:
+      - method: POST
+        endpoint: /api/v1/auth/login
+    auth_required: false
+  - name: Actividad — hora inicio y hora término (NEW, 2026-07-17)
+    description: >
+      In the admin activities calendar, creating or editing an activity now
+      exposes two optional time inputs: "Hora inicio (opcional)" and "Hora
+      término (opcional)". The end-time input is disabled until a start time
+      is set, and its native min is bound to the start time so it cannot be
+      set earlier than the start. Both are sent to the backend as
+      hora/hora_termino (HH:mm strings). In the week/day calendar views, an
+      activity with both times renders a colored block in the hourly grid
+      whose height is proportional to its real duration (end - start)
+      instead of a fixed 60-minute block, and its label/tooltip shows
+      "HH:mm-HH:mm". An activity with only a start time still renders as
+      before (fixed visual block, label shows just "HH:mm"). An activity
+      with no time at all still falls in the "Sin hora"/"Todo el día" lane.
+    files:
+      - src/app/features/actividades/pages/actividades-page.component.ts
+      - src/app/features/actividades/pages/actividades-page.component.html
+      - src/app/features/actividades/pages/actividades-page.component.css
+      - src/app/shared/utils.ts
+      - src/app/shared/models/actividad.model.ts
+    entry_route: /actividades
+    user_interactions:
+      - Click "+ Nueva actividad" (or click a day cell) to open the creation wizard
+      - Fill in "Nombre" and select a "Tipo"
+      - Pick "Fecha"
+      - Set "Hora inicio (opcional)" to e.g. 09:00
+      - Set "Hora término (opcional)" to e.g. 11:30 (verify this field is disabled/empty until Hora inicio has a value, and cannot be set earlier than Hora inicio)
+      - Select "Centro de costos"
+      - Click "Siguiente" through the wizard steps and "Guardar" to create
+      - Switch calendar to vista "Semana" or "Día"
+      - Verify the created activity's block height in the hourly grid is taller for a 2.5h activity than for an activity with only a start time (fixed-height block)
+      - Verify the block/chip label shows "09:00-11:30"
+      - Click the block to reopen the edit modal and confirm both time fields are pre-filled correctly
+      - Edit only "Hora término" and save, confirm the block height updates
+      - Clear "Hora inicio" and confirm "Hora término" is also cleared/disabled
+    api_calls:
+      - method: POST
+        endpoint: /api/v1/actividades
+      - method: PUT
+        endpoint: /api/v1/actividades/:id
+      - method: GET
+        endpoint: /api/v1/actividades
+    auth_required: true
+  - name: Tag "quién subió" en Documentos (admin) (NEW, 2026-07-17)
+    description: >
+      In documentos-admin-page, each document row's metadata line (which
+      already shows a level pill Empresa/Centro/Proyecto and "Subido:
+      {fecha}") now also shows, when available, a small teal pill with the
+      name of the user who uploaded it (subido_por_nombre), resolved by the
+      backend from the stored subido_por user id. This applies to all 4
+      admin views: the main list (per docTipo empresa/centro/proyecto), the
+      aggregated "Todos los centros" view, "Todos los proyectos" view, and
+      the "Vencidos" (expired documents) view. Documents uploaded before this
+      change (no subido_por stored) show no pill — never a placeholder like
+      "Desconocido". documentos-consumidor-page must NOT show this pill at
+      all (explicitly out of scope) — verify this as a negative check.
+    files:
+      - src/app/features/documentos/pages/documentos-admin-page.component.html
+      - src/app/features/documentos/pages/documentos-admin-page.component.ts
+      - src/app/features/documentos/documentos.service.ts
+    entry_route: /documentos
+    user_interactions:
+      - Log in as super_admin or admin_smartclarity (admin mode)
+      - Navigate to /documentos, select an empresa
+      - Upload a new document (archivo o link) at the empresa level
+      - Verify the new document row shows a teal pill with the logged-in user's name, right next to the "Subido: ..." date text
+      - Switch to "Todos los centros" and "Todos los proyectos" tabs and confirm the same document (if applicable) still shows the uploader pill
+      - Mark a document as vencido and check the "Vencidos" tab shows the uploader pill there too
+      - Switch profile mode to consumidor (or log in as a rol=usuario user) and open /documentos — confirm NO uploader pill is rendered anywhere, only the existing "Subido: {fecha}" text
+    api_calls:
+      - method: GET
+        endpoint: /api/v1/empresas/:empresaId/documentos
+      - method: GET
+        endpoint: /api/v1/empresas/:empresaId/centros/:centroId/documentos
+      - method: GET
+        endpoint: /api/v1/empresas/:empresaId/proyectos/:proyectoId/documentos
+      - method: GET
+        endpoint: /api/v1/documentos-vencidos
+      - method: POST
+        endpoint: /api/v1/empresas/:empresaId/documentos
+    auth_required: true
+known_limitations:
+  - issue: Clearing an already-set "Hora inicio"/"Hora término" on an existing activity and saving may not actually clear it in the backend (PUT only sends defined keys; an empty string is mapped to undefined and dropped by JSON serialization, so Mongo keeps the old value). Pre-existing behavior for hora, not introduced today.
+    location: src/app/features/actividades/pages/actividades-page.component.ts (guardar())
+    impact: Editing an activity to remove its time may silently fail to persist the removal; the UI form will show it cleared until the next reload.
+  - issue: Backend does not validate that hora_termino is chronologically after hora (only the frontend time input's min attribute nudges this in the UI).
+    location: back4/src/actividades/actividades.dto.ts
+    impact: A direct API call (bypassing the UI) could store hora_termino <= hora; the frontend grid layout falls back to a fixed visual duration in that case rather than crashing.

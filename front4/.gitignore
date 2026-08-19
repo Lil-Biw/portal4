@@ -42,3 +42,7 @@ __screenshots__/
 # System files
 .DS_Store
 Thumbs.db
+
+# TestSprite — contiene API key y credenciales de prueba
+testsprite_tests/tmp/config.json
+testsprite_tests/tmp/mcp.log

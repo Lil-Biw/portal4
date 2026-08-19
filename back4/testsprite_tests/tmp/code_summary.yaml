@@ -1,0 +1,244 @@
+version: "2"
+type: backend
+tech_stack:
+  - Node.js
+  - NestJS 10
+  - Mongoose 8
+  - MongoDB Atlas
+  - JWT (@nestjs/jwt)
+  - bcryptjs
+  - Amazon S3 (almacenamiento de documentos)
+features:
+  - name: Autenticacion
+    description: Login de usuarios (admin y consumidor) con email y password, emision de JWT con rol y cliente_id. Unico endpoint publico junto a logos/imagenes/cron.
+    files:
+      - src/auth/auth.controller.ts
+      - src/auth/auth.service.ts
+      - src/auth/auth.dto.ts
+      - src/auth/jwt.strategy.ts
+      - src/common/guards
+    endpoints:
+      - method: POST
+        path: /api/v1/auth/login
+        description: Autentica un usuario por email y password, devuelve access_token JWT y datos basicos del usuario
+        auth_required: false
+        request_schema:
+          body:
+            email: string
+            password: string
+        response_schema:
+          "200":
+            access_token: string
+            usuario: { id: string, nombre: string, email: string, rol: string, cliente_id: "string|null", debe_cambiar_password: boolean }
+          "401": Credenciales invalidas
+    depends_on: []
+
+  - name: Empresas (Clientes)
+    description: CRUD de empresas cliente, logo y documentos generales de la empresa
+    files:
+      - src/clientes/clientes.controller.ts
+    endpoints:
+      - { method: POST, path: /api/v1/empresas, description: Crear empresa cliente, auth_required: true }
+      - { method: GET, path: /api/v1/empresas, description: Listar empresas (paginado o array segun rol), auth_required: true }
+      - { method: GET, path: /api/v1/empresas/:id, description: Obtener detalle de una empresa, auth_required: true }
+      - { method: PUT, path: /api/v1/empresas/:id, description: Actualizar datos de una empresa, auth_required: true }
+      - { method: PUT, path: /api/v1/empresas/:id/score-smartclarity, description: Actualizar score smartclarity de la empresa, auth_required: true }
+      - { method: PATCH, path: /api/v1/empresas/:id/config-grafico, description: Actualizar configuracion de grafico de la empresa, auth_required: true }
+      - { method: DELETE, path: /api/v1/empresas/:id, description: Eliminar empresa (solo super_admin), auth_required: true }
+      - { method: POST, path: /api/v1/empresas/:id/logo, description: Subir logo de la empresa, auth_required: true }
+      - { method: GET, path: /api/v1/empresas/:id/logo, description: Servir el logo de la empresa (publico), auth_required: false }
+      - { method: POST, path: /api/v1/empresas/:id/documentos, description: Subir documento general de la empresa, auth_required: true }
+      - { method: GET, path: /api/v1/empresas/:id/documentos, description: Listar documentos de la empresa, auth_required: true }
+      - { method: GET, path: /api/v1/empresas/:id/documentos/:docId, description: Descargar/servir un documento de la empresa, auth_required: true }
+      - { method: DELETE, path: /api/v1/empresas/:id/documentos/:docId, description: Eliminar un documento de la empresa, auth_required: true }
+      - { method: PATCH, path: /api/v1/empresas/:id/documentos/:docId/vencer, description: Marcar un documento de empresa como vencido, auth_required: true }
+    depends_on:
+      - Autenticacion
+
+  - name: Centros de costo
+    description: CRUD de centros de costo anidados bajo empresa, protegido por EmpresaAccessGuard, con documentos propios
+    files:
+      - src/centros-costos/centros-costos.controller.ts
+    endpoints:
+      - { method: POST, path: /api/v1/empresas/:empresaId/centros, description: Crear centro de costo, auth_required: true }
+      - { method: GET, path: /api/v1/empresas/:empresaId/centros, description: Listar centros de costo de una empresa, auth_required: true }
+      - { method: GET, path: /api/v1/empresas/:empresaId/centros/:centroId, description: Obtener detalle de un centro de costo, auth_required: true }
+      - { method: PUT, path: /api/v1/empresas/:empresaId/centros/:centroId, description: Actualizar centro de costo, auth_required: true }
+      - { method: PUT, path: /api/v1/empresas/:empresaId/centros/:centroId/score-smartclarity, description: Actualizar score smartclarity del centro, auth_required: true }
+      - { method: DELETE, path: /api/v1/empresas/:empresaId/centros/:centroId, description: Eliminar centro de costo, auth_required: true }
+      - { method: POST, path: /api/v1/empresas/:empresaId/centros/:centroId/documentos, description: Subir documento del centro de costo, auth_required: true }
+      - { method: GET, path: /api/v1/empresas/:empresaId/centros/:centroId/documentos, description: Listar documentos del centro, auth_required: true }
+      - { method: GET, path: /api/v1/empresas/:empresaId/centros/:centroId/documentos/:docId, description: Descargar documento del centro, auth_required: true }
+      - { method: DELETE, path: /api/v1/empresas/:empresaId/centros/:centroId/documentos/:docId, description: Eliminar documento del centro, auth_required: true }
+      - { method: PATCH, path: /api/v1/empresas/:empresaId/centros/:centroId/documentos/:docId/vencer, description: Marcar documento del centro como vencido, auth_required: true }
+      - { method: GET, path: /api/v1/centros-costos, description: Listar todos los centros de costo (paginado, solo admin), auth_required: true }
+      - { method: GET, path: /api/v1/centros-costos/:id, description: Obtener detalle de un centro de costo por id global, auth_required: true }
+    depends_on:
+      - Empresas (Clientes)
+
+  - name: Proyectos
+    description: CRUD de proyectos anidados bajo empresa/centro, con documentos propios y tipos de proyecto
+    files:
+      - src/proyectos/proyectos.controller.ts
+      - src/tipos-proyecto/tipos-proyecto.controller.ts
+    endpoints:
+      - { method: POST, path: /api/v1/empresas/:empresaId/centros/:centroId/proyectos, description: Crear proyecto, auth_required: true }
+      - { method: GET, path: /api/v1/empresas/:empresaId/centros/:centroId/proyectos, description: Listar proyectos del centro, auth_required: true }
+      - { method: GET, path: /api/v1/empresas/:empresaId/centros/:centroId/proyectos/:proyectoId, description: Obtener detalle de un proyecto, auth_required: true }
+      - { method: PUT, path: /api/v1/empresas/:empresaId/centros/:centroId/proyectos/:proyectoId, description: Actualizar proyecto, auth_required: true }
+      - { method: DELETE, path: /api/v1/empresas/:empresaId/centros/:centroId/proyectos/:proyectoId, description: Eliminar proyecto, auth_required: true }
+      - { method: POST, path: /api/v1/empresas/:empresaId/centros/:centroId/proyectos/:proyectoId/documentos, description: Subir documento del proyecto, auth_required: true }
+      - { method: GET, path: /api/v1/empresas/:empresaId/centros/:centroId/proyectos/:proyectoId/documentos, description: Listar documentos del proyecto, auth_required: true }
+      - { method: GET, path: /api/v1/empresas/:empresaId/centros/:centroId/proyectos/:proyectoId/documentos/:docId, description: Descargar documento del proyecto, auth_required: true }
+      - { method: DELETE, path: /api/v1/empresas/:empresaId/centros/:centroId/proyectos/:proyectoId/documentos/:docId, description: Eliminar documento del proyecto, auth_required: true }
+      - { method: PATCH, path: /api/v1/empresas/:empresaId/centros/:centroId/proyectos/:proyectoId/documentos/:docId/vencer, description: Marcar documento del proyecto como vencido, auth_required: true }
+      - { method: GET, path: /api/v1/proyectos, description: Listar todos los proyectos paginado (solo admin), auth_required: true }
+      - { method: GET, path: /api/v1/proyectos/:id, description: Obtener proyecto por id global, auth_required: true }
+      - { method: GET, path: /api/v1/empresas/:empresaId/proyectos, description: Listar proyectos de una empresa (todos los centros), auth_required: true }
+      - { method: GET, path: /api/v1/tipos-proyecto, description: Listar tipos de proyecto, auth_required: true }
+      - { method: GET, path: /api/v1/tipos-proyecto/:id, description: Obtener tipo de proyecto, auth_required: true }
+      - { method: POST, path: /api/v1/tipos-proyecto, description: Crear tipo de proyecto (solo super_admin), auth_required: true }
+      - { method: PUT, path: /api/v1/tipos-proyecto/:id, description: Actualizar tipo de proyecto (solo super_admin), auth_required: true }
+      - { method: DELETE, path: /api/v1/tipos-proyecto/:id, description: Eliminar tipo de proyecto (solo super_admin), auth_required: true }
+    depends_on:
+      - Centros de costo
+
+  - name: Usuarios
+    description: CRUD de usuarios, cambio de password y suscripciones de notificaciones de admins
+    files:
+      - src/usuarios/usuarios.controller.ts
+    endpoints:
+      - { method: POST, path: /api/v1/usuarios, description: Crear usuario (admin o consumidor), auth_required: true }
+      - { method: GET, path: /api/v1/usuarios, description: Listar usuarios, auth_required: true }
+      - { method: GET, path: /api/v1/usuarios/:id, description: Obtener detalle de un usuario, auth_required: true }
+      - { method: PUT, path: /api/v1/usuarios/:id, description: Actualizar usuario, auth_required: true }
+      - { method: DELETE, path: /api/v1/usuarios/:id, description: Eliminar usuario, auth_required: true }
+      - { method: PATCH, path: /api/v1/usuarios/:id/password, description: Cambiar password del usuario, auth_required: true }
+      - { method: PATCH, path: /api/v1/usuarios/:id/suscripciones, description: Actualizar suscripciones de notificaciones del propio admin, auth_required: true }
+    depends_on:
+      - Autenticacion
+
+  - name: Activos
+    description: CRUD de activos anidados bajo centro de costo, documentos e historial, y tipos de activo
+    files:
+      - src/activos/activos.controller.ts
+      - src/tipos-activo/tipos-activo.controller.ts
+    endpoints:
+      - { method: GET, path: /api/v1/empresas/:empresaId/centros/:centroId/activos, description: Listar activos del centro, auth_required: true }
+      - { method: GET, path: /api/v1/empresas/:empresaId/centros/:centroId/activos/:activoId, description: Obtener detalle de un activo, auth_required: true }
+      - { method: POST, path: /api/v1/empresas/:empresaId/centros/:centroId/activos, description: Crear activo, auth_required: true }
+      - { method: PUT, path: /api/v1/empresas/:empresaId/centros/:centroId/activos/:activoId, description: Actualizar activo, auth_required: true }
+      - { method: DELETE, path: /api/v1/empresas/:empresaId/centros/:centroId/activos/:activoId, description: Eliminar activo, auth_required: true }
+      - { method: POST, path: /api/v1/empresas/:empresaId/centros/:centroId/activos/:activoId/documentos, description: Subir documento del activo, auth_required: true }
+      - { method: GET, path: /api/v1/empresas/:empresaId/centros/:centroId/activos/:activoId/documentos, description: Listar documentos del activo, auth_required: true }
+      - { method: GET, path: /api/v1/empresas/:empresaId/centros/:centroId/activos/:activoId/documentos/:docId, description: Descargar documento del activo, auth_required: true }
+      - { method: DELETE, path: /api/v1/empresas/:empresaId/centros/:centroId/activos/:activoId/documentos/:docId, description: Eliminar documento del activo, auth_required: true }
+      - { method: GET, path: /api/v1/empresas/:empresaId/centros/:centroId/activos/:activoId/historial, description: Ver historial de un activo, auth_required: true }
+      - { method: GET, path: /api/v1/activos, description: Listar todos los activos paginado (solo admin), auth_required: true }
+      - { method: GET, path: /api/v1/activos/:id, description: Obtener activo por id global, auth_required: true }
+      - { method: GET, path: /api/v1/activos/:id/historial, description: Ver historial de un activo por id global, auth_required: true }
+      - { method: GET, path: /api/v1/tipos-activo, description: Listar tipos de activo, auth_required: true }
+      - { method: GET, path: /api/v1/tipos-activo/:id, description: Obtener tipo de activo, auth_required: true }
+      - { method: POST, path: /api/v1/tipos-activo, description: Crear tipo de activo (solo super_admin), auth_required: true }
+      - { method: PUT, path: /api/v1/tipos-activo/:id, description: Actualizar tipo de activo (solo super_admin), auth_required: true }
+      - { method: DELETE, path: /api/v1/tipos-activo/:id, description: Eliminar tipo de activo (solo super_admin), auth_required: true }
+    depends_on:
+      - Centros de costo
+
+  - name: Actividades
+    description: CRUD de actividades anidadas bajo centro de costo, documentos y tipos de actividad
+    files:
+      - src/actividades/actividades.controller.ts
+      - src/tipos-actividad/tipos-actividad.controller.ts
+    endpoints:
+      - { method: GET, path: /api/v1/empresas/:empresaId/centros/:centroId/actividades, description: Listar actividades del centro, auth_required: true }
+      - { method: GET, path: /api/v1/empresas/:empresaId/centros/:centroId/actividades/:actividadId, description: Obtener detalle de una actividad, auth_required: true }
+      - { method: POST, path: /api/v1/empresas/:empresaId/centros/:centroId/actividades, description: Crear actividad, auth_required: true }
+      - { method: PUT, path: /api/v1/empresas/:empresaId/centros/:centroId/actividades/:actividadId, description: Actualizar actividad, auth_required: true }
+      - { method: DELETE, path: /api/v1/empresas/:empresaId/centros/:centroId/actividades/:actividadId, description: Eliminar actividad, auth_required: true }
+      - { method: POST, path: /api/v1/empresas/:empresaId/centros/:centroId/actividades/:actividadId/documentos, description: Subir documento de la actividad, auth_required: true }
+      - { method: GET, path: /api/v1/empresas/:empresaId/centros/:centroId/actividades/:actividadId/documentos, description: Listar documentos de la actividad, auth_required: true }
+      - { method: GET, path: /api/v1/empresas/:empresaId/centros/:centroId/actividades/:actividadId/documentos/:docId, description: Descargar documento de la actividad, auth_required: true }
+      - { method: DELETE, path: /api/v1/empresas/:empresaId/centros/:centroId/actividades/:actividadId/documentos/:docId, description: Eliminar documento de la actividad, auth_required: true }
+      - { method: GET, path: /api/v1/empresas/:empresaId/actividades, description: Listar actividades de una empresa (todos los centros), auth_required: true }
+      - { method: GET, path: /api/v1/actividades, description: Listar todas las actividades (solo admin), auth_required: true }
+      - { method: GET, path: /api/v1/actividades/:id, description: Obtener actividad por id global (solo admin), auth_required: true }
+      - { method: GET, path: /api/v1/tipos-actividad, description: Listar tipos de actividad, auth_required: true }
+      - { method: GET, path: /api/v1/tipos-actividad/:id, description: Obtener tipo de actividad, auth_required: true }
+      - { method: POST, path: /api/v1/tipos-actividad, description: Crear tipo de actividad (solo super_admin), auth_required: true }
+      - { method: PUT, path: /api/v1/tipos-actividad/:id, description: Actualizar tipo de actividad (solo super_admin), auth_required: true }
+      - { method: DELETE, path: /api/v1/tipos-actividad/:id, description: Eliminar tipo de actividad (solo super_admin), auth_required: true }
+    depends_on:
+      - Centros de costo
+
+  - name: Solicitudes
+    description: Solicitudes de documentos por empresa, con adjunto y cambio de estado
+    files:
+      - src/solicitudes/solicitudes.controller.ts
+    endpoints:
+      - { method: POST, path: /api/v1/empresas/:empresaId/solicitudes, description: Crear solicitud de documento, auth_required: true }
+      - { method: GET, path: /api/v1/empresas/:empresaId/solicitudes, description: Listar solicitudes de la empresa, auth_required: true }
+      - { method: PATCH, path: /api/v1/empresas/:empresaId/solicitudes/:solicitudId, description: Actualizar una solicitud, auth_required: true }
+      - { method: DELETE, path: /api/v1/empresas/:empresaId/solicitudes/:solicitudId, description: Eliminar una solicitud, auth_required: true }
+      - { method: PUT, path: /api/v1/empresas/:empresaId/solicitudes/:solicitudId/estado, description: Cambiar el estado de una solicitud (pendiente/revision/aprobada/rechazada), auth_required: true }
+      - { method: POST, path: /api/v1/empresas/:empresaId/solicitudes/:solicitudId/adjuntar, description: Adjuntar archivo a una solicitud, auth_required: true }
+      - { method: GET, path: /api/v1/empresas/:empresaId/solicitudes/:solicitudId/adjunto, description: Descargar el adjunto de una solicitud, auth_required: true }
+      - { method: GET, path: /api/v1/solicitudes/en-revision, description: Listar solicitudes en revision (solo admin), auth_required: true }
+    depends_on:
+      - Empresas (Clientes)
+
+  - name: Documentos vencidos
+    description: Listado y descarga de documentos vencidos de todas las entidades (centralizado)
+    files:
+      - src/documentos-vencidos/documentos-vencidos.controller.ts
+    endpoints:
+      - { method: GET, path: /api/v1/documentos-vencidos, description: Listar documentos vencidos accesibles para el usuario, auth_required: true }
+      - { method: GET, path: /api/v1/documentos-vencidos/:id, description: Descargar un documento vencido, auth_required: true }
+    depends_on:
+      - Empresas (Clientes)
+
+  - name: Noticias
+    description: CRUD de noticias del portal con imagen
+    files:
+      - src/noticias/noticias.controller.ts
+    endpoints:
+      - { method: GET, path: /api/v1/noticias, description: Listar noticias, auth_required: true }
+      - { method: GET, path: /api/v1/noticias/:id, description: Obtener detalle de una noticia, auth_required: true }
+      - { method: GET, path: /api/v1/noticias/:id/imagen, description: Servir la imagen de una noticia (publico), auth_required: false }
+      - { method: POST, path: /api/v1/noticias, description: Crear noticia (solo super_admin), auth_required: true }
+      - { method: POST, path: /api/v1/noticias/:id/imagen, description: Subir imagen de una noticia (solo super_admin), auth_required: true }
+      - { method: DELETE, path: /api/v1/noticias/:id, description: Eliminar noticia (solo super_admin), auth_required: true }
+    depends_on:
+      - Autenticacion
+
+  - name: Permisos
+    description: Asignacion de permisos de acceso de usuarios consumidor a centros de costo especificos
+    files:
+      - src/permisos/permisos.controller.ts
+    endpoints:
+      - { method: POST, path: /api/v1/permisos, description: Asignar permiso de un usuario sobre un centro, auth_required: true }
+      - { method: GET, path: /api/v1/permisos/usuario/:usuarioId, description: Listar permisos de un usuario, auth_required: true }
+      - { method: GET, path: /api/v1/permisos/centro/:centroId, description: Listar permisos sobre un centro, auth_required: true }
+      - { method: DELETE, path: /api/v1/permisos/usuario/:usuarioId/centro/:centroId, description: Revocar permiso de un usuario sobre un centro, auth_required: true }
+    depends_on:
+      - Autenticacion
+      - Usuarios
+
+  - name: Tareas programadas (cron)
+    description: Endpoints publicos protegidos por header de autorizacion propio (no JWT), usados por crons externos para disparar recordatorios
+    files:
+      - src/tareas/tareas.controller.ts
+    endpoints:
+      - { method: POST, path: /api/v1/tareas/recordatorios-proyectos, description: Dispara el envio de recordatorios de vencimiento de proyectos, auth_required: false }
+      - { method: POST, path: /api/v1/tareas/recordatorios-actividades, description: Dispara el envio de recordatorios de vencimiento de actividades, auth_required: false }
+    depends_on:
+      - Proyectos
+      - Actividades
+
+known_limitations:
+  - issue: Login no distingue por rate limiting ni bloqueo tras intentos fallidos
+    location: src/auth/auth.service.ts
+    impact: Posible fuerza bruta sobre credenciales
+  - issue: Endpoints de tareas/cron son @Public y solo validan un header de autorizacion propio, no JWT estandar
+    location: src/tareas/tareas.controller.ts
+    impact: Superficie de ataque adicional si el secreto del header se filtra

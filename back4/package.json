@@ -13,10 +13,12 @@
     "test:busqueda-cascada": "npx -y ts-node scripts/test-busqueda-cascada.ts",
     "test:desuscripcion": "npx -y ts-node scripts/test-desuscripcion-admin.ts",
     "test:permisos-roles": "npx -y ts-node scripts/test-permisos-roles.ts",
+    "test:permisos-seguridad": "npx -y ts-node scripts/test-permisos-seguridad.ts",
     "seed:roles": "node scripts/seed-roles.js",
     "test:recuperar-password": "npx -y ts-node scripts/test-recuperar-password.ts",
     "test:creado-por-actividad": "npx -y ts-node scripts/test-creado-por-actividad.ts",
-    "test:lider-actividad": "npx -y ts-node scripts/test-lider-actividad.ts"
+    "test:lider-actividad": "npx -y ts-node scripts/test-lider-actividad.ts",
+    "test:permisos-actividad-consumidor": "npx -y ts-node scripts/test-permisos-actividad-consumidor.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1079.0",

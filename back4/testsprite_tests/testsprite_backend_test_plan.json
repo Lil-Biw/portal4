@@ -1,0 +1,107 @@
+[
+  {
+    "id": "TC001",
+    "title": "post api v1 auth login valid credentials",
+    "description": "Test login endpoint with valid email and password to receive 200 status with access_token and user data including id, nombre, email, rol, cliente_id, and debe_cambiar_password flag."
+  },
+  {
+    "id": "TC002",
+    "title": "post api v1 auth login invalid credentials",
+    "description": "Test POST /api/v1/auth/login with a wrong password and with a non-existent email, verifying both cases return 401 Unauthorized and no access_token is issued."
+  },
+  {
+    "id": "TC003",
+    "title": "get api v1 empresas without jwt is rejected",
+    "description": "Call GET /api/v1/empresas with no Authorization header and verify the API responds 401 Unauthorized, confirming the endpoint is protected by the global JWT guard."
+  },
+  {
+    "id": "TC004",
+    "title": "full crud lifecycle for empresa as super_admin",
+    "description": "Login as super_admin, POST /api/v1/empresas to create a new empresa, GET /api/v1/empresas/:id to confirm it exists, PUT /api/v1/empresas/:id to update its name, then DELETE /api/v1/empresas/:id and confirm subsequent GET returns 404."
+  },
+  {
+    "id": "TC005",
+    "title": "create centro de costo under an empresa and list it",
+    "description": "Login as super_admin, create an empresa, then POST /api/v1/empresas/:empresaId/centros with valid data, and GET /api/v1/empresas/:empresaId/centros to verify the new centro appears in the list."
+  },
+  {
+    "id": "TC006",
+    "title": "create proyecto under empresa and centro and list it",
+    "description": "Login as super_admin, create an empresa and a centro de costo, then POST /api/v1/empresas/:empresaId/centros/:centroId/proyectos with valid data and dates, and GET the same path to verify the new proyecto is listed."
+  },
+  {
+    "id": "TC007",
+    "title": "create usuario consumidor and verify listing",
+    "description": "Login as super_admin, POST /api/v1/usuarios with rol usuario tied to an existing empresa, and GET /api/v1/usuarios to verify the new user appears with the correct rol and cliente_id."
+  },
+  {
+    "id": "TC008",
+    "title": "create activo under centro and check historial endpoint",
+    "description": "Login as super_admin, create an empresa and centro, POST /api/v1/empresas/:empresaId/centros/:centroId/activos with valid data, then GET the historial endpoint for that activo and verify it returns 200 with an array."
+  },
+  {
+    "id": "TC009",
+    "title": "create actividad under centro and verify listing",
+    "description": "Login as super_admin, create an empresa and centro, POST /api/v1/empresas/:empresaId/centros/:centroId/actividades with valid fecha and tipo, then GET the same path and verify the actividad is listed."
+  },
+  {
+    "id": "TC010",
+    "title": "create solicitud and update its estado",
+    "description": "Login as super_admin, create an empresa, POST /api/v1/empresas/:empresaId/solicitudes with valid data, then PUT /api/v1/empresas/:empresaId/solicitudes/:solicitudId/estado to move it from pendiente to revision, and GET the list to verify the updated estado."
+  },
+  {
+    "id": "TC011",
+    "title": "create noticia as super_admin and access it",
+    "description": "Login as super_admin, POST /api/v1/noticias with valid titulo and contenido, then GET /api/v1/noticias/:id to verify the created noticia is retrievable, and confirm a usuario without super_admin role receives 403 when attempting to POST /api/v1/noticias."
+  },
+  {
+    "id": "TC012",
+    "title": "assign and revoke permiso for usuario over centro",
+    "description": "Login as super_admin, create a usuario and a centro de costo, POST /api/v1/permisos to assign the usuario access to the centro, GET /api/v1/permisos/usuario/:usuarioId to verify it appears, then DELETE /api/v1/permisos/usuario/:usuarioId/centro/:centroId and verify it no longer appears."
+  },
+  {
+    "id": "TC013",
+    "title": "usuario role forbidden from creating empresa",
+    "description": "Login as a usuario (rol consumidor) using seeded credentials, attempt POST /api/v1/empresas with valid payload, and verify the API responds 403 Forbidden, confirming role-based access control on empresa creation is enforced."
+  },
+  {
+    "id": "TC014",
+    "title": "usuario cannot access another empresa's centros",
+    "description": "Login as a usuario tied to one empresa (cliente_id A), then login as super_admin and call GET /api/v1/empresas to find a different empresa (cliente_id B). IMPORTANT: GET /api/v1/empresas ALWAYS returns a paginated object { data: Empresa[], total, page, pages } (never a plain array) and each Empresa uses the field \"_id\" (not \"id\"); read the target empresa from response.json()[\"data\"] and use its \"_id\". Then, using the usuario's JWT (empresa A), attempt GET /api/v1/empresas/:otroEmpresaId/centros for empresa B, and verify the API responds 403 Forbidden, confirming EmpresaAccessGuard blocks cross-tenant access."
+  },
+  {
+    "id": "TC015",
+    "title": "tareas recordatorios endpoints require a bearer secret",
+    "description": "Call POST /api/v1/tareas/recordatorios-proyectos and POST /api/v1/tareas/recordatorios-actividades (these are @Public, no JWT needed) WITHOUT any Authorization header and verify both respond 401 Unauthorized. Then call both again WITH an obviously WRONG bearer token (e.g. 'Authorization: Bearer wrong-secret-12345') and verify both still respond 401 Unauthorized, confirming the endpoints validate a secret and do not accept arbitrary bearer values. Do not attempt to guess or brute-force the real secret."
+  },
+  {
+    "id": "TC016",
+    "title": "dias_recordatorio rejects values outside the allowed set",
+    "description": "Login as super_admin, create an empresa and centro, then POST a proyecto to /api/v1/empresas/:empresaId/centros/:centroId/proyectos with dias_recordatorio containing an invalid value not in [30,15,7,3,1,0] (e.g. [5]), and verify the API responds 400 Bad Request. Then POST the same proyecto again with a valid dias_recordatorio like [7,1,0] and verify it is created successfully (200/201)."
+  },
+  {
+    "id": "TC017",
+    "title": "usuario cannot patch another admin's suscripciones",
+    "description": "Login as one admin_smartclarity-equivalent seeded admin user, then attempt PATCH /api/v1/usuarios/:id/suscripciones where :id is a DIFFERENT admin user's id (not the logged-in user's own id), with a valid SuscripcionesDto body { notificar_todas_empresas: true }. Verify the API responds 403 Forbidden. Then PATCH the same endpoint using the logged-in admin's OWN id and verify it responds 200 and the response reflects the updated notificar_todas_empresas value."
+  },
+  {
+    "id": "TC018",
+    "title": "usuario role forbidden from editing suscripciones even for own id",
+    "description": "Login as a usuario (rol consumidor, not admin), then attempt PATCH /api/v1/usuarios/:id/suscripciones using their OWN user id with a valid body { notificar_todas_empresas: true }. Verify the API responds 403 Forbidden, since the suscripciones endpoint is restricted to super_admin and admin_smartclarity roles only regardless of whose id is targeted."
+  },
+  {
+    "id": "TC019",
+    "title": "PATCH suscripciones parcial no debe borrar arrays de suscripcion omitidos del body",
+    "description": "Login as an admin_smartclarity user. PATCH /api/v1/usuarios/:id/suscripciones on OWN id with body { notificar_todas_empresas: false, empresas_suscritas: [<a valid empresa id>] } and verify 200 with empresas_suscritas reflecting that value. Then send a SECOND PATCH to the SAME endpoint with body { notificar_todas_empresas: false, centros_suscritos: [<a valid centro id>] }, deliberately OMITTING empresas_suscritas from this second request body (this is a PATCH, so fields not present in the body should be left untouched). Verify the response of this second PATCH AND a subsequent GET /api/v1/usuarios/:id both still show empresas_suscritas containing the empresa id set in step 1 (not wiped to an empty array), while centros_suscritos now contains the centro id from step 2. Restore the user's original notificar_todas_empresas/empresas_suscritas/centros_suscritos/proyectos_suscritos values at the end of the test."
+  },
+  {
+    "id": "TC020",
+    "title": "super_admin cannot patch admin_smartclarity's suscripciones (ownership symmetry)",
+    "description": "Login as a super_admin user, then attempt PATCH /api/v1/usuarios/:id/suscripciones where :id belongs to a DIFFERENT admin_smartclarity user (not the logged-in super_admin's own id), with body { notificar_todas_empresas: true }. Verify the API responds 403 Forbidden (the ownership check user.sub !== id must block super_admin from editing another admin's subscriptions too, not just the reverse direction). Then PATCH the same endpoint using the super_admin's OWN id and verify it responds 200 and the response reflects the updated notificar_todas_empresas value. Restore the original value afterward if it changed."
+  },
+  {
+    "id": "TC021",
+    "title": "suscripciones rejects invalid mongo id inside subscription arrays",
+    "description": "Login as an admin_smartclarity user. GET own user data first to record the current notificar_todas_empresas/empresas_suscritas/centros_suscritos/proyectos_suscritos values. Then PATCH /api/v1/usuarios/:id/suscripciones on OWN id with body { notificar_todas_empresas: true, empresas_suscritas: [\"not-a-valid-object-id\"] } and verify the API responds 400 Bad Request (class-validator @IsMongoId on array elements). Then GET the same user again and verify none of the subscription fields changed from the values recorded before the failed PATCH, confirming a validation failure does not partially mutate state."
+  }
+]

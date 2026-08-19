@@ -1,6 +1,7 @@
 # Secrets — NUNCA al repo
 **/.env
 **/uploads/
+testsprite_tests/tmp/
 
 # Node
 **/node_modules/

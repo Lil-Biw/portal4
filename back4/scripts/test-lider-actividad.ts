@@ -68,7 +68,10 @@ async function main() {
     fecha: new Date(Date.now() + 86_400_000).toISOString(),
     notificacion: { notificar: false },
   };
-  const reqSinUsuario = { user: undefined } as any;
+  // El create exige un usuario autenticado (autorizarCreacion); como rol no se
+  // pasa en estas llamadas directas, no agrega restricción de centros y el foco
+  // queda en resolverLider.
+  const reqAdmin = { user: { sub: adminId.toString() } } as any;
 
   let fallas = 0;
   const check = (ok: boolean, msg: string) => {
@@ -79,8 +82,9 @@ async function main() {
   // Caso 1: lider_id de un admin_smartclarity válido → guarda snapshot
   const conLider = await controller.create(
     centroId.toString(),
+    empresaId.toString(),
     { ...dtoBase, lider_id: adminId.toString() },
-    reqSinUsuario,
+    reqAdmin,
   );
   check(conLider.lider_nombre === 'Admin Líder', 'guarda lider_nombre del admin elegido');
   check(conLider.lider_email === 'admin-lider@example.com', 'guarda lider_email del admin elegido');
@@ -89,7 +93,7 @@ async function main() {
   // Caso 2: lider_id de un usuario con rol 'usuario' → rechazado
   let error2: any = null;
   try {
-    await controller.create(centroId.toString(), { ...dtoBase, lider_id: usuarioId.toString() }, reqSinUsuario);
+    await controller.create(centroId.toString(), empresaId.toString(), { ...dtoBase, lider_id: usuarioId.toString() }, reqAdmin);
   } catch (err: any) {
     error2 = err;
   }
@@ -99,7 +103,7 @@ async function main() {
   // Caso 3: lider_id con formato de ObjectId inválido → rechazado
   let errorFormato: any = null;
   try {
-    await controller.create(centroId.toString(), { ...dtoBase, lider_id: 'no-es-un-objectid' }, reqSinUsuario);
+    await controller.create(centroId.toString(), empresaId.toString(), { ...dtoBase, lider_id: 'no-es-un-objectid' }, reqAdmin);
   } catch (err: any) {
     errorFormato = err;
   }
@@ -110,7 +114,7 @@ async function main() {
   const idInexistente = oid().toString();
   let errorInexistente: any = null;
   try {
-    await controller.create(centroId.toString(), { ...dtoBase, lider_id: idInexistente }, reqSinUsuario);
+    await controller.create(centroId.toString(), empresaId.toString(), { ...dtoBase, lider_id: idInexistente }, reqAdmin);
   } catch (err: any) {
     errorInexistente = err;
   }
@@ -118,18 +122,24 @@ async function main() {
   check(errorInexistente?.status === 400, 'el rechazo de usuario inexistente es un BadRequestException (400)');
 
   // Caso 5: sin lider_id → actividad se crea sin líder, sin error
-  const sinLider = await controller.create(centroId.toString(), { ...dtoBase }, reqSinUsuario);
+  const sinLider = await controller.create(centroId.toString(), empresaId.toString(), { ...dtoBase }, reqAdmin);
   check(!sinLider.lider_nombre, 'sin lider_id no guarda lider_nombre');
   check(!!sinLider._id, 'la actividad se crea igual sin lider_id');
 
   // Caso 6: editar para reasignar el líder a otro admin → snapshot se actualiza
-  const reasignada = await controller.update(String(conLider._id), { lider_id: superAdminId.toString() });
+  const reasignada = await controller.update(
+    String(conLider._id), centroId.toString(), empresaId.toString(),
+    { lider_id: superAdminId.toString() }, reqAdmin,
+  );
   check(reasignada.lider_nombre === 'Super Admin Líder', 'reasigna el líder y actualiza el nombre');
   check(reasignada.lider_email === 'super-lider@example.com', 'reasigna el líder y actualiza el correo');
   check(String(reasignada.lider_id) === superAdminId.toString(), 'reasigna la referencia lider_id');
 
   // Caso 7: editar enviando lider_id: '' → limpia el líder
-  const limpiada = await controller.update(String(conLider._id), { lider_id: '' });
+  const limpiada = await controller.update(
+    String(conLider._id), centroId.toString(), empresaId.toString(),
+    { lider_id: '' }, reqAdmin,
+  );
   check(!limpiada.lider_nombre, "lider_id vacío limpia lider_nombre");
   check(!limpiada.lider_email, "lider_id vacío limpia lider_email");
   check(!limpiada.lider_id, "lider_id vacío limpia la referencia lider_id");
@@ -137,10 +147,14 @@ async function main() {
   // Caso 8: editar sin incluir lider_id → el líder existente no se toca
   const conLiderOtraVez = await controller.create(
     centroId.toString(),
+    empresaId.toString(),
     { ...dtoBase, lider_id: adminId.toString() },
-    reqSinUsuario,
+    reqAdmin,
   );
-  const sinTocarLider = await controller.update(String(conLiderOtraVez._id), { nombre: 'Actividad renombrada' });
+  const sinTocarLider = await controller.update(
+    String(conLiderOtraVez._id), centroId.toString(), empresaId.toString(),
+    { nombre: 'Actividad renombrada' }, reqAdmin,
+  );
   check(sinTocarLider.lider_nombre === 'Admin Líder', 'update() sin lider_id conserva lider_nombre existente');
   check(sinTocarLider.lider_email === 'admin-lider@example.com', 'update() sin lider_id conserva lider_email existente');
   check(String(sinTocarLider.lider_id) === adminId.toString(), 'update() sin lider_id conserva la referencia lider_id existente');

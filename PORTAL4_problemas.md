@@ -15,14 +15,14 @@ Leyenda de estado:
 
 ## 1. Seguridad
 
-### 1.1 🔴 Cross-tenant: acceso a documentos de otra empresa ⚠️ PENDIENTE
-**Archivos:** `back4/src/centros-costos/centros-costos.service.ts`, `proyectos.service.ts`, `mantenciones.service.ts`
+### 1.1 🔴 Cross-tenant: acceso a documentos de otra empresa ✅ SOLUCIONADO (2026-08-12)
+**Archivos:** `back4/src/centros-costos/centros-costos.service.ts`, `proyectos.service.ts`
 
-`EmpresaAccessGuard` valida que `empresaId` del URL coincida con el `cliente_id` del JWT, pero **no verifica que el `centroId`/`proyectoId`/`mantencionId` pertenezca a esa empresa**. Los servicios hacen `findById(centroId)` sin filtro adicional.
+`EmpresaAccessGuard` valida que `empresaId` del URL coincida con el `cliente_id` del JWT, pero **no verificaba que el `centroId`/`proyectoId` perteneciera a esa empresa**. Los servicios hacían `findById(centroId)` sin filtro adicional.
 
-**Vector de ataque:** Usuario de empresa A hace `GET /empresas/A/centros/<centroId-de-B>/documentos` → recibe documentos de empresa B.
+**Vector de ataque:** Usuario de empresa A hacía `GET /empresas/A/centros/<centroId-de-B>/documentos` → recibía documentos de empresa B.
 
-**Fix:** Agregar validación en los servicios: al buscar un centro, filtrar por `{ _id: centroId, cliente_id: empresaId }`.
+**Solución aplicada:** `centros-costos.service.ts` y `proyectos.service.ts` agregan `autorizarCentro()`/`autorizarProyecto()` — validan `{ _id, cliente_id: empresaId }` (y, para proyectos, que `centroId` esté en `centro_costo_ids`) antes de cualquier lectura/escritura sobre centro, proyecto o sus documentos. Lanzan `NotFoundException` si no calza, mismo criterio que `actividades.service.ts` (`validarPertenencia`). De paso se cerró un segundo hueco relacionado: `centros_asignados` (qué centros ve un usuario `rol: 'usuario'` dentro de su propia empresa) tampoco se filtraba en listados/detalle — ahora `findAllByCliente`/`findOne` lo aplican. Regresión cubierta por `back4/scripts/test-permisos-seguridad.ts` (`npm run test:permisos-seguridad`).
 
 ---
 
