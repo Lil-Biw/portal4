@@ -36,24 +36,49 @@ export class ActividadesController {
 
   @Post()
   @RequiereAccion('actividades', 'crear')
-  create(
+  async create(
     @Param('centroId') centroId: string,
+    @Param('empresaId') empresaId: string,
     @Body() dto: CreateActividadDto,
     @Req() req: Request,
   ) {
-    const creadoPorId = (req as any)?.user?.sub as string | undefined;
+    const user = (req as any)?.user;
+    await this.service.autorizarCreacion(centroId, empresaId, user && { sub: user.sub, rol: user.rol });
+    const creadoPorId = user?.sub as string | undefined;
     return this.service.create({ ...dto, centro_costo_id: centroId }, creadoPorId);
   }
 
   @Put(':actividadId')
   @RequiereAccion('actividades', 'editar')
-  update(@Param('actividadId') actividadId: string, @Body() dto: UpdateActividadDto) {
+  async update(
+    @Param('actividadId') actividadId: string,
+    @Param('centroId') centroId: string,
+    @Param('empresaId') empresaId: string,
+    @Body() dto: UpdateActividadDto,
+    @Req() req: Request,
+  ) {
+    const user = (req as any)?.user;
+    await this.service.autorizarModificacion(
+      actividadId, centroId, empresaId,
+      user && { sub: user.sub, rol: user.rol },
+      dto.centro_costo_id,
+    );
     return this.service.update(actividadId, dto);
   }
 
   @Delete(':actividadId')
   @RequiereAccion('actividades', 'eliminar')
-  remove(@Param('actividadId') actividadId: string) {
+  async remove(
+    @Param('actividadId') actividadId: string,
+    @Param('centroId') centroId: string,
+    @Param('empresaId') empresaId: string,
+    @Req() req: Request,
+  ) {
+    const user = (req as any)?.user;
+    await this.service.autorizarModificacion(
+      actividadId, centroId, empresaId,
+      user && { sub: user.sub, rol: user.rol },
+    );
     return this.service.remove(actividadId);
   }
 
@@ -69,22 +94,41 @@ export class ActividadesController {
   @Post(':actividadId/documentos')
   @RequiereAccion('docActividad', 'subir')
   @UseInterceptors(FileInterceptor('archivo', OPCIONES_SUBIDA))
-  subirDocumento(
+  async subirDocumento(
     @Param('actividadId') actividadId: string,
+    @Param('centroId') centroId: string,
+    @Param('empresaId') empresaId: string,
+    @Req() req: Request,
     @UploadedFile() archivo: Express.Multer.File & { buffer: Buffer },
     @Body('nombre_display') nombreDisplay?: string,
     @Body('link_url') linkUrl?: string,
   ) {
     if (!archivo && !linkUrl) throw new BadRequestException('Debes adjuntar un archivo o un link');
+    const user = (req as any)?.user;
+    // En el perfil consumidor, los documentos siguen la autoría de la actividad:
+    // no se pueden adjuntar a actividades de admins Eclarity ni de centros no
+    // asignados (misma regla que editar/eliminar la actividad).
+    await this.service.autorizarModificacion(
+      actividadId, centroId, empresaId,
+      user && { sub: user.sub, rol: user.rol },
+    );
     return this.service.subirDocumento(actividadId, { archivo, linkUrl }, nombreDisplay);
   }
 
   @Delete(':actividadId/documentos/:docId')
   @RequiereAccion('docActividad', 'eliminar')
-  eliminarDocumento(
+  async eliminarDocumento(
     @Param('actividadId') actividadId: string,
+    @Param('centroId') centroId: string,
+    @Param('empresaId') empresaId: string,
     @Param('docId') docId: string,
+    @Req() req: Request,
   ) {
+    const user = (req as any)?.user;
+    await this.service.autorizarModificacion(
+      actividadId, centroId, empresaId,
+      user && { sub: user.sub, rol: user.rol },
+    );
     return this.service.eliminarDocumento(actividadId, docId);
   }
 
@@ -118,8 +162,12 @@ export class ActividadesEmpresaController {
   constructor(private readonly svc: ActividadesService) {}
 
   @Get()
-  findAll(@Param('empresaId') empresaId: string) {
-    return this.svc.findAllByEmpresa(empresaId);
+  findAll(@Param('empresaId') empresaId: string, @Req() req: Request) {
+    const user = (req as any)?.user;
+    return this.svc.findAllByEmpresa(
+      empresaId, undefined, undefined, undefined,
+      user && { sub: user.sub, rol: user.rol },
+    );
   }
 }
 

@@ -56,6 +56,9 @@ export class AuthService {
         cliente_id: usuario.cliente_id ? usuario.cliente_id.toString() : null,
         debe_cambiar_password: usuario.debe_cambiar_password ?? false,
         permisos: usuario.permisos ?? {},
+        // Lo consume el frontend para filtrar (ej. el select de centros del
+        // wizard de actividades en el perfil consumidor). Los admins traen [].
+        centros_asignados: (usuario.centros_asignados ?? []).map((c: any) => String(c)),
       },
     };
   }

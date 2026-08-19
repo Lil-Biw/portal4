@@ -15,6 +15,10 @@ export interface UsuarioAuth {
   cliente_id: string | null;
   debe_cambiar_password: boolean;
   permisos?: PermisosUsuario;
+  // Solo centros asignados para rol 'usuario' (viene del login). Ausente en
+  // sesiones previas a este cambio: en ese caso el front muestra todos los
+  // centros de la empresa (el backend revalida igual en el create).
+  centros_asignados?: string[];
 }
 
 const TOKEN_KEY = 'auth_token';

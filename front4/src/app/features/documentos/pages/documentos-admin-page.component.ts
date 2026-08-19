@@ -1,8 +1,8 @@
-import { Component, OnInit, inject, signal, computed, effect } from '@angular/core';
+import { Component, OnInit, inject, signal, computed, effect, untracked } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpEvent, HttpEventType } from '@angular/common/http';
-import { DocumentosService, DocTipo, CATEGORIAS_DOCUMENTO, DocumentoItem, DocumentoVencidoItem, DocBusquedaItem } from '../documentos.service';
+import { DocumentosService, DocTipo, CATEGORIAS_DOCUMENTO, DocumentoItem, DocumentoVencidoItem, DocBusquedaItem, NodoBusqueda } from '../documentos.service';
 import { ClientesService } from '../../clientes/clientes.service';
 import { CentrosService } from '../../centros/centros.service';
 import { ProyectosService } from '../../proyectos/proyectos.service';
@@ -74,6 +74,23 @@ export function ordenarFilasTodos(filas: FilaDocTodos[], modo: OrdenTodos): Fila
     collatorNombre.compare(a.doc.nombre_display, b.doc.nombre_display)
   );
   return resultado;
+}
+
+// Un nodo de nivel 'proyecto' puede repetirse en el árbol (un Proyecto con varios
+// centros aparece una vez por centro, con los mismos documentos) — se dedupea por
+// doc._id para no inflar el conteo. Para 'empresa'/'centro' no hay duplicados, pero
+// dedupear igual no cambia el resultado.
+export function contarNivelEnArbol(nodos: NodoBusqueda[], nivel: 'empresa' | 'centro' | 'proyecto'): number {
+  const vistos = new Set<string>();
+  const visitar = (nodo: NodoBusqueda): void => {
+    if (nodo.nivel === nivel) {
+      for (const doc of nodo.documentos) vistos.add(doc._id);
+    }
+    nodo.centros.forEach(visitar);
+    nodo.proyectos.forEach(visitar);
+  };
+  nodos.forEach(visitar);
+  return vistos.size;
 }
 
 type UploadCtx =
@@ -252,6 +269,34 @@ export class DocumentosAdminPageComponent implements OnInit {
     effect(() => {
       if (this.solicitudesService.status()?.type === 'error') {
         this.creandoSolicitud.set(false);
+      }
+    });
+
+    // cargarTodosCentros/cargarTodosProyectos reciben la lista de centros/proyectos
+    // como snapshot no-reactivo (this.centrosFiltrados es un getter plano). Si se
+    // llaman antes de que CentrosService/ProyectosService terminen su GET, el snapshot
+    // llega vacío y nada vuelve a reintentarlo — por eso "Centro"/"Proyecto" en modo
+    // "todos" podían quedar vacíos hasta que el usuario tocaba el <select> a mano.
+    // Estos efectos reaccionan cuando esas listas cambian y rellenan la carga.
+    effect(() => {
+      const empresaId = this.selectedEmpresaId;
+      const centroId = this.selectedCentroId;
+      const centros = this.centrosFiltrados;
+      if (empresaId !== 'todos' && centroId === 'todos' && centros.length > 0) {
+        untracked(() => this.service.cargarTodosCentros(empresaId, centros));
+      }
+    });
+
+    effect(() => {
+      const empresaId = this.selectedEmpresaId;
+      const centroId = this.selectedCentroId;
+      const proyectoId = this.selectedProyectoId;
+      if (empresaId === 'todos' || proyectoId !== 'todos') return;
+      const proyectos = centroId !== 'todos'
+        ? this.proyectosService.proyectos().filter(p => asId(p.cliente_id) === empresaId && (p.centro_costo_ids ?? []).some(id => asId(id) === centroId))
+        : this.proyectosService.proyectos().filter(p => asId(p.cliente_id) === empresaId);
+      if (proyectos.length > 0) {
+        untracked(() => this.service.cargarTodosProyectos(empresaId, proyectos, this.centrosFiltrados));
       }
     });
   }
@@ -459,6 +504,33 @@ export class DocumentosAdminPageComponent implements OnInit {
       }
     }
     return ordenarFilasTodos(filas, this.ordenTodos());
+  });
+
+  // Conteos para los badges de los tabs — total de documentos "en juego" en cada
+  // tab con la selección actual, independiente del buscador/categorías de cada panel.
+  protected conteoTodos = computed(() => this.filasTodos().length);
+
+  protected conteoEmpresa = computed(() => {
+    if (this.selectedEmpresaId === 'todos') {
+      return contarNivelEnArbol(this.service.documentosTodasEmpresas(), 'empresa');
+    }
+    return this.service.documentosEmpresa().length;
+  });
+
+  protected conteoCentro = computed(() => {
+    if (this.selectedEmpresaId === 'todos') {
+      return contarNivelEnArbol(this.service.documentosTodasEmpresas(), 'centro');
+    }
+    if (this.selectedCentroId !== 'todos') return this.service.documentosCentro().length;
+    return this.service.documentosPorCentro().reduce((acc, g) => acc + g.docs.length, 0);
+  });
+
+  protected conteoProyecto = computed(() => {
+    if (this.selectedEmpresaId === 'todos') {
+      return contarNivelEnArbol(this.service.documentosTodasEmpresas(), 'proyecto');
+    }
+    if (this.selectedProyectoId !== 'todos') return this.service.documentosProyecto().length;
+    return this.service.documentosPorProyecto().reduce((acc, g) => acc + g.docs.length, 0);
   });
 
   formatFecha(fecha?: string): string {

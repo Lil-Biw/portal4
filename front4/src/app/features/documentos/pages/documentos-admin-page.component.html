@@ -80,6 +80,7 @@
             <path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"/>
           </svg>
           <span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Todos</span>
+          <span style="font-size:.68rem;font-weight:700;line-height:1;padding:.15rem .4rem;border-radius:999px;background:rgba(124,58,237,.15);color:#7c3aed;flex-shrink:0">{{ conteoTodos() }}</span>
         </button>
         <button
           style="flex:1;padding:.55rem 1rem;border-style:solid;border-width:1px;border-radius:8px;font-size:.875rem;font-weight:600;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;justify-content:center;gap:.4rem;overflow:hidden"
@@ -94,6 +95,7 @@
             <path d="M10 6h4"/><path d="M10 10h4"/><path d="M10 14h4"/><path d="M10 18h4"/>
           </svg>
           <span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ (selectedEmpresaId === 'todos' ? 'Todas las empresas' : empresaNombre) || 'Empresa' }}</span>
+          <span style="font-size:.68rem;font-weight:700;line-height:1;padding:.15rem .4rem;border-radius:999px;background:rgba(0,149,214,.15);color:#0095d6;flex-shrink:0">{{ conteoEmpresa() }}</span>
         </button>
         <button
           style="flex:1;padding:.55rem 1rem;border-style:solid;border-width:1px;border-radius:8px;font-size:.875rem;font-weight:600;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;justify-content:center;gap:.4rem;overflow:hidden"
@@ -109,6 +111,7 @@
             <polyline points="2 12 12 17 22 12"/>
           </svg>
           <span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ (selectedCentroId === 'todos' ? 'Todos los centros' : centroNombre) || 'Centro de costo' }}</span>
+          <span style="font-size:.68rem;font-weight:700;line-height:1;padding:.15rem .4rem;border-radius:999px;background:rgba(16,185,129,.15);color:#059669;flex-shrink:0">{{ conteoCentro() }}</span>
         </button>
         <button
           style="flex:1;padding:.55rem 1rem;border-style:solid;border-width:1px;border-radius:8px;font-size:.875rem;font-weight:600;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;justify-content:center;gap:.4rem;overflow:hidden"
@@ -122,6 +125,7 @@
             <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
           </svg>
           <span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ (selectedProyectoId === 'todos' ? 'Todos los proyectos' : proyectoNombre) || 'Proyecto' }}</span>
+          <span style="font-size:.68rem;font-weight:700;line-height:1;padding:.15rem .4rem;border-radius:999px;background:rgba(245,158,11,.15);color:#d97706;flex-shrink:0">{{ conteoProyecto() }}</span>
         </button>
       </div>
     </div>

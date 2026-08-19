@@ -1,9 +1,10 @@
-import { Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { ActividadDocument } from './actividades.schema';
 import { CentroCostoDocument } from '../centros-costos/centros-costos.schema';
 import { CreateActividadDto, UpdateActividadDto } from './actividades.dto';
+import { permisosPorDefectoSegunRol } from '../common/permisos-defaults';
 import { MailService } from '../mail/mail.service';
 import { NotificacionOpcionesDto } from '../common/dto/notificacion-opciones.dto';
 import { DocumentosHelper, DocumentoInput } from '../common/helpers/documentos.helper';
@@ -20,7 +21,7 @@ export class ActividadesService {
   constructor(
     @InjectModel('Actividad') private actividadModel: Model<ActividadDocument>,
     @InjectModel('CentroCosto') private centroCostoModel: Model<CentroCostoDocument>,
-    @InjectModel('Usuario') private usuarioModel: Model<{ nombre: string; email: string; rol: string; cliente_id: Types.ObjectId; centros_asignados: Types.ObjectId[]; activo: boolean }>,
+    @InjectModel('Usuario') private usuarioModel: Model<{ nombre: string; email: string; rol: string; cliente_id: Types.ObjectId; centros_asignados: Types.ObjectId[]; activo: boolean; permisos?: Record<string, Record<string, boolean>> }>,
     @InjectModel('Activo') private activoModel: Model<{ nombre: string }>,
     @InjectModel('DocActividad') private docActividadModel: Model<any>,
     @InjectModel('DocEliminado') private docEliminadoModel: Model<any>,
@@ -48,7 +49,13 @@ export class ActividadesService {
     return actividades.map(a => ({ ...a, dias_recordatorio: mapa.get(String(a._id)) ?? [] }));
   }
 
-  async findAllByEmpresa(empresaId: string, centroCostoId?: string, desde?: string, hasta?: string) {
+  async findAllByEmpresa(
+    empresaId: string,
+    centroCostoId?: string,
+    desde?: string,
+    hasta?: string,
+    solicitante?: { sub: string; rol: string },
+  ) {
     const centros = await this.centroCostoModel
       .find({ cliente_id: new Types.ObjectId(empresaId), activo: true })
       .select('_id')
@@ -76,7 +83,52 @@ export class ActividadesService {
       .populate('activo_ids')
       .sort({ fecha: 1 })
       .lean();
-    return this.adjuntarDiasRecordatorio(actividades);
+    const conRecordatorios = await this.adjuntarDiasRecordatorio(actividades);
+    return this.adjuntarPermisosConsumidor(conRecordatorios, empresaId, solicitante);
+  }
+
+  // Flags puede_editar/puede_eliminar por actividad para el perfil consumidor
+  // (rol 'usuario'). El permiso del catálogo sigue mandando (PermisoAccionGuard
+  // protege el PUT/DELETE), pero además el consumidor solo puede modificar
+  // actividades de centros que tiene asignados y que hayan sido creadas por él
+  // mismo o por otro usuario (rol 'usuario') de su empresa — las creadas por
+  // admins Eclarity quedan protegidas. El frontend usa los flags para mostrar
+  // u ocultar los botones; el backend revalida todo en autorizarModificacion().
+  private async adjuntarPermisosConsumidor<T extends { creado_por?: Types.ObjectId; centro_costo_id: Types.ObjectId }>(
+    actividades: T[],
+    empresaId: string,
+    solicitante?: { sub: string; rol: string },
+  ): Promise<(T & { puede_editar?: boolean; puede_eliminar?: boolean })[]> {
+    if (solicitante?.rol !== 'usuario') return actividades;
+
+    const usuario = await this.usuarioModel
+      .findById(solicitante.sub)
+      .select('centros_asignados permisos')
+      .lean();
+    const defecto = permisosPorDefectoSegunRol('usuario');
+    const permisos = usuario?.permisos ?? {};
+    const permEditar   = permisos['actividades']?.['editar']   ?? defecto['actividades']?.['editar']   ?? false;
+    const permEliminar = permisos['actividades']?.['eliminar'] ?? defecto['actividades']?.['eliminar'] ?? false;
+
+    const asignados = new Set((usuario?.centros_asignados ?? []).map(c => String(c)));
+    const creadorIds = [...new Set(
+      actividades.map(a => a.creado_por).filter((id): id is Types.ObjectId => !!id).map(String),
+    )];
+    const creadoresValidos = new Set(
+      (await this.usuarioModel
+        .find({ _id: { $in: creadorIds }, rol: 'usuario', cliente_id: new Types.ObjectId(empresaId) })
+        .select('_id')
+        .lean())
+        .map(u => String(u._id)),
+    );
+
+    return actividades.map(a => {
+      const centroAsignado = asignados.has(String(a.centro_costo_id));
+      const creadorDeSuEmpresa = !!a.creado_por &&
+        (String(a.creado_por) === String(solicitante.sub) || creadoresValidos.has(String(a.creado_por)));
+      const base = centroAsignado && creadorDeSuEmpresa;
+      return { ...a, puede_editar: permEditar && base, puede_eliminar: permEliminar && base };
+    });
   }
 
   async findAll(centroCostoId?: string, desde?: string, hasta?: string) {
@@ -118,6 +170,99 @@ export class ActividadesService {
     }
     if (!actividad || String(actividad.centro_costo_id) !== String(centroId)) {
       throw new NotFoundException(`Actividad ${actividadId} no encontrada`);
+    }
+  }
+
+  // Autorización extra para editar/eliminar actividades en el perfil consumidor
+  // (rol 'usuario'), sobre el permiso del catálogo que ya validó
+  // PermisoAccionGuard. Exige que:
+  //  1. el centro actual de la actividad pertenezca a su empresa (EmpresaAccessGuard
+  //     ya garantizó que :empresaId === user.cliente_id) y, si la está moviendo
+  //     de centro, que el destino también sea de su empresa;
+  //  2. tanto el centro actual como el destino estén entre sus centros_asignados;
+  //  3. la actividad la haya creado él mismo u otro usuario (rol 'usuario') de
+  //     su empresa — las creadas por admins Eclarity quedan protegidas.
+  // Para otros roles no agrega restricciones (comportamiento previo: los admins
+  // pueden incluso mover actividades entre empresas).
+  //
+  // OJO con el :centroId de la ruta en update: el frontend arma la URL con el
+  // centro NUEVO cuando el wizard cambia de centro, así que se acepta que la
+  // ruta apunte al centro actual o al destino declarado en el body.
+  async autorizarModificacion(
+    actividadId: string,
+    centroId: string,
+    empresaId: string,
+    solicitante?: { sub: string; rol: string },
+    nuevoCentroId?: string,
+  ): Promise<void> {
+    if (!solicitante) throw new ForbiddenException('Usuario no autenticado');
+    if (solicitante.rol !== 'usuario') return;
+
+    const actividad = await this.actividadModel
+      .findById(actividadId)
+      .select('centro_costo_id creado_por')
+      .lean();
+    if (!actividad) throw new NotFoundException(`Actividad ${actividadId} no encontrada`);
+
+    const centroActualId  = String(actividad.centro_costo_id);
+    const centroDestinoId = nuevoCentroId ? String(nuevoCentroId) : centroActualId;
+    if (String(centroId) !== centroActualId && String(centroId) !== centroDestinoId) {
+      throw new NotFoundException(`Actividad ${actividadId} no encontrada`);
+    }
+
+    const centroActual = await this.centroCostoModel.findById(centroActualId).select('cliente_id').lean();
+    if (!centroActual || String(centroActual.cliente_id) !== String(empresaId)) {
+      throw new NotFoundException(`Actividad ${actividadId} no encontrada`);
+    }
+    if (centroDestinoId !== centroActualId) {
+      const centroDestino = await this.centroCostoModel.findById(centroDestinoId).select('cliente_id').lean();
+      if (!centroDestino || String(centroDestino.cliente_id) !== String(empresaId)) {
+        throw new NotFoundException(`Centro ${centroDestinoId} no encontrado`);
+      }
+    }
+
+    const usuario = await this.usuarioModel.findById(solicitante.sub).select('centros_asignados').lean();
+    const asignados = new Set((usuario?.centros_asignados ?? []).map(c => String(c)));
+    if (!asignados.has(centroActualId) || !asignados.has(centroDestinoId)) {
+      throw new NotFoundException(`Actividad ${actividadId} no encontrada`);
+    }
+
+    const creadoPor = actividad.creado_por;
+    if (creadoPor && String(creadoPor) === String(solicitante.sub)) return;
+    const creador = creadoPor
+      ? await this.usuarioModel.findById(creadoPor).select('rol cliente_id').lean()
+      : null;
+    const creadorEsUsuarioDeSuEmpresa = creador?.rol === 'usuario' && String(creador.cliente_id) === String(empresaId);
+    if (!creadorEsUsuarioDeSuEmpresa) {
+      throw new ForbiddenException('Solo puedes modificar actividades creadas por usuarios de tu empresa.');
+    }
+  }
+
+  // Autorización extra para CREAR actividades en el perfil consumidor (rol
+  // 'usuario'), sobre el permiso del catálogo que ya validó PermisoAccionGuard.
+  // Exige que el centro de destino pertenezca a su empresa (EmpresaAccessGuard
+  // ya garantizó que :empresaId === user.cliente_id) y que además esté entre
+  // sus centros_asignados. Sin esto, un consumidor con actividades.crear podía
+  // crear actividades en centros que no puede gestionar, y luego ni editarlas
+  // ni borrarlas (puede_editar/puede_eliminar = false). Para otros roles no
+  // agrega restricciones (los admins pueden crear en cualquier centro).
+  async autorizarCreacion(
+    centroId: string,
+    empresaId: string,
+    solicitante?: { sub: string; rol: string },
+  ): Promise<void> {
+    if (!solicitante) throw new ForbiddenException('Usuario no autenticado');
+    if (solicitante.rol !== 'usuario') return;
+
+    const centro = await this.centroCostoModel.findById(centroId).select('cliente_id').lean();
+    if (!centro || String(centro.cliente_id) !== String(empresaId)) {
+      throw new NotFoundException(`Centro ${centroId} no encontrado`);
+    }
+
+    const usuario = await this.usuarioModel.findById(solicitante.sub).select('centros_asignados').lean();
+    const asignados = new Set((usuario?.centros_asignados ?? []).map(c => String(c)));
+    if (!asignados.has(String(centroId))) {
+      throw new ForbiddenException('No tienes asignado el centro de costos seleccionado.');
     }
   }
 

@@ -343,6 +343,11 @@
                 }
               </div>
             </div>
+            @if (puedeEditarActividad(det)) {
+              <div class="cal-day-detail-footer">
+                <button class="btn-primary btn-sm" (click)="abrirEditar(det)">Editar actividad</button>
+              </div>
+            }
           </div>
         }
       </div>
@@ -475,6 +480,14 @@
               <span class="actividad-detalle-historial-fecha">{{ h.fecha | slice:0:10 }}</span>
             </div>
           }
+        </div>
+      }
+
+      <!-- Footer: editar solo si el backend lo permite para esta actividad -->
+      @if (puedeEditarActividad(actividadDetalle()!)) {
+        <div class="actividad-detalle-footer">
+          @let detalle = actividadDetalle()!;
+          <button class="btn-primary btn-sm" (click)="abrirEditar(detalle); cerrarDetalle()">Editar actividad</button>
         </div>
       }
 
@@ -945,9 +958,10 @@
 
       <!-- FOOTER -->
       <div class="wz-footer">
+        @let editando = actividadEditando;
         <span class="wz-paso-indicador">Paso {{ paso() }} de 4</span>
-        @if (paso() === 4 && editingId() && authService.tienePermiso('actividades', 'eliminar')) {
-          <button class="btn-danger btn-sm" (click)="eliminarActividad(editingId()!)">Eliminar</button>
+        @if (paso() === 4 && editando && puedeEliminarActividad(editando)) {
+          <button class="btn-danger btn-sm" (click)="eliminarActividad(editando._id)">Eliminar</button>
         }
         <div style="display:flex;gap:.5rem;margin-left:auto">
           @if (paso() === 1) {
@@ -957,7 +971,7 @@
           }
           @if (paso() < 4) {
             <button class="btn-primary" (click)="avanzar()">Siguiente →</button>
-          } @else if (editingId() ? authService.tienePermiso('actividades', 'editar') : authService.tienePermiso('actividades', 'crear')) {
+          } @else if (editando ? puedeEditarActividad(editando) : authService.tienePermiso('actividades', 'crear')) {
             <button class="btn-primary" [class.btn-loading]="service.saving() || subiendoDocs" (click)="guardar()" [disabled]="service.saving() || subiendoDocs"
               style="background:#22c55e;border-color:#22c55e">
               @if (subiendoDocs) { Subiendo... }

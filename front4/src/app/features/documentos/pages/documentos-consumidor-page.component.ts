@@ -232,6 +232,22 @@ export class DocumentosConsumidorPageComponent implements OnInit {
     return ordenarFilasTodosC(filas, this.ordenTodosC());
   });
 
+  // Conteos para los badges de los tabs — total de documentos "en juego" en cada
+  // tab con la selección actual, independiente del buscador/categorías de cada panel.
+  protected conteoTodos = computed(() => this.filasTodos().length);
+
+  protected conteoEmpresa = computed(() => this.service.documentosEmpresa().length);
+
+  protected conteoCentro = computed(() => {
+    if (this.selectedCentroIdC() !== 'todos') return this.service.documentosCentro().length;
+    return this.service.documentosPorCentro().reduce((acc, g) => acc + g.docs.length, 0);
+  });
+
+  protected conteoProyecto = computed(() => {
+    if (this.selectedProyectoIdC() !== 'todos') return this.service.documentosProyecto().length;
+    return this.service.documentosPorProyecto().reduce((acc, g) => acc + g.docs.length, 0);
+  });
+
   formatFecha(fecha?: string): string {
     if (!fecha) return '—';
     const d = new Date(fecha);
@@ -343,6 +359,35 @@ export class DocumentosConsumidorPageComponent implements OnInit {
         this.onCentroChangeC(centroId);
         if (proyectoId) this.onProyectoChangeC(proyectoId);
       });
+    });
+
+    // cargarTodosCentros/cargarTodosProyectos reciben la lista de centros/proyectos
+    // como snapshot no-reactivo (this.centrosFiltradosC es un getter plano). Si se
+    // llaman antes de que CentrosService/ProyectosService terminen su GET (p.ej. el
+    // GET que dispara TopbarComponent), el snapshot llega vacío y nada vuelve a
+    // reintentarlo — por eso "Centro"/"Proyecto" en modo "todos" podían quedar vacíos
+    // hasta que el usuario tocaba el <select> a mano. Estos efectos reaccionan cuando
+    // esas listas cambian y rellenan la carga.
+    effect(() => {
+      const empresa = this.consumidorContext.empresaSeleccionada();
+      const centroId = this.selectedCentroIdC();
+      const centros = this.centrosFiltradosC;
+      if (empresa && centroId === 'todos' && centros.length > 0) {
+        untracked(() => this.service.cargarTodosCentros(empresa._id, centros));
+      }
+    });
+
+    effect(() => {
+      const empresa = this.consumidorContext.empresaSeleccionada();
+      const centroId = this.selectedCentroIdC();
+      const proyectoId = this.selectedProyectoIdC();
+      if (!empresa || proyectoId !== 'todos') return;
+      const proyectos = centroId !== 'todos'
+        ? this.proyectosService.proyectos().filter(p => asId(p.cliente_id) === asId(empresa._id) && (p.centro_costo_ids ?? []).some(id => asId(id) === centroId))
+        : this.proyectosService.proyectos().filter(p => asId(p.cliente_id) === asId(empresa._id));
+      if (proyectos.length > 0) {
+        untracked(() => this.service.cargarTodosProyectos(empresa._id, proyectos, this.centrosFiltradosC));
+      }
     });
   }
 

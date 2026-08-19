@@ -34,8 +34,15 @@ export interface Actividad {
   // Días de antelación a la fecha en que se avisa a los admins suscritos
   // (subconjunto de [365, 180, 30, 15, 7, 3, 1, 0]; 0 = el día de la actividad)
   dias_recordatorio?: number[];
+  creado_por?: string;
   creado_por_nombre?: string;
   creado_por_email?: string;
+  // Flags por actividad que el backend adjunta al perfil consumidor (rol
+  // 'usuario') en GET /empresas/:id/actividades: catálogo (actividades.editar/
+  // eliminar) + centro asignado + creador de su empresa. Ausentes para admins —
+  // en ese caso el front cae al permiso del catálogo (tienePermiso).
+  puede_editar?: boolean;
+  puede_eliminar?: boolean;
   lider_id?: string;
   lider_nombre?: string;
   lider_email?: string;

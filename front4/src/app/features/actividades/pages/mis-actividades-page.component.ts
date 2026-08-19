@@ -293,6 +293,18 @@ export class MisActividadesPageComponent implements OnInit {
     this.authService.tienePermiso('catalogos', 'eliminar')
   );
 
+  // El backend adjunta puede_editar/puede_eliminar por actividad cuando el
+  // usuario es consumidor (rol 'usuario'): catálogo + centro asignado + la
+  // actividad la creó él mismo u otro usuario de su empresa. Si el flag no
+  // viene (super_admin en modo consumidor), se cae al permiso del catálogo.
+  protected puedeEditarActividad(a: Actividad): boolean {
+    return a.puede_editar ?? this.authService.tienePermiso('actividades', 'editar');
+  }
+
+  protected puedeEliminarActividad(a: Actividad): boolean {
+    return a.puede_eliminar ?? this.authService.tienePermiso('actividades', 'eliminar');
+  }
+
   // La vista consumidor trabaja siempre sobre la empresa del contexto, así que
   // el select de empresa del wizard muestra únicamente esa empresa.
   protected empresasContext = computed(() => {
@@ -303,7 +315,16 @@ export class MisActividadesPageComponent implements OnInit {
   protected centrosParaEmpresa = computed(() => {
     const empId = this.form().empresa_id;
     if (!empId) return [];
-    return this.centrosService.centros().filter(c => asId(c.cliente_id) === empId);
+    let centros = this.centrosService.centros().filter(c => asId(c.cliente_id) === empId);
+    // Perfil consumidor: el select solo ofrece los centros asignados al usuario
+    // (el backend revalida igual en create con autorizarCreacion). Si el campo
+    // no viene (sesión previa al cambio) se muestran todos para no romperlas.
+    const usuario = this.authService.usuarioActual();
+    if (usuario?.rol === 'usuario' && Array.isArray(usuario.centros_asignados)) {
+      const asignados = new Set(usuario.centros_asignados.map(asId));
+      centros = centros.filter(c => asignados.has(asId(c._id)));
+    }
+    return centros;
   });
 
   protected activosParaCentro = computed(() =>
