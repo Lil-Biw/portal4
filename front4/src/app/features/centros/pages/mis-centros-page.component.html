@@ -2,8 +2,8 @@
 @if (!centroActivo) {
   <div class="page-header">
     <div>
-      <h2 style="margin:0 0 .25rem;font-size:1.5rem;font-weight:700;color:#1f2937">Centros de costo</h2>
-      <p style="margin:0;font-size:.85rem;color:#6b7280">
+      <h2 style="margin:0 0 .25rem;font-size:1.5rem;font-weight:700;color:var(--fg-2)">Centros de costo</h2>
+      <p style="margin:0;font-size:.85rem;color:var(--fg-4)">
         @if (empresa) {
           {{ centros().length }} centro{{ centros().length !== 1 ? 's' : '' }} activo{{ centros().length !== 1 ? 's' : '' }} · {{ empresa.razon_social }}
         } @else {
@@ -25,7 +25,7 @@
 
   @if (mostrarBuscar()) {
     <input
-      style="width:100%;padding:.65rem .9rem;border-radius:8px;border:1px solid rgba(34,33,33,.2);font-size:.9rem;font-family:inherit;margin-bottom:1rem;box-sizing:border-box"
+      style="width:100%;padding:.65rem .9rem;border-radius:8px;border:1px solid var(--border-strong);font-size:.9rem;font-family:inherit;margin-bottom:1rem;box-sizing:border-box"
       type="text"
       placeholder="Nombre, código, ciudad o región..."
       [ngModel]="busqueda()"
@@ -34,15 +34,15 @@
   }
 
   @if (!empresa) {
-    <div class="card" style="text-align:center;padding:2.5rem;color:#9ca3af">
+    <div class="card" style="text-align:center;padding:2.5rem;color:var(--fg-5)">
       Ninguna empresa seleccionada.
     </div>
   } @else if (centros().length === 0) {
-    <div class="card" style="text-align:center;padding:2.5rem;color:#9ca3af">
+    <div class="card" style="text-align:center;padding:2.5rem;color:var(--fg-5)">
       Esta empresa no tiene centros de costo registrados.
     </div>
   } @else if (centrosFiltrados().length === 0) {
-    <div class="card" style="text-align:center;padding:2.5rem;color:#9ca3af">
+    <div class="card" style="text-align:center;padding:2.5rem;color:var(--fg-5)">
       Sin resultados para "{{ busqueda() }}"
     </div>
   } @else {
@@ -57,17 +57,17 @@
               <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:.75rem">
                 <div style="flex:1;min-width:0;display:flex;align-items:center;gap:.6rem">
                   @if (fotoUrlCentro(c); as foto) {
-                    <img [src]="foto" alt="Foto de {{ c.nombre }}" style="width:40px;height:40px;border-radius:9px;object-fit:cover;border:1px solid rgba(34,33,33,.1);flex-shrink:0" />
+                    <img [src]="foto" alt="Foto de {{ c.nombre }}" style="width:40px;height:40px;border-radius:9px;object-fit:cover;border:1px solid var(--border-default);flex-shrink:0" />
                   } @else {
-                    <div style="width:40px;height:40px;border-radius:9px;border:1.5px dashed #d1d5db;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#9ca3af">
+                    <div style="width:40px;height:40px;border-radius:9px;border:1.5px dashed var(--border-default);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--fg-5)">
                       <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
                     </div>
                   }
                   <div style="flex:1;min-width:0">
-                    <h3 style="margin:0 0 .15rem;font-size:1rem;font-weight:700;color:#1f2937;line-height:1.25;overflow:hidden;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;line-clamp:2">{{ c.nombre }}</h3>
-                    <span style="font-size:.78rem;color:#6b7280">Cód. {{ c.codigo }}</span>
+                    <h3 style="margin:0 0 .15rem;font-size:1rem;font-weight:700;color:var(--fg-2);line-height:1.25;overflow:hidden;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;line-clamp:2">{{ c.nombre }}</h3>
+                    <span style="font-size:.78rem;color:var(--fg-4)">Cód. {{ c.codigo }}</span>
                     @if (c.ubicacion_ciudad) {
-                      <p style="margin:.25rem 0 0;font-size:.8rem;color:#6b7280">
+                      <p style="margin:.25rem 0 0;font-size:.8rem;color:var(--fg-4)">
                         {{ c.ubicacion_ciudad }}{{ c.ubicacion_region ? ', ' + c.ubicacion_region : '' }}
                       </p>
                     }
@@ -77,21 +77,21 @@
               </div>
 
               <!-- Separador -->
-              <div style="height:1px;background:rgba(34,33,33,.08);margin:.75rem 0"></div>
+              <div style="height:1px;background:var(--border-subtle);margin:.75rem 0"></div>
 
               <!-- Contadores -->
               <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:.5rem">
-                <div style="display:flex;flex-direction:column;align-items:center;padding:.45rem .3rem;border-radius:8px;background:#dcfce7">
-                  <span style="font-size:1.2rem;font-weight:700;color:#15803d;line-height:1">{{ sc.aprobados }}</span>
-                  <span style="font-size:.68rem;font-weight:600;color:#15803d;margin-top:.15rem">Aprob.</span>
+                <div style="display:flex;flex-direction:column;align-items:center;padding:.45rem .3rem;border-radius:8px;background:var(--ok-bg)">
+                  <span style="font-size:1.2rem;font-weight:700;color:var(--ok);line-height:1">{{ sc.aprobados }}</span>
+                  <span style="font-size:.68rem;font-weight:600;color:var(--ok);margin-top:.15rem">Aprob.</span>
                 </div>
-                <div style="display:flex;flex-direction:column;align-items:center;padding:.45rem .3rem;border-radius:8px;background:#fef3c7">
-                  <span style="font-size:1.2rem;font-weight:700;color:#b45309;line-height:1">{{ sc.revision }}</span>
-                  <span style="font-size:.68rem;font-weight:600;color:#b45309;margin-top:.15rem">Revisi.</span>
+                <div style="display:flex;flex-direction:column;align-items:center;padding:.45rem .3rem;border-radius:8px;background:var(--revision-bg)">
+                  <span style="font-size:1.2rem;font-weight:700;color:var(--revision);line-height:1">{{ sc.revision }}</span>
+                  <span style="font-size:.68rem;font-weight:600;color:var(--revision);margin-top:.15rem">Revisi.</span>
                 </div>
-                <div style="display:flex;flex-direction:column;align-items:center;padding:.45rem .3rem;border-radius:8px;background:#f3f4f6">
-                  <span style="font-size:1.2rem;font-weight:700;color:#374151;line-height:1">{{ sc.pendiente }}</span>
-                  <span style="font-size:.68rem;font-weight:600;color:#374151;margin-top:.15rem">Pend.</span>
+                <div style="display:flex;flex-direction:column;align-items:center;padding:.45rem .3rem;border-radius:8px;background:var(--bg-2)">
+                  <span style="font-size:1.2rem;font-weight:700;color:var(--fg-2);line-height:1">{{ sc.pendiente }}</span>
+                  <span style="font-size:.68rem;font-weight:600;color:var(--fg-2);margin-top:.15rem">Pend.</span>
                 </div>
               </div>
 
@@ -99,7 +99,7 @@
 
             <!-- Botones de acción en columna vertical, al costado derecho -->
             @if (authService.tienePermiso('centros', 'editar') || authService.tienePermiso('centros', 'eliminar')) {
-            <div style="display:flex;flex-direction:column;gap:.4rem;align-items:center;justify-content:center;flex-shrink:0;padding-left:.5rem;border-left:1px solid rgba(34,33,33,.08)">
+            <div style="display:flex;flex-direction:column;gap:.4rem;align-items:center;justify-content:center;flex-shrink:0;padding-left:.5rem;border-left:1px solid var(--border-subtle)">
               @if (authService.tienePermiso('centros', 'editar')) {
                 <button class="btn-icon-sq" title="Editar" (click)="$event.stopPropagation(); abrirEditar(c)">
                   <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -131,12 +131,12 @@
   <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:1.25rem;flex-wrap:wrap">
     <button
       (click)="volver()"
-      style="background:none;border:none;cursor:pointer;color:#6b7280;font-size:.85rem;padding:0;display:flex;align-items:center;gap:.35rem;font-weight:500">
+      style="background:none;border:none;cursor:pointer;color:var(--fg-4);font-size:.85rem;padding:0;display:flex;align-items:center;gap:.35rem;font-weight:500">
       ← Volver
     </button>
-    <span style="color:#d1d5db">/</span>
-    <h2 style="margin:0;font-size:1.25rem;font-weight:700;color:#1f2937">{{ centroActivo.nombre }}</h2>
-    <span style="font-size:.78rem;color:#6b7280">Cód. {{ centroActivo.codigo }}</span>
+    <span style="color:var(--border-default)">/</span>
+    <h2 style="margin:0;font-size:1.25rem;font-weight:700;color:var(--fg-2)">{{ centroActivo.nombre }}</h2>
+    <span style="font-size:.78rem;color:var(--fg-4)">Cód. {{ centroActivo.codigo }}</span>
   </div>
 
   <!-- Grid 2 columnas superior -->
@@ -145,48 +145,48 @@
     <!-- Recuadro 1: Información general -->
     <div class="card" style="min-height:320px;display:grid;grid-template-columns:1fr 220px;gap:1.25rem">
       <div>
-        <h3 style="margin:0 0 1rem;font-size:.95rem;font-weight:700;color:#1f2937">Información general</h3>
+        <h3 style="margin:0 0 1rem;font-size:.95rem;font-weight:700;color:var(--fg-2)">Información general</h3>
         <dl style="margin:0;display:flex;flex-direction:column;gap:.55rem">
           <div style="display:flex;gap:.5rem">
-            <dt style="font-size:.78rem;color:#6b7280;min-width:80px;flex-shrink:0">Nombre</dt>
-            <dd style="margin:0;font-size:.82rem;color:#1f2937;font-weight:500">{{ centroActivo.nombre }}</dd>
+            <dt style="font-size:.78rem;color:var(--fg-4);min-width:80px;flex-shrink:0">Nombre</dt>
+            <dd style="margin:0;font-size:.82rem;color:var(--fg-2);font-weight:500">{{ centroActivo.nombre }}</dd>
           </div>
           <div style="display:flex;gap:.5rem">
-            <dt style="font-size:.78rem;color:#6b7280;min-width:80px;flex-shrink:0">Código</dt>
-            <dd style="margin:0;font-size:.82rem;color:#0095d6;font-weight:600">{{ centroActivo.codigo }}</dd>
+            <dt style="font-size:.78rem;color:var(--fg-4);min-width:80px;flex-shrink:0">Código</dt>
+            <dd style="margin:0;font-size:.82rem;color:var(--sc-cyan);font-weight:600">{{ centroActivo.codigo }}</dd>
           </div>
           @if (centroActivo.descripcion) {
             <div style="display:flex;gap:.5rem">
-              <dt style="font-size:.78rem;color:#6b7280;min-width:80px;flex-shrink:0">Descripción</dt>
-              <dd style="margin:0;font-size:.82rem;color:#1f2937">{{ centroActivo.descripcion }}</dd>
+              <dt style="font-size:.78rem;color:var(--fg-4);min-width:80px;flex-shrink:0">Descripción</dt>
+              <dd style="margin:0;font-size:.82rem;color:var(--fg-2)">{{ centroActivo.descripcion }}</dd>
             </div>
           }
           @if (centroActivo.ubicacion_direccion) {
             <div style="display:flex;gap:.5rem">
-              <dt style="font-size:.78rem;color:#6b7280;min-width:80px;flex-shrink:0">Dirección</dt>
-              <dd style="margin:0;font-size:.82rem;color:#1f2937">{{ centroActivo.ubicacion_direccion }}</dd>
+              <dt style="font-size:.78rem;color:var(--fg-4);min-width:80px;flex-shrink:0">Dirección</dt>
+              <dd style="margin:0;font-size:.82rem;color:var(--fg-2)">{{ centroActivo.ubicacion_direccion }}</dd>
             </div>
           }
           @if (centroActivo.ubicacion_ciudad) {
             <div style="display:flex;gap:.5rem">
-              <dt style="font-size:.78rem;color:#6b7280;min-width:80px;flex-shrink:0">Ciudad</dt>
-              <dd style="margin:0;font-size:.82rem;color:#1f2937">
+              <dt style="font-size:.78rem;color:var(--fg-4);min-width:80px;flex-shrink:0">Ciudad</dt>
+              <dd style="margin:0;font-size:.82rem;color:var(--fg-2)">
                 {{ centroActivo.ubicacion_ciudad }}{{ centroActivo.ubicacion_region ? ', ' + centroActivo.ubicacion_region : '' }}
               </dd>
             </div>
           }
           @if (centroActivo.ubicacion_pais) {
             <div style="display:flex;gap:.5rem">
-              <dt style="font-size:.78rem;color:#6b7280;min-width:80px;flex-shrink:0">País</dt>
-              <dd style="margin:0;font-size:.82rem;color:#1f2937">{{ centroActivo.ubicacion_pais }}</dd>
+              <dt style="font-size:.78rem;color:var(--fg-4);min-width:80px;flex-shrink:0">País</dt>
+              <dd style="margin:0;font-size:.82rem;color:var(--fg-2)">{{ centroActivo.ubicacion_pais }}</dd>
             </div>
           }
         </dl>
       </div>
       @if (fotoUrlCentro(centroActivo); as foto) {
-        <img [src]="foto" alt="Foto de {{ centroActivo.nombre }}" style="width:100%;height:100%;min-height:220px;object-fit:cover;border-radius:12px;border:1px solid rgba(34,33,33,.08);display:block" />
+        <img [src]="foto" alt="Foto de {{ centroActivo.nombre }}" style="width:100%;height:100%;min-height:220px;object-fit:cover;border-radius:12px;border:1px solid var(--border-subtle);display:block" />
       } @else {
-        <div style="min-height:220px;border-radius:12px;border:1.5px dashed #d1d5db;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.4rem;color:#9ca3af">
+        <div style="min-height:220px;border-radius:12px;border:1.5px dashed var(--border-default);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.4rem;color:var(--fg-5)">
           <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
           <span style="font-size:.72rem;font-weight:600">Sin foto</span>
         </div>
@@ -196,9 +196,9 @@
     <!-- Recuadro 2: Mapa -->
     <div class="card" style="min-height:320px;padding:.75rem;overflow:hidden;display:flex;flex-direction:column">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.65rem;flex-shrink:0">
-        <h3 style="margin:0;font-size:.95rem;font-weight:700;color:#1f2937">Localización</h3>
+        <h3 style="margin:0;font-size:.95rem;font-weight:700;color:var(--fg-2)">Localización</h3>
         <a [href]="mapsLink()" target="_blank" rel="noopener"
-           style="display:flex;align-items:center;gap:.35rem;font-size:.78rem;font-weight:600;color:#0095d6;text-decoration:none;padding:.3rem .65rem;border-radius:7px;border:1px solid rgba(0,149,214,.3);background:rgba(0,149,214,.06)">
+           style="display:flex;align-items:center;gap:.35rem;font-size:.78rem;font-weight:600;color:var(--sc-cyan);text-decoration:none;padding:.3rem .65rem;border-radius:7px;border:1px solid rgba(0,149,214,.3);background:rgba(0,149,214,.06)">
           <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
             <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>
           </svg>
@@ -214,7 +214,7 @@
           referrerpolicy="no-referrer-when-downgrade">
         </iframe>
       } @else {
-        <div style="flex:1;min-height:240px;display:flex;align-items:center;justify-content:center;color:#9ca3af;font-size:.85rem;background:#f9fafb;border-radius:8px">
+        <div style="flex:1;min-height:240px;display:flex;align-items:center;justify-content:center;color:var(--fg-5);font-size:.85rem;background:var(--bg-1);border-radius:8px">
           Sin localización registrada
         </div>
       }
@@ -223,7 +223,7 @@
     <!-- Recuadro 3: Score documental -->
     <div class="card" style="min-height:220px">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem">
-        <h3 style="margin:0;font-size:.95rem;font-weight:700;color:#1f2937">Score documental</h3>
+        <h3 style="margin:0;font-size:.95rem;font-weight:700;color:var(--fg-2)">Score documental</h3>
         <app-stat-chip [label]="scoreChipLabel()" [variant]="scoreChipVariant()"></app-stat-chip>
       </div>
       <!-- Donut + texto -->
@@ -231,35 +231,35 @@
         <app-donut-arc [value]="scoreDelCentro().pct" [size]="120"></app-donut-arc>
         <div>
           @if (scoreDelCentro().total > 0) {
-            <p style="margin:0;font-size:.82rem;color:#6b7280">
+            <p style="margin:0;font-size:.82rem;color:var(--fg-4)">
               {{ scoreDelCentro().aprobados }} de {{ scoreDelCentro().total }} solicitudes aprobadas
             </p>
           } @else {
-            <p style="margin:0;font-size:.82rem;color:#9ca3af">Sin solicitudes registradas</p>
+            <p style="margin:0;font-size:.82rem;color:var(--fg-5)">Sin solicitudes registradas</p>
           }
         </div>
       </div>
       <!-- 5 contadores -->
       <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:.4rem">
-        <div style="padding:.5rem .3rem;border-radius:9px;text-align:center;background:#dcfce7">
-          <p style="margin:0 0 .1rem;font-size:1.3rem;font-weight:700;color:#15803d;line-height:1">{{ scoreDelCentro().aprobados }}</p>
-          <p style="margin:0;font-size:.62rem;font-weight:600;color:#15803d">Aprobados</p>
+        <div style="padding:.5rem .3rem;border-radius:9px;text-align:center;background:var(--ok-bg)">
+          <p style="margin:0 0 .1rem;font-size:1.3rem;font-weight:700;color:var(--ok);line-height:1">{{ scoreDelCentro().aprobados }}</p>
+          <p style="margin:0;font-size:.62rem;font-weight:600;color:var(--ok)">Aprobados</p>
         </div>
-        <div style="padding:.5rem .3rem;border-radius:9px;text-align:center;background:#fef3c7">
-          <p style="margin:0 0 .1rem;font-size:1.3rem;font-weight:700;color:#b45309;line-height:1">{{ scoreDelCentro().revision }}</p>
-          <p style="margin:0;font-size:.62rem;font-weight:600;color:#b45309">Revisión</p>
+        <div style="padding:.5rem .3rem;border-radius:9px;text-align:center;background:var(--revision-bg)">
+          <p style="margin:0 0 .1rem;font-size:1.3rem;font-weight:700;color:var(--revision);line-height:1">{{ scoreDelCentro().revision }}</p>
+          <p style="margin:0;font-size:.62rem;font-weight:600;color:var(--revision)">Revisión</p>
         </div>
-        <div style="padding:.5rem .3rem;border-radius:9px;text-align:center;background:#fee2e2">
-          <p style="margin:0 0 .1rem;font-size:1.3rem;font-weight:700;color:#dc2626;line-height:1">{{ scoreDelCentro().vencido }}</p>
-          <p style="margin:0;font-size:.62rem;font-weight:600;color:#dc2626">Vencidos</p>
+        <div style="padding:.5rem .3rem;border-radius:9px;text-align:center;background:var(--danger-bg)">
+          <p style="margin:0 0 .1rem;font-size:1.3rem;font-weight:700;color:var(--danger);line-height:1">{{ scoreDelCentro().vencido }}</p>
+          <p style="margin:0;font-size:.62rem;font-weight:600;color:var(--danger)">Vencidos</p>
         </div>
-        <div style="padding:.5rem .3rem;border-radius:9px;text-align:center;background:#fce7f3">
-          <p style="margin:0 0 .1rem;font-size:1.3rem;font-weight:700;color:#9d174d;line-height:1">{{ scoreDelCentro().rechazado }}</p>
-          <p style="margin:0;font-size:.62rem;font-weight:600;color:#9d174d">Rechazados</p>
+        <div style="padding:.5rem .3rem;border-radius:9px;text-align:center;background:var(--rechazado-bg)">
+          <p style="margin:0 0 .1rem;font-size:1.3rem;font-weight:700;color:var(--rechazado);line-height:1">{{ scoreDelCentro().rechazado }}</p>
+          <p style="margin:0;font-size:.62rem;font-weight:600;color:var(--rechazado)">Rechazados</p>
         </div>
-        <div style="padding:.5rem .3rem;border-radius:9px;text-align:center;background:#f0f9ff">
-          <p style="margin:0 0 .1rem;font-size:1.3rem;font-weight:700;color:#0369a1;line-height:1">{{ scoreDelCentro().pendiente }}</p>
-          <p style="margin:0;font-size:.62rem;font-weight:600;color:#0369a1">Pendiente</p>
+        <div style="padding:.5rem .3rem;border-radius:9px;text-align:center;background:var(--info-bg)">
+          <p style="margin:0 0 .1rem;font-size:1.3rem;font-weight:700;color:var(--info);line-height:1">{{ scoreDelCentro().pendiente }}</p>
+          <p style="margin:0;font-size:.62rem;font-weight:600;color:var(--info)">Pendiente</p>
         </div>
       </div>
     </div>
@@ -267,8 +267,8 @@
     <!-- Recuadro 4: Spider chart -->
     <div class="card" style="min-height:220px;display:flex;flex-direction:column">
       <div style="margin-bottom:.25rem">
-        <h3 style="margin:0 0 .15rem;font-size:.95rem;font-weight:700;color:#1f2937">Score 2 — Evaluación SmartClarity</h3>
-        <span style="font-size:.76rem;color:#0095d6;font-weight:500">Nivel centro</span>
+        <h3 style="margin:0 0 .15rem;font-size:.95rem;font-weight:700;color:var(--fg-2)">Score 2 — Evaluación SmartClarity</h3>
+        <span style="font-size:.76rem;color:var(--sc-cyan);font-weight:500">Nivel centro</span>
       </div>
       <div style="flex:1;display:flex;align-items:center;justify-content:center">
         <app-spider-chart [labels]="spiderLabels" [values]="spiderValues()" [size]="260"></app-spider-chart>
@@ -283,21 +283,21 @@
     <!-- Documentos del centro -->
     <div class="card">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem">
-        <h3 style="margin:0;font-size:.95rem;font-weight:700;color:#1f2937">Documentos del centro</h3>
+        <h3 style="margin:0;font-size:.95rem;font-weight:700;color:var(--fg-2)">Documentos del centro</h3>
         <button
           (click)="irADocumentos('documentacion')"
-          style="display:flex;align-items:center;gap:.4rem;padding:.4rem .8rem;border-radius:8px;border:1px solid rgba(0,149,214,.3);background:rgba(0,149,214,.06);color:#0095d6;font-size:.78rem;font-weight:600;cursor:pointer;font-family:inherit">
+          style="display:flex;align-items:center;gap:.4rem;padding:.4rem .8rem;border-radius:8px;border:1px solid rgba(0,149,214,.3);background:rgba(0,149,214,.06);color:var(--sc-cyan);font-size:.78rem;font-weight:600;cursor:pointer;font-family:inherit">
           <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
           Ir a documentación
         </button>
       </div>
       @if (documentosService.documentosCentro().length === 0) {
-        <p style="color:#9ca3af;font-size:.85rem;margin:0">Sin documentos cargados para este centro.</p>
+        <p style="color:var(--fg-5);font-size:.85rem;margin:0">Sin documentos cargados para este centro.</p>
       } @else {
         <div style="display:flex;flex-direction:column;gap:.4rem">
           @for (d of documentosService.documentosCentro(); track d._id) {
             @let info = docTipoInfo(d.tipo_mime);
-            <div style="display:flex;align-items:center;gap:.7rem;padding:.5rem .65rem;border-radius:8px;border:1px solid rgba(34,33,33,.08)">
+            <div style="display:flex;align-items:center;gap:.7rem;padding:.5rem .65rem;border-radius:8px;border:1px solid var(--border-subtle)">
               <!-- Ícono de archivo -->
               <div style="width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0"
                    [style.background]="info.color + '1a'">
@@ -318,15 +318,15 @@
               </div>
               <!-- Nombre + categoría -->
               <div style="flex:1;min-width:0">
-                <span style="display:block;font-size:.82rem;font-weight:600;color:#1f2937;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ d.nombre_display || d.nombre }}</span>
+                <span style="display:block;font-size:.82rem;font-weight:600;color:var(--fg-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ d.nombre_display || d.nombre }}</span>
                 @if (d.categoria) {
-                  <span style="font-size:.72rem;color:#6b7280">{{ d.categoria }}</span>
+                  <span style="font-size:.72rem;color:var(--fg-4)">{{ d.categoria }}</span>
                 }
               </div>
               <!-- Acción -->
               <button
                 (click)="$event.stopPropagation(); documentosService.descargar(d.url, d.nombre_display)"
-                style="flex-shrink:0;background:none;border:none;cursor:pointer;color:#6b7280;display:flex;align-items:center;padding:.25rem"
+                style="flex-shrink:0;background:none;border:none;cursor:pointer;color:var(--fg-4);display:flex;align-items:center;padding:.25rem"
                 title="Descargar">
                 <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
               </button>
@@ -339,33 +339,33 @@
     <!-- Solicitudes documentales -->
     <div class="card">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem">
-        <h3 style="margin:0;font-size:.95rem;font-weight:700;color:#1f2937">Solicitudes documentales</h3>
+        <h3 style="margin:0;font-size:.95rem;font-weight:700;color:var(--fg-2)">Solicitudes documentales</h3>
         <button
           (click)="irADocumentos('solicitudes')"
-          style="display:flex;align-items:center;gap:.4rem;padding:.4rem .8rem;border-radius:8px;border:1px solid rgba(0,149,214,.3);background:rgba(0,149,214,.06);color:#0095d6;font-size:.78rem;font-weight:600;cursor:pointer;font-family:inherit">
+          style="display:flex;align-items:center;gap:.4rem;padding:.4rem .8rem;border-radius:8px;border:1px solid rgba(0,149,214,.3);background:rgba(0,149,214,.06);color:var(--sc-cyan);font-size:.78rem;font-weight:600;cursor:pointer;font-family:inherit">
           <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
           Ir a solicitudes
         </button>
       </div>
       @if (solicitudesDelCentro().length === 0) {
-        <p style="color:#9ca3af;font-size:.85rem;margin:0">Sin solicitudes registradas para este centro.</p>
+        <p style="color:var(--fg-5);font-size:.85rem;margin:0">Sin solicitudes registradas para este centro.</p>
       } @else {
         <div style="display:flex;flex-direction:column;gap:.4rem">
           @for (s of solicitudesDelCentro(); track s._id) {
-            <div style="display:flex;align-items:center;gap:.65rem;padding:.55rem .7rem;border-radius:8px;border:1px solid rgba(34,33,33,.08)">
+            <div style="display:flex;align-items:center;gap:.65rem;padding:.55rem .7rem;border-radius:8px;border:1px solid var(--border-subtle)">
               <!-- Punto de estado -->
               <span style="width:9px;height:9px;border-radius:50%;flex-shrink:0"
                     [style.background]="dotColorSolicitud(s.estado)"></span>
               <!-- Nombre + tipo -->
               <div style="flex:1;min-width:0">
-                <span style="display:block;font-size:.84rem;font-weight:600;color:#1f2937;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ s.nombre }}</span>
-                <span style="font-size:.72rem;color:#6b7280">{{ s.tipo }}</span>
+                <span style="display:block;font-size:.84rem;font-weight:600;color:var(--fg-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ s.nombre }}</span>
+                <span style="font-size:.72rem;color:var(--fg-4)">{{ s.tipo }}</span>
               </div>
               <!-- Acción / badge -->
               @if (s.estado === 'pendiente') {
                 <button
                   (click)="$event.stopPropagation(); irADocumentos('solicitudes')"
-                  style="display:flex;align-items:center;gap:.3rem;padding:.3rem .65rem;border-radius:7px;border:1px solid rgba(0,149,214,.35);background:rgba(0,149,214,.07);color:#0095d6;font-size:.75rem;font-weight:600;cursor:pointer;font-family:inherit;flex-shrink:0">
+                  style="display:flex;align-items:center;gap:.3rem;padding:.3rem .65rem;border-radius:7px;border:1px solid rgba(0,149,214,.35);background:rgba(0,149,214,.07);color:var(--sc-cyan);font-size:.75rem;font-weight:600;cursor:pointer;font-family:inherit;flex-shrink:0">
                   <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>
                   Subir
                 </button>
@@ -388,18 +388,18 @@
 
     <!-- Activos del centro -->
     <div class="card">
-      <h3 style="margin:0 0 .75rem;font-size:.95rem;font-weight:700;color:#1f2937">Activos del centro</h3>
+      <h3 style="margin:0 0 .75rem;font-size:.95rem;font-weight:700;color:var(--fg-2)">Activos del centro</h3>
       @if (activosService.loading()) {
-        <p style="color:#9ca3af;font-size:.85rem;margin:0">Cargando activos...</p>
+        <p style="color:var(--fg-5);font-size:.85rem;margin:0">Cargando activos...</p>
       } @else if (activosService.activos().length === 0) {
-        <p style="color:#9ca3af;font-size:.85rem;margin:0">Sin activos registrados para este centro.</p>
+        <p style="color:var(--fg-5);font-size:.85rem;margin:0">Sin activos registrados para este centro.</p>
       } @else {
         <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:.75rem">
           @for (a of activosService.activos(); track a._id) {
-            <div style="display:flex;align-items:center;gap:.65rem;padding:.55rem .75rem;border-radius:10px;border:1px solid rgba(34,33,33,.08)">
+            <div style="display:flex;align-items:center;gap:.65rem;padding:.55rem .75rem;border-radius:10px;border:1px solid var(--border-subtle)">
               <app-activo-icono [icono]="tipoActivoIcono(a)" [color]="tipoActivoColor(a)" [size]="20"></app-activo-icono>
               <div style="min-width:0">
-                <span style="display:block;font-size:.84rem;font-weight:600;color:#1f2937;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ a.nombre }}</span>
+                <span style="display:block;font-size:.84rem;font-weight:600;color:var(--fg-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ a.nombre }}</span>
                 <span style="font-size:.73rem;font-weight:600;white-space:nowrap" [style.color]="tipoActivoColor(a)">{{ tipoActivoNombre(a) }}</span>
               </div>
             </div>
@@ -410,20 +410,20 @@
 
     <!-- Proyectos del centro -->
     <div class="card">
-      <h3 style="margin:0 0 .75rem;font-size:.95rem;font-weight:700;color:#1f2937">Proyectos del centro</h3>
+      <h3 style="margin:0 0 .75rem;font-size:.95rem;font-weight:700;color:var(--fg-2)">Proyectos del centro</h3>
       @if (proyectosService.loading()) {
-        <p style="color:#9ca3af;font-size:.85rem;margin:0">Cargando proyectos...</p>
+        <p style="color:var(--fg-5);font-size:.85rem;margin:0">Cargando proyectos...</p>
       } @else if (proyectosService.proyectos().length === 0) {
-        <p style="color:#9ca3af;font-size:.85rem;margin:0">Sin proyectos registrados para este centro.</p>
+        <p style="color:var(--fg-5);font-size:.85rem;margin:0">Sin proyectos registrados para este centro.</p>
       } @else {
         <div style="display:flex;flex-direction:column;gap:.4rem">
           @for (p of proyectosService.proyectos(); track p._id) {
             <div
               (click)="irAProyecto(p)"
-              style="display:flex;align-items:flex-start;justify-content:space-between;gap:.65rem;padding:.55rem .75rem;border-radius:10px;border:1px solid rgba(34,33,33,.08);cursor:pointer">
+              style="display:flex;align-items:flex-start;justify-content:space-between;gap:.65rem;padding:.55rem .75rem;border-radius:10px;border:1px solid var(--border-subtle);cursor:pointer">
               <div style="min-width:0;flex:1">
-                <span style="display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;text-overflow:ellipsis;line-height:1.25;font-size:.84rem;font-weight:600;color:#1f2937">{{ p.nombre }}</span>
-                <span style="font-size:.73rem;color:#6b7280">{{ p.codigo }}</span>
+                <span style="display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;text-overflow:ellipsis;line-height:1.25;font-size:.84rem;font-weight:600;color:var(--fg-2)">{{ p.nombre }}</span>
+                <span style="font-size:.73rem;color:var(--fg-4)">{{ p.codigo }}</span>
               </div>
               <span style="font-size:.7rem;font-weight:700;padding:.2rem .55rem;border-radius:999px;white-space:nowrap;flex-shrink:0"
                     [style]="estadoBadgeStyle(p.estado)">

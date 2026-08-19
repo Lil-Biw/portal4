@@ -35,12 +35,12 @@ type ModalMode = 'crear' | 'editar' | 'buscar' | 'score' | null;
       margin: 0 0 .2rem;
       font-size: 1.5rem;
       font-weight: 800;
-      color: #111827;
+      color: var(--fg-1);
     }
     .page-subtitle {
       margin: 0;
       font-size: .83rem;
-      color: #6b7280;
+      color: var(--fg-4);
     }
     .header-actions { display: flex; gap: .6rem; align-items: center; }
     .btn-buscar {
@@ -51,7 +51,7 @@ type ModalMode = 'crear' | 'editar' | 'buscar' | 'score' | null;
     .modal-backdrop {
       position: fixed;
       inset: 0;
-      background: rgba(15,23,42,.45);
+      background: var(--overlay);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -59,9 +59,9 @@ type ModalMode = 'crear' | 'editar' | 'buscar' | 'score' | null;
       padding: 1rem;
     }
     .modal {
-      background: #fff;
+      background: var(--bg-0);
       border-radius: 16px;
-      box-shadow: 0 20px 60px rgba(15,23,42,.18);
+      box-shadow: var(--shadow-4);
       width: 100%;
       max-width: 640px;
       max-height: 85vh;
@@ -81,23 +81,23 @@ type ModalMode = 'crear' | 'editar' | 'buscar' | 'score' | null;
       font-size: 1.4rem;
       line-height: 1;
       cursor: pointer;
-      color: #6b7280;
+      color: var(--fg-4);
       padding: 0 .25rem;
     }
-    .modal-close:hover { color: #1f2937; }
+    .modal-close:hover { color: var(--fg-2); }
 
     /* Buscar */
     .search-input {
       width: 100%;
       padding: .65rem .9rem;
       border-radius: 8px;
-      border: 1px solid rgba(34,33,33,.2);
+      border: 1px solid var(--border-strong);
       font-size: .9rem;
       font-family: inherit;
       margin-bottom: 1rem;
       box-sizing: border-box;
     }
-    .search-input:focus { outline: none; border-color: #0095d6; }
+    .search-input:focus { outline: none; border-color: var(--sc-cyan); }
 
   `],
 })

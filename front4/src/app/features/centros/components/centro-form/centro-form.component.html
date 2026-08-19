@@ -22,21 +22,21 @@
 
     <!-- Tabs de ubicación -->
     <div style="grid-column:1/-1">
-      <div style="display:flex;gap:0;border-bottom:2px solid rgba(34,33,33,.1);margin-bottom:1rem">
+      <div style="display:flex;gap:0;border-bottom:2px solid var(--border-default);margin-bottom:1rem">
         <button
           type="button"
           (click)="setTabUbicacion('direccion')"
           style="padding:.55rem 1.1rem;border:none;background:none;cursor:pointer;font-size:.88rem;font-weight:600;font-family:inherit;border-bottom:2px solid transparent;margin-bottom:-2px;transition:color .15s,border-color .15s"
-          [style.color]="tabUbicacion === 'direccion' ? '#0095d6' : '#6b7280'"
-          [style.border-bottom-color]="tabUbicacion === 'direccion' ? '#0095d6' : 'transparent'">
+          [style.color]="tabUbicacion === 'direccion' ? 'var(--sc-cyan)' : 'var(--fg-4)'"
+          [style.border-bottom-color]="tabUbicacion === 'direccion' ? 'var(--sc-cyan)' : 'transparent'">
           Dirección
         </button>
         <button
           type="button"
           (click)="setTabUbicacion('coordenadas')"
           style="padding:.55rem 1.1rem;border:none;background:none;cursor:pointer;font-size:.88rem;font-weight:600;font-family:inherit;border-bottom:2px solid transparent;margin-bottom:-2px;transition:color .15s,border-color .15s"
-          [style.color]="tabUbicacion === 'coordenadas' ? '#0095d6' : '#6b7280'"
-          [style.border-bottom-color]="tabUbicacion === 'coordenadas' ? '#0095d6' : 'transparent'">
+          [style.color]="tabUbicacion === 'coordenadas' ? 'var(--sc-cyan)' : 'var(--fg-4)'"
+          [style.border-bottom-color]="tabUbicacion === 'coordenadas' ? 'var(--sc-cyan)' : 'transparent'">
           Coordenadas Google
         </button>
       </div>
@@ -70,9 +70,9 @@
                    (ngModelChange)="onCoordChange()"
                    placeholder='ej. -38.758556, -72.609528' />
           </label>
-          <small style="color:#6b7280;display:block;margin-top:.25rem;font-size:.78rem">Abre Google Maps → clic derecho en el punto → copia los números que aparecen</small>
+          <small style="color:var(--fg-4);display:block;margin-top:.25rem;font-size:.78rem">Abre Google Maps → clic derecho en el punto → copia los números que aparecen</small>
           @if (coordError) {
-            <small style="color:var(--color-danger,#dc3545);display:block;margin-top:.25rem">{{ coordError }}</small>
+            <small style="color:var(--danger);display:block;margin-top:.25rem">{{ coordError }}</small>
           }
           @if (puedePrevisualizar && !coordError) {
             <div style="margin-top:.5rem">

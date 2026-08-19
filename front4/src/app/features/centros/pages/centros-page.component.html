@@ -112,15 +112,15 @@
             @let val = valoresScoreEdit()[$index];
             @let fuera = campoFuera(val);
             <div style="display:flex;align-items:center;gap:.75rem">
-              <span style="font-size:.82rem;color:#374151;min-width:160px;flex-shrink:0">{{ label }}</span>
+              <span style="font-size:.82rem;color:var(--fg-2);min-width:160px;flex-shrink:0">{{ label }}</span>
               <input
                 type="number" min="1" max="10" step="1"
                 [value]="val"
                 (input)="setValorScore($index, +$any($event.target).value)"
                 style="width:64px;padding:.35rem .45rem;border-radius:7px;font-size:.9rem;text-align:center;font-family:inherit"
-                [style.border]="fuera ? '1.5px solid #dc2626' : '1.5px solid #d1d5db'">
+                [style.border]="fuera ? '1.5px solid var(--danger)' : '1.5px solid var(--border-default)'">
               @if (fuera) {
-                <span style="font-size:.75rem;color:#dc2626;font-weight:600">⚠ 1–10</span>
+                <span style="font-size:.75rem;color:var(--danger);font-weight:600">⚠ 1–10</span>
               }
             </div>
           }
@@ -128,12 +128,12 @@
 
         <!-- Advertencia global -->
         @if (scoreError()) {
-          <div style="margin-top:.85rem;padding:.55rem .8rem;border-radius:8px;background:#fef2f2;border:1px solid #fecaca;font-size:.82rem;color:#dc2626;font-weight:600">
+          <div style="margin-top:.85rem;padding:.55rem .8rem;border-radius:8px;background:var(--danger-bg);border:1px solid var(--danger-bg);font-size:.82rem;color:var(--danger);font-weight:600">
             ⚠ {{ scoreError() }}
           </div>
         }
         @if (scoreHayError()) {
-          <div style="margin-top:.85rem;padding:.55rem .8rem;border-radius:8px;background:#fef2f2;border:1px solid #fecaca;font-size:.82rem;color:#dc2626">
+          <div style="margin-top:.85rem;padding:.55rem .8rem;border-radius:8px;background:var(--danger-bg);border:1px solid var(--danger-bg);font-size:.82rem;color:var(--danger)">
             Rango permitido: 1 a 10 (números naturales).
           </div>
         }
@@ -143,14 +143,14 @@
           <button
             (click)="guardarScore()"
             [disabled]="guardandoScore() || scoreHayError()"
-            style="padding:.45rem 1.1rem;background:#0095d6;color:#fff;border:none;border-radius:8px;font-size:.84rem;font-weight:600;cursor:pointer;font-family:inherit"
+            style="padding:.45rem 1.1rem;background:var(--sc-cyan);color:var(--fg-inverse);border:none;border-radius:8px;font-size:.84rem;font-weight:600;cursor:pointer;font-family:inherit"
             [style.opacity]="(guardandoScore() || scoreHayError()) ? '0.55' : '1'">
             {{ guardandoScore() ? 'Guardando…' : 'Guardar' }}
           </button>
           <button
             (click)="cerrar()"
             [disabled]="guardandoScore()"
-            style="padding:.45rem 1.1rem;background:none;border:1.5px solid #d1d5db;border-radius:8px;font-size:.84rem;font-weight:600;cursor:pointer;color:#374151;font-family:inherit">
+            style="padding:.45rem 1.1rem;background:none;border:1.5px solid var(--border-default);border-radius:8px;font-size:.84rem;font-weight:600;cursor:pointer;color:var(--fg-2);font-family:inherit">
             Cancelar
           </button>
         </div>
