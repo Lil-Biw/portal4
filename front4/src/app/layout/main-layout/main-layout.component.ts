@@ -17,7 +17,7 @@ import { ProfileService } from '../../profile/profile.service';
       grid-template-rows:60px 1fr;
       height:100vh;
       overflow:hidden;
-      background:#e9ecf0;
+      background: var(--bg-1);
     }
     aside {
       grid-column:1;
@@ -35,7 +35,7 @@ import { ProfileService } from '../../profile/profile.service';
       padding:1.5rem 2rem;
       overflow-y:auto;
       min-width:0;
-      background:#e9ecf0;
+      background: var(--bg-1);
     }
   `],
 })

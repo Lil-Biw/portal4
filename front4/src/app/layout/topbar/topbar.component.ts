@@ -13,11 +13,11 @@ import { SolicitudesService } from '../../features/solicitudes/solicitudes.servi
 import { Actividad, TipoActividad } from '../../shared/models/actividad.model';
 import { asId } from '../../shared/utils';
 
-const BELL_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>`;
+const BELL_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>`;
 
 const NOTIF_ICONS: Record<string, string> = {
-  calendar: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`,
-  file:     `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>`,
+  calendar: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`,
+  file:     `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>`,
 };
 
 interface Notificacion {
@@ -51,7 +51,7 @@ interface Notificacion {
       gap:1rem;
       padding:0 1.5rem;
       box-shadow:0 1px 8px rgba(0,0,0,.18);
-      background:rgba(18,26,36,.85);
+      background:rgba(11,15,20,.85);
       backdrop-filter:blur(14px);
       -webkit-backdrop-filter:blur(14px);
     }
@@ -65,18 +65,18 @@ interface Notificacion {
       border-radius:8px;
       border:1px solid rgba(124,58,237,.4);
       font-size:.85rem;
-      color:#e2eaf2;
+      color:var(--fg-inverse);
       background:rgba(255,255,255,.08);
       cursor:pointer;
       min-width:180px;
       max-width:260px;
     }
     .empresa-select:focus { outline:none; border-color:#7c3aed; }
-    .empresa-select option { background:#18222e; color:#e2eaf2; }
+    .empresa-select option { background:var(--bg-dark); color:var(--fg-inverse); }
 
     .icons-slot { display:flex; align-items:center; gap:.5rem; }
     .mode-chip {
-      background:#0095d6;
+      background:var(--sc-cyan);
       color:#fff;
       padding:.3rem .7rem;
       border-radius:999px;
@@ -85,14 +85,14 @@ interface Notificacion {
       letter-spacing:.3px;
     }
     .topbar.consumidor .mode-chip { background:#7c3aed; }
-    .topbar.admin .mode-chip { background:#2d3f52; color:#8aa4b8; }
+    .topbar.admin .mode-chip { background:var(--bg-dark-2); color:rgba(255,255,255,.55); }
     .toggle-btn {
       display:flex;
       align-items:center;
       gap:.4rem;
       border:1px solid rgba(255,255,255,.18);
       background:transparent;
-      color:#c8daea;
+      color:rgba(255,255,255,.8);
       border-radius:10px;
       padding:.45rem .85rem;
       font-weight:600;
@@ -110,17 +110,17 @@ interface Notificacion {
       cursor: pointer;
       padding: .35rem;
       border-radius: 8px;
-      color: #8aa4b8;
+      color: rgba(255,255,255,.55);
       display: flex;
       align-items: center;
       transition: background .12s, color .12s;
     }
-    .notif-btn:hover { background: rgba(255,255,255,.08); color: #c8daea; }
+    .notif-btn:hover { background: rgba(255,255,255,.08); color: rgba(255,255,255,.8); }
     .notif-badge {
       position: absolute;
       top: 2px;
       right: 2px;
-      background: #ef4444;
+      background: var(--danger);
       color: #fff;
       font-size: 9px;
       font-weight: 800;
@@ -139,10 +139,10 @@ interface Notificacion {
       left: 50%;
       transform: translateX(-50%);
       width: 460px;
-      background: #fff;
+      background: var(--bg-0);
       border-radius: 12px;
-      border: 1px solid rgba(34,33,33,.1);
-      box-shadow: 0 8px 30px rgba(15,23,42,.15);
+      border: 1px solid var(--border-default);
+      box-shadow: var(--shadow-3);
       z-index: 1002;
       overflow: hidden;
     }
@@ -150,20 +150,20 @@ interface Notificacion {
       padding: .7rem 1.1rem;
       font-size: .88rem;
       font-weight: 700;
-      color: #374151;
-      border-bottom: 1px solid rgba(34,33,33,.08);
-      background: #f9fafb;
+      color: var(--fg-2);
+      border-bottom: 1px solid var(--border-subtle);
+      background: var(--bg-1);
     }
     .notif-list { max-height: 380px; overflow-y: auto; }
     .notif-item {
       display: flex;
       gap: .75rem;
       padding: .75rem 1.1rem;
-      border-bottom: 1px solid rgba(34,33,33,.05);
+      border-bottom: 1px solid var(--border-subtle);
       cursor: pointer;
       transition: background .12s;
     }
-    .notif-item:hover { background: #f0f9ff; }
+    .notif-item:hover { background: var(--sc-cyan-tint-6); }
     .notif-item:last-child { border-bottom: none; }
     .notif-dot {
       display: flex;
@@ -174,13 +174,13 @@ interface Notificacion {
       opacity: .85;
     }
     .notif-body { flex: 1; }
-    .notif-titulo { font-size: .875rem; font-weight: 600; color: #1f2937; }
-    .notif-detalle { font-size: .8rem; color: #6b7280; margin-top: .15rem; }
+    .notif-titulo { font-size: .875rem; font-weight: 600; color: var(--fg-2); }
+    .notif-detalle { font-size: .8rem; color: var(--fg-4); margin-top: .15rem; }
     .notif-empty {
       padding: 1.25rem 1rem;
       text-align: center;
       font-size: .82rem;
-      color: #9ca3af;
+      color: var(--fg-5);
     }
     .notif-wrapper { position: relative; }
   `],
@@ -297,7 +297,7 @@ export class TopbarComponent implements OnInit {
           tipo:    'actividad',
           titulo:  a.nombre,
           detalle: partes.join(' · '),
-          color:   tipo?.color ?? '#0095d6',
+          color:   tipo?.color ?? '#00AEEF',
           urgente: diff <= 2,
           icono:   'calendar',
           ruta:    '/mis-actividades',
@@ -326,7 +326,7 @@ export class TopbarComponent implements OnInit {
           tipo:        'solicitud',
           titulo:      s.nombre,
           detalle:     partes.join(' · '),
-          color:       s.estado === 'rechazado' ? '#ef4444' : '#0095d6',
+          color:       s.estado === 'rechazado' ? '#E5484D' : '#00AEEF',
           urgente:     s.estado !== 'pendiente',
           icono:       'file',
           ruta:        '/documentos',

@@ -33,7 +33,7 @@
             <div class="notif-header">
               Notificaciones
               @if (totalNotificaciones() > 0) {
-                <span style="margin-left:.4rem;background:#ef4444;color:#fff;font-size:.68rem;font-weight:800;padding:.1rem .4rem;border-radius:999px">
+                <span style="margin-left:.4rem;background:var(--danger);color:var(--fg-inverse);font-size:.68rem;font-weight:800;padding:.1rem .4rem;border-radius:999px">
                   {{ totalNotificaciones() }}
                 </span>
               }
@@ -50,7 +50,7 @@
                       <div class="notif-detalle">{{ n.detalle }}</div>
                     </div>
                     @if (n.urgente) {
-                      <span style="font-size:.65rem;font-weight:700;color:#dc2626;flex-shrink:0;margin-top:.2rem">!</span>
+                      <span style="font-size:.65rem;font-weight:700;color:var(--danger);flex-shrink:0;margin-top:.2rem">!</span>
                     }
                   </div>
                 }
@@ -70,23 +70,23 @@
 
     @if (esAdmin && mode === 'admin') {
       <button class="toggle-btn" (click)="activarVistaConsumidor()" title="Previsualizar como consumidor">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0">
           <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
         </svg>
         Vista consumidor
       </button>
     }
     @if (esAdmin && mode === 'consumidor') {
-      <button class="toggle-btn" style="color:#e2eaf2;border-color:rgba(255,255,255,.25)" (click)="volverAAdmin()">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0">
+      <button class="toggle-btn" style="color:var(--fg-inverse);border-color:rgba(255,255,255,.25)" (click)="volverAAdmin()">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0">
           <polyline points="15 18 9 12 15 6"/>
         </svg>
         Volver a admin
       </button>
     }
 
-    <button class="toggle-btn" style="color:#dc2626;border-color:#dc2626" (click)="authService.logout()">
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0">
+    <button class="toggle-btn" style="color:var(--danger);border-color:var(--danger)" (click)="authService.logout()">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0">
         <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
       </svg>
       Cerrar sesión
