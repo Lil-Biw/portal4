@@ -40,7 +40,7 @@ import { FormsModule } from '@angular/forms';
       background: var(--bg-0);
       color: var(--fg-2);
     }
-    .udf-tab--active { background: var(--sc-cyan); color: var(--bg-0); border-color: var(--sc-cyan); }
+    .udf-tab--active { background: var(--sc-cyan); color: var(--fg-inverse); border-color: var(--sc-cyan); }
     .udf-descripcion { margin: 0 0 .5rem; font-size: .78rem; color: var(--fg-3); }
     .udf-dropzone {
       position: relative;
