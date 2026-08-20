@@ -60,11 +60,11 @@ import { SECCIONES, SeccionNoticia } from '../../../shared/models/noticia.model'
       display:flex; align-items:center; gap:.55rem;
       margin-bottom:.9rem;
       padding-bottom:.55rem;
-      border-bottom:2px solid var(--sc-cyan);
+      border-bottom:2px solid var(--sec-color, var(--sc-cyan));
     }
     .seccion-dot {
       width:10px; height:10px; border-radius:50%;
-      background:var(--sc-cyan);
+      background:var(--sec-color, var(--sc-cyan));
       flex-shrink:0;
     }
     .seccion-titulo { margin:0; font-size:1rem; font-weight:700; color:var(--fg-2); }
