@@ -6,12 +6,12 @@ import { asId } from '../../../../shared/utils';
 import { ProyectoIconoComponent } from '../proyecto-icono/proyecto-icono.component';
 
 const ESTADO_CHIP: Record<string, { label: string; color: string; bg: string }> = {
-  estancado:            { label: 'Estancado',              color: '#dc2626', bg: 'rgba(220,38,38,.12)'  },
-  nuevo_sin_oc:          { label: 'Nuevos por Programar / Sin OC',         color: '#6b7280', bg: 'rgba(107,114,128,.12)' },
-  nuevo_con_oc:          { label: 'Nuevos por Programar / Con OC',         color: '#64748b', bg: 'rgba(100,116,139,.12)' },
-  en_ejecucion:          { label: 'En ejecución',                         color: '#16a34a', bg: 'rgba(22,163,74,.12)'  },
+  estancado:            { label: 'Estancado',              color: 'var(--danger)', bg: 'var(--danger-bg)'  },
+  nuevo_sin_oc:          { label: 'Nuevos por Programar / Sin OC',         color: 'var(--fg-4)', bg: 'rgba(107,114,128,.12)' },
+  nuevo_con_oc:          { label: 'Nuevos por Programar / Con OC',         color: 'var(--fg-3)', bg: 'rgba(100,116,139,.12)' },
+  en_ejecucion:          { label: 'En ejecución',                         color: 'var(--ok)', bg: 'var(--ok-bg)'  },
   cierre_pendiente:      { label: 'Cierre pendiente / Validación Interna', color: '#7c3aed', bg: 'rgba(124,58,237,.12)' },
-  finalizado_facturar:   { label: 'Finalizado / Listo para facturar',      color: '#d97706', bg: 'rgba(217,119,6,.12)'  },
+  finalizado_facturar:   { label: 'Finalizado / Listo para facturar',      color: 'var(--warn)', bg: 'var(--warn-bg)'  },
   finalizado_facturado:  { label: 'Finalizado y facturado', color: '#0d9488', bg: 'rgba(13,148,136,.12)' },
 };
 
@@ -31,7 +31,7 @@ interface GrupoEmpresa { empresa: Cliente; proyectos: Proyecto[]; }
       border: 1.5px solid rgba(0,149,214,.2);
       border-radius: 16px;
       overflow: hidden;
-      background: #fff;
+      background: var(--bg-0);
     }
 
     .grupo-header {
@@ -48,13 +48,13 @@ interface GrupoEmpresa { empresa: Cliente; proyectos: Proyecto[]; }
       gap: .5rem;
       font-weight: 700;
       font-size: .9rem;
-      color: #1f2937;
+      color: var(--fg-2);
     }
-    .grupo-title svg { color: #0095d6; flex-shrink: 0; }
+    .grupo-title svg { color: var(--sc-cyan); flex-shrink: 0; }
     .grupo-count {
       font-size: .78rem;
       font-weight: 600;
-      color: #0095d6;
+      color: var(--sc-cyan);
     }
 
     .proyecto-grid {
@@ -68,16 +68,16 @@ interface GrupoEmpresa { empresa: Cliente; proyectos: Proyecto[]; }
     }
 
     .proyecto-card {
-      border: 1px solid rgba(34,33,33,.1);
+      border: 1px solid var(--border-default);
       border-radius: 12px;
       padding: 1rem 1.1rem;
       display: flex;
       flex-direction: column;
       gap: .5rem;
-      background: #fff;
+      background: var(--bg-0);
       transition: box-shadow .15s, border-color .15s;
     }
-    .proyecto-card:hover { box-shadow: 0 4px 14px rgba(0,0,0,.08); border-color: rgba(34,33,33,.2); }
+    .proyecto-card:hover { box-shadow: 0 4px 14px rgba(0,0,0,.08); border-color: var(--border-strong); }
 
     .proyecto-card-top {
       display: flex;
@@ -89,7 +89,7 @@ interface GrupoEmpresa { empresa: Cliente; proyectos: Proyecto[]; }
     .proyecto-nombre {
       font-weight: 700;
       font-size: .95rem;
-      color: #1f2937;
+      color: var(--fg-2);
       line-height: 1.3;
     }
     .estado-badge {
@@ -103,7 +103,7 @@ interface GrupoEmpresa { empresa: Cliente; proyectos: Proyecto[]; }
     .proyecto-meta {
       margin: 0;
       font-size: .8rem;
-      color: #6b7280;
+      color: var(--fg-4);
     }
     .proyecto-footer {
       display: flex;
@@ -117,7 +117,7 @@ interface GrupoEmpresa { empresa: Cliente; proyectos: Proyecto[]; }
       align-items: center;
       gap: .35rem;
       font-size: .8rem;
-      color: #6b7280;
+      color: var(--fg-4);
     }
     .proyecto-fechas svg { flex-shrink: 0; }
     .btn-icon {
@@ -127,15 +127,15 @@ interface GrupoEmpresa { empresa: Cliente; proyectos: Proyecto[]; }
       width: 32px;
       height: 32px;
       border-radius: 8px;
-      border: 1px solid rgba(34,33,33,.15);
+      border: 1px solid var(--border-default);
       background: transparent;
-      color: #6b7280;
+      color: var(--fg-4);
       cursor: pointer;
       transition: all .15s;
     }
-    .btn-icon:hover { border-color: rgba(34,33,33,.3); background: rgba(34,33,33,.04); color: #374151; }
-    .btn-icon-danger { border-color: rgba(239,68,68,.25); color: #ef4444; }
-    .btn-icon-danger:hover { border-color: rgba(239,68,68,.4); background: rgba(239,68,68,.06); color: #dc2626; }
+    .btn-icon:hover { border-color: var(--border-strong); background: rgba(34,33,33,.04); color: var(--fg-2); }
+    .btn-icon-danger { border-color: rgba(239,68,68,.25); color: var(--danger); }
+    .btn-icon-danger:hover { border-color: rgba(239,68,68,.4); background: var(--danger-bg); color: var(--danger); }
     .proyecto-acciones { display: flex; gap: .4rem; }
   `],
 })

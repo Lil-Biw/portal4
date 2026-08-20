@@ -23,11 +23,11 @@ type ProyectoModal = 'crear' | 'editar' | null;
     .proyecto-card {
       cursor: pointer;
       transition: box-shadow .15s, border-color .15s;
-      border: 1px solid rgba(34,33,33,.12);
+      border: 1px solid var(--border-default);
     }
     .proyecto-card:hover {
-      box-shadow: 0 4px 16px rgba(0,149,214,.18);
-      border-color: rgba(0,149,214,.35);
+      box-shadow: 0 4px 16px rgba(0,174,239,.18);
+      border-color: var(--sc-cyan);
     }
 
     .btn-icon-sq {
@@ -36,16 +36,16 @@ type ProyectoModal = 'crear' | 'editar' | null;
       justify-content: center;
       width: 30px;
       height: 30px;
-      border: 1px solid #d1d5db;
+      border: 1px solid var(--border-default);
       border-radius: 7px;
       background: none;
       cursor: pointer;
-      color: #6b7280;
+      color: var(--fg-4);
       transition: border-color .15s, color .15s, background .15s;
     }
-    .btn-icon-sq:hover { border-color: #0095d6; color: #0095d6; background: rgba(0,149,214,.06); }
-    .btn-action-danger { color: #f87171; }
-    .btn-action-danger:hover { color: #ef4444; background: rgba(239,68,68,.08); }
+    .btn-icon-sq:hover { border-color: var(--sc-cyan); color: var(--sc-cyan); background: var(--sc-cyan-tint-6); }
+    .btn-action-danger { color: var(--danger); }
+    .btn-action-danger:hover { color: var(--danger); background: var(--danger-bg); }
 
     .page-header {
       display: flex;
@@ -60,7 +60,7 @@ type ProyectoModal = 'crear' | 'editar' | null;
     .modal-backdrop {
       position: fixed;
       inset: 0;
-      background: rgba(15,23,42,.45);
+      background: var(--overlay);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -68,9 +68,9 @@ type ProyectoModal = 'crear' | 'editar' | null;
       padding: 1rem;
     }
     .modal {
-      background: #fff;
+      background: var(--bg-0);
       border-radius: 16px;
-      box-shadow: 0 20px 60px rgba(15,23,42,.18);
+      box-shadow: var(--shadow-4);
       width: 100%;
       max-width: 640px;
       max-height: 85vh;
@@ -90,10 +90,10 @@ type ProyectoModal = 'crear' | 'editar' | null;
       font-size: 1.4rem;
       line-height: 1;
       cursor: pointer;
-      color: #6b7280;
+      color: var(--fg-4);
       padding: 0 .25rem;
     }
-    .modal-close:hover { color: #1f2937; }
+    .modal-close:hover { color: var(--fg-2); }
   `],
 })
 export class MisProyectosPageComponent implements OnInit {
@@ -152,18 +152,18 @@ export class MisProyectosPageComponent implements OnInit {
   });
 
   private static readonly ESTADO_BADGE_STYLE: Record<string, string> = {
-    estancado:            'background:rgba(220,38,38,.12);color:#dc2626',
-    nuevo_sin_oc:         'background:rgba(107,114,128,.12);color:#6b7280',
-    nuevo_con_oc:         'background:rgba(100,116,139,.12);color:#64748b',
-    en_ejecucion:         'background:rgba(22,163,74,.12);color:#16a34a',
+    estancado:            'background:var(--danger-bg);color:var(--danger)',
+    nuevo_sin_oc:         'background:rgba(107,114,128,.12);color:var(--fg-4)',
+    nuevo_con_oc:         'background:rgba(100,116,139,.12);color:var(--fg-3)',
+    en_ejecucion:         'background:var(--ok-bg);color:var(--ok)',
     cierre_pendiente:     'background:rgba(124,58,237,.12);color:#7c3aed',
-    finalizado_facturar:  'background:rgba(217,119,6,.12);color:#d97706',
+    finalizado_facturar:  'background:var(--warn-bg);color:var(--warn)',
     finalizado_facturado: 'background:rgba(13,148,136,.12);color:#0d9488',
   };
 
   protected estadoBadgeStyle(estado: string): string {
     return MisProyectosPageComponent.ESTADO_BADGE_STYLE[estado]
-      ?? 'background:rgba(34,33,33,.07);color:#6b7280';
+      ?? 'background:var(--border-subtle);color:var(--fg-4)';
   }
 
   protected estadoLabel(estado: string): string {

@@ -20,32 +20,32 @@ import { PERM_SCHEMA, PermisosUsuario, Rol, contarPermisosActivos, filaAplica } 
     .pfm-avatar {
       width: 40px; height: 40px; border-radius: 999px; flex-shrink: 0;
       display: flex; align-items: center; justify-content: center;
-      font-weight: 700; font-size: .9rem; color: #fff;
+      font-weight: 700; font-size: .9rem; color: var(--fg-inverse);
     }
-    .pfm-avatar-usuario { background: #6b7280; }
-    .pfm-avatar-admin   { background: #0095d6; }
-    .pfm-avatar-super   { background: #f59e0b; }
+    .pfm-avatar-usuario { background: var(--fg-4); }
+    .pfm-avatar-admin   { background: var(--sc-cyan); }
+    .pfm-avatar-super   { background: var(--warn); }
     .pfm-identity { display: flex; flex-direction: column; gap: .15rem; min-width: 0; flex: 1; }
     .pfm-identity-top { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; }
-    .pfm-identity-top h3 { margin: 0; font-size: 1rem; font-weight: 700; color: #111827; }
+    .pfm-identity-top h3 { margin: 0; font-size: 1rem; font-weight: 700; color: var(--fg-1); }
     .pfm-role-chip {
       font-size: .68rem; font-weight: 700; letter-spacing: .03em;
       padding: .14rem .55rem; border-radius: 999px;
-      background: rgba(0,149,214,.12); color: #0075a8;
+      background: var(--sc-cyan-tint-12); color: var(--sc-cyan-pressed);
     }
-    .pfm-identity-sub { font-size: .78rem; color: #6b7280; }
+    .pfm-identity-sub { font-size: .78rem; color: var(--fg-4); }
 
     .pfm-fijos-top {
       flex-shrink: 0;
       padding: 1.1rem 1.5rem .9rem;
-      background: #fff;
-      border-bottom: 1px solid rgba(34,33,33,.07);
+      background: var(--bg-0);
+      border-bottom: 1px solid var(--border-subtle);
     }
     .pfm-fijos-bottom {
       flex-shrink: 0;
       padding: .8rem 1.5rem 1.2rem;
-      background: #fff;
-      border-top: 1px solid rgba(34,33,33,.07);
+      background: var(--bg-0);
+      border-top: 1px solid var(--border-subtle);
     }
     .pfm-body {
       flex: 1;
@@ -57,22 +57,22 @@ import { PERM_SCHEMA, PermisosUsuario, Rol, contarPermisosActivos, filaAplica } 
     .pfm-rol-preset {
       display: flex; align-items: center; gap: .6rem;
       padding: .6rem .8rem; margin-bottom: .4rem;
-      background: rgba(0,149,214,.06); border-radius: 10px;
-      font-size: .82rem; font-weight: 600; color: #374151;
+      background: var(--sc-cyan-tint-6); border-radius: 10px;
+      font-size: .82rem; font-weight: 600; color: var(--fg-2);
     }
     .pfm-rol-preset select {
       flex: 1; padding: .4rem .6rem; border-radius: 7px;
-      border: 1px solid rgba(34,33,33,.18); font-family: inherit; font-size: .84rem;
-      background: #fff; color: #1f2937;
+      border: 1px solid var(--border-strong); font-family: inherit; font-size: .84rem;
+      background: var(--bg-0); color: var(--fg-2);
     }
-    .pfm-rol-preset select:disabled { background: #f3f4f6; color: #9ca3af; cursor: not-allowed; }
+    .pfm-rol-preset select:disabled { background: var(--bg-2); color: var(--fg-5); cursor: not-allowed; }
 
     .pfm-footer {
       display: flex; align-items: center; justify-content: space-between; gap: 1rem;
       margin-top: .4rem;
     }
-    .pfm-footer-contador { font-size: .82rem; color: #374151; }
-    .pfm-footer-contador strong { font-variant-numeric: tabular-nums; color: #111827; }
+    .pfm-footer-contador { font-size: .82rem; color: var(--fg-2); }
+    .pfm-footer-contador strong { font-variant-numeric: tabular-nums; color: var(--fg-1); }
     .pfm-footer-actions { display: flex; gap: .6rem; }
   `],
 })

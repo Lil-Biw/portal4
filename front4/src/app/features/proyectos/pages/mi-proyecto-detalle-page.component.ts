@@ -18,12 +18,12 @@ import { EstadoProyecto, ESTADO_PROYECTO_LABEL } from '../../../shared/models/pr
   styles: [`
     .cards-grid { display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-bottom:1.5rem; }
     @media (max-width: 720px) { .cards-grid { grid-template-columns:1fr; } }
-    .section-title { margin:0 0 .75rem; font-size:.95rem; font-weight:700; color:#1f2937; }
+    .section-title { margin:0 0 .75rem; font-size:.95rem; font-weight:700; color:var(--fg-2); }
     .dl-row { display:flex; gap:.5rem; margin-bottom:.45rem; }
-    .dl-label { font-size:.78rem; color:#6b7280; min-width:90px; flex-shrink:0; }
-    .dl-value { font-size:.82rem; color:#1f2937; font-weight:500; }
-    .doc-row { display:flex; align-items:center; justify-content:space-between; padding:.55rem .75rem; border-radius:8px; border:1px solid rgba(34,33,33,.08); margin-bottom:.4rem; font-size:.82rem; }
-    .sol-row  { display:flex; align-items:center; justify-content:space-between; padding:.55rem .75rem; border-radius:8px; border:1px solid rgba(34,33,33,.08); margin-bottom:.4rem; font-size:.82rem; }
+    .dl-label { font-size:.78rem; color:var(--fg-4); min-width:90px; flex-shrink:0; }
+    .dl-value { font-size:.82rem; color:var(--fg-2); font-weight:500; }
+    .doc-row { display:flex; align-items:center; justify-content:space-between; padding:.55rem .75rem; border-radius:8px; border:1px solid var(--border-subtle); margin-bottom:.4rem; font-size:.82rem; }
+    .sol-row  { display:flex; align-items:center; justify-content:space-between; padding:.55rem .75rem; border-radius:8px; border:1px solid var(--border-subtle); margin-bottom:.4rem; font-size:.82rem; }
   `],
 })
 export class MiProyectoDetallePageComponent implements OnInit, OnDestroy {
@@ -84,18 +84,18 @@ export class MiProyectoDetallePageComponent implements OnInit, OnDestroy {
   }
 
   private static readonly ESTADO_BADGE_STYLE: Record<string, string> = {
-    estancado:            'background:rgba(220,38,38,.12);color:#dc2626',
-    nuevo_sin_oc:         'background:rgba(107,114,128,.12);color:#6b7280',
-    nuevo_con_oc:         'background:rgba(100,116,139,.12);color:#64748b',
-    en_ejecucion:         'background:rgba(22,163,74,.12);color:#16a34a',
+    estancado:            'background:var(--danger-bg);color:var(--danger)',
+    nuevo_sin_oc:         'background:rgba(107,114,128,.12);color:var(--fg-4)',
+    nuevo_con_oc:         'background:rgba(100,116,139,.12);color:var(--fg-3)',
+    en_ejecucion:         'background:var(--ok-bg);color:var(--ok)',
     cierre_pendiente:     'background:rgba(124,58,237,.12);color:#7c3aed',
-    finalizado_facturar:  'background:rgba(217,119,6,.12);color:#d97706',
+    finalizado_facturar:  'background:var(--warn-bg);color:var(--warn)',
     finalizado_facturado: 'background:rgba(13,148,136,.12);color:#0d9488',
   };
 
   protected estadoBadgeStyle(estado: string): string {
     return MiProyectoDetallePageComponent.ESTADO_BADGE_STYLE[estado]
-      ?? 'background:rgba(34,33,33,.07);color:#6b7280';
+      ?? 'background:var(--border-subtle);color:var(--fg-4)';
   }
 
   protected estadoLabel(estado: string): string {
@@ -103,10 +103,10 @@ export class MiProyectoDetallePageComponent implements OnInit, OnDestroy {
   }
 
   protected estadoSolStyle(estado: string): string {
-    if (estado === 'aprobado')  return 'background:rgba(34,197,94,.1);color:#16a34a';
-    if (estado === 'revision')  return 'background:rgba(245,158,11,.1);color:#d97706';
-    if (estado === 'rechazado') return 'background:rgba(239,68,68,.1);color:#ef4444';
-    return 'background:rgba(34,33,33,.07);color:#6b7280';
+    if (estado === 'aprobado')  return 'background:var(--ok-bg);color:var(--ok)';
+    if (estado === 'revision')  return 'background:var(--warn-bg);color:var(--warn)';
+    if (estado === 'rechazado') return 'background:var(--danger-bg);color:var(--danger)';
+    return 'background:var(--border-subtle);color:var(--fg-4)';
   }
 
   protected formatFecha(iso?: string): string {

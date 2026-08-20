@@ -126,7 +126,7 @@ import { resolverIconoProyecto } from '../../proyectos-icons';
   `],
 })
 export class ProyectoIconoComponent {
-  @Input() color = '#0095d6';
+  @Input() color = '#00AEEF';
   @Input() icono?: string;
   @Input() size  = 20;
 

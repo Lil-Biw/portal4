@@ -25,14 +25,14 @@
     <select [(ngModel)]="rolUI" name="rol" (ngModelChange)="onRolChange($event)">
       <option *ngFor="let r of rolOpciones" [value]="r.value">{{ r.label }}</option>
     </select>
-    <small *ngIf="form.permisos && isEdit" style="display:block; margin-top:.25rem; font-size:.74rem; color:#9ca3af">
+    <small *ngIf="form.permisos && isEdit" style="display:block; margin-top:.25rem; font-size:.74rem; color:var(--fg-5)">
       Al cambiar el rol se aplican los permisos por defecto de ese rol. "Personalizado" conserva los permisos actuales.
     </small>
   </label>
 
   <!-- Centros de costos asignados -->
   <div style="grid-column: 1/-1" *ngIf="centrosFiltrados.length > 0">
-    <p style="font-size: 0.82rem; font-weight: 600; color: #374151; margin: 0 0 0.6rem">
+    <p style="font-size: 0.82rem; font-weight: 600; color: var(--fg-2); margin: 0 0 0.6rem">
       Centros de costos asignados
     </p>
     <div
@@ -49,9 +49,9 @@
           align-items: center;
           gap: 0.5rem;
           padding: 0.6rem 0.75rem;
-          border: 1px solid rgba(34, 33, 33, 0.15);
+          border: 1px solid var(--border-default);
           border-radius: 8px;
-          background: #fff;
+          background: var(--bg-0);
           cursor: pointer;
           font-size: 0.875rem;
         "
@@ -61,13 +61,13 @@
           [checked]="centrosSeleccionados.includes(c._id)"
           (change)="centroToggle.emit({ centroId: c._id, checked: $any($event.target).checked })"
         />
-        {{ c.nombre }} <small style="color: #9ca3af">({{ c.codigo }})</small>
+        {{ c.nombre }} <small style="color: var(--fg-5)">({{ c.codigo }})</small>
       </label>
     </div>
   </div>
   <p
     *ngIf="form.cliente_id && centrosFiltrados.length === 0"
-    style="grid-column: 1/-1; font-size: 0.85rem; color: #9ca3af; margin: 0"
+    style="grid-column: 1/-1; font-size: 0.85rem; color: var(--fg-5); margin: 0"
   >
     La empresa no tiene centros de costos asociados.
   </p>

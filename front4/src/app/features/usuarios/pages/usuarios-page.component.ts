@@ -49,12 +49,12 @@ type ModalMode = 'crear-admin' | 'crear-usuario' | 'editar' | 'suscripciones' | 
         margin: 0;
         font-size: 1.35rem;
         font-weight: 700;
-        color: #1f2937;
+        color: var(--fg-2);
       }
       .header-subtitle {
         margin: 0;
         font-size: 0.82rem;
-        color: #9ca3af;
+        color: var(--fg-5);
       }
       .header-actions {
         display: flex;
@@ -65,7 +65,7 @@ type ModalMode = 'crear-admin' | 'crear-usuario' | 'editar' | 'suscripciones' | 
       .modal-backdrop {
         position: fixed;
         inset: 0;
-        background: rgba(15, 23, 42, 0.45);
+        background: var(--overlay);
         display: flex;
         align-items: center;
         justify-content: center;
@@ -73,9 +73,9 @@ type ModalMode = 'crear-admin' | 'crear-usuario' | 'editar' | 'suscripciones' | 
         padding: 1rem;
       }
       .modal {
-        background: #fff;
+        background: var(--bg-0);
         border-radius: 16px;
-        box-shadow: 0 20px 60px rgba(15, 23, 42, 0.18);
+        box-shadow: var(--shadow-4);
         width: 100%;
         max-width: 640px;
         max-height: 85vh;
@@ -95,7 +95,7 @@ type ModalMode = 'crear-admin' | 'crear-usuario' | 'editar' | 'suscripciones' | 
       .modal.modal-permisos .modal-header {
         margin-bottom: 0;
         padding: 1.1rem 1.5rem;
-        border-bottom: 1px solid rgba(34,33,33,.07);
+        border-bottom: 1px solid var(--border-subtle);
         flex-shrink: 0;
       }
       .modal.modal-permisos app-status-banner {
@@ -124,17 +124,17 @@ type ModalMode = 'crear-admin' | 'crear-usuario' | 'editar' | 'suscripciones' | 
         font-size: 1.4rem;
         line-height: 1;
         cursor: pointer;
-        color: #6b7280;
+        color: var(--fg-4);
         padding: 0 0.25rem;
       }
       .modal-close:hover {
-        color: #1f2937;
+        color: var(--fg-2);
       }
       .search-input {
         width: 100%;
         padding: 0.65rem 0.9rem;
         border-radius: 8px;
-        border: 1px solid rgba(34, 33, 33, 0.2);
+        border: 1px solid var(--border-strong);
         font-size: 0.9rem;
         font-family: inherit;
         margin-bottom: 1rem;
@@ -142,7 +142,7 @@ type ModalMode = 'crear-admin' | 'crear-usuario' | 'editar' | 'suscripciones' | 
       }
       .search-input:focus {
         outline: none;
-        border-color: #0095d6;
+        border-color: var(--sc-cyan);
       }
 
       .empresa-grupo {
@@ -151,7 +151,7 @@ type ModalMode = 'crear-admin' | 'crear-usuario' | 'editar' | 'suscripciones' | 
       .empresa-titulo {
         font-size: 0.72rem;
         font-weight: 700;
-        color: #9ca3af;
+        color: var(--fg-5);
         text-transform: uppercase;
         letter-spacing: 0.8px;
         margin: 0 0 0.5rem;

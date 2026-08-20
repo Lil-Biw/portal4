@@ -1,8 +1,8 @@
 <!-- Encabezado -->
 <div class="page-header">
   <div>
-    <h2 style="margin:0 0 .25rem;font-size:1.5rem;font-weight:700;color:#1f2937">Proyectos</h2>
-    <p style="margin:0;font-size:.85rem;color:#6b7280">
+    <h2 style="margin:0 0 .25rem;font-size:1.5rem;font-weight:700;color:var(--fg-2)">Proyectos</h2>
+    <p style="margin:0;font-size:.85rem;color:var(--fg-4)">
       @if (empresa) {
         {{ proyectos().length }} proyecto{{ proyectos().length !== 1 ? 's' : '' }} · {{ empresa.razon_social }}
       } @else {
@@ -24,7 +24,7 @@
 
 @if (mostrarBuscar()) {
   <input
-    style="width:100%;padding:.65rem .9rem;border-radius:8px;border:1px solid rgba(34,33,33,.2);font-size:.9rem;font-family:inherit;margin-bottom:1rem;box-sizing:border-box"
+    style="width:100%;padding:.65rem .9rem;border-radius:8px;border:1px solid var(--border-strong);font-size:.9rem;font-family:inherit;margin-bottom:1rem;box-sizing:border-box"
     type="text"
     placeholder="Nombre, código o descripción..."
     [value]="busqueda()"
@@ -33,23 +33,23 @@
 }
 
 @if (!empresa) {
-  <div class="card" style="text-align:center;padding:2.5rem;color:#9ca3af">
+  <div class="card" style="text-align:center;padding:2.5rem;color:var(--fg-5)">
     Ninguna empresa seleccionada.
   </div>
 } @else if (proyectos().length === 0) {
-  <div class="card" style="text-align:center;padding:2.5rem;color:#9ca3af">
+  <div class="card" style="text-align:center;padding:2.5rem;color:var(--fg-5)">
     Esta empresa no tiene proyectos registrados.
   </div>
 } @else if (proyectosFiltrados().length === 0) {
-  <div class="card" style="text-align:center;padding:2.5rem;color:#9ca3af">
+  <div class="card" style="text-align:center;padding:2.5rem;color:var(--fg-5)">
     Sin resultados para "{{ busqueda() }}"
   </div>
 } @else {
   <div style="display:flex;flex-direction:column;gap:1.25rem">
     @for (grupo of centrosConProyectos(); track grupo.nombre) {
       <!-- Agrupación por centro -->
-      <div style="border:1px solid rgba(34,33,33,.12);border-radius:14px;padding:1rem;background:#fff;box-shadow:0 1px 6px rgba(15,23,42,.04)">
-        <h3 style="margin:0 0 .85rem;font-size:.88rem;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.04em;display:flex;align-items:center;gap:.5rem">
+      <div style="border:1px solid var(--border-default);border-radius:14px;padding:1rem;background:var(--bg-0);box-shadow:var(--shadow-1)">
+        <h3 style="margin:0 0 .85rem;font-size:.88rem;font-weight:700;color:var(--fg-4);text-transform:uppercase;letter-spacing:.04em;display:flex;align-items:center;gap:.5rem">
           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="18"/><rect x="14" y="9" width="7" height="12"/><path d="M10 3h4v4h-4z"/></svg>
           {{ grupo.nombre }}
         </h3>
@@ -64,41 +64,41 @@
                   <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:.6rem">
                     <div style="flex:1;min-width:0">
                       <div style="display:flex;align-items:flex-start;gap:.5rem;flex-wrap:wrap;margin-bottom:.15rem">
-                        <h3 style="margin:0;font-size:1rem;font-weight:700;color:#1f2937;line-height:1.25;user-select:text;min-width:0">{{ p.nombre }}</h3>
+                        <h3 style="margin:0;font-size:1rem;font-weight:700;color:var(--fg-2);line-height:1.25;user-select:text;min-width:0">{{ p.nombre }}</h3>
                         <span style="font-size:.7rem;font-weight:700;padding:.18rem .5rem;border-radius:999px;white-space:nowrap;flex-shrink:0"
                               [style]="estadoBadgeStyle(p.estado)">{{ estadoLabel(p.estado) }}</span>
                       </div>
-                      <p style="margin:0;font-size:.78rem;color:#6b7280">Cód. {{ p.codigo }}</p>
+                      <p style="margin:0;font-size:.78rem;color:var(--fg-4)">Cód. {{ p.codigo }}</p>
                       @if (p.descripcion) {
-                        <p style="margin:.2rem 0 0;font-size:.78rem;color:#9ca3af;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ p.descripcion }}</p>
+                        <p style="margin:.2rem 0 0;font-size:.78rem;color:var(--fg-5);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ p.descripcion }}</p>
                       }
                     </div>
                     <app-donut-arc [value]="sc.pct" [size]="66"></app-donut-arc>
                   </div>
 
                   <!-- Separador -->
-                  <div style="height:1px;background:rgba(34,33,33,.08);margin:.75rem 0"></div>
+                  <div style="height:1px;background:var(--border-subtle);margin:.75rem 0"></div>
 
                   <!-- Contadores -->
                   <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:.5rem">
-                    <div style="display:flex;flex-direction:column;align-items:center;padding:.45rem .3rem;border-radius:8px;background:#dcfce7">
-                      <span style="font-size:1.2rem;font-weight:700;color:#15803d;line-height:1">{{ sc.aprobados }}</span>
-                      <span style="font-size:.68rem;font-weight:600;color:#15803d;margin-top:.15rem">Aprob.</span>
+                    <div style="display:flex;flex-direction:column;align-items:center;padding:.45rem .3rem;border-radius:8px;background:var(--ok-bg)">
+                      <span style="font-size:1.2rem;font-weight:700;color:var(--ok);line-height:1">{{ sc.aprobados }}</span>
+                      <span style="font-size:.68rem;font-weight:600;color:var(--ok);margin-top:.15rem">Aprob.</span>
                     </div>
-                    <div style="display:flex;flex-direction:column;align-items:center;padding:.45rem .3rem;border-radius:8px;background:#fef3c7">
-                      <span style="font-size:1.2rem;font-weight:700;color:#b45309;line-height:1">{{ sc.revision }}</span>
-                      <span style="font-size:.68rem;font-weight:600;color:#b45309;margin-top:.15rem">Revisi.</span>
+                    <div style="display:flex;flex-direction:column;align-items:center;padding:.45rem .3rem;border-radius:8px;background:var(--revision-bg)">
+                      <span style="font-size:1.2rem;font-weight:700;color:var(--revision);line-height:1">{{ sc.revision }}</span>
+                      <span style="font-size:.68rem;font-weight:600;color:var(--revision);margin-top:.15rem">Revisi.</span>
                     </div>
-                    <div style="display:flex;flex-direction:column;align-items:center;padding:.45rem .3rem;border-radius:8px;background:#f3f4f6">
-                      <span style="font-size:1.2rem;font-weight:700;color:#374151;line-height:1">{{ sc.pendiente }}</span>
-                      <span style="font-size:.68rem;font-weight:600;color:#374151;margin-top:.15rem">Pend.</span>
+                    <div style="display:flex;flex-direction:column;align-items:center;padding:.45rem .3rem;border-radius:8px;background:var(--bg-2)">
+                      <span style="font-size:1.2rem;font-weight:700;color:var(--fg-2);line-height:1">{{ sc.pendiente }}</span>
+                      <span style="font-size:.68rem;font-weight:600;color:var(--fg-2);margin-top:.15rem">Pend.</span>
                     </div>
                   </div>
                 </div>
 
                 <!-- Botones de acción en columna vertical, al costado derecho -->
                 @if (authService.tienePermiso('proyectos', 'editar') || authService.tienePermiso('proyectos', 'eliminar')) {
-                  <div style="display:flex;flex-direction:column;gap:.4rem;align-items:center;justify-content:center;flex-shrink:0;padding-left:.5rem;border-left:1px solid rgba(34,33,33,.08)">
+                  <div style="display:flex;flex-direction:column;gap:.4rem;align-items:center;justify-content:center;flex-shrink:0;padding-left:.5rem;border-left:1px solid var(--border-subtle)">
                     @if (authService.tienePermiso('proyectos', 'editar')) {
                       <button class="btn-icon-sq" title="Editar" (click)="$event.stopPropagation(); abrirEditar(p)">
                         <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">

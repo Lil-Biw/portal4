@@ -25,53 +25,53 @@ import { StatusBannerComponent } from '../../../../shared/components/status-bann
       margin: 0;
       font-size: .7rem; font-weight: 700;
       letter-spacing: .08em; text-transform: uppercase;
-      color: #0075a8;
+      color: var(--sc-cyan-pressed);
       display: flex; align-items: center; gap: .6rem;
     }
     .pf-seccion-titulo::after {
-      content: ""; flex: 1; height: 1px; background: rgba(0,149,214,.18);
+      content: ""; flex: 1; height: 1px; background: var(--sc-cyan-tint-12);
     }
     .pf-label-row { display: flex; align-items: center; gap: .5rem; }
     .pf-badge {
-      font-size: .72rem; font-weight: 700; color: #0075a8;
-      background: rgba(0,149,214,.12);
+      font-size: .72rem; font-weight: 700; color: var(--sc-cyan-pressed);
+      background: var(--sc-cyan-tint-12);
       padding: .12rem .5rem; border-radius: 999px;
     }
-    .pf-hint { margin: 0; font-size: .78rem; color: #6b7280; line-height: 1.45; }
+    .pf-hint { margin: 0; font-size: .78rem; color: var(--fg-4); line-height: 1.45; }
 
     /* Centros: buscador + lista en un solo panel */
     .centros-panel {
-      border: 1px solid rgba(34,33,33,.18);
+      border: 1px solid var(--border-strong);
       border-radius: 10px;
       overflow: hidden;
     }
     .centros-search {
       display: flex; align-items: center; gap: .5rem;
       padding: .5rem .75rem;
-      border-bottom: 1px solid rgba(34,33,33,.1);
-      background: #f8fafc;
+      border-bottom: 1px solid var(--border-default);
+      background: var(--bg-1);
     }
-    .centros-search svg { color: #9ca3af; flex-shrink: 0; }
+    .centros-search svg { color: var(--fg-5); flex-shrink: 0; }
     .centros-search input {
       border: none; background: transparent; outline: none;
-      font-family: inherit; font-size: .875rem; color: #1f2937; width: 100%;
+      font-family: inherit; font-size: .875rem; color: var(--fg-2); width: 100%;
     }
     .centros-lista {
       max-height: 168px; overflow-y: auto; padding: .35rem;
       scrollbar-width: thin;
-      scrollbar-color: rgba(0,0,0,.15) transparent;
+      scrollbar-color: var(--border-strong) transparent;
     }
     .centro-row {
       display: flex; align-items: center; gap: .6rem;
       padding: .45rem .6rem; border-radius: 7px;
-      font-size: .875rem; color: #374151; cursor: pointer;
+      font-size: .875rem; color: var(--fg-2); cursor: pointer;
       transition: background .12s;
     }
-    .centro-row:hover { background: rgba(0,149,214,.06); }
-    .centro-row input { accent-color: #0095d6; width: 15px; height: 15px; margin: 0; }
-    .centro-row--sel { background: rgba(0,149,214,.09); color: #0075a8; font-weight: 600; }
+    .centro-row:hover { background: var(--sc-cyan-tint-6); }
+    .centro-row input { accent-color: var(--sc-cyan); width: 15px; height: 15px; margin: 0; }
+    .centro-row--sel { background: var(--sc-cyan-tint-12); color: var(--sc-cyan-pressed); font-weight: 600; }
     .centros-empty {
-      margin: 0; font-size: .82rem; color: #9ca3af;
+      margin: 0; font-size: .82rem; color: var(--fg-5);
       text-align: center; padding: .35rem 0;
     }
 
@@ -80,17 +80,17 @@ import { StatusBannerComponent } from '../../../../shared/components/status-bann
     .pf-pill {
       display: inline-flex; align-items: center; gap: .38rem;
       padding: .38rem .8rem; border-radius: 999px;
-      border: 1px solid rgba(34,33,33,.18);
-      font-size: .82rem; font-weight: 600; color: #4b5563;
-      background: #fff; cursor: pointer; user-select: none;
+      border: 1px solid var(--border-strong);
+      font-size: .82rem; font-weight: 600; color: var(--fg-3);
+      background: var(--bg-0); cursor: pointer; user-select: none;
       transition: all .13s;
     }
     .pf-pill input { position: absolute; opacity: 0; pointer-events: none; }
     .pf-pill:hover { border-color: rgba(0,149,214,.5); }
     .pf-pill--on {
-      background: rgba(0,149,214,.1);
-      border-color: #0095d6;
-      color: #0075a8;
+      background: var(--sc-cyan-tint-12);
+      border-color: var(--sc-cyan);
+      color: var(--sc-cyan-pressed);
     }
     .pf-pill-check { display: none; font-size: .75rem; }
     .pf-pill--on .pf-pill-check { display: inline; }
@@ -101,37 +101,37 @@ import { StatusBannerComponent } from '../../../../shared/components/status-bann
       display: flex; justify-content: flex-end; gap: .6rem;
       padding: .9rem 1.5rem;
       background: #fbfcfd;
-      border-top: 1px solid rgba(34,33,33,.08);
+      border-top: 1px solid var(--border-subtle);
     }
 
     .tipo-combo { position: relative; }
     .tipo-combo-input {
       width: 100%; box-sizing: border-box;
       padding: .55rem .75rem; padding-right: 2rem;
-      border: 1px solid rgba(34,33,33,.15); border-radius: 8px;
-      font-size: .875rem; color: #1f2937; font-family: inherit;
-      background: #fff; cursor: text; outline: none;
+      border: 1px solid var(--border-default); border-radius: 8px;
+      font-size: .875rem; color: var(--fg-2); font-family: inherit;
+      background: var(--bg-0); cursor: text; outline: none;
       transition: border-color .15s;
     }
-    .tipo-combo-input:focus { border-color: #0095d6; }
-    .tipo-combo-input::placeholder { color: #9ca3af; }
+    .tipo-combo-input:focus { border-color: var(--sc-cyan); }
+    .tipo-combo-input::placeholder { color: var(--fg-5); }
     .tipo-combo-arrow {
       position: absolute; right: .65rem; top: 50%; transform: translateY(-50%);
-      pointer-events: none; color: #9ca3af; display: flex; align-items: center;
+      pointer-events: none; color: var(--fg-5); display: flex; align-items: center;
     }
     .tipo-combo-dropdown {
       position: absolute; top: calc(100% + 4px); left: 0; right: 0;
-      background: #fff; border: 1px solid rgba(34,33,33,.15); border-radius: 8px;
-      box-shadow: 0 8px 24px rgba(15,23,42,.12); z-index: 200;
+      background: var(--bg-0); border: 1px solid var(--border-default); border-radius: 8px;
+      box-shadow: var(--shadow-3); z-index: 200;
       max-height: 200px; overflow-y: auto;
     }
     .tipo-combo-option {
-      padding: .5rem .75rem; font-size: .875rem; color: #374151;
+      padding: .5rem .75rem; font-size: .875rem; color: var(--fg-2);
       cursor: pointer; display: flex; align-items: center; gap: .5rem;
       transition: background .1s;
     }
-    .tipo-combo-option:hover, .tipo-combo-option--active { background: #f0f9ff; color: #0095d6; }
-    .tipo-combo-empty { padding: .5rem .75rem; font-size: .83rem; color: #9ca3af; }
+    .tipo-combo-option:hover, .tipo-combo-option--active { background: var(--sc-cyan-tint-6); color: var(--sc-cyan); }
+    .tipo-combo-empty { padding: .5rem .75rem; font-size: .83rem; color: var(--fg-5); }
   `],
 })
 export class ProyectoFormComponent implements OnChanges {

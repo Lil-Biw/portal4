@@ -17,7 +17,7 @@ import { ICONOS_PROYECTO } from '../proyectos-icons';
 type ModalMode = 'crear' | 'editar' | 'buscar' | 'tipos' | null;
 
 interface TipoForm { nombre: string; color: string; icono: string; }
-function emptyTipoForm(): TipoForm { return { nombre: '', color: '#0095d6', icono: 'calendario' }; }
+function emptyTipoForm(): TipoForm { return { nombre: '', color: '#00AEEF', icono: 'calendario' }; }
 
 @Component({
   selector: 'app-proyectos-page',
@@ -32,14 +32,14 @@ function emptyTipoForm(): TipoForm { return { nombre: '', color: '#0095d6', icon
       margin-bottom: 1.25rem;
       gap: 1rem;
     }
-    .page-header h2 { margin: 0 0 .15rem; font-size: 1.4rem; font-weight: 700; color: #1f2937; }
-    .page-subtitle { margin: 0; font-size: .85rem; color: #6b7280; }
+    .page-header h2 { margin: 0 0 .15rem; font-size: 1.4rem; font-weight: 700; color: var(--fg-2); }
+    .page-subtitle { margin: 0; font-size: .85rem; color: var(--fg-4); }
     .header-actions { display: flex; gap: .6rem; flex-shrink: 0; align-items: flex-start; }
 
     .modal-backdrop {
       position: fixed;
       inset: 0;
-      background: rgba(15,23,42,.45);
+      background: var(--overlay);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -47,9 +47,9 @@ function emptyTipoForm(): TipoForm { return { nombre: '', color: '#0095d6', icon
       padding: 1rem;
     }
     .modal {
-      background: #fff;
+      background: var(--bg-0);
       border-radius: 16px;
-      box-shadow: 0 20px 60px rgba(15,23,42,.18);
+      box-shadow: var(--shadow-4);
       width: 100%;
       max-width: 680px;
       max-height: 85vh;
@@ -61,16 +61,16 @@ function emptyTipoForm(): TipoForm { return { nombre: '', color: '#0095d6', icon
       position: sticky;
       top: 0;
       z-index: 10;
-      background: #fff;
+      background: var(--bg-0);
       display: flex;
       align-items: flex-start;
       justify-content: space-between;
       gap: 1rem;
       padding: 1.15rem 1.5rem 1rem;
-      border-bottom: 1px solid rgba(34,33,33,.08);
+      border-bottom: 1px solid var(--border-subtle);
     }
     .modal-header h3 { margin: 0; font-size: 1.1rem; font-weight: 700; }
-    .modal-sub { margin: .2rem 0 0; font-size: .8rem; color: #6b7280; }
+    .modal-sub { margin: .2rem 0 0; font-size: .8rem; color: var(--fg-4); }
     .modal-close {
       background: none;
       border: none;
@@ -83,24 +83,24 @@ function emptyTipoForm(): TipoForm { return { nombre: '', color: '#0095d6', icon
       font-size: 1.05rem;
       line-height: 1;
       cursor: pointer;
-      color: #6b7280;
+      color: var(--fg-4);
       flex-shrink: 0;
       transition: background .15s;
     }
-    .modal-close:hover { background: rgba(34,33,33,.07); color: #1f2937; }
+    .modal-close:hover { background: var(--border-subtle); color: var(--fg-2); }
     .modal-body { padding: 1.25rem 1.5rem; }
     .modal--tipos { max-width: 840px; }
     .search-input {
       width: 100%;
       padding: .65rem .9rem;
       border-radius: 8px;
-      border: 1px solid rgba(34,33,33,.2);
+      border: 1px solid var(--border-strong);
       font-size: .9rem;
       font-family: inherit;
       margin-bottom: 1rem;
       box-sizing: border-box;
     }
-    .search-input:focus { outline: none; border-color: #0095d6; }
+    .search-input:focus { outline: none; border-color: var(--sc-cyan); }
     .tipos-modal {
       display: grid;
       /* minmax(0,…): sin esto los nombres largos (nowrap implícito del
@@ -112,63 +112,63 @@ function emptyTipoForm(): TipoForm { return { nombre: '', color: '#0095d6', icon
     .tipos-col-title {
       font-size: .9rem;
       font-weight: 700;
-      color: #374151;
+      color: var(--fg-2);
       margin: 0 0 .75rem;
     }
-    .tipos-empty { color: #9ca3af; font-size: .85rem; margin: .5rem 0; }
+    .tipos-empty { color: var(--fg-5); font-size: .85rem; margin: .5rem 0; }
     .tipos-list { display: flex; flex-direction: column; gap: 0; max-height: min(55vh, 480px); overflow-y: auto; padding-right: .25rem; }
     .tipo-item {
       display: flex;
       align-items: center;
       gap: .6rem;
       padding: .5rem 0;
-      border-bottom: 1px solid rgba(34,33,33,.06);
+      border-bottom: 1px solid var(--border-subtle);
     }
     .tipo-item:last-child { border-bottom: none; }
     .tipo-texto { flex: 1; min-width: 0; }
-    .tipo-nombre { font-size: .85rem; font-weight: 600; color: #1f2937; word-break: break-word; }
+    .tipo-nombre { font-size: .85rem; font-weight: 600; color: var(--fg-2); word-break: break-word; }
     .tipo-actions { display: flex; gap: .35rem; flex-shrink: 0; }
     .tipo-input {
       width: 100%;
       padding: .5rem .7rem;
-      border: 1px solid rgba(34,33,33,.2);
+      border: 1px solid var(--border-strong);
       border-radius: 8px;
       font-size: .85rem;
       font-family: inherit;
       box-sizing: border-box;
       margin-bottom: .5rem;
     }
-    .tipo-input:focus { outline: 2px solid #0095d6; border-color: transparent; }
+    .tipo-input:focus { outline: 2px solid var(--sc-cyan); border-color: transparent; }
 
     /* ── Tipo-combo (context card) ───────────────────────────── */
     .tipo-combo { position: relative; }
     .tipo-combo-input {
       width: 100%; box-sizing: border-box;
       padding: .55rem .75rem; padding-right: 2rem;
-      border: 1px solid rgba(34,33,33,.15); border-radius: 8px;
-      font-size: .875rem; color: #1f2937; font-family: inherit;
-      background: #fff; cursor: text; outline: none;
+      border: 1px solid var(--border-default); border-radius: 8px;
+      font-size: .875rem; color: var(--fg-2); font-family: inherit;
+      background: var(--bg-0); cursor: text; outline: none;
       transition: border-color .15s;
     }
-    .tipo-combo-input:focus { border-color: #0095d6; }
-    .tipo-combo-input::placeholder { color: #9ca3af; }
+    .tipo-combo-input:focus { border-color: var(--sc-cyan); }
+    .tipo-combo-input::placeholder { color: var(--fg-5); }
     .tipo-combo-arrow {
       position: absolute; right: .65rem; top: 50%; transform: translateY(-50%);
-      pointer-events: none; color: #9ca3af; display: flex; align-items: center;
+      pointer-events: none; color: var(--fg-5); display: flex; align-items: center;
     }
     .tipo-combo-dropdown {
       position: absolute; top: calc(100% + 4px); left: 0; right: 0;
-      background: #fff; border: 1px solid rgba(34,33,33,.15); border-radius: 8px;
-      box-shadow: 0 8px 24px rgba(15,23,42,.12); z-index: 200;
+      background: var(--bg-0); border: 1px solid var(--border-default); border-radius: 8px;
+      box-shadow: var(--shadow-3); z-index: 200;
       max-height: 200px; overflow-y: auto;
     }
     .tipo-combo-option {
-      padding: .5rem .75rem; font-size: .875rem; color: #374151;
+      padding: .5rem .75rem; font-size: .875rem; color: var(--fg-2);
       cursor: pointer; display: flex; align-items: center; gap: .5rem;
       transition: background .1s;
     }
-    .tipo-combo-option:hover, .tipo-combo-option--active { background: #f0f9ff; color: #0095d6; }
-    .tipo-combo-empty { padding: .5rem .75rem; font-size: .83rem; color: #9ca3af; }
+    .tipo-combo-option:hover, .tipo-combo-option--active { background: var(--sc-cyan-tint-6); color: var(--sc-cyan); }
+    .tipo-combo-empty { padding: .5rem .75rem; font-size: .83rem; color: var(--fg-5); }
   `],
 })
 export class ProyectosPageComponent implements OnInit {

@@ -24,16 +24,16 @@ interface EmpresaGrupo {
       align-items: center;
       gap: 0.6rem;
       padding: 0.75rem 0.9rem;
-      background: rgba(0,149,214,.06);
+      background: var(--sc-cyan-tint-6);
       border-radius: 10px;
       margin-bottom: 1rem;
       font-size: 0.88rem;
       font-weight: 600;
-      color: #1f2937;
+      color: var(--fg-2);
     }
     .toggle-hint {
       font-weight: 400;
-      color: #6b7280;
+      color: var(--fg-4);
       font-size: 0.78rem;
       margin: -0.5rem 0 1rem;
     }
@@ -53,22 +53,22 @@ interface EmpresaGrupo {
     .arbol {
       max-height: 45vh;
       overflow-y: auto;
-      border: 1px solid rgba(34,33,33,.1);
+      border: 1px solid var(--border-default);
       border-radius: 10px;
     }
     .resumen-titulo {
       font-size: 0.82rem;
       font-weight: 700;
-      color: #374151;
+      color: var(--fg-2);
       margin: 0 0 0.6rem;
     }
     .resumen-box {
-      border: 1px solid rgba(34,33,33,.1);
+      border: 1px solid var(--border-default);
       border-radius: 10px;
       padding: 0.85rem 0.9rem;
       max-height: 45vh;
       overflow-y: auto;
-      background: rgba(34,33,33,.015);
+      background: var(--bg-1);
     }
     .resumen-general {
       display: flex;
@@ -76,29 +76,29 @@ interface EmpresaGrupo {
       gap: 0.5rem;
       font-size: 0.85rem;
       font-weight: 600;
-      color: #6b7280;
+      color: var(--fg-4);
       margin: 0 0 0.9rem;
       padding: 0.6rem 0.75rem;
       border-radius: 8px;
-      background: rgba(34,33,33,.04);
+      background: var(--bg-1);
       border: 1px solid transparent;
     }
-    .resumen-general svg { flex-shrink: 0; margin-top: 1px; color: #9ca3af; }
+    .resumen-general svg { flex-shrink: 0; margin-top: 1px; color: var(--fg-5); }
     .resumen-general.activo {
-      color: #0075a8;
-      background: rgba(0,149,214,.12);
-      border-color: rgba(0,149,214,.3);
+      color: var(--sc-cyan-pressed);
+      background: var(--sc-cyan-tint-12);
+      border-color: var(--sc-cyan-tint-12);
     }
-    .resumen-general.activo svg { color: #0095d6; }
+    .resumen-general.activo svg { color: var(--sc-cyan); }
     .resumen-item {
       font-size: 0.85rem;
-      color: #374151;
+      color: var(--fg-2);
       margin: 0 0 0.35rem;
       padding-left: 0.1rem;
     }
-    .resumen-item small { color: #9ca3af; }
+    .resumen-item small { color: var(--fg-5); }
     .empresa-item {
-      border-bottom: 1px solid rgba(34,33,33,.07);
+      border-bottom: 1px solid var(--border-subtle);
     }
     .empresa-item:last-child { border-bottom: none; }
     .empresa-header {
@@ -114,14 +114,14 @@ interface EmpresaGrupo {
       flex: 1;
       font-size: 0.88rem;
       font-weight: 600;
-      color: #1f2937;
+      color: var(--fg-2);
       cursor: pointer;
     }
     .btn-expand {
       background: none;
       border: none;
       cursor: pointer;
-      color: #6b7280;
+      color: var(--fg-4);
       padding: 0.4rem;
       border-radius: 6px;
       display: flex;
@@ -129,7 +129,7 @@ interface EmpresaGrupo {
       justify-content: center;
       transition: transform .15s, background-color .15s;
     }
-    .btn-expand:hover { background: rgba(34,33,33,.07); color: #1f2937; }
+    .btn-expand:hover { background: var(--border-subtle); color: var(--fg-2); }
     .btn-expand.abierto { transform: rotate(90deg); }
     .empresa-detalle {
       padding: 0 0.75rem 0.75rem 2.1rem;
@@ -137,7 +137,7 @@ interface EmpresaGrupo {
     .subgrupo-titulo {
       font-size: 0.7rem;
       font-weight: 700;
-      color: #9ca3af;
+      color: var(--fg-5);
       text-transform: uppercase;
       letter-spacing: 0.6px;
       margin: 0.4rem 0 0.3rem;
@@ -147,13 +147,13 @@ interface EmpresaGrupo {
       align-items: center;
       gap: 0.5rem;
       font-size: 0.85rem;
-      color: #374151;
+      color: var(--fg-2);
       padding: 0.2rem 0;
       cursor: pointer;
     }
     .empty-sub {
       font-size: 0.8rem;
-      color: #9ca3af;
+      color: var(--fg-5);
       padding: 0.2rem 0;
     }
   `],

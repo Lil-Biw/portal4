@@ -8,9 +8,9 @@ import { Usuario, RolUsuario } from '../../../../shared/models/usuario.model';
   templateUrl: './usuarios-list.component.html',
   styles: [`
     .user-list {
-      background: #fff;
+      background: var(--bg-0);
       border-radius: 12px;
-      border: 1px solid rgba(34,33,33,.1);
+      border: 1px solid var(--border-default);
       overflow: hidden;
     }
     .user-row {
@@ -18,7 +18,7 @@ import { Usuario, RolUsuario } from '../../../../shared/models/usuario.model';
       align-items: center;
       gap: 0.75rem;
       padding: 0.85rem 1rem;
-      border-bottom: 1px solid rgba(34,33,33,.07);
+      border-bottom: 1px solid var(--border-subtle);
     }
     .user-row:last-child { border-bottom: none; }
 
@@ -31,13 +31,13 @@ import { Usuario, RolUsuario } from '../../../../shared/models/usuario.model';
       justify-content: center;
       font-size: 0.75rem;
       font-weight: 700;
-      color: #fff;
+      color: var(--fg-inverse);
       flex-shrink: 0;
-      background: #6b7280;
+      background: var(--fg-4);
     }
-    .avatar-usuario        { background: #6b7280; }
-    .avatar-admin          { background: #0095d6; }
-    .avatar-super          { background: #f59e0b; }
+    .avatar-usuario        { background: var(--fg-4); }
+    .avatar-admin          { background: var(--sc-cyan); }
+    .avatar-super          { background: var(--warn); }
 
     .user-info {
       flex: 1;
@@ -46,8 +46,8 @@ import { Usuario, RolUsuario } from '../../../../shared/models/usuario.model';
       flex-direction: column;
       gap: 1px;
     }
-    .user-name  { font-size: 0.88rem; font-weight: 600; color: #1f2937; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .user-email { font-size: 0.78rem; color: #6b7280; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .user-name  { font-size: 0.88rem; font-weight: 600; color: var(--fg-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .user-email { font-size: 0.78rem; color: var(--fg-4); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
     .role-badge {
       font-size: 0.72rem;
@@ -57,14 +57,14 @@ import { Usuario, RolUsuario } from '../../../../shared/models/usuario.model';
       white-space: nowrap;
       flex-shrink: 0;
     }
-    .badge-usuario { background: rgba(107,114,128,.1);  color: #4b5563; }
-    .badge-admin   { background: rgba(0,149,214,.1);    color: #0075a8; }
-    .badge-super   { background: rgba(245,158,11,.12);  color: #b45309; }
+    .badge-usuario { background: var(--bg-2);           color: var(--fg-3); }
+    .badge-admin   { background: var(--sc-cyan-tint-12); color: var(--sc-cyan-pressed); }
+    .badge-super   { background: var(--warn-bg);         color: var(--warn); }
 
     .permiso-badge {
       font-size: 0.72rem;
       font-weight: 600;
-      color: #9ca3af;
+      color: var(--fg-5);
       white-space: nowrap;
       flex-shrink: 0;
     }
@@ -85,14 +85,14 @@ import { Usuario, RolUsuario } from '../../../../shared/models/usuario.model';
       border: none;
       font-size: 0.78rem;
       font-weight: 500;
-      color: #6b7280;
+      color: var(--fg-4);
       cursor: pointer;
       padding: 0.35rem 0.55rem;
       border-radius: 6px;
       white-space: nowrap;
     }
-    .btn-icon-label:hover:not(:disabled) { color: #1f2937; background: rgba(34,33,33,.06); }
-    .btn-icon-label.danger:hover:not(:disabled) { background: rgba(239,68,68,.08); color: #ef4444; }
+    .btn-icon-label:hover:not(:disabled) { color: var(--fg-2); background: var(--border-subtle); }
+    .btn-icon-label.danger:hover:not(:disabled) { background: var(--danger-bg); color: var(--danger); }
     .btn-icon-label:disabled { opacity: 0.35; cursor: not-allowed; }
   `],
 })

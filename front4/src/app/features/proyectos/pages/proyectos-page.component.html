@@ -17,7 +17,7 @@
 
 <!-- Recuadro de contexto -->
 <div class="card" style="margin-bottom:1rem">
-  <p style="margin:0 0 .75rem;font-size:.85rem;font-weight:600;color:#374151">Selecciona el contexto</p>
+  <p style="margin:0 0 .75rem;font-size:.85rem;font-weight:600;color:var(--fg-2)">Selecciona el contexto</p>
   <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:.75rem">
     <label class="field">
       <span>Empresa</span>
@@ -196,7 +196,7 @@
             placeholder="Nombre del tipo *"
             [ngModel]="tipoForm().nombre"
             (ngModelChange)="patchTipoForm('nombre', $event)" />
-          <p style="font-size:.78rem;color:#6b7280;margin:0 0 .4rem">Ícono</p>
+          <p style="font-size:.78rem;color:var(--fg-4);margin:0 0 .4rem">Ícono</p>
           <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:.75rem">
             <button type="button" *ngFor="let clave of iconosProyecto"
               [title]="clave"
@@ -208,18 +208,18 @@
               <app-proyecto-icono [icono]="clave" [color]="tipoForm().color" [size]="22"></app-proyecto-icono>
             </button>
           </div>
-          <p style="font-size:.78rem;color:#6b7280;margin:0 0 .4rem">Color</p>
+          <p style="font-size:.78rem;color:var(--fg-4);margin:0 0 .4rem">Color</p>
           <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.75rem">
             <input type="color"
               [ngModel]="tipoForm().color"
               (ngModelChange)="patchTipoForm('color', $event)"
-              style="width:36px;height:36px;padding:0;border:1px solid #e5e7eb;border-radius:8px;cursor:pointer" />
+              style="width:36px;height:36px;padding:0;border:1px solid var(--border-subtle);border-radius:8px;cursor:pointer" />
             <input type="text"
               class="tipo-input"
               style="margin-bottom:0;max-width:110px"
               [ngModel]="tipoForm().color"
               (ngModelChange)="patchTipoForm('color', $event)"
-              placeholder="#0095d6" />
+              placeholder="#00AEEF" />
           </div>
           <div style="display:flex;gap:.5rem" *ngIf="editingTipoId() ? authService.tienePermiso('catalogos', 'editar') : authService.tienePermiso('catalogos', 'crear')">
             <button class="btn-primary btn-sm" (click)="guardarTipo()"
