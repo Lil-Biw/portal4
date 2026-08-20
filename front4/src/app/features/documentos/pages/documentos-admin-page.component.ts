@@ -1285,9 +1285,9 @@ export class DocumentosAdminPageComponent implements OnInit {
   }
 
   contextoTagStyle(s: Solicitud): { color: string; bg: string } {
-    if (s.proyecto_id) return { color: 'var(--warn)', bg: 'rgba(245,158,11,.1)' };
-    if (s.centro_costo_id) return { color: 'var(--ok)', bg: 'rgba(16,185,129,.1)' };
-    return { color: 'var(--sc-cyan)', bg: 'rgba(0,149,214,.1)' };
+    if (s.proyecto_id) return { color: 'var(--warn)', bg: 'rgba(245,165,36,.1)' };
+    if (s.centro_costo_id) return { color: 'var(--ok)', bg: 'rgba(46,174,110,.1)' };
+    return { color: 'var(--sc-cyan)', bg: 'rgba(0,174,239,.1)' };
   }
 
   estadoChipStyle(estado: EstadoSolicitud): { color: string; bg: string } {

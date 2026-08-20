@@ -78,7 +78,7 @@ import { SECCIONES, SeccionNoticia } from '../../../shared/models/noticia.model'
       overflow-x:auto;
       padding-bottom:.5rem;
       scrollbar-width:thin;
-      scrollbar-color:#d1d5db transparent;
+      scrollbar-color:var(--border-strong) transparent;
     }
     .card { flex:0 0 420px; }
 

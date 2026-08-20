@@ -130,7 +130,7 @@
 }
 .cal-view-toggle button.active {
   background: var(--sc-cyan);
-  color: var(--bg-0);
+  color: var(--fg-inverse);
 }
 
 /* ── Calendar card ─────────────────────────────────────────────── */
@@ -188,7 +188,7 @@
 }
 .cal-week-bar {
   border-radius: 4px;
-  color: var(--bg-0);
+  color: var(--fg-inverse);
   font-size: .64rem;
   font-weight: 700;
   height: 18px;
@@ -236,7 +236,7 @@
 }
 .cal-cell.today .cal-day-num {
   background: var(--sc-cyan);
-  color: var(--bg-0);
+  color: var(--fg-inverse);
   width: 22px;
   height: 22px;
   border-radius: 50%;
@@ -267,7 +267,7 @@
 }
 .cal-week-num.today-num {
   background: var(--sc-cyan);
-  color: var(--bg-0);
+  color: var(--fg-inverse);
 }
 
 /* ── Event chip ─────────────────────────────────────────────────── */
@@ -280,7 +280,7 @@
   font-size: .67rem;
   line-height: 1.35;
   font-weight: 600;
-  color: var(--bg-0);
+  color: var(--fg-inverse);
   padding: .2rem .35rem;
   border-radius: 5px;
   white-space: nowrap;
@@ -422,7 +422,7 @@
   border-radius: 6px;
   padding: .15rem .35rem;
   overflow: hidden;
-  color: var(--bg-0);
+  color: var(--fg-inverse);
   font-size: .65rem;
   font-weight: 600;
   cursor: pointer;
@@ -787,7 +787,7 @@
 }
 .wz-step--active .wz-circle {
   background: var(--sc-cyan);
-  color: var(--bg-0);
+  color: var(--fg-inverse);
   box-shadow: 0 0 0 4px var(--sc-cyan-tint-12);
 }
 .wz-step--completed .wz-circle { background: var(--ok-bg); color: var(--ok); }
@@ -848,7 +848,7 @@
   justify-content: space-between;
   gap: 1rem;
   padding: .75rem .9rem;
-  border: 1px solid rgba(0,149,214,.25);
+  border: 1px solid rgba(0,174,239,.25);
   background: var(--sc-cyan-tint-6);
   border-radius: 10px;
   cursor: pointer;
@@ -929,7 +929,7 @@
 .dest-count {
   font-size: .68rem;
   font-weight: 700;
-  background: rgba(107,114,128,.14);
+  background: rgba(122,133,144,.14);
   color: var(--fg-4);
   border-radius: 999px;
   padding: .08rem .42rem;
@@ -1044,7 +1044,7 @@
   transition: background .13s, border-color .13s, color .13s;
 }
 .wz-pill input { position: absolute; opacity: 0; pointer-events: none; }
-.wz-pill:hover { border-color: rgba(0,149,214,.5); }
+.wz-pill:hover { border-color: rgba(0,174,239,.5); }
 .wz-pill--on {
   background: var(--sc-cyan-tint-12);
   border-color: var(--sc-cyan);

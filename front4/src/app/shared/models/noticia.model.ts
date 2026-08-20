@@ -18,7 +18,7 @@ export interface CreateNoticiaDto {
 }
 
 export const SECCIONES: { value: SeccionNoticia; label: string; labelMin: string; color: string }[] = [
-  { value: 'novedades',  label: 'Novedades',  labelMin: 'novedad',   color: '#0095d6' },
-  { value: 'normativas', label: 'Normativas', labelMin: 'normativa', color: '#d97706' },
-  { value: 'anuncios',   label: 'Anuncios',   labelMin: 'anuncio',   color: '#16a34a' },
+  { value: 'novedades',  label: 'Novedades',  labelMin: 'novedad',   color: '#00AEEF' },
+  { value: 'normativas', label: 'Normativas', labelMin: 'normativa', color: '#F5A524' },
+  { value: 'anuncios',   label: 'Anuncios',   labelMin: 'anuncio',   color: '#2EAE6E' },
 ];

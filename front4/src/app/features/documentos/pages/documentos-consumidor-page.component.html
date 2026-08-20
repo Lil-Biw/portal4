@@ -111,9 +111,9 @@
         </button>
         <button
           style="flex:1;padding:.55rem 1rem;border-style:solid;border-width:1px;border-radius:8px;font-size:.875rem;font-weight:600;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;justify-content:center;gap:.4rem"
-          [style.background]="tabJerarquia() === 'empresa' ? 'rgba(0,149,214,.08)' : 'transparent'"
+          [style.background]="tabJerarquia() === 'empresa' ? 'rgba(0,174,239,.08)' : 'transparent'"
           [style.color]="tabJerarquia() === 'empresa' ? 'var(--sc-cyan)' : 'var(--fg-4)'"
-          [style.borderColor]="tabJerarquia() === 'empresa' ? 'rgba(0,149,214,.18)' : 'transparent'"
+          [style.borderColor]="tabJerarquia() === 'empresa' ? 'rgba(0,174,239,.18)' : 'transparent'"
           (click)="seleccionarTabJerarquiaC('empresa')">
           <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"/>
@@ -122,13 +122,13 @@
             <path d="M10 6h4"/><path d="M10 10h4"/><path d="M10 14h4"/><path d="M10 18h4"/>
           </svg>
           Empresa
-          <span style="font-size:.68rem;font-weight:700;line-height:1;padding:.15rem .4rem;border-radius:999px;background:rgba(0,149,214,.15);color:var(--sc-cyan);flex-shrink:0">{{ conteoEmpresa() }}</span>
+          <span style="font-size:.68rem;font-weight:700;line-height:1;padding:.15rem .4rem;border-radius:999px;background:rgba(0,174,239,.15);color:var(--sc-cyan);flex-shrink:0">{{ conteoEmpresa() }}</span>
         </button>
         <button
           style="flex:1;padding:.55rem 1rem;border-style:solid;border-width:1px;border-radius:8px;font-size:.875rem;font-weight:600;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;justify-content:center;gap:.4rem"
-          [style.background]="tabJerarquia() === 'centro' ? 'rgba(16,185,129,.08)' : 'transparent'"
+          [style.background]="tabJerarquia() === 'centro' ? 'rgba(46,174,110,.08)' : 'transparent'"
           [style.color]="tabJerarquia() === 'centro' ? 'var(--ok)' : 'var(--fg-4)'"
-          [style.borderColor]="tabJerarquia() === 'centro' ? 'rgba(16,185,129,.18)' : 'transparent'"
+          [style.borderColor]="tabJerarquia() === 'centro' ? 'rgba(46,174,110,.18)' : 'transparent'"
           (click)="seleccionarTabJerarquiaC('centro')">
           <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <polygon points="12 2 2 7 12 12 22 7 12 2"/>
@@ -136,13 +136,13 @@
             <polyline points="2 12 12 17 22 12"/>
           </svg>
           Centro de costo
-          <span style="font-size:.68rem;font-weight:700;line-height:1;padding:.15rem .4rem;border-radius:999px;background:rgba(16,185,129,.15);color:var(--ok);flex-shrink:0">{{ conteoCentro() }}</span>
+          <span style="font-size:.68rem;font-weight:700;line-height:1;padding:.15rem .4rem;border-radius:999px;background:rgba(46,174,110,.15);color:var(--ok);flex-shrink:0">{{ conteoCentro() }}</span>
         </button>
         <button
           style="flex:1;padding:.55rem 1rem;border-style:solid;border-width:1px;border-radius:8px;font-size:.875rem;font-weight:600;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;justify-content:center;gap:.4rem"
-          [style.background]="tabJerarquia() === 'proyecto' ? 'rgba(245,158,11,.08)' : 'transparent'"
+          [style.background]="tabJerarquia() === 'proyecto' ? 'rgba(245,165,36,.08)' : 'transparent'"
           [style.color]="tabJerarquia() === 'proyecto' ? 'var(--warn)' : 'var(--fg-4)'"
-          [style.borderColor]="tabJerarquia() === 'proyecto' ? 'rgba(245,158,11,.18)' : 'transparent'"
+          [style.borderColor]="tabJerarquia() === 'proyecto' ? 'rgba(245,165,36,.18)' : 'transparent'"
           [disabled]="!selectedCentroIdC()"
           [style.opacity]="!selectedCentroIdC() ? '0.45' : '1'"
           (click)="seleccionarTabJerarquiaC('proyecto')">
@@ -150,7 +150,7 @@
             <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
           </svg>
           Proyecto
-          <span style="font-size:.68rem;font-weight:700;line-height:1;padding:.15rem .4rem;border-radius:999px;background:rgba(245,158,11,.15);color:var(--warn);flex-shrink:0">{{ conteoProyecto() }}</span>
+          <span style="font-size:.68rem;font-weight:700;line-height:1;padding:.15rem .4rem;border-radius:999px;background:rgba(245,165,36,.15);color:var(--warn);flex-shrink:0">{{ conteoProyecto() }}</span>
         </button>
       </div>
     </div>
@@ -221,7 +221,7 @@
     @if (tabJerarquia() === 'empresa') {
       <div style="padding:.75rem 1rem;border-left:4px solid var(--sc-cyan);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.75rem">
         <div style="display:flex;align-items:center;gap:.75rem">
-          <div style="width:38px;height:38px;border-radius:9px;background:rgba(0,149,214,.1);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--sc-cyan)">
+          <div style="width:38px;height:38px;border-radius:9px;background:rgba(0,174,239,.1);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--sc-cyan)">
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"/>
               <path d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"/>
@@ -253,7 +253,7 @@
         } @else if (selectedCentroIdC() === 'todos') {
           <div style="border-left:4px solid var(--ok);border-radius:8px;background:var(--bg-1);padding:.75rem .85rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.75rem">
             <div style="display:flex;align-items:center;gap:.75rem">
-              <div style="width:38px;height:38px;border-radius:9px;background:rgba(16,185,129,.1);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--ok)">
+              <div style="width:38px;height:38px;border-radius:9px;background:rgba(46,174,110,.1);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--ok)">
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <polygon points="12 2 2 7 12 12 22 7 12 2"/>
                   <polyline points="2 17 12 22 22 17"/>
@@ -270,7 +270,7 @@
         } @else {
           <div style="border-left:4px solid var(--ok);border-radius:8px;background:var(--bg-1);padding:.75rem .85rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.75rem">
             <div style="display:flex;align-items:center;gap:.75rem">
-              <div style="width:38px;height:38px;border-radius:9px;background:rgba(16,185,129,.1);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--ok)">
+              <div style="width:38px;height:38px;border-radius:9px;background:rgba(46,174,110,.1);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--ok)">
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <polygon points="12 2 2 7 12 12 22 7 12 2"/>
                   <polyline points="2 17 12 22 22 17"/>
@@ -316,7 +316,7 @@
         } @else if (selectedProyectoIdC() === 'todos') {
           <div style="border-left:4px solid var(--warn);border-radius:8px;background:var(--bg-1);padding:.75rem .85rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.75rem">
             <div style="display:flex;align-items:center;gap:.75rem">
-              <div style="width:38px;height:38px;border-radius:9px;background:rgba(245,158,11,.1);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--warn)">
+              <div style="width:38px;height:38px;border-radius:9px;background:rgba(245,165,36,.1);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--warn)">
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
                 </svg>
@@ -338,7 +338,7 @@
         } @else {
           <div style="border-left:4px solid var(--warn);border-radius:8px;background:var(--bg-1);padding:.75rem .85rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.75rem">
             <div style="display:flex;align-items:center;gap:.75rem">
-              <div style="width:38px;height:38px;border-radius:9px;background:rgba(245,158,11,.1);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--warn)">
+              <div style="width:38px;height:38px;border-radius:9px;background:rgba(245,165,36,.1);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--warn)">
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
                 </svg>
@@ -381,17 +381,17 @@
       <span style="font-size:.72rem;font-weight:600;color:var(--fg-4);margin-right:.15rem">Ordenar por:</span>
       <button
         style="padding:.3rem .65rem;border-style:solid;border-width:1px;border-radius:999px;font-size:.75rem;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap"
-        [style.background]="ordenEmpresaC() === 'recientes' ? 'rgba(0,149,214,.08)' : 'transparent'"
+        [style.background]="ordenEmpresaC() === 'recientes' ? 'rgba(0,174,239,.08)' : 'transparent'"
         [style.color]="ordenEmpresaC() === 'recientes' ? 'var(--sc-cyan)' : 'var(--fg-4)'"
-        [style.borderColor]="ordenEmpresaC() === 'recientes' ? 'rgba(0,149,214,.3)' : 'var(--border-subtle)'"
+        [style.borderColor]="ordenEmpresaC() === 'recientes' ? 'rgba(0,174,239,.3)' : 'var(--border-subtle)'"
         (click)="ordenEmpresaC.set('recientes')">
         Recientes
       </button>
       <button
         style="padding:.3rem .65rem;border-style:solid;border-width:1px;border-radius:999px;font-size:.75rem;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap"
-        [style.background]="ordenEmpresaC() === 'alfabetico' ? 'rgba(0,149,214,.08)' : 'transparent'"
+        [style.background]="ordenEmpresaC() === 'alfabetico' ? 'rgba(0,174,239,.08)' : 'transparent'"
         [style.color]="ordenEmpresaC() === 'alfabetico' ? 'var(--sc-cyan)' : 'var(--fg-4)'"
-        [style.borderColor]="ordenEmpresaC() === 'alfabetico' ? 'rgba(0,149,214,.3)' : 'var(--border-subtle)'"
+        [style.borderColor]="ordenEmpresaC() === 'alfabetico' ? 'rgba(0,174,239,.3)' : 'var(--border-subtle)'"
         (click)="ordenEmpresaC.set('alfabetico')">
         Alfabético
       </button>
@@ -403,17 +403,17 @@
       <span style="font-size:.72rem;font-weight:600;color:var(--fg-4);margin-right:.15rem">Ordenar por:</span>
       <button
         style="padding:.3rem .65rem;border-style:solid;border-width:1px;border-radius:999px;font-size:.75rem;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap"
-        [style.background]="ordenCentroC() === 'recientes' ? 'rgba(16,185,129,.08)' : 'transparent'"
+        [style.background]="ordenCentroC() === 'recientes' ? 'rgba(46,174,110,.08)' : 'transparent'"
         [style.color]="ordenCentroC() === 'recientes' ? 'var(--ok)' : 'var(--fg-4)'"
-        [style.borderColor]="ordenCentroC() === 'recientes' ? 'rgba(16,185,129,.3)' : 'var(--border-subtle)'"
+        [style.borderColor]="ordenCentroC() === 'recientes' ? 'rgba(46,174,110,.3)' : 'var(--border-subtle)'"
         (click)="ordenCentroC.set('recientes')">
         Recientes
       </button>
       <button
         style="padding:.3rem .65rem;border-style:solid;border-width:1px;border-radius:999px;font-size:.75rem;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap"
-        [style.background]="ordenCentroC() === 'alfabetico' ? 'rgba(16,185,129,.08)' : 'transparent'"
+        [style.background]="ordenCentroC() === 'alfabetico' ? 'rgba(46,174,110,.08)' : 'transparent'"
         [style.color]="ordenCentroC() === 'alfabetico' ? 'var(--ok)' : 'var(--fg-4)'"
-        [style.borderColor]="ordenCentroC() === 'alfabetico' ? 'rgba(16,185,129,.3)' : 'var(--border-subtle)'"
+        [style.borderColor]="ordenCentroC() === 'alfabetico' ? 'rgba(46,174,110,.3)' : 'var(--border-subtle)'"
         (click)="ordenCentroC.set('alfabetico')">
         Alfabético
       </button>
@@ -425,17 +425,17 @@
       <span style="font-size:.72rem;font-weight:600;color:var(--fg-4);margin-right:.15rem">Ordenar por:</span>
       <button
         style="padding:.3rem .65rem;border-style:solid;border-width:1px;border-radius:999px;font-size:.75rem;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap"
-        [style.background]="ordenProyectoC() === 'recientes' ? 'rgba(245,158,11,.08)' : 'transparent'"
+        [style.background]="ordenProyectoC() === 'recientes' ? 'rgba(245,165,36,.08)' : 'transparent'"
         [style.color]="ordenProyectoC() === 'recientes' ? 'var(--warn)' : 'var(--fg-4)'"
-        [style.borderColor]="ordenProyectoC() === 'recientes' ? 'rgba(245,158,11,.3)' : 'var(--border-subtle)'"
+        [style.borderColor]="ordenProyectoC() === 'recientes' ? 'rgba(245,165,36,.3)' : 'var(--border-subtle)'"
         (click)="ordenProyectoC.set('recientes')">
         Recientes
       </button>
       <button
         style="padding:.3rem .65rem;border-style:solid;border-width:1px;border-radius:999px;font-size:.75rem;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap"
-        [style.background]="ordenProyectoC() === 'alfabetico' ? 'rgba(245,158,11,.08)' : 'transparent'"
+        [style.background]="ordenProyectoC() === 'alfabetico' ? 'rgba(245,165,36,.08)' : 'transparent'"
         [style.color]="ordenProyectoC() === 'alfabetico' ? 'var(--warn)' : 'var(--fg-4)'"
-        [style.borderColor]="ordenProyectoC() === 'alfabetico' ? 'rgba(245,158,11,.3)' : 'var(--border-subtle)'"
+        [style.borderColor]="ordenProyectoC() === 'alfabetico' ? 'rgba(245,165,36,.3)' : 'var(--border-subtle)'"
         (click)="ordenProyectoC.set('alfabetico')">
         Alfabético
       </button>
@@ -459,9 +459,9 @@
         <div style="display:flex;gap:.25rem;background:var(--bg-2);border-radius:10px;padding:.25rem">
           <button
             style="flex:1;padding:.55rem 1rem;border-style:solid;border-width:1px;border-radius:8px;font-size:.875rem;font-weight:600;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;justify-content:center;gap:.4rem"
-            [style.background]="tabConsumidorActiva() === 'documentacion' ? 'rgba(0,149,214,.08)' : 'transparent'"
+            [style.background]="tabConsumidorActiva() === 'documentacion' ? 'rgba(0,174,239,.08)' : 'transparent'"
             [style.color]="tabConsumidorActiva() === 'documentacion' ? 'var(--sc-cyan)' : 'var(--fg-4)'"
-            [style.borderColor]="tabConsumidorActiva() === 'documentacion' ? 'rgba(0,149,214,.18)' : 'transparent'"
+            [style.borderColor]="tabConsumidorActiva() === 'documentacion' ? 'rgba(0,174,239,.18)' : 'transparent'"
             (click)="tabConsumidorActiva.set('documentacion')">
             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/>
@@ -474,9 +474,9 @@
           @if (tabJerarquia() !== 'todos') {
             <button
               style="flex:1;padding:.55rem 1rem;border-style:solid;border-width:1px;border-radius:8px;font-size:.875rem;font-weight:600;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;justify-content:center;gap:.4rem;position:relative"
-              [style.background]="tabConsumidorActiva() === 'solicitudes' ? 'rgba(22,163,74,.08)' : 'transparent'"
+              [style.background]="tabConsumidorActiva() === 'solicitudes' ? 'rgba(46,174,110,.08)' : 'transparent'"
               [style.color]="tabConsumidorActiva() === 'solicitudes' ? 'var(--ok)' : 'var(--fg-4)'"
-              [style.borderColor]="tabConsumidorActiva() === 'solicitudes' ? 'rgba(22,163,74,.18)' : 'transparent'"
+              [style.borderColor]="tabConsumidorActiva() === 'solicitudes' ? 'rgba(46,174,110,.18)' : 'transparent'"
               (click)="tabConsumidorActiva.set('solicitudes')">
               <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="m22 2-7 20-4-9-9-4Z"/>
@@ -507,7 +507,7 @@
               style="flex:1;padding:.3rem .5rem;border-style:solid;border-width:1px;border-radius:6px;font-size:.78rem;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap;display:inline-flex;align-items:center;justify-content:center;gap:.35rem"
               [style.background]="tabDocConsumidor() === 'activos' ? 'var(--sc-cyan-tint-6)' : 'transparent'"
               [style.color]="tabDocConsumidor() === 'activos' ? 'var(--sc-cyan)' : 'var(--fg-4)'"
-              [style.borderColor]="tabDocConsumidor() === 'activos' ? 'rgba(0,149,214,.25)' : 'var(--border-subtle)'"
+              [style.borderColor]="tabDocConsumidor() === 'activos' ? 'rgba(0,174,239,.25)' : 'var(--border-subtle)'"
               (click)="tabDocConsumidor.set('activos')">
               <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0">
                 <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
@@ -516,9 +516,9 @@
             </button>
             <button
               style="flex:1;padding:.3rem .5rem;border-style:solid;border-width:1px;border-radius:6px;font-size:.78rem;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap;display:inline-flex;align-items:center;justify-content:center;gap:.35rem"
-              [style.background]="tabDocConsumidor() === 'vencidos' ? 'rgba(239,68,68,.06)' : 'transparent'"
+              [style.background]="tabDocConsumidor() === 'vencidos' ? 'rgba(229,72,77,.06)' : 'transparent'"
               [style.color]="tabDocConsumidor() === 'vencidos' ? 'var(--danger)' : 'var(--fg-4)'"
-              [style.borderColor]="tabDocConsumidor() === 'vencidos' ? 'rgba(239,68,68,.25)' : 'var(--border-subtle)'"
+              [style.borderColor]="tabDocConsumidor() === 'vencidos' ? 'rgba(229,72,77,.25)' : 'var(--border-subtle)'"
               (click)="activarTabVencidosConsumidor()">
               <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0">
                 <path d="m21.73 18-8-14a2 2 0 0 0-3.46 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
@@ -562,13 +562,13 @@
                         </div>
                         <div style="margin-top:.2rem;display:flex;align-items:center;gap:.5rem;flex-wrap:wrap">
                           @if (fila.tipo === 'empresa') {
-                            <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:rgba(0,149,214,.1);color:var(--sc-cyan)">Empresa · {{ empresaNombreC }}</span>
+                            <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:rgba(0,174,239,.1);color:var(--sc-cyan)">Empresa · {{ empresaNombreC }}</span>
                           }
                           @if (fila.centroId) {
-                            <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:rgba(16,185,129,.1);color:var(--ok)">Centro · {{ fila.centroNombre }}</span>
+                            <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:rgba(46,174,110,.1);color:var(--ok)">Centro · {{ fila.centroNombre }}</span>
                           }
                           @if (fila.proyectoId) {
-                            <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:rgba(245,158,11,.1);color:var(--warn)">Proyecto · {{ fila.proyectoNombre }}</span>
+                            <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:rgba(245,165,36,.1);color:var(--warn)">Proyecto · {{ fila.proyectoNombre }}</span>
                           }
                           <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:#f1f5f9;color:#475569">Subido: {{ formatFechaHora(fila.doc.subido_en) }}</span>
                           @if (fila.doc.subido_por_nombre) {
@@ -696,11 +696,11 @@
                         </div>
                         <div style="margin-top:.2rem;display:flex;align-items:center;gap:.5rem;flex-wrap:wrap">
                           @if (docTipo === 'empresa') {
-                            <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:rgba(0,149,214,.1);color:var(--sc-cyan)">Empresa</span>
+                            <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:rgba(0,174,239,.1);color:var(--sc-cyan)">Empresa</span>
                           } @else if (docTipo === 'centro') {
-                            <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:rgba(16,185,129,.1);color:var(--ok)">Centro{{ centroNombreC ? ' · ' + centroNombreC : '' }}</span>
+                            <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:rgba(46,174,110,.1);color:var(--ok)">Centro{{ centroNombreC ? ' · ' + centroNombreC : '' }}</span>
                           } @else if (docTipo === 'proyecto') {
-                            <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:rgba(245,158,11,.1);color:var(--warn)">Proyecto{{ proyectoNombreC ? ' · ' + proyectoNombreC : '' }}</span>
+                            <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:rgba(245,165,36,.1);color:var(--warn)">Proyecto{{ proyectoNombreC ? ' · ' + proyectoNombreC : '' }}</span>
                           }
                           <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:#f1f5f9;color:#475569">Subido: {{ formatFechaHora(d.subido_en) }}</span>
                           @if (d.subido_por_nombre) {
@@ -785,7 +785,7 @@
                             }
                           </div>
                           <div style="margin-top:.2rem;display:flex;align-items:center;gap:.5rem;flex-wrap:wrap">
-                            <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:rgba(16,185,129,.1);color:var(--ok)">Centro · {{ item.nombre }}</span>
+                            <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:rgba(46,174,110,.1);color:var(--ok)">Centro · {{ item.nombre }}</span>
                             <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:#f1f5f9;color:#475569">Subido: {{ formatFechaHora(d.subido_en) }}</span>
                             @if (d.subido_por_nombre) {
                               <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:#f0fdfa;color:#0f766e">{{ d.subido_por_nombre }}</span>
@@ -837,7 +837,7 @@
                             }
                           </div>
                           <div style="margin-top:.2rem;display:flex;align-items:center;gap:.5rem;flex-wrap:wrap">
-                            <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:rgba(245,158,11,.1);color:var(--warn)">Proyecto · {{ item.nombre }}</span>
+                            <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:rgba(245,165,36,.1);color:var(--warn)">Proyecto · {{ item.nombre }}</span>
                             <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:#f1f5f9;color:#475569">Subido: {{ formatFechaHora(d.subido_en) }}</span>
                             @if (d.subido_por_nombre) {
                               <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:#f0fdfa;color:#0f766e">{{ d.subido_por_nombre }}</span>
@@ -890,11 +890,11 @@
                         </div>
                         <div style="margin-top:.2rem">
                           @if (v.origen_tipo === 'empresa') {
-                            <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:rgba(0,149,214,.1);color:var(--sc-cyan)">Empresa</span>
+                            <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:rgba(0,174,239,.1);color:var(--sc-cyan)">Empresa</span>
                           } @else if (v.origen_tipo === 'centro') {
-                            <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:rgba(16,185,129,.1);color:var(--ok)">Centro{{ v.centro_nombre ? ' · ' + v.centro_nombre : '' }}</span>
+                            <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:rgba(46,174,110,.1);color:var(--ok)">Centro{{ v.centro_nombre ? ' · ' + v.centro_nombre : '' }}</span>
                           } @else if (v.origen_tipo === 'proyecto') {
-                            <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:rgba(245,158,11,.1);color:var(--warn)">Proyecto{{ v.proyecto_nombre ? ' · ' + v.proyecto_nombre : '' }}</span>
+                            <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:rgba(245,165,36,.1);color:var(--warn)">Proyecto{{ v.proyecto_nombre ? ' · ' + v.proyecto_nombre : '' }}</span>
                           }
                         </div>
                       </div>

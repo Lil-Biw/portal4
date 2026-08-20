@@ -86,7 +86,7 @@ import { StatusBannerComponent } from '../../../../shared/components/status-bann
       transition: all .13s;
     }
     .pf-pill input { position: absolute; opacity: 0; pointer-events: none; }
-    .pf-pill:hover { border-color: rgba(0,149,214,.5); }
+    .pf-pill:hover { border-color: rgba(0,174,239,.5); }
     .pf-pill--on {
       background: var(--sc-cyan-tint-12);
       border-color: var(--sc-cyan);

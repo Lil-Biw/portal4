@@ -7,7 +7,7 @@ import { ProyectoIconoComponent } from '../proyecto-icono/proyecto-icono.compone
 
 const ESTADO_CHIP: Record<string, { label: string; color: string; bg: string }> = {
   estancado:            { label: 'Estancado',              color: 'var(--danger)', bg: 'var(--danger-bg)'  },
-  nuevo_sin_oc:          { label: 'Nuevos por Programar / Sin OC',         color: 'var(--fg-4)', bg: 'rgba(107,114,128,.12)' },
+  nuevo_sin_oc:          { label: 'Nuevos por Programar / Sin OC',         color: 'var(--fg-4)', bg: 'rgba(122,133,144,.12)' },
   nuevo_con_oc:          { label: 'Nuevos por Programar / Con OC',         color: 'var(--fg-3)', bg: 'rgba(100,116,139,.12)' },
   en_ejecucion:          { label: 'En ejecución',                         color: 'var(--ok)', bg: 'var(--ok-bg)'  },
   cierre_pendiente:      { label: 'Cierre pendiente / Validación Interna', color: '#7c3aed', bg: 'rgba(124,58,237,.12)' },
@@ -28,7 +28,7 @@ interface GrupoEmpresa { empresa: Cliente; proyectos: Proyecto[]; }
     .grupos { display: flex; flex-direction: column; gap: 1.5rem; }
 
     .grupo-empresa {
-      border: 1.5px solid rgba(0,149,214,.2);
+      border: 1.5px solid rgba(0,174,239,.2);
       border-radius: 16px;
       overflow: hidden;
       background: var(--bg-0);
@@ -39,8 +39,8 @@ interface GrupoEmpresa { empresa: Cliente; proyectos: Proyecto[]; }
       align-items: center;
       justify-content: space-between;
       padding: .75rem 1.25rem;
-      background: rgba(0,149,214,.05);
-      border-bottom: 1px solid rgba(0,149,214,.15);
+      background: rgba(0,174,239,.05);
+      border-bottom: 1px solid rgba(0,174,239,.15);
     }
     .grupo-title {
       display: flex;
@@ -133,9 +133,9 @@ interface GrupoEmpresa { empresa: Cliente; proyectos: Proyecto[]; }
       cursor: pointer;
       transition: all .15s;
     }
-    .btn-icon:hover { border-color: var(--border-strong); background: rgba(34,33,33,.04); color: var(--fg-2); }
-    .btn-icon-danger { border-color: rgba(239,68,68,.25); color: var(--danger); }
-    .btn-icon-danger:hover { border-color: rgba(239,68,68,.4); background: var(--danger-bg); color: var(--danger); }
+    .btn-icon:hover { border-color: var(--border-strong); background: var(--bg-2); color: var(--fg-2); }
+    .btn-icon-danger { border-color: rgba(229,72,77,.25); color: var(--danger); }
+    .btn-icon-danger:hover { border-color: rgba(229,72,77,.4); background: var(--danger-bg); color: var(--danger); }
     .proyecto-acciones { display: flex; gap: .4rem; }
   `],
 })

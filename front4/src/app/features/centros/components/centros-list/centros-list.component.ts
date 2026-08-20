@@ -78,7 +78,7 @@ interface GrupoEmpresa { empresa: Cliente; centros: CentroCosto[]; }
     .score-block { text-align: center; flex-shrink: 0; min-width: 54px; }
     .score-label { font-size: .6rem; font-weight: 700; letter-spacing: .07em; color: var(--fg-5); text-transform: uppercase; display: block; }
     .score-num { font-size: 1.3rem; font-weight: 800; line-height: 1.1; }
-    .score-empty { font-size: .72rem; color: #d1d5db; font-weight: 600; }
+    .score-empty { font-size: .72rem; color: var(--fg-5); font-weight: 600; }
   `],
 })
 export class CentrosListComponent implements OnChanges {

@@ -32,7 +32,7 @@ import { asId } from '../../../../shared/utils';
     .score-block { text-align: center; flex-shrink: 0; min-width: 60px; }
     .score-label { font-size: .65rem; font-weight: 700; letter-spacing: .08em; color: var(--fg-5); text-transform: uppercase; display: block; }
     .score-num { font-size: 1.5rem; font-weight: 800; line-height: 1.1; }
-    .score-empty { font-size: .75rem; color: #d1d5db; font-weight: 600; }
+    .score-empty { font-size: .75rem; color: var(--fg-5); font-weight: 600; }
     .card-actions { display: flex; align-items: center; gap: .4rem; flex-shrink: 0; }
     .btn-ficha {
       display: flex; align-items: center; gap: .3rem;

@@ -138,7 +138,7 @@
   margin:1.25rem 0 .85rem;
 }
 .divider::before, .divider::after {
-  content:''; flex:1; height:1px; background:rgba(34,33,33,.1);
+  content:''; flex:1; height:1px; background:var(--border-default);
 }
 .divider span { font-size:.75rem; color:var(--fg-5); white-space:nowrap; }
 
@@ -149,7 +149,7 @@
   color:var(--sc-cyan); font-size:.82rem; font-weight:600;
   text-decoration:none; transition:background .15s;
 }
-.btn-soporte:hover { background:rgba(0,149,214,.1); }
+.btn-soporte:hover { background:rgba(0,174,239,.1); }
 
 .form-footer {
   text-align:center; margin-top:1.25rem;

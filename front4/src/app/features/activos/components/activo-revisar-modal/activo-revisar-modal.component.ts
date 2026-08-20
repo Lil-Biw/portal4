@@ -278,21 +278,21 @@ export interface DescargarActividadDocEvt {
     }
     .descripcion-texto {
       font-size: .875rem; color: var(--fg-2); margin: 0;
-      background: #f9fafb; border-radius: 8px; padding: .6rem .8rem;
+      background: var(--bg-1); border-radius: 8px; padding: .6rem .8rem;
     }
     .empty-text { font-size: .85rem; color: var(--fg-5); margin: 0; }
 
     .docs-list {
       display: flex; flex-direction: column; gap: 0;
-      border: 1px solid rgba(34,33,33,.08); border-radius: 10px; overflow: hidden;
+      border: 1px solid var(--border-subtle); border-radius: 10px; overflow: hidden;
     }
     .doc-row {
       display: flex; align-items: center; gap: .6rem;
-      padding: .55rem .8rem; border-bottom: 1px solid rgba(34,33,33,.06);
-      background: #fff; transition: background .12s;
+      padding: .55rem .8rem; border-bottom: 1px solid var(--border-subtle);
+      background: var(--bg-0); transition: background .12s;
     }
     .doc-row:last-child { border-bottom: none; }
-    .doc-row:hover { background: #f9fafb; }
+    .doc-row:hover { background: var(--bg-1); }
     .doc-icon { width: 18px; height: 18px; flex-shrink: 0; color: var(--fg-4); }
     .doc-info { flex: 1; min-width: 0; }
     .doc-nombre {
@@ -304,16 +304,16 @@ export interface DescargarActividadDocEvt {
 
     .historial-list { display: flex; flex-direction: column; gap: .5rem; }
     .hist-card {
-      border: 1px solid rgba(34,33,33,.08); border-radius: 10px; overflow: hidden;
+      border: 1px solid var(--border-subtle); border-radius: 10px; overflow: hidden;
       cursor: pointer; transition: box-shadow .12s, border-color .12s;
     }
-    .hist-card:hover { border-color: var(--sc-cyan); box-shadow: 0 2px 8px rgba(0,149,214,.1); }
+    .hist-card:hover { border-color: var(--sc-cyan); box-shadow: 0 2px 8px rgba(0,174,239,.1); }
     .hist-card-header {
       display: grid; grid-template-columns: 100px 1fr 190px;
       gap: .5rem; align-items: center; padding: .6rem .8rem;
-      background: #fff; transition: background .1s;
+      background: var(--bg-0); transition: background .1s;
     }
-    .hist-card-header:hover { background: #f9fafb; }
+    .hist-card-header:hover { background: var(--bg-1); }
     .hist-fecha { font-size: .82rem; color: var(--fg-4); }
     .hist-nombre-wrap { min-width: 0; }
     .hist-nombre {
@@ -336,7 +336,7 @@ export interface DescargarActividadDocEvt {
       z-index: 300; padding: 1rem;
     }
     .detalle-modal {
-      background: #fff; border-radius: 16px; box-shadow: 0 20px 60px rgba(15,23,42,.25);
+      background: var(--bg-0); border-radius: 16px; box-shadow: 0 20px 60px rgba(11,15,20,.25);
       width: 100%; max-width: 600px; max-height: 90vh; overflow-y: auto; padding: 1.5rem;
     }
 
@@ -345,7 +345,7 @@ export interface DescargarActividadDocEvt {
     .main-col { min-width: 0; }
 
     .gallery-col {
-      border-left: 1px solid rgba(34,33,33,.08);
+      border-left: 1px solid var(--border-subtle);
       padding-left: 1.25rem;
       display: flex; flex-direction: column; min-width: 0;
     }
@@ -357,15 +357,15 @@ export interface DescargarActividadDocEvt {
 
     .thumb {
       position: relative; border-radius: 10px; overflow: hidden; flex-shrink: 0;
-      border: 1px solid rgba(34,33,33,.08); cursor: pointer; background: #f9fafb;
+      border: 1px solid var(--border-subtle); cursor: pointer; background: var(--bg-1);
     }
     .thumb-img { display: block; width: 100%; aspect-ratio: 4 / 3; object-fit: cover; }
     .thumb-fallback {
       width: 100%; aspect-ratio: 4 / 3; display: flex; align-items: center; justify-content: center;
-      background: #f3f4f6; color: var(--fg-5);
+      background: var(--bg-2); color: var(--fg-5);
     }
     .thumb-fallback--loading { animation: thumb-pulse 1.2s ease-in-out infinite; }
-    .thumb-fallback--error { color: var(--border-default); }
+    .thumb-fallback--error { color: var(--danger); }
     @keyframes thumb-pulse { 0%, 100% { opacity: .5; } 50% { opacity: 1; } }
     .fmt-badge {
       position: absolute; top: .35rem; right: .35rem;

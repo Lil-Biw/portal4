@@ -220,7 +220,7 @@ h1, h2, h3, h4, h5, h6 { font-family: var(--font-display); }
   gap: 1rem;
   padding: .9rem 1rem;
   cursor: pointer;
-  border: 1px solid rgba(34,33,33,.1);
+  border: 1px solid var(--border-default);
   transition: box-shadow .15s, border-color .15s;
 }
 .list .card:hover { box-shadow: var(--shadow-2); border-color: var(--border-strong); }
@@ -280,7 +280,7 @@ h1, h2, h3, h4, h5, h6 { font-family: var(--font-display); }
 }
 .grupo-header--centro {
   background: var(--ok-bg);
-  border-bottom: 1px solid var(--ok-bg);
+  border-bottom: 1px solid var(--border-subtle);
 }
 .grupo-label--centro {
   color: var(--ok);

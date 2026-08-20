@@ -266,7 +266,7 @@ export class MisCentrosPageComponent implements OnInit, OnDestroy {
 
   private static readonly ESTADO_BADGE_STYLE: Record<string, string> = {
     estancado:            'background:var(--danger-bg);color:var(--danger)',
-    nuevo_sin_oc:         'background:rgba(107,114,128,.12);color:var(--fg-4)',
+    nuevo_sin_oc:         'background:rgba(122,133,144,.12);color:var(--fg-4)',
     nuevo_con_oc:         'background:rgba(100,116,139,.12);color:var(--fg-3)',
     en_ejecucion:         'background:var(--ok-bg);color:var(--ok)',
     cierre_pendiente:     'background:rgba(124,58,237,.12);color:#7c3aed',
@@ -276,7 +276,7 @@ export class MisCentrosPageComponent implements OnInit, OnDestroy {
 
   protected estadoBadgeStyle(estado: string): string {
     return MisCentrosPageComponent.ESTADO_BADGE_STYLE[estado]
-      ?? 'background:rgba(107,114,128,.1);color:var(--fg-4)';
+      ?? 'background:rgba(122,133,144,.1);color:var(--fg-4)';
   }
 
   protected estadoLabel(estado: string): string {

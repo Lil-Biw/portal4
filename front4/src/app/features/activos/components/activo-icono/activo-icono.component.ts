@@ -120,7 +120,7 @@ import { resolverIconoActivo } from '../../activos-icons';
   `],
 })
 export class ActivoIconoComponent {
-  @Input() color = '#0095d6';
+  @Input() color = '#00AEEF';
   @Input() icono?: string;
   @Input() size  = 20;
 
