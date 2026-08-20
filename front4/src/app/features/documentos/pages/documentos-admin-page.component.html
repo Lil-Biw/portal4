@@ -1,16 +1,16 @@
   <!-- Panel de filtros — primer componente de la página -->
   @if (tabAdminActiva() === 'documentacion') {
     @let docTipo = tabJerarquia();
-    <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:.5rem;padding:.75rem;margin-bottom:1rem">
+    <div style="background:var(--bg-1);border:1px solid var(--border-subtle);border-radius:.5rem;padding:.75rem;margin-bottom:1rem">
       <div style="display:grid;grid-template-columns:1fr 600px;gap:1.5rem;align-items:start">
         <div>
-          <p style="margin:0 0 .5rem;font-size:.8rem;font-weight:600;color:#374151">Filtrar por tipo</p>
+          <p style="margin:0 0 .5rem;font-size:.8rem;font-weight:600;color:var(--fg-2)">Filtrar por tipo</p>
           <div style="display:flex;flex-wrap:wrap;gap:.3rem .5rem">
             @for (cat of categorias; track cat) {
               @if (cat === '[GAS] Boleta/Factura') { <div style="flex-basis:100%;width:0;height:0"></div> }
-              <label style="display:flex;align-items:center;gap:.3rem;font-size:.85rem;cursor:pointer;padding:.3rem .6rem;border:1px solid #d1d5db;border-radius:.375rem"
-                [style.background]="isFiltroSelected(docTipo, cat) ? '#e0e7ff' : '#fff'"
-                [style.borderColor]="isFiltroSelected(docTipo, cat) ? '#6366f1' : '#d1d5db'">
+              <label style="display:flex;align-items:center;gap:.3rem;font-size:.85rem;cursor:pointer;padding:.3rem .6rem;border:1px solid var(--border-default);border-radius:.375rem"
+                [style.background]="isFiltroSelected(docTipo, cat) ? '#e0e7ff' : 'var(--bg-0)'"
+                [style.borderColor]="isFiltroSelected(docTipo, cat) ? '#6366f1' : 'var(--border-default)'">
                 <input type="checkbox" [checked]="isFiltroSelected(docTipo, cat)" (change)="toggleFiltroCategoria(docTipo, cat)" style="display:none" />
                 @if (categoriaTag(cat); as tag) { <span style="font-weight:700;color:#6366f1">[{{ tag }}]</span> {{ categoriaResto(cat) }} } @else { {{ cat }} }
               </label>
@@ -19,7 +19,7 @@
         </div>
         <div style="display:flex;gap:.5rem;align-items:flex-end">
           <label class="field" style="margin:0;flex:1;min-width:0">
-            <span style="font-size:.8rem;font-weight:600;color:#374151">Buscar por nombre</span>
+            <span style="font-size:.8rem;font-weight:600;color:var(--fg-2)">Buscar por nombre</span>
             <input type="text" [ngModel]="panels[docTipo].busqueda" (ngModelChange)="onBusquedaNombreChange(docTipo, $event)" placeholder="Nombre del documento…" />
           </label>
           <button class="btn-ghost" style="font-size:.8rem;padding:.45rem .7rem;white-space:nowrap"
@@ -30,16 +30,16 @@
   }
 
   @if (tabAdminActiva() === 'solicitudes') {
-    <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:.5rem;padding:.75rem;margin-bottom:1rem">
+    <div style="background:var(--bg-1);border:1px solid var(--border-subtle);border-radius:.5rem;padding:.75rem;margin-bottom:1rem">
       <div style="display:grid;grid-template-columns:1fr 600px;gap:1.5rem;align-items:start">
         <div>
-          <p style="margin:0 0 .5rem;font-size:.8rem;font-weight:600;color:#374151">Filtrar por tipo</p>
+          <p style="margin:0 0 .5rem;font-size:.8rem;font-weight:600;color:var(--fg-2)">Filtrar por tipo</p>
           <div style="display:flex;flex-wrap:wrap;gap:.3rem .5rem">
             @for (cat of categorias; track cat) {
               @if (cat === '[GAS] Boleta/Factura') { <div style="flex-basis:100%;width:0;height:0"></div> }
-              <label style="display:flex;align-items:center;gap:.3rem;font-size:.85rem;cursor:pointer;padding:.3rem .6rem;border:1px solid #d1d5db;border-radius:.375rem"
-                [style.background]="isFiltroTipoSolicitudSelected(cat) ? '#e0e7ff' : '#fff'"
-                [style.borderColor]="isFiltroTipoSolicitudSelected(cat) ? '#6366f1' : '#d1d5db'">
+              <label style="display:flex;align-items:center;gap:.3rem;font-size:.85rem;cursor:pointer;padding:.3rem .6rem;border:1px solid var(--border-default);border-radius:.375rem"
+                [style.background]="isFiltroTipoSolicitudSelected(cat) ? '#e0e7ff' : 'var(--bg-0)'"
+                [style.borderColor]="isFiltroTipoSolicitudSelected(cat) ? '#6366f1' : 'var(--border-default)'">
                 <input type="checkbox" [checked]="isFiltroTipoSolicitudSelected(cat)" (change)="toggleFiltroTipoSolicitud(cat)" style="display:none" />
                 @if (categoriaTag(cat); as tag) { <span style="font-weight:700;color:#6366f1">[{{ tag }}]</span> {{ categoriaResto(cat) }} } @else { {{ cat }} }
               </label>
@@ -48,7 +48,7 @@
         </div>
         <div style="display:flex;gap:.5rem;align-items:flex-end">
           <label class="field" style="margin:0;flex:1;min-width:0">
-            <span style="font-size:.8rem;font-weight:600;color:#374151">Buscar por nombre</span>
+            <span style="font-size:.8rem;font-weight:600;color:var(--fg-2)">Buscar por nombre</span>
             <input type="text" [ngModel]="busquedaSolicitud()" (ngModelChange)="busquedaSolicitud.set($event)" placeholder="Nombre de la solicitud…" />
           </label>
           <button class="btn-ghost" style="font-size:.8rem;padding:.45rem .7rem;white-space:nowrap" (click)="limpiarFiltroSolicitudes()">Limpiar</button>
@@ -66,12 +66,12 @@
   <div class="card" style="padding:0;overflow:hidden;margin-bottom:1rem">
 
     <!-- Tab strip -->
-    <div style="padding:.5rem;border-bottom:1px solid #f0f0f0">
-      <div style="display:flex;gap:.25rem;background:#f3f4f6;border-radius:10px;padding:.25rem">
+    <div style="padding:.5rem;border-bottom:1px solid var(--border-subtle)">
+      <div style="display:flex;gap:.25rem;background:var(--bg-2);border-radius:10px;padding:.25rem">
         <button
           style="flex:1;padding:.55rem 1rem;border-style:solid;border-width:1px;border-radius:8px;font-size:.875rem;font-weight:600;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;justify-content:center;gap:.4rem;overflow:hidden"
           [style.background]="tabJerarquia() === 'todos' ? 'rgba(124,58,237,.08)' : 'transparent'"
-          [style.color]="tabJerarquia() === 'todos' ? '#7c3aed' : '#6b7280'"
+          [style.color]="tabJerarquia() === 'todos' ? '#7c3aed' : 'var(--fg-4)'"
           [style.borderColor]="tabJerarquia() === 'todos' ? 'rgba(124,58,237,.18)' : 'transparent'"
           (click)="seleccionarTabJerarquia('todos')">
           <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0">
@@ -85,7 +85,7 @@
         <button
           style="flex:1;padding:.55rem 1rem;border-style:solid;border-width:1px;border-radius:8px;font-size:.875rem;font-weight:600;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;justify-content:center;gap:.4rem;overflow:hidden"
           [style.background]="tabJerarquia() === 'empresa' ? 'rgba(0,149,214,.08)' : 'transparent'"
-          [style.color]="tabJerarquia() === 'empresa' ? '#0095d6' : '#6b7280'"
+          [style.color]="tabJerarquia() === 'empresa' ? 'var(--sc-cyan)' : 'var(--fg-4)'"
           [style.borderColor]="tabJerarquia() === 'empresa' ? 'rgba(0,149,214,.18)' : 'transparent'"
           (click)="seleccionarTabJerarquia('empresa')">
           <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0">
@@ -95,12 +95,12 @@
             <path d="M10 6h4"/><path d="M10 10h4"/><path d="M10 14h4"/><path d="M10 18h4"/>
           </svg>
           <span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ (selectedEmpresaId === 'todos' ? 'Todas las empresas' : empresaNombre) || 'Empresa' }}</span>
-          <span style="font-size:.68rem;font-weight:700;line-height:1;padding:.15rem .4rem;border-radius:999px;background:rgba(0,149,214,.15);color:#0095d6;flex-shrink:0">{{ conteoEmpresa() }}</span>
+          <span style="font-size:.68rem;font-weight:700;line-height:1;padding:.15rem .4rem;border-radius:999px;background:rgba(0,149,214,.15);color:var(--sc-cyan);flex-shrink:0">{{ conteoEmpresa() }}</span>
         </button>
         <button
           style="flex:1;padding:.55rem 1rem;border-style:solid;border-width:1px;border-radius:8px;font-size:.875rem;font-weight:600;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;justify-content:center;gap:.4rem;overflow:hidden"
           [style.background]="tabJerarquia() === 'centro' ? 'rgba(16,185,129,.08)' : 'transparent'"
-          [style.color]="tabJerarquia() === 'centro' ? '#059669' : '#6b7280'"
+          [style.color]="tabJerarquia() === 'centro' ? 'var(--ok)' : 'var(--fg-4)'"
           [style.borderColor]="tabJerarquia() === 'centro' ? 'rgba(16,185,129,.18)' : 'transparent'"
           [disabled]="!selectedEmpresaId"
           [style.opacity]="!selectedEmpresaId ? '0.45' : '1'"
@@ -111,12 +111,12 @@
             <polyline points="2 12 12 17 22 12"/>
           </svg>
           <span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ (selectedCentroId === 'todos' ? 'Todos los centros' : centroNombre) || 'Centro de costo' }}</span>
-          <span style="font-size:.68rem;font-weight:700;line-height:1;padding:.15rem .4rem;border-radius:999px;background:rgba(16,185,129,.15);color:#059669;flex-shrink:0">{{ conteoCentro() }}</span>
+          <span style="font-size:.68rem;font-weight:700;line-height:1;padding:.15rem .4rem;border-radius:999px;background:rgba(16,185,129,.15);color:var(--ok);flex-shrink:0">{{ conteoCentro() }}</span>
         </button>
         <button
           style="flex:1;padding:.55rem 1rem;border-style:solid;border-width:1px;border-radius:8px;font-size:.875rem;font-weight:600;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;justify-content:center;gap:.4rem;overflow:hidden"
           [style.background]="tabJerarquia() === 'proyecto' ? 'rgba(245,158,11,.08)' : 'transparent'"
-          [style.color]="tabJerarquia() === 'proyecto' ? '#d97706' : '#6b7280'"
+          [style.color]="tabJerarquia() === 'proyecto' ? 'var(--warn)' : 'var(--fg-4)'"
           [style.borderColor]="tabJerarquia() === 'proyecto' ? 'rgba(245,158,11,.18)' : 'transparent'"
           [disabled]="!selectedCentroId"
           [style.opacity]="!selectedCentroId ? '0.45' : '1'"
@@ -125,7 +125,7 @@
             <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
           </svg>
           <span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ (selectedProyectoId === 'todos' ? 'Todos los proyectos' : proyectoNombre) || 'Proyecto' }}</span>
-          <span style="font-size:.68rem;font-weight:700;line-height:1;padding:.15rem .4rem;border-radius:999px;background:rgba(245,158,11,.15);color:#d97706;flex-shrink:0">{{ conteoProyecto() }}</span>
+          <span style="font-size:.68rem;font-weight:700;line-height:1;padding:.15rem .4rem;border-radius:999px;background:rgba(245,158,11,.15);color:var(--warn);flex-shrink:0">{{ conteoProyecto() }}</span>
         </button>
       </div>
     </div>
@@ -133,7 +133,7 @@
     <!-- Panel: Todos (resumen, sin selección) -->
     @if (tabJerarquia() === 'todos') {
       <div style="padding:1rem">
-        <div style="border-left:4px solid #7c3aed;border-radius:8px;background:#fafbfc;padding:.75rem .85rem;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap">
+        <div style="border-left:4px solid #7c3aed;border-radius:8px;background:var(--bg-1);padding:.75rem .85rem;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap">
           <div style="display:flex;align-items:center;gap:.75rem">
             <div style="width:38px;height:38px;border-radius:9px;background:rgba(124,58,237,.1);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#7c3aed">
               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -143,49 +143,49 @@
               </svg>
             </div>
             <div>
-              <p style="margin:0 0 .15rem;font-size:.9rem;font-weight:700;color:#1f2937">Todos los documentos</p>
-              <p style="margin:0;font-size:.75rem;color:#6b7280">Empresas, centros de costos y proyectos · {{ filasTodos().length }} documentos</p>
+              <p style="margin:0 0 .15rem;font-size:.9rem;font-weight:700;color:var(--fg-2)">Todos los documentos</p>
+              <p style="margin:0;font-size:.75rem;color:var(--fg-4)">Empresas, centros de costos y proyectos · {{ filasTodos().length }} documentos</p>
             </div>
           </div>
           <div style="display:flex;gap:.35rem;flex-wrap:wrap;align-items:center">
-            <span style="font-size:.72rem;font-weight:600;color:#6b7280;margin-right:.15rem">Ordenar por:</span>
+            <span style="font-size:.72rem;font-weight:600;color:var(--fg-4);margin-right:.15rem">Ordenar por:</span>
             <button
               style="padding:.3rem .65rem;border-style:solid;border-width:1px;border-radius:999px;font-size:.75rem;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap"
               [style.background]="ordenTodos() === 'recientes' ? 'rgba(124,58,237,.08)' : 'transparent'"
-              [style.color]="ordenTodos() === 'recientes' ? '#7c3aed' : '#6b7280'"
-              [style.borderColor]="ordenTodos() === 'recientes' ? 'rgba(124,58,237,.3)' : '#e5e7eb'"
+              [style.color]="ordenTodos() === 'recientes' ? '#7c3aed' : 'var(--fg-4)'"
+              [style.borderColor]="ordenTodos() === 'recientes' ? 'rgba(124,58,237,.3)' : 'var(--border-subtle)'"
               (click)="ordenTodos.set('recientes')">
               Recientes
             </button>
             <button
               style="padding:.3rem .65rem;border-style:solid;border-width:1px;border-radius:999px;font-size:.75rem;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap"
               [style.background]="ordenTodos() === 'alfabetico' ? 'rgba(124,58,237,.08)' : 'transparent'"
-              [style.color]="ordenTodos() === 'alfabetico' ? '#7c3aed' : '#6b7280'"
-              [style.borderColor]="ordenTodos() === 'alfabetico' ? 'rgba(124,58,237,.3)' : '#e5e7eb'"
+              [style.color]="ordenTodos() === 'alfabetico' ? '#7c3aed' : 'var(--fg-4)'"
+              [style.borderColor]="ordenTodos() === 'alfabetico' ? 'rgba(124,58,237,.3)' : 'var(--border-subtle)'"
               (click)="ordenTodos.set('alfabetico')">
               Alfabético
             </button>
             <button
               style="padding:.3rem .65rem;border-style:solid;border-width:1px;border-radius:999px;font-size:.75rem;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap"
               [style.background]="ordenTodos() === 'nivel_empresa' ? 'rgba(124,58,237,.08)' : 'transparent'"
-              [style.color]="ordenTodos() === 'nivel_empresa' ? '#7c3aed' : '#6b7280'"
-              [style.borderColor]="ordenTodos() === 'nivel_empresa' ? 'rgba(124,58,237,.3)' : '#e5e7eb'"
+              [style.color]="ordenTodos() === 'nivel_empresa' ? '#7c3aed' : 'var(--fg-4)'"
+              [style.borderColor]="ordenTodos() === 'nivel_empresa' ? 'rgba(124,58,237,.3)' : 'var(--border-subtle)'"
               (click)="ordenTodos.set('nivel_empresa')">
               Nivel empresa
             </button>
             <button
               style="padding:.3rem .65rem;border-style:solid;border-width:1px;border-radius:999px;font-size:.75rem;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap"
               [style.background]="ordenTodos() === 'nivel_centro' ? 'rgba(124,58,237,.08)' : 'transparent'"
-              [style.color]="ordenTodos() === 'nivel_centro' ? '#7c3aed' : '#6b7280'"
-              [style.borderColor]="ordenTodos() === 'nivel_centro' ? 'rgba(124,58,237,.3)' : '#e5e7eb'"
+              [style.color]="ordenTodos() === 'nivel_centro' ? '#7c3aed' : 'var(--fg-4)'"
+              [style.borderColor]="ordenTodos() === 'nivel_centro' ? 'rgba(124,58,237,.3)' : 'var(--border-subtle)'"
               (click)="ordenTodos.set('nivel_centro')">
               Nivel centro
             </button>
             <button
               style="padding:.3rem .65rem;border-style:solid;border-width:1px;border-radius:999px;font-size:.75rem;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap"
               [style.background]="ordenTodos() === 'nivel_proyecto' ? 'rgba(124,58,237,.08)' : 'transparent'"
-              [style.color]="ordenTodos() === 'nivel_proyecto' ? '#7c3aed' : '#6b7280'"
-              [style.borderColor]="ordenTodos() === 'nivel_proyecto' ? 'rgba(124,58,237,.3)' : '#e5e7eb'"
+              [style.color]="ordenTodos() === 'nivel_proyecto' ? '#7c3aed' : 'var(--fg-4)'"
+              [style.borderColor]="ordenTodos() === 'nivel_proyecto' ? 'rgba(124,58,237,.3)' : 'var(--border-subtle)'"
               (click)="ordenTodos.set('nivel_proyecto')">
               Nivel proyecto
             </button>
@@ -198,9 +198,9 @@
     @if (tabJerarquia() === 'empresa') {
       <div style="padding:1rem;display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1rem">
         @if (selectedEmpresaId === 'todos') {
-          <div style="border-left:4px solid #0095d6;border-radius:8px;background:#fafbfc;padding:.75rem .85rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.75rem">
+          <div style="border-left:4px solid var(--sc-cyan);border-radius:8px;background:var(--bg-1);padding:.75rem .85rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.75rem">
             <div style="display:flex;align-items:center;gap:.75rem">
-              <div style="width:38px;height:38px;border-radius:9px;background:rgba(0,149,214,.1);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#0095d6">
+              <div style="width:38px;height:38px;border-radius:9px;background:rgba(0,149,214,.1);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--sc-cyan)">
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"/>
                   <path d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"/>
@@ -209,16 +209,16 @@
                 </svg>
               </div>
               <div>
-                <p style="margin:0 0 .15rem;font-size:.9rem;font-weight:700;color:#1f2937">Documentación total de empresas</p>
-                <p style="margin:0;font-size:.75rem;color:#6b7280">{{ clientesService.clientes().length }} empresas</p>
+                <p style="margin:0 0 .15rem;font-size:.9rem;font-weight:700;color:var(--fg-2)">Documentación total de empresas</p>
+                <p style="margin:0;font-size:.75rem;color:var(--fg-4)">{{ clientesService.clientes().length }} empresas</p>
               </div>
             </div>
             <ng-container *ngTemplateOutlet="ordenEmpresaChips"></ng-container>
           </div>
         } @else if (empresaSeleccionadaObj) {
-          <div style="border-left:4px solid #0095d6;border-radius:8px;background:#fafbfc;padding:.75rem .85rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.75rem">
+          <div style="border-left:4px solid var(--sc-cyan);border-radius:8px;background:var(--bg-1);padding:.75rem .85rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.75rem">
             <div style="display:flex;align-items:center;gap:.75rem">
-              <div style="width:38px;height:38px;border-radius:9px;background:rgba(0,149,214,.1);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#0095d6">
+              <div style="width:38px;height:38px;border-radius:9px;background:rgba(0,149,214,.1);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--sc-cyan)">
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"/>
                   <path d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"/>
@@ -227,8 +227,8 @@
                 </svg>
               </div>
               <div>
-                <p style="margin:0 0 .15rem;font-size:.9rem;font-weight:700;color:#1f2937">{{ empresaNombre }}</p>
-                <p style="margin:0;font-size:.75rem;color:#6b7280">
+                <p style="margin:0 0 .15rem;font-size:.9rem;font-weight:700;color:var(--fg-2)">{{ empresaNombre }}</p>
+                <p style="margin:0;font-size:.75rem;color:var(--fg-4)">
                   RUT: {{ empresaSeleccionadaObj.rut }}
                   @if (empresaSeleccionadaObj.direccion?.ciudad) { · {{ empresaSeleccionadaObj.direccion!.ciudad }} }
                 </p>
@@ -237,8 +237,8 @@
             <ng-container *ngTemplateOutlet="ordenEmpresaChips"></ng-container>
           </div>
         } @else {
-          <div style="border-left:4px solid #e5e7eb;border-radius:8px;background:#f9fafb;padding:.75rem .85rem;display:flex;align-items:center">
-            <p style="margin:0;color:#9ca3af;font-size:.875rem">Selecciona una empresa para ver su documentación.</p>
+          <div style="border-left:4px solid var(--border-subtle);border-radius:8px;background:var(--bg-1);padding:.75rem .85rem;display:flex;align-items:center">
+            <p style="margin:0;color:var(--fg-5);font-size:.875rem">Selecciona una empresa para ver su documentación.</p>
           </div>
         }
         <label class="field" style="margin:0;justify-content:center">
@@ -257,13 +257,13 @@
     @if (tabJerarquia() === 'centro') {
       <div style="padding:1rem;display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1rem">
         @if (!selectedCentroId) {
-          <div style="border-left:4px solid #e5e7eb;border-radius:8px;background:#f9fafb;padding:.75rem .85rem;display:flex;align-items:center">
-            <p style="margin:0;color:#9ca3af;font-size:.875rem">Selecciona un centro de costos para ver su documentación.</p>
+          <div style="border-left:4px solid var(--border-subtle);border-radius:8px;background:var(--bg-1);padding:.75rem .85rem;display:flex;align-items:center">
+            <p style="margin:0;color:var(--fg-5);font-size:.875rem">Selecciona un centro de costos para ver su documentación.</p>
           </div>
         } @else if (selectedCentroId === 'todos') {
-          <div style="border-left:4px solid #10b981;border-radius:8px;background:#fafbfc;padding:.75rem .85rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.75rem">
+          <div style="border-left:4px solid var(--ok);border-radius:8px;background:var(--bg-1);padding:.75rem .85rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.75rem">
             <div style="display:flex;align-items:center;gap:.75rem">
-              <div style="width:38px;height:38px;border-radius:9px;background:rgba(16,185,129,.1);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#059669">
+              <div style="width:38px;height:38px;border-radius:9px;background:rgba(16,185,129,.1);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--ok)">
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <polygon points="12 2 2 7 12 12 22 7 12 2"/>
                   <polyline points="2 17 12 22 22 17"/>
@@ -271,16 +271,16 @@
                 </svg>
               </div>
               <div>
-                <p style="margin:0 0 .15rem;font-size:.9rem;font-weight:700;color:#1f2937">Documentación total de centros de costos</p>
-                <p style="margin:0;font-size:.75rem;color:#6b7280">{{ centrosFiltrados.length }} centros de costos</p>
+                <p style="margin:0 0 .15rem;font-size:.9rem;font-weight:700;color:var(--fg-2)">Documentación total de centros de costos</p>
+                <p style="margin:0;font-size:.75rem;color:var(--fg-4)">{{ centrosFiltrados.length }} centros de costos</p>
               </div>
             </div>
             <ng-container *ngTemplateOutlet="ordenCentroChips"></ng-container>
           </div>
         } @else {
-          <div style="border-left:4px solid #10b981;border-radius:8px;background:#fafbfc;padding:.75rem .85rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.75rem">
+          <div style="border-left:4px solid var(--ok);border-radius:8px;background:var(--bg-1);padding:.75rem .85rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.75rem">
             <div style="display:flex;align-items:center;gap:.75rem">
-              <div style="width:38px;height:38px;border-radius:9px;background:rgba(16,185,129,.1);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#059669">
+              <div style="width:38px;height:38px;border-radius:9px;background:rgba(16,185,129,.1);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--ok)">
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <polygon points="12 2 2 7 12 12 22 7 12 2"/>
                   <polyline points="2 17 12 22 22 17"/>
@@ -288,9 +288,9 @@
                 </svg>
               </div>
               <div>
-                <p style="margin:0 0 .15rem;font-size:.9rem;font-weight:700;color:#1f2937">{{ centroNombre }}</p>
+                <p style="margin:0 0 .15rem;font-size:.9rem;font-weight:700;color:var(--fg-2)">{{ centroNombre }}</p>
                 @if (centroSeleccionado) {
-                  <p style="margin:0;font-size:.75rem;color:#6b7280">
+                  <p style="margin:0;font-size:.75rem;color:var(--fg-4)">
                     Código: {{ centroSeleccionado.codigo }}
                     @if (centroSeleccionado.ubicacion_ciudad) { · {{ centroSeleccionado.ubicacion_ciudad }}@if (centroSeleccionado.ubicacion_region) {, {{ centroSeleccionado.ubicacion_region }}} }
                   </p>
@@ -318,29 +318,29 @@
     @if (tabJerarquia() === 'proyecto') {
       <div style="padding:1rem;display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1rem">
         @if (!selectedCentroId) {
-          <div style="border-left:4px solid #e5e7eb;border-radius:8px;background:#f9fafb;padding:.75rem .85rem;display:flex;align-items:center">
-            <p style="margin:0;color:#9ca3af;font-size:.875rem">Selecciona primero un centro de costos para ver sus proyectos.</p>
+          <div style="border-left:4px solid var(--border-subtle);border-radius:8px;background:var(--bg-1);padding:.75rem .85rem;display:flex;align-items:center">
+            <p style="margin:0;color:var(--fg-5);font-size:.875rem">Selecciona primero un centro de costos para ver sus proyectos.</p>
           </div>
         } @else if (!selectedProyectoId) {
-          <div style="border-left:4px solid #e5e7eb;border-radius:8px;background:#f9fafb;padding:.75rem .85rem;display:flex;align-items:center">
-            <p style="margin:0;color:#9ca3af;font-size:.875rem">Selecciona un proyecto para ver su documentación.</p>
+          <div style="border-left:4px solid var(--border-subtle);border-radius:8px;background:var(--bg-1);padding:.75rem .85rem;display:flex;align-items:center">
+            <p style="margin:0;color:var(--fg-5);font-size:.875rem">Selecciona un proyecto para ver su documentación.</p>
           </div>
         } @else if (selectedProyectoId === 'todos') {
-          <div style="border-left:4px solid #f59e0b;border-radius:8px;background:#fafbfc;padding:.75rem .85rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.75rem">
+          <div style="border-left:4px solid var(--warn);border-radius:8px;background:var(--bg-1);padding:.75rem .85rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.75rem">
             <div style="display:flex;align-items:center;gap:.75rem">
-              <div style="width:38px;height:38px;border-radius:9px;background:rgba(245,158,11,.1);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#d97706">
+              <div style="width:38px;height:38px;border-radius:9px;background:rgba(245,158,11,.1);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--warn)">
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
                 </svg>
               </div>
               <div>
                 @if (selectedCentroId === 'todos') {
-                  <p style="margin:0 0 .15rem;font-size:.9rem;font-weight:700;color:#1f2937">Todos los proyectos</p>
-                  <p style="margin:0;font-size:.75rem;color:#6b7280">Todos los centros de costos</p>
+                  <p style="margin:0 0 .15rem;font-size:.9rem;font-weight:700;color:var(--fg-2)">Todos los proyectos</p>
+                  <p style="margin:0;font-size:.75rem;color:var(--fg-4)">Todos los centros de costos</p>
                 } @else {
-                  <p style="margin:0 0 .15rem;font-size:.9rem;font-weight:700;color:#1f2937">Todos los proyectos de: {{ centroNombre }}</p>
+                  <p style="margin:0 0 .15rem;font-size:.9rem;font-weight:700;color:var(--fg-2)">Todos los proyectos de: {{ centroNombre }}</p>
                   @if (centroSeleccionado) {
-                    <p style="margin:0;font-size:.75rem;color:#6b7280">Código: {{ centroSeleccionado.codigo }}</p>
+                    <p style="margin:0;font-size:.75rem;color:var(--fg-4)">Código: {{ centroSeleccionado.codigo }}</p>
                   }
                 }
               </div>
@@ -348,17 +348,17 @@
             <ng-container *ngTemplateOutlet="ordenProyectoChips"></ng-container>
           </div>
         } @else {
-          <div style="border-left:4px solid #f59e0b;border-radius:8px;background:#fafbfc;padding:.75rem .85rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.75rem">
+          <div style="border-left:4px solid var(--warn);border-radius:8px;background:var(--bg-1);padding:.75rem .85rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.75rem">
             <div style="display:flex;align-items:center;gap:.75rem">
-              <div style="width:38px;height:38px;border-radius:9px;background:rgba(245,158,11,.1);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#d97706">
+              <div style="width:38px;height:38px;border-radius:9px;background:rgba(245,158,11,.1);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--warn)">
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
                 </svg>
               </div>
               <div>
-                <p style="margin:0 0 .15rem;font-size:.9rem;font-weight:700;color:#1f2937">{{ proyectoNombre }}</p>
+                <p style="margin:0 0 .15rem;font-size:.9rem;font-weight:700;color:var(--fg-2)">{{ proyectoNombre }}</p>
                 @if (proyectoSeleccionado) {
-                  <p style="margin:0;font-size:.75rem;color:#6b7280">
+                  <p style="margin:0;font-size:.75rem;color:var(--fg-4)">
                     Código: {{ proyectoSeleccionado.codigo }}
                     @if (proyectoSeleccionado.fecha_inicio) { · Inicio: {{ formatFecha(proyectoSeleccionado.fecha_inicio) }} }
                     @if (proyectoSeleccionado.fecha_fin) { — Término: {{ formatFecha(proyectoSeleccionado.fecha_fin) }} }
@@ -390,20 +390,20 @@
   <!-- Chips "Ordenar por" reutilizados dentro de las tarjetas de resumen de Empresa/Centro/Proyecto -->
   <ng-template #ordenEmpresaChips>
     <div style="display:flex;align-items:center;gap:.35rem;flex-wrap:wrap">
-      <span style="font-size:.72rem;font-weight:600;color:#6b7280;margin-right:.15rem">Ordenar por:</span>
+      <span style="font-size:.72rem;font-weight:600;color:var(--fg-4);margin-right:.15rem">Ordenar por:</span>
       <button
         style="padding:.3rem .65rem;border-style:solid;border-width:1px;border-radius:999px;font-size:.75rem;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap"
         [style.background]="ordenEmpresa() === 'recientes' ? 'rgba(0,149,214,.08)' : 'transparent'"
-        [style.color]="ordenEmpresa() === 'recientes' ? '#0095d6' : '#6b7280'"
-        [style.borderColor]="ordenEmpresa() === 'recientes' ? 'rgba(0,149,214,.3)' : '#e5e7eb'"
+        [style.color]="ordenEmpresa() === 'recientes' ? 'var(--sc-cyan)' : 'var(--fg-4)'"
+        [style.borderColor]="ordenEmpresa() === 'recientes' ? 'rgba(0,149,214,.3)' : 'var(--border-subtle)'"
         (click)="ordenEmpresa.set('recientes')">
         Recientes
       </button>
       <button
         style="padding:.3rem .65rem;border-style:solid;border-width:1px;border-radius:999px;font-size:.75rem;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap"
         [style.background]="ordenEmpresa() === 'alfabetico' ? 'rgba(0,149,214,.08)' : 'transparent'"
-        [style.color]="ordenEmpresa() === 'alfabetico' ? '#0095d6' : '#6b7280'"
-        [style.borderColor]="ordenEmpresa() === 'alfabetico' ? 'rgba(0,149,214,.3)' : '#e5e7eb'"
+        [style.color]="ordenEmpresa() === 'alfabetico' ? 'var(--sc-cyan)' : 'var(--fg-4)'"
+        [style.borderColor]="ordenEmpresa() === 'alfabetico' ? 'rgba(0,149,214,.3)' : 'var(--border-subtle)'"
         (click)="ordenEmpresa.set('alfabetico')">
         Alfabético
       </button>
@@ -412,20 +412,20 @@
 
   <ng-template #ordenCentroChips>
     <div style="display:flex;align-items:center;gap:.35rem;flex-wrap:wrap">
-      <span style="font-size:.72rem;font-weight:600;color:#6b7280;margin-right:.15rem">Ordenar por:</span>
+      <span style="font-size:.72rem;font-weight:600;color:var(--fg-4);margin-right:.15rem">Ordenar por:</span>
       <button
         style="padding:.3rem .65rem;border-style:solid;border-width:1px;border-radius:999px;font-size:.75rem;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap"
         [style.background]="ordenCentro() === 'recientes' ? 'rgba(16,185,129,.08)' : 'transparent'"
-        [style.color]="ordenCentro() === 'recientes' ? '#059669' : '#6b7280'"
-        [style.borderColor]="ordenCentro() === 'recientes' ? 'rgba(16,185,129,.3)' : '#e5e7eb'"
+        [style.color]="ordenCentro() === 'recientes' ? 'var(--ok)' : 'var(--fg-4)'"
+        [style.borderColor]="ordenCentro() === 'recientes' ? 'rgba(16,185,129,.3)' : 'var(--border-subtle)'"
         (click)="ordenCentro.set('recientes')">
         Recientes
       </button>
       <button
         style="padding:.3rem .65rem;border-style:solid;border-width:1px;border-radius:999px;font-size:.75rem;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap"
         [style.background]="ordenCentro() === 'alfabetico' ? 'rgba(16,185,129,.08)' : 'transparent'"
-        [style.color]="ordenCentro() === 'alfabetico' ? '#059669' : '#6b7280'"
-        [style.borderColor]="ordenCentro() === 'alfabetico' ? 'rgba(16,185,129,.3)' : '#e5e7eb'"
+        [style.color]="ordenCentro() === 'alfabetico' ? 'var(--ok)' : 'var(--fg-4)'"
+        [style.borderColor]="ordenCentro() === 'alfabetico' ? 'rgba(16,185,129,.3)' : 'var(--border-subtle)'"
         (click)="ordenCentro.set('alfabetico')">
         Alfabético
       </button>
@@ -434,20 +434,20 @@
 
   <ng-template #ordenProyectoChips>
     <div style="display:flex;align-items:center;gap:.35rem;flex-wrap:wrap">
-      <span style="font-size:.72rem;font-weight:600;color:#6b7280;margin-right:.15rem">Ordenar por:</span>
+      <span style="font-size:.72rem;font-weight:600;color:var(--fg-4);margin-right:.15rem">Ordenar por:</span>
       <button
         style="padding:.3rem .65rem;border-style:solid;border-width:1px;border-radius:999px;font-size:.75rem;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap"
         [style.background]="ordenProyecto() === 'recientes' ? 'rgba(245,158,11,.08)' : 'transparent'"
-        [style.color]="ordenProyecto() === 'recientes' ? '#d97706' : '#6b7280'"
-        [style.borderColor]="ordenProyecto() === 'recientes' ? 'rgba(245,158,11,.3)' : '#e5e7eb'"
+        [style.color]="ordenProyecto() === 'recientes' ? 'var(--warn)' : 'var(--fg-4)'"
+        [style.borderColor]="ordenProyecto() === 'recientes' ? 'rgba(245,158,11,.3)' : 'var(--border-subtle)'"
         (click)="ordenProyecto.set('recientes')">
         Recientes
       </button>
       <button
         style="padding:.3rem .65rem;border-style:solid;border-width:1px;border-radius:999px;font-size:.75rem;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap"
         [style.background]="ordenProyecto() === 'alfabetico' ? 'rgba(245,158,11,.08)' : 'transparent'"
-        [style.color]="ordenProyecto() === 'alfabetico' ? '#d97706' : '#6b7280'"
-        [style.borderColor]="ordenProyecto() === 'alfabetico' ? 'rgba(245,158,11,.3)' : '#e5e7eb'"
+        [style.color]="ordenProyecto() === 'alfabetico' ? 'var(--warn)' : 'var(--fg-4)'"
+        [style.borderColor]="ordenProyecto() === 'alfabetico' ? 'rgba(245,158,11,.3)' : 'var(--border-subtle)'"
         (click)="ordenProyecto.set('alfabetico')">
         Alfabético
       </button>
@@ -461,13 +461,13 @@
     <div class="card" style="padding:0">
 
       <!-- Sub-tab strip con iconos -->
-      <div style="border-bottom:1px solid #f0f0f0">
+      <div style="border-bottom:1px solid var(--border-subtle)">
         <div style="padding:.5rem">
-          <div style="display:flex;gap:.25rem;background:#f3f4f6;border-radius:10px;padding:.25rem">
+          <div style="display:flex;gap:.25rem;background:var(--bg-2);border-radius:10px;padding:.25rem">
             <button
               style="flex:1;padding:.55rem 1rem;border-style:solid;border-width:1px;border-radius:8px;font-size:.875rem;font-weight:600;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;justify-content:center;gap:.4rem"
               [style.background]="tabAdminActiva() === 'documentacion' ? 'rgba(0,149,214,.08)' : 'transparent'"
-              [style.color]="tabAdminActiva() === 'documentacion' ? '#0095d6' : '#6b7280'"
+              [style.color]="tabAdminActiva() === 'documentacion' ? 'var(--sc-cyan)' : 'var(--fg-4)'"
               [style.borderColor]="tabAdminActiva() === 'documentacion' ? 'rgba(0,149,214,.18)' : 'transparent'"
               (click)="tabAdminActiva.set('documentacion')">
               <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -481,7 +481,7 @@
               <button
                 style="flex:1;padding:.55rem 1rem;border-style:solid;border-width:1px;border-radius:8px;font-size:.875rem;font-weight:600;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;justify-content:center;gap:.4rem"
                 [style.background]="tabAdminActiva() === 'solicitudes' ? 'rgba(22,163,74,.08)' : 'transparent'"
-                [style.color]="tabAdminActiva() === 'solicitudes' ? '#16a34a' : '#6b7280'"
+                [style.color]="tabAdminActiva() === 'solicitudes' ? 'var(--ok)' : 'var(--fg-4)'"
                 [style.borderColor]="tabAdminActiva() === 'solicitudes' ? 'rgba(22,163,74,.18)' : 'transparent'"
                 (click)="tabAdminActiva.set('solicitudes')">
                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -508,9 +508,9 @@
                 }
                 <button
                   style="flex:1;padding:.3rem .5rem;border-style:solid;border-width:1px;border-radius:6px;font-size:.78rem;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap;display:inline-flex;align-items:center;justify-content:center;gap:.35rem"
-                  [style.background]="tabDocAdmin() === 'activos' ? '#f0f9ff' : 'transparent'"
-                  [style.color]="tabDocAdmin() === 'activos' ? '#0095d6' : '#6b7280'"
-                  [style.borderColor]="tabDocAdmin() === 'activos' ? 'rgba(0,149,214,.25)' : '#e5e7eb'"
+                  [style.background]="tabDocAdmin() === 'activos' ? 'var(--sc-cyan-tint-6)' : 'transparent'"
+                  [style.color]="tabDocAdmin() === 'activos' ? 'var(--sc-cyan)' : 'var(--fg-4)'"
+                  [style.borderColor]="tabDocAdmin() === 'activos' ? 'rgba(0,149,214,.25)' : 'var(--border-subtle)'"
                   (click)="tabDocAdmin.set('activos')">
                   <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0">
                     <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
@@ -520,8 +520,8 @@
                 <button
                   style="flex:1;padding:.3rem .5rem;border-style:solid;border-width:1px;border-radius:6px;font-size:.78rem;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap;display:inline-flex;align-items:center;justify-content:center;gap:.35rem"
                   [style.background]="tabDocAdmin() === 'vencidos' ? 'rgba(239,68,68,.06)' : 'transparent'"
-                  [style.color]="tabDocAdmin() === 'vencidos' ? '#dc2626' : '#6b7280'"
-                  [style.borderColor]="tabDocAdmin() === 'vencidos' ? 'rgba(239,68,68,.25)' : '#e5e7eb'"
+                  [style.color]="tabDocAdmin() === 'vencidos' ? 'var(--danger)' : 'var(--fg-4)'"
+                  [style.borderColor]="tabDocAdmin() === 'vencidos' ? 'rgba(239,68,68,.25)' : 'var(--border-subtle)'"
                   [style.opacity]="selectedEmpresaId === 'todos' ? '0.45' : '1'"
                   [disabled]="selectedEmpresaId === 'todos'"
                   (click)="activarTabVencidosAdmin()">
@@ -559,30 +559,30 @@
             @if (filasTodos().length === 0) {
               <p class="empty">{{ service.busquedaCascadaError() ? 'No se pudo cargar la búsqueda total. Intenta de nuevo.' : 'Sin documentos para el filtro actual.' }}</p>
             } @else {
-              <div style="border:1px solid #e5e7eb;border-radius:8px">
-                <div style="display:flex;justify-content:space-between;padding:.5rem 1rem;background:#f9fafb;border-bottom:1px solid #e5e7eb;border-top-left-radius:8px;border-top-right-radius:8px">
-                  <span style="font-size:.7rem;font-weight:700;color:#9ca3af;letter-spacing:.07em;text-transform:uppercase">Documento</span>
-                  <span style="font-size:.7rem;font-weight:700;color:#9ca3af;letter-spacing:.07em;text-transform:uppercase">Acciones</span>
+              <div style="border:1px solid var(--border-subtle);border-radius:8px">
+                <div style="display:flex;justify-content:space-between;padding:.5rem 1rem;background:var(--bg-1);border-bottom:1px solid var(--border-subtle);border-top-left-radius:8px;border-top-right-radius:8px">
+                  <span style="font-size:.7rem;font-weight:700;color:var(--fg-5);letter-spacing:.07em;text-transform:uppercase">Documento</span>
+                  <span style="font-size:.7rem;font-weight:700;color:var(--fg-5);letter-spacing:.07em;text-transform:uppercase">Acciones</span>
                 </div>
                 @for (fila of filasTodos(); track fila.doc._id + '|' + fila.empresaId + '|' + (fila.centroId || '') + '|' + (fila.proyectoId || '')) {
-                  <div style="display:flex;align-items:center;justify-content:space-between;padding:.6rem 1rem;border-bottom:1px solid #f3f4f6">
+                  <div style="display:flex;align-items:center;justify-content:space-between;padding:.6rem 1rem;border-bottom:1px solid var(--bg-2)">
                     <div style="display:flex;align-items:center;gap:.6rem;min-width:0">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                      <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--fg-5)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
                       <div style="min-width:0;overflow:hidden">
                         <div style="display:flex;align-items:center;gap:.4rem;flex-wrap:wrap">
                           <span style="font-size:.7rem;font-weight:600;padding:.2rem .55rem;border-radius:999px;background:#e0e7ff;color:#3730a3;white-space:nowrap;flex-shrink:0">{{ fila.doc.categoria }}</span>
-                          <span style="font-size:.875rem;color:#1f2937;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ fila.doc.nombre_display }}</span>
+                          <span style="font-size:.875rem;color:var(--fg-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ fila.doc.nombre_display }}</span>
                           @if (fila.doc.tipo_contenido === 'link') {
                             <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:#ecfdf5;color:#047857;flex-shrink:0">🔗 Link</span>
                           }
                         </div>
                         <div style="margin-top:.2rem;display:flex;align-items:center;gap:.5rem;flex-wrap:wrap">
-                          <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:rgba(0,149,214,.1);color:#0095d6">Empresa · {{ fila.empresaNombre }}</span>
+                          <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:rgba(0,149,214,.1);color:var(--sc-cyan)">Empresa · {{ fila.empresaNombre }}</span>
                           @if (fila.centroId) {
-                            <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:rgba(16,185,129,.1);color:#059669">Centro · {{ fila.centroNombre }}</span>
+                            <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:rgba(16,185,129,.1);color:var(--ok)">Centro · {{ fila.centroNombre }}</span>
                           }
                           @if (fila.proyectoId) {
-                            <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:rgba(245,158,11,.1);color:#d97706">Proyecto · {{ fila.proyectoNombre }}</span>
+                            <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:rgba(245,158,11,.1);color:var(--warn)">Proyecto · {{ fila.proyectoNombre }}</span>
                           }
                           <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:#f1f5f9;color:#475569">Subido: {{ formatFechaHora(fila.doc.subido_en) }}</span>
                           @if (fila.doc.subido_por_nombre) {
@@ -593,7 +593,7 @@
                     </div>
                     <div style="display:flex;gap:.35rem;flex-shrink:0">
                       <button (click)="abrirDocumento(fila.doc)"
-                              style="padding:.35rem .65rem;border-radius:7px;border:none;background:#eff6ff;color:#0095d6;cursor:pointer;display:inline-flex;align-items:center;gap:.35rem;font-size:.72rem;font-weight:600;white-space:nowrap">
+                              style="padding:.35rem .65rem;border-radius:7px;border:none;background:var(--sc-cyan-tint-6);color:var(--sc-cyan);cursor:pointer;display:inline-flex;align-items:center;gap:.35rem;font-size:.72rem;font-weight:600;white-space:nowrap">
                         @if (fila.doc.tipo_contenido === 'link') {
                           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
                         } @else {
@@ -608,12 +608,12 @@
                         </button>
                         @if (categoriaMenuAbierto() === fila.doc._id) {
                           <div style="position:fixed;inset:0;z-index:60" (click)="categoriaMenuAbierto.set(null)"></div>
-                          <div style="position:absolute;top:36px;right:0;background:#fff;border:1px solid #e5e7eb;border-radius:8px;box-shadow:0 8px 24px rgba(15,23,42,.14);z-index:61;min-width:190px;max-height:240px;overflow-y:auto;padding:.25rem">
+                          <div style="position:absolute;top:36px;right:0;background:var(--bg-0);border:1px solid var(--border-subtle);border-radius:8px;box-shadow:0 8px 24px rgba(15,23,42,.14);z-index:61;min-width:190px;max-height:240px;overflow-y:auto;padding:.25rem">
                             @for (cat of categorias; track cat) {
                               <div (click)="seleccionarCategoriaTodos(fila.doc.url, cat)"
                                    style="padding:.4rem .65rem;font-size:.8rem;border-radius:6px;cursor:pointer"
                                    [style.font-weight]="cat === fila.doc.categoria ? '700' : '400'"
-                                   [style.color]="cat === fila.doc.categoria ? '#3730a3' : '#374151'"
+                                   [style.color]="cat === fila.doc.categoria ? '#3730a3' : 'var(--fg-2)'"
                                    [style.background]="cat === fila.doc.categoria ? '#eef2ff' : 'transparent'">
                                 {{ cat }}
                               </div>
@@ -623,14 +623,14 @@
                       </div>
                       @if (puedeDoc(fila.tipo, 'vencer')) {
                       <button (click)="abrirModalVencer(fila.doc, fila.centroId, fila.proyectoId, fila.empresaId, fila.tipo)"
-                              style="padding:.35rem .65rem;border-radius:7px;border:none;background:#fffbeb;color:#d97706;cursor:pointer;display:inline-flex;align-items:center;gap:.35rem;font-size:.72rem;font-weight:600;white-space:nowrap">
+                              style="padding:.35rem .65rem;border-radius:7px;border:none;background:var(--warn-bg);color:var(--warn);cursor:pointer;display:inline-flex;align-items:center;gap:.35rem;font-size:.72rem;font-weight:600;white-space:nowrap">
                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                         Marcar vencido
                       </button>
                       }
                       @if (puedeDoc(fila.tipo, 'eliminar')) {
                       <button (click)="eliminarEnTodos(fila.doc.url, fila.doc.nombre_display)"
-                              style="padding:.35rem .65rem;border-radius:7px;border:none;background:#fef2f2;color:#dc2626;cursor:pointer;display:inline-flex;align-items:center;gap:.35rem;font-size:.72rem;font-weight:600;white-space:nowrap">
+                              style="padding:.35rem .65rem;border-radius:7px;border:none;background:var(--danger-bg);color:var(--danger);cursor:pointer;display:inline-flex;align-items:center;gap:.35rem;font-size:.72rem;font-weight:600;white-space:nowrap">
                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
                         Eliminar
                       </button>
@@ -691,30 +691,30 @@
             <!-- Lista documentos -->
             @if (docsFiltrados(docTipo).length === 0) { <p class="empty">Sin documentos.</p> }
             @else {
-              <div style="border:1px solid #e5e7eb;border-radius:8px">
-                <div style="display:flex;justify-content:space-between;padding:.5rem 1rem;background:#f9fafb;border-bottom:1px solid #e5e7eb;border-top-left-radius:8px;border-top-right-radius:8px">
-                  <span style="font-size:.7rem;font-weight:700;color:#9ca3af;letter-spacing:.07em;text-transform:uppercase">Documento</span>
-                  <span style="font-size:.7rem;font-weight:700;color:#9ca3af;letter-spacing:.07em;text-transform:uppercase">Acciones</span>
+              <div style="border:1px solid var(--border-subtle);border-radius:8px">
+                <div style="display:flex;justify-content:space-between;padding:.5rem 1rem;background:var(--bg-1);border-bottom:1px solid var(--border-subtle);border-top-left-radius:8px;border-top-right-radius:8px">
+                  <span style="font-size:.7rem;font-weight:700;color:var(--fg-5);letter-spacing:.07em;text-transform:uppercase">Documento</span>
+                  <span style="font-size:.7rem;font-weight:700;color:var(--fg-5);letter-spacing:.07em;text-transform:uppercase">Acciones</span>
                 </div>
                 @for (d of docsFiltrados(docTipo); track d._id) {
-                  <div style="display:flex;align-items:center;justify-content:space-between;padding:.6rem 1rem;border-bottom:1px solid #f3f4f6">
+                  <div style="display:flex;align-items:center;justify-content:space-between;padding:.6rem 1rem;border-bottom:1px solid var(--bg-2)">
                     <div style="display:flex;align-items:center;gap:.6rem;min-width:0">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                      <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--fg-5)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
                       <div style="min-width:0;overflow:hidden">
                         <div style="display:flex;align-items:center;gap:.4rem;flex-wrap:wrap">
                           <span style="font-size:.7rem;font-weight:600;padding:.2rem .55rem;border-radius:999px;background:#e0e7ff;color:#3730a3;white-space:nowrap;flex-shrink:0">{{ d.categoria }}</span>
-                          <span style="font-size:.875rem;color:#1f2937;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ d.nombre_display }}</span>
+                          <span style="font-size:.875rem;color:var(--fg-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ d.nombre_display }}</span>
                           @if (d.tipo_contenido === 'link') {
                             <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:#ecfdf5;color:#047857;flex-shrink:0">🔗 Link</span>
                           }
                         </div>
                         <div style="margin-top:.2rem;display:flex;align-items:center;gap:.5rem;flex-wrap:wrap">
                           @if (docTipo === 'empresa') {
-                            <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:rgba(0,149,214,.1);color:#0095d6">Empresa</span>
+                            <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:rgba(0,149,214,.1);color:var(--sc-cyan)">Empresa</span>
                           } @else if (docTipo === 'centro') {
-                            <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:rgba(16,185,129,.1);color:#059669">Centro{{ centroNombre ? ' · ' + centroNombre : '' }}</span>
+                            <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:rgba(16,185,129,.1);color:var(--ok)">Centro{{ centroNombre ? ' · ' + centroNombre : '' }}</span>
                           } @else if (docTipo === 'proyecto') {
-                            <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:rgba(245,158,11,.1);color:#d97706">Proyecto{{ proyectoNombre ? ' · ' + proyectoNombre : '' }}</span>
+                            <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:rgba(245,158,11,.1);color:var(--warn)">Proyecto{{ proyectoNombre ? ' · ' + proyectoNombre : '' }}</span>
                           }
                           <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:#f1f5f9;color:#475569">Subido: {{ formatFechaHora(d.subido_en) }}</span>
                           @if (d.subido_por_nombre) {
@@ -725,7 +725,7 @@
                     </div>
                     <div style="display:flex;gap:.35rem;flex-shrink:0">
                       <button (click)="abrirDocumento(d)"
-                              style="padding:.35rem .65rem;border-radius:7px;border:none;background:#eff6ff;color:#0095d6;cursor:pointer;display:inline-flex;align-items:center;gap:.35rem;font-size:.72rem;font-weight:600;white-space:nowrap">
+                              style="padding:.35rem .65rem;border-radius:7px;border:none;background:var(--sc-cyan-tint-6);color:var(--sc-cyan);cursor:pointer;display:inline-flex;align-items:center;gap:.35rem;font-size:.72rem;font-weight:600;white-space:nowrap">
                         @if (d.tipo_contenido === 'link') {
                           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
                         } @else {
@@ -740,12 +740,12 @@
                         </button>
                         @if (categoriaMenuAbierto() === d._id) {
                           <div style="position:fixed;inset:0;z-index:60" (click)="categoriaMenuAbierto.set(null)"></div>
-                          <div style="position:absolute;top:36px;right:0;background:#fff;border:1px solid #e5e7eb;border-radius:8px;box-shadow:0 8px 24px rgba(15,23,42,.14);z-index:61;min-width:190px;max-height:240px;overflow-y:auto;padding:.25rem">
+                          <div style="position:absolute;top:36px;right:0;background:var(--bg-0);border:1px solid var(--border-subtle);border-radius:8px;box-shadow:0 8px 24px rgba(15,23,42,.14);z-index:61;min-width:190px;max-height:240px;overflow-y:auto;padding:.25rem">
                             @for (cat of categorias; track cat) {
                               <div (click)="seleccionarCategoria(d.url, cat, docTipo)"
                                    style="padding:.4rem .65rem;font-size:.8rem;border-radius:6px;cursor:pointer"
                                    [style.font-weight]="cat === d.categoria ? '700' : '400'"
-                                   [style.color]="cat === d.categoria ? '#3730a3' : '#374151'"
+                                   [style.color]="cat === d.categoria ? '#3730a3' : 'var(--fg-2)'"
                                    [style.background]="cat === d.categoria ? '#eef2ff' : 'transparent'">
                                 {{ cat }}
                               </div>
@@ -755,14 +755,14 @@
                       </div>
                       @if (puedeDoc(docTipo, 'vencer')) {
                       <button (click)="abrirModalVencer(d)"
-                              style="padding:.35rem .65rem;border-radius:7px;border:none;background:#fffbeb;color:#d97706;cursor:pointer;display:inline-flex;align-items:center;gap:.35rem;font-size:.72rem;font-weight:600;white-space:nowrap">
+                              style="padding:.35rem .65rem;border-radius:7px;border:none;background:var(--warn-bg);color:var(--warn);cursor:pointer;display:inline-flex;align-items:center;gap:.35rem;font-size:.72rem;font-weight:600;white-space:nowrap">
                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                         Marcar vencido
                       </button>
                       }
                       @if (puedeDoc(docTipo, 'eliminar')) {
                       <button (click)="eliminar(d.url, docTipo, d.nombre_display)"
-                              style="padding:.35rem .65rem;border-radius:7px;border:none;background:#fef2f2;color:#dc2626;cursor:pointer;display:inline-flex;align-items:center;gap:.35rem;font-size:.72rem;font-weight:600;white-space:nowrap">
+                              style="padding:.35rem .65rem;border-radius:7px;border:none;background:var(--danger-bg);color:var(--danger);cursor:pointer;display:inline-flex;align-items:center;gap:.35rem;font-size:.72rem;font-weight:600;white-space:nowrap">
                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
                         Eliminar
                       </button>
@@ -779,25 +779,25 @@
             @if (docsEmpresaTodas().length === 0) {
               <p class="empty">Sin documentos.</p>
             } @else {
-              <div style="border:1px solid #e5e7eb;border-radius:8px">
-                <div style="display:flex;justify-content:space-between;padding:.5rem 1rem;background:#f9fafb;border-bottom:1px solid #e5e7eb;border-top-left-radius:8px;border-top-right-radius:8px">
-                  <span style="font-size:.7rem;font-weight:700;color:#9ca3af;letter-spacing:.07em;text-transform:uppercase">Documento</span>
-                  <span style="font-size:.7rem;font-weight:700;color:#9ca3af;letter-spacing:.07em;text-transform:uppercase">Acciones</span>
+              <div style="border:1px solid var(--border-subtle);border-radius:8px">
+                <div style="display:flex;justify-content:space-between;padding:.5rem 1rem;background:var(--bg-1);border-bottom:1px solid var(--border-subtle);border-top-left-radius:8px;border-top-right-radius:8px">
+                  <span style="font-size:.7rem;font-weight:700;color:var(--fg-5);letter-spacing:.07em;text-transform:uppercase">Documento</span>
+                  <span style="font-size:.7rem;font-weight:700;color:var(--fg-5);letter-spacing:.07em;text-transform:uppercase">Acciones</span>
                 </div>
                 @for (fila of docsEmpresaTodas(); track fila.doc._id) {
-                  <div style="display:flex;align-items:center;justify-content:space-between;padding:.6rem 1rem;border-bottom:1px solid #f3f4f6">
+                  <div style="display:flex;align-items:center;justify-content:space-between;padding:.6rem 1rem;border-bottom:1px solid var(--bg-2)">
                     <div style="display:flex;align-items:center;gap:.6rem;min-width:0">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                      <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--fg-5)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
                       <div style="min-width:0;overflow:hidden">
                         <div style="display:flex;align-items:center;gap:.4rem;flex-wrap:wrap">
                           <span style="font-size:.7rem;font-weight:600;padding:.2rem .55rem;border-radius:999px;background:#e0e7ff;color:#3730a3;white-space:nowrap;flex-shrink:0">{{ fila.doc.categoria }}</span>
-                          <span style="font-size:.875rem;color:#1f2937;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ fila.doc.nombre_display }}</span>
+                          <span style="font-size:.875rem;color:var(--fg-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ fila.doc.nombre_display }}</span>
                           @if (fila.doc.tipo_contenido === 'link') {
                             <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:#ecfdf5;color:#047857;flex-shrink:0">🔗 Link</span>
                           }
                         </div>
                         <div style="margin-top:.2rem;display:flex;align-items:center;gap:.5rem;flex-wrap:wrap">
-                          <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:rgba(0,149,214,.1);color:#0095d6">Empresa · {{ fila.empresaNombre }}</span>
+                          <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:rgba(0,149,214,.1);color:var(--sc-cyan)">Empresa · {{ fila.empresaNombre }}</span>
                           <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:#f1f5f9;color:#475569">Subido: {{ formatFechaHora(fila.doc.subido_en) }}</span>
                           @if (fila.doc.subido_por_nombre) {
                             <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:#f0fdfa;color:#0f766e">{{ fila.doc.subido_por_nombre }}</span>
@@ -807,7 +807,7 @@
                     </div>
                     <div style="display:flex;gap:.35rem;flex-shrink:0">
                       <button (click)="abrirDocumento(fila.doc)"
-                              style="padding:.35rem .65rem;border-radius:7px;border:none;background:#eff6ff;color:#0095d6;cursor:pointer;display:inline-flex;align-items:center;gap:.35rem;font-size:.72rem;font-weight:600;white-space:nowrap">
+                              style="padding:.35rem .65rem;border-radius:7px;border:none;background:var(--sc-cyan-tint-6);color:var(--sc-cyan);cursor:pointer;display:inline-flex;align-items:center;gap:.35rem;font-size:.72rem;font-weight:600;white-space:nowrap">
                         @if (fila.doc.tipo_contenido === 'link') {
                           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
                         } @else {
@@ -822,12 +822,12 @@
                         </button>
                         @if (categoriaMenuAbierto() === fila.doc._id) {
                           <div style="position:fixed;inset:0;z-index:60" (click)="categoriaMenuAbierto.set(null)"></div>
-                          <div style="position:absolute;top:36px;right:0;background:#fff;border:1px solid #e5e7eb;border-radius:8px;box-shadow:0 8px 24px rgba(15,23,42,.14);z-index:61;min-width:190px;max-height:240px;overflow-y:auto;padding:.25rem">
+                          <div style="position:absolute;top:36px;right:0;background:var(--bg-0);border:1px solid var(--border-subtle);border-radius:8px;box-shadow:0 8px 24px rgba(15,23,42,.14);z-index:61;min-width:190px;max-height:240px;overflow-y:auto;padding:.25rem">
                             @for (cat of categorias; track cat) {
                               <div (click)="seleccionarCategoriaTodasEmpresas(fila.doc.url, cat, 'empresa')"
                                    style="padding:.4rem .65rem;font-size:.8rem;border-radius:6px;cursor:pointer"
                                    [style.font-weight]="cat === fila.doc.categoria ? '700' : '400'"
-                                   [style.color]="cat === fila.doc.categoria ? '#3730a3' : '#374151'"
+                                   [style.color]="cat === fila.doc.categoria ? '#3730a3' : 'var(--fg-2)'"
                                    [style.background]="cat === fila.doc.categoria ? '#eef2ff' : 'transparent'">
                                 {{ cat }}
                               </div>
@@ -837,14 +837,14 @@
                       </div>
                       @if (puedeDoc('empresa', 'vencer')) {
                       <button (click)="abrirModalVencer(fila.doc, undefined, undefined, fila.empresaId, 'empresa')"
-                              style="padding:.35rem .65rem;border-radius:7px;border:none;background:#fffbeb;color:#d97706;cursor:pointer;display:inline-flex;align-items:center;gap:.35rem;font-size:.72rem;font-weight:600;white-space:nowrap">
+                              style="padding:.35rem .65rem;border-radius:7px;border:none;background:var(--warn-bg);color:var(--warn);cursor:pointer;display:inline-flex;align-items:center;gap:.35rem;font-size:.72rem;font-weight:600;white-space:nowrap">
                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                         Marcar vencido
                       </button>
                       }
                       @if (puedeDoc('empresa', 'eliminar')) {
                       <button (click)="eliminarEnTodasEmpresas(fila.doc.url, fila.empresaId, fila.doc.nombre_display)"
-                              style="padding:.35rem .65rem;border-radius:7px;border:none;background:#fef2f2;color:#dc2626;cursor:pointer;display:inline-flex;align-items:center;gap:.35rem;font-size:.72rem;font-weight:600;white-space:nowrap">
+                              style="padding:.35rem .65rem;border-radius:7px;border:none;background:var(--danger-bg);color:var(--danger);cursor:pointer;display:inline-flex;align-items:center;gap:.35rem;font-size:.72rem;font-weight:600;white-space:nowrap">
                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
                         Eliminar
                       </button>
@@ -863,26 +863,26 @@
             }
             @for (item of filteredDocsPorCentro(); track item.nombre) {
               <div style="margin-bottom:1rem">
-                <p style="margin:0 0 .5rem;font-size:.875rem;font-weight:700;color:#374151">{{ item.nombre }}</p>
-                <div style="border:1px solid #e5e7eb;border-radius:8px">
-                  <div style="display:flex;justify-content:space-between;padding:.5rem 1rem;background:#f9fafb;border-bottom:1px solid #e5e7eb;border-top-left-radius:8px;border-top-right-radius:8px">
-                    <span style="font-size:.7rem;font-weight:700;color:#9ca3af;letter-spacing:.07em;text-transform:uppercase">Documento</span>
-                    <span style="font-size:.7rem;font-weight:700;color:#9ca3af;letter-spacing:.07em;text-transform:uppercase">Acciones</span>
+                <p style="margin:0 0 .5rem;font-size:.875rem;font-weight:700;color:var(--fg-2)">{{ item.nombre }}</p>
+                <div style="border:1px solid var(--border-subtle);border-radius:8px">
+                  <div style="display:flex;justify-content:space-between;padding:.5rem 1rem;background:var(--bg-1);border-bottom:1px solid var(--border-subtle);border-top-left-radius:8px;border-top-right-radius:8px">
+                    <span style="font-size:.7rem;font-weight:700;color:var(--fg-5);letter-spacing:.07em;text-transform:uppercase">Documento</span>
+                    <span style="font-size:.7rem;font-weight:700;color:var(--fg-5);letter-spacing:.07em;text-transform:uppercase">Acciones</span>
                   </div>
                   @for (d of item.docs; track d._id) {
-                    <div style="display:flex;align-items:center;justify-content:space-between;padding:.6rem 1rem;border-bottom:1px solid #f3f4f6">
+                    <div style="display:flex;align-items:center;justify-content:space-between;padding:.6rem 1rem;border-bottom:1px solid var(--bg-2)">
                       <div style="display:flex;align-items:center;gap:.6rem;min-width:0">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--fg-5)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
                         <div style="min-width:0;overflow:hidden">
                           <div style="display:flex;align-items:center;gap:.4rem;flex-wrap:wrap">
                             <span style="font-size:.7rem;font-weight:600;padding:.2rem .55rem;border-radius:999px;background:#e0e7ff;color:#3730a3;white-space:nowrap;flex-shrink:0">{{ d.categoria }}</span>
-                            <span style="font-size:.875rem;color:#1f2937;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ d.nombre_display }}</span>
+                            <span style="font-size:.875rem;color:var(--fg-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ d.nombre_display }}</span>
                             @if (d.tipo_contenido === 'link') {
                               <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:#ecfdf5;color:#047857;flex-shrink:0">🔗 Link</span>
                             }
                           </div>
                           <div style="margin-top:.2rem;display:flex;align-items:center;gap:.5rem;flex-wrap:wrap">
-                            <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:rgba(16,185,129,.1);color:#059669">Centro · {{ item.nombre }}</span>
+                            <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:rgba(16,185,129,.1);color:var(--ok)">Centro · {{ item.nombre }}</span>
                             <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:#f1f5f9;color:#475569">Subido: {{ formatFechaHora(d.subido_en) }}</span>
                             @if (d.subido_por_nombre) {
                               <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:#f0fdfa;color:#0f766e">{{ d.subido_por_nombre }}</span>
@@ -892,7 +892,7 @@
                       </div>
                       <div style="display:flex;gap:.3rem;flex-shrink:0">
                         <button (click)="abrirDocumento(d)"
-                                style="padding:.35rem .65rem;border-radius:7px;border:none;background:#eff6ff;color:#0095d6;cursor:pointer;display:inline-flex;align-items:center;gap:.35rem;font-size:.72rem;font-weight:600;white-space:nowrap">
+                                style="padding:.35rem .65rem;border-radius:7px;border:none;background:var(--sc-cyan-tint-6);color:var(--sc-cyan);cursor:pointer;display:inline-flex;align-items:center;gap:.35rem;font-size:.72rem;font-weight:600;white-space:nowrap">
                           @if (d.tipo_contenido === 'link') {
                             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
                           } @else {
@@ -907,12 +907,12 @@
                           </button>
                           @if (categoriaMenuAbierto() === d._id) {
                             <div style="position:fixed;inset:0;z-index:60" (click)="categoriaMenuAbierto.set(null)"></div>
-                            <div style="position:absolute;top:36px;right:0;background:#fff;border:1px solid #e5e7eb;border-radius:8px;box-shadow:0 8px 24px rgba(15,23,42,.14);z-index:61;min-width:190px;max-height:240px;overflow-y:auto;padding:.25rem">
+                            <div style="position:absolute;top:36px;right:0;background:var(--bg-0);border:1px solid var(--border-subtle);border-radius:8px;box-shadow:0 8px 24px rgba(15,23,42,.14);z-index:61;min-width:190px;max-height:240px;overflow-y:auto;padding:.25rem">
                               @for (cat of categorias; track cat) {
                                 <div (click)="seleccionarCategoria(d.url, cat, 'centro')"
                                      style="padding:.4rem .65rem;font-size:.8rem;border-radius:6px;cursor:pointer"
                                      [style.font-weight]="cat === d.categoria ? '700' : '400'"
-                                     [style.color]="cat === d.categoria ? '#3730a3' : '#374151'"
+                                     [style.color]="cat === d.categoria ? '#3730a3' : 'var(--fg-2)'"
                                      [style.background]="cat === d.categoria ? '#eef2ff' : 'transparent'">
                                   {{ cat }}
                                 </div>
@@ -922,14 +922,14 @@
                         </div>
                         @if (puedeDoc('centro', 'vencer')) {
                         <button (click)="abrirModalVencer(d, item.centroId)"
-                                style="padding:.35rem .65rem;border-radius:7px;border:none;background:#fffbeb;color:#d97706;cursor:pointer;display:inline-flex;align-items:center;gap:.35rem;font-size:.72rem;font-weight:600;white-space:nowrap">
+                                style="padding:.35rem .65rem;border-radius:7px;border:none;background:var(--warn-bg);color:var(--warn);cursor:pointer;display:inline-flex;align-items:center;gap:.35rem;font-size:.72rem;font-weight:600;white-space:nowrap">
                           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                           Marcar vencido
                         </button>
                         }
                         @if (puedeDoc('centro', 'eliminar')) {
                         <button (click)="eliminarEnTodosCentros(d.url, d.nombre_display)"
-                                style="padding:.35rem .65rem;border-radius:7px;border:none;background:#fef2f2;color:#dc2626;cursor:pointer;display:inline-flex;align-items:center;gap:.35rem;font-size:.72rem;font-weight:600;white-space:nowrap">
+                                style="padding:.35rem .65rem;border-radius:7px;border:none;background:var(--danger-bg);color:var(--danger);cursor:pointer;display:inline-flex;align-items:center;gap:.35rem;font-size:.72rem;font-weight:600;white-space:nowrap">
                           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
                           Eliminar
                         </button>
@@ -947,26 +947,26 @@
             @if (docsCentroTodas().length === 0) {
               <p class="empty">Sin documentos en centros de costos.</p>
             } @else {
-              <div style="border:1px solid #e5e7eb;border-radius:8px">
-                <div style="display:flex;justify-content:space-between;padding:.5rem 1rem;background:#f9fafb;border-bottom:1px solid #e5e7eb;border-top-left-radius:8px;border-top-right-radius:8px">
-                  <span style="font-size:.7rem;font-weight:700;color:#9ca3af;letter-spacing:.07em;text-transform:uppercase">Documento</span>
-                  <span style="font-size:.7rem;font-weight:700;color:#9ca3af;letter-spacing:.07em;text-transform:uppercase">Acciones</span>
+              <div style="border:1px solid var(--border-subtle);border-radius:8px">
+                <div style="display:flex;justify-content:space-between;padding:.5rem 1rem;background:var(--bg-1);border-bottom:1px solid var(--border-subtle);border-top-left-radius:8px;border-top-right-radius:8px">
+                  <span style="font-size:.7rem;font-weight:700;color:var(--fg-5);letter-spacing:.07em;text-transform:uppercase">Documento</span>
+                  <span style="font-size:.7rem;font-weight:700;color:var(--fg-5);letter-spacing:.07em;text-transform:uppercase">Acciones</span>
                 </div>
                 @for (fila of docsCentroTodas(); track fila.doc._id) {
-                  <div style="display:flex;align-items:center;justify-content:space-between;padding:.6rem 1rem;border-bottom:1px solid #f3f4f6">
+                  <div style="display:flex;align-items:center;justify-content:space-between;padding:.6rem 1rem;border-bottom:1px solid var(--bg-2)">
                     <div style="display:flex;align-items:center;gap:.6rem;min-width:0">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                      <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--fg-5)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
                       <div style="min-width:0;overflow:hidden">
                         <div style="display:flex;align-items:center;gap:.4rem;flex-wrap:wrap">
                           <span style="font-size:.7rem;font-weight:600;padding:.2rem .55rem;border-radius:999px;background:#e0e7ff;color:#3730a3;white-space:nowrap;flex-shrink:0">{{ fila.doc.categoria }}</span>
-                          <span style="font-size:.875rem;color:#1f2937;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ fila.doc.nombre_display }}</span>
+                          <span style="font-size:.875rem;color:var(--fg-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ fila.doc.nombre_display }}</span>
                           @if (fila.doc.tipo_contenido === 'link') {
                             <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:#ecfdf5;color:#047857;flex-shrink:0">🔗 Link</span>
                           }
                         </div>
                         <div style="margin-top:.2rem;display:flex;align-items:center;gap:.5rem;flex-wrap:wrap">
-                          <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:rgba(0,149,214,.1);color:#0095d6">Empresa · {{ fila.empresaNombre }}</span>
-                          <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:rgba(16,185,129,.1);color:#059669">Centro · {{ fila.centroNombre }}</span>
+                          <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:rgba(0,149,214,.1);color:var(--sc-cyan)">Empresa · {{ fila.empresaNombre }}</span>
+                          <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:rgba(16,185,129,.1);color:var(--ok)">Centro · {{ fila.centroNombre }}</span>
                           <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:#f1f5f9;color:#475569">Subido: {{ formatFechaHora(fila.doc.subido_en) }}</span>
                           @if (fila.doc.subido_por_nombre) {
                             <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:#f0fdfa;color:#0f766e">{{ fila.doc.subido_por_nombre }}</span>
@@ -976,7 +976,7 @@
                     </div>
                     <div style="display:flex;gap:.3rem;flex-shrink:0">
                       <button (click)="abrirDocumento(fila.doc)"
-                              style="padding:.35rem .65rem;border-radius:7px;border:none;background:#eff6ff;color:#0095d6;cursor:pointer;display:inline-flex;align-items:center;gap:.35rem;font-size:.72rem;font-weight:600;white-space:nowrap">
+                              style="padding:.35rem .65rem;border-radius:7px;border:none;background:var(--sc-cyan-tint-6);color:var(--sc-cyan);cursor:pointer;display:inline-flex;align-items:center;gap:.35rem;font-size:.72rem;font-weight:600;white-space:nowrap">
                         @if (fila.doc.tipo_contenido === 'link') {
                           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
                         } @else {
@@ -991,12 +991,12 @@
                         </button>
                         @if (categoriaMenuAbierto() === fila.doc._id) {
                           <div style="position:fixed;inset:0;z-index:60" (click)="categoriaMenuAbierto.set(null)"></div>
-                          <div style="position:absolute;top:36px;right:0;background:#fff;border:1px solid #e5e7eb;border-radius:8px;box-shadow:0 8px 24px rgba(15,23,42,.14);z-index:61;min-width:190px;max-height:240px;overflow-y:auto;padding:.25rem">
+                          <div style="position:absolute;top:36px;right:0;background:var(--bg-0);border:1px solid var(--border-subtle);border-radius:8px;box-shadow:0 8px 24px rgba(15,23,42,.14);z-index:61;min-width:190px;max-height:240px;overflow-y:auto;padding:.25rem">
                             @for (cat of categorias; track cat) {
                               <div (click)="seleccionarCategoriaTodasEmpresas(fila.doc.url, cat, 'centro')"
                                    style="padding:.4rem .65rem;font-size:.8rem;border-radius:6px;cursor:pointer"
                                    [style.font-weight]="cat === fila.doc.categoria ? '700' : '400'"
-                                   [style.color]="cat === fila.doc.categoria ? '#3730a3' : '#374151'"
+                                   [style.color]="cat === fila.doc.categoria ? '#3730a3' : 'var(--fg-2)'"
                                    [style.background]="cat === fila.doc.categoria ? '#eef2ff' : 'transparent'">
                                 {{ cat }}
                               </div>
@@ -1006,14 +1006,14 @@
                       </div>
                       @if (puedeDoc('centro', 'vencer')) {
                       <button (click)="abrirModalVencer(fila.doc, fila.centroId, undefined, fila.empresaId, 'centro')"
-                              style="padding:.35rem .65rem;border-radius:7px;border:none;background:#fffbeb;color:#d97706;cursor:pointer;display:inline-flex;align-items:center;gap:.35rem;font-size:.72rem;font-weight:600;white-space:nowrap">
+                              style="padding:.35rem .65rem;border-radius:7px;border:none;background:var(--warn-bg);color:var(--warn);cursor:pointer;display:inline-flex;align-items:center;gap:.35rem;font-size:.72rem;font-weight:600;white-space:nowrap">
                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                         Marcar vencido
                       </button>
                       }
                       @if (puedeDoc('centro', 'eliminar')) {
                       <button (click)="eliminarCentroEnTodasEmpresas(fila.doc.url, fila.empresaId, fila.centroId, fila.doc.nombre_display)"
-                              style="padding:.35rem .65rem;border-radius:7px;border:none;background:#fef2f2;color:#dc2626;cursor:pointer;display:inline-flex;align-items:center;gap:.35rem;font-size:.72rem;font-weight:600;white-space:nowrap">
+                              style="padding:.35rem .65rem;border-radius:7px;border:none;background:var(--danger-bg);color:var(--danger);cursor:pointer;display:inline-flex;align-items:center;gap:.35rem;font-size:.72rem;font-weight:600;white-space:nowrap">
                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
                         Eliminar
                       </button>
@@ -1032,29 +1032,29 @@
             }
             @for (item of filteredDocsPorProyecto(); track item.nombre) {
               <div style="margin-bottom:1rem">
-                <p style="margin:0 0 .15rem;font-size:.875rem;font-weight:700;color:#374151">{{ item.nombre }}</p>
+                <p style="margin:0 0 .15rem;font-size:.875rem;font-weight:700;color:var(--fg-2)">{{ item.nombre }}</p>
                 @if (item.centroNombres) {
-                  <p style="margin:0 0 .5rem;font-size:.75rem;color:#9ca3af">Centro: {{ item.centroNombres }}</p>
+                  <p style="margin:0 0 .5rem;font-size:.75rem;color:var(--fg-5)">Centro: {{ item.centroNombres }}</p>
                 }
-                <div style="border:1px solid #e5e7eb;border-radius:8px">
-                  <div style="display:flex;justify-content:space-between;padding:.5rem 1rem;background:#f9fafb;border-bottom:1px solid #e5e7eb;border-top-left-radius:8px;border-top-right-radius:8px">
-                    <span style="font-size:.7rem;font-weight:700;color:#9ca3af;letter-spacing:.07em;text-transform:uppercase">Documento</span>
-                    <span style="font-size:.7rem;font-weight:700;color:#9ca3af;letter-spacing:.07em;text-transform:uppercase">Acciones</span>
+                <div style="border:1px solid var(--border-subtle);border-radius:8px">
+                  <div style="display:flex;justify-content:space-between;padding:.5rem 1rem;background:var(--bg-1);border-bottom:1px solid var(--border-subtle);border-top-left-radius:8px;border-top-right-radius:8px">
+                    <span style="font-size:.7rem;font-weight:700;color:var(--fg-5);letter-spacing:.07em;text-transform:uppercase">Documento</span>
+                    <span style="font-size:.7rem;font-weight:700;color:var(--fg-5);letter-spacing:.07em;text-transform:uppercase">Acciones</span>
                   </div>
                   @for (d of item.docs; track d._id) {
-                    <div style="display:flex;align-items:center;justify-content:space-between;padding:.6rem 1rem;border-bottom:1px solid #f3f4f6">
+                    <div style="display:flex;align-items:center;justify-content:space-between;padding:.6rem 1rem;border-bottom:1px solid var(--bg-2)">
                       <div style="display:flex;align-items:center;gap:.6rem;min-width:0">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--fg-5)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
                         <div style="min-width:0;overflow:hidden">
                           <div style="display:flex;align-items:center;gap:.4rem;flex-wrap:wrap">
                             <span style="font-size:.7rem;font-weight:600;padding:.2rem .55rem;border-radius:999px;background:#e0e7ff;color:#3730a3;white-space:nowrap;flex-shrink:0">{{ d.categoria }}</span>
-                            <span style="font-size:.875rem;color:#1f2937;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ d.nombre_display }}</span>
+                            <span style="font-size:.875rem;color:var(--fg-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ d.nombre_display }}</span>
                             @if (d.tipo_contenido === 'link') {
                               <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:#ecfdf5;color:#047857;flex-shrink:0">🔗 Link</span>
                             }
                           </div>
                           <div style="margin-top:.2rem;display:flex;align-items:center;gap:.5rem;flex-wrap:wrap">
-                            <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:rgba(245,158,11,.1);color:#d97706">Proyecto · {{ item.nombre }}</span>
+                            <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:rgba(245,158,11,.1);color:var(--warn)">Proyecto · {{ item.nombre }}</span>
                             <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:#f1f5f9;color:#475569">Subido: {{ formatFechaHora(d.subido_en) }}</span>
                             @if (d.subido_por_nombre) {
                               <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:#f0fdfa;color:#0f766e">{{ d.subido_por_nombre }}</span>
@@ -1064,7 +1064,7 @@
                       </div>
                       <div style="display:flex;gap:.3rem;flex-shrink:0">
                         <button (click)="abrirDocumento(d)"
-                                style="padding:.35rem .65rem;border-radius:7px;border:none;background:#eff6ff;color:#0095d6;cursor:pointer;display:inline-flex;align-items:center;gap:.35rem;font-size:.72rem;font-weight:600;white-space:nowrap">
+                                style="padding:.35rem .65rem;border-radius:7px;border:none;background:var(--sc-cyan-tint-6);color:var(--sc-cyan);cursor:pointer;display:inline-flex;align-items:center;gap:.35rem;font-size:.72rem;font-weight:600;white-space:nowrap">
                           @if (d.tipo_contenido === 'link') {
                             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
                           } @else {
@@ -1079,12 +1079,12 @@
                           </button>
                           @if (categoriaMenuAbierto() === d._id) {
                             <div style="position:fixed;inset:0;z-index:60" (click)="categoriaMenuAbierto.set(null)"></div>
-                            <div style="position:absolute;top:36px;right:0;background:#fff;border:1px solid #e5e7eb;border-radius:8px;box-shadow:0 8px 24px rgba(15,23,42,.14);z-index:61;min-width:190px;max-height:240px;overflow-y:auto;padding:.25rem">
+                            <div style="position:absolute;top:36px;right:0;background:var(--bg-0);border:1px solid var(--border-subtle);border-radius:8px;box-shadow:0 8px 24px rgba(15,23,42,.14);z-index:61;min-width:190px;max-height:240px;overflow-y:auto;padding:.25rem">
                               @for (cat of categorias; track cat) {
                                 <div (click)="seleccionarCategoria(d.url, cat, 'proyecto')"
                                      style="padding:.4rem .65rem;font-size:.8rem;border-radius:6px;cursor:pointer"
                                      [style.font-weight]="cat === d.categoria ? '700' : '400'"
-                                     [style.color]="cat === d.categoria ? '#3730a3' : '#374151'"
+                                     [style.color]="cat === d.categoria ? '#3730a3' : 'var(--fg-2)'"
                                      [style.background]="cat === d.categoria ? '#eef2ff' : 'transparent'">
                                   {{ cat }}
                                 </div>
@@ -1094,14 +1094,14 @@
                         </div>
                         @if (puedeDoc('proyecto', 'vencer')) {
                         <button (click)="abrirModalVencer(d, undefined, item.proyectoId)"
-                                style="padding:.35rem .65rem;border-radius:7px;border:none;background:#fffbeb;color:#d97706;cursor:pointer;display:inline-flex;align-items:center;gap:.35rem;font-size:.72rem;font-weight:600;white-space:nowrap">
+                                style="padding:.35rem .65rem;border-radius:7px;border:none;background:var(--warn-bg);color:var(--warn);cursor:pointer;display:inline-flex;align-items:center;gap:.35rem;font-size:.72rem;font-weight:600;white-space:nowrap">
                           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                           Marcar vencido
                         </button>
                         }
                         @if (puedeDoc('proyecto', 'eliminar')) {
                         <button (click)="eliminarEnTodosProyectos(d.url, d.nombre_display)"
-                                style="padding:.35rem .65rem;border-radius:7px;border:none;background:#fef2f2;color:#dc2626;cursor:pointer;display:inline-flex;align-items:center;gap:.35rem;font-size:.72rem;font-weight:600;white-space:nowrap">
+                                style="padding:.35rem .65rem;border-radius:7px;border:none;background:var(--danger-bg);color:var(--danger);cursor:pointer;display:inline-flex;align-items:center;gap:.35rem;font-size:.72rem;font-weight:600;white-space:nowrap">
                           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
                           Eliminar
                         </button>
@@ -1119,27 +1119,27 @@
             @if (docsProyectoTodas().length === 0) {
               <p class="empty">Sin documentos en proyectos.</p>
             } @else {
-              <div style="border:1px solid #e5e7eb;border-radius:8px">
-                <div style="display:flex;justify-content:space-between;padding:.5rem 1rem;background:#f9fafb;border-bottom:1px solid #e5e7eb;border-top-left-radius:8px;border-top-right-radius:8px">
-                  <span style="font-size:.7rem;font-weight:700;color:#9ca3af;letter-spacing:.07em;text-transform:uppercase">Documento</span>
-                  <span style="font-size:.7rem;font-weight:700;color:#9ca3af;letter-spacing:.07em;text-transform:uppercase">Acciones</span>
+              <div style="border:1px solid var(--border-subtle);border-radius:8px">
+                <div style="display:flex;justify-content:space-between;padding:.5rem 1rem;background:var(--bg-1);border-bottom:1px solid var(--border-subtle);border-top-left-radius:8px;border-top-right-radius:8px">
+                  <span style="font-size:.7rem;font-weight:700;color:var(--fg-5);letter-spacing:.07em;text-transform:uppercase">Documento</span>
+                  <span style="font-size:.7rem;font-weight:700;color:var(--fg-5);letter-spacing:.07em;text-transform:uppercase">Acciones</span>
                 </div>
                 @for (fila of docsProyectoTodas(); track fila.doc._id) {
-                  <div style="display:flex;align-items:center;justify-content:space-between;padding:.6rem 1rem;border-bottom:1px solid #f3f4f6">
+                  <div style="display:flex;align-items:center;justify-content:space-between;padding:.6rem 1rem;border-bottom:1px solid var(--bg-2)">
                     <div style="display:flex;align-items:center;gap:.6rem;min-width:0">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                      <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--fg-5)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
                       <div style="min-width:0;overflow:hidden">
                         <div style="display:flex;align-items:center;gap:.4rem;flex-wrap:wrap">
                           <span style="font-size:.7rem;font-weight:600;padding:.2rem .55rem;border-radius:999px;background:#e0e7ff;color:#3730a3;white-space:nowrap;flex-shrink:0">{{ fila.doc.categoria }}</span>
-                          <span style="font-size:.875rem;color:#1f2937;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ fila.doc.nombre_display }}</span>
+                          <span style="font-size:.875rem;color:var(--fg-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ fila.doc.nombre_display }}</span>
                           @if (fila.doc.tipo_contenido === 'link') {
                             <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:#ecfdf5;color:#047857;flex-shrink:0">🔗 Link</span>
                           }
                         </div>
                         <div style="margin-top:.2rem;display:flex;align-items:center;gap:.5rem;flex-wrap:wrap">
-                          <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:rgba(0,149,214,.1);color:#0095d6">Empresa · {{ fila.empresaNombre }}</span>
-                          <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:rgba(16,185,129,.1);color:#059669">Centro · {{ fila.centroNombre }}</span>
-                          <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:rgba(245,158,11,.1);color:#d97706">Proyecto · {{ fila.proyectoNombre }}</span>
+                          <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:rgba(0,149,214,.1);color:var(--sc-cyan)">Empresa · {{ fila.empresaNombre }}</span>
+                          <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:rgba(16,185,129,.1);color:var(--ok)">Centro · {{ fila.centroNombre }}</span>
+                          <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:rgba(245,158,11,.1);color:var(--warn)">Proyecto · {{ fila.proyectoNombre }}</span>
                           <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:#f1f5f9;color:#475569">Subido: {{ formatFechaHora(fila.doc.subido_en) }}</span>
                           @if (fila.doc.subido_por_nombre) {
                             <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:#f0fdfa;color:#0f766e">{{ fila.doc.subido_por_nombre }}</span>
@@ -1149,7 +1149,7 @@
                     </div>
                     <div style="display:flex;gap:.3rem;flex-shrink:0">
                       <button (click)="abrirDocumento(fila.doc)"
-                              style="padding:.35rem .65rem;border-radius:7px;border:none;background:#eff6ff;color:#0095d6;cursor:pointer;display:inline-flex;align-items:center;gap:.35rem;font-size:.72rem;font-weight:600;white-space:nowrap">
+                              style="padding:.35rem .65rem;border-radius:7px;border:none;background:var(--sc-cyan-tint-6);color:var(--sc-cyan);cursor:pointer;display:inline-flex;align-items:center;gap:.35rem;font-size:.72rem;font-weight:600;white-space:nowrap">
                         @if (fila.doc.tipo_contenido === 'link') {
                           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
                         } @else {
@@ -1164,12 +1164,12 @@
                         </button>
                         @if (categoriaMenuAbierto() === fila.doc._id) {
                           <div style="position:fixed;inset:0;z-index:60" (click)="categoriaMenuAbierto.set(null)"></div>
-                          <div style="position:absolute;top:36px;right:0;background:#fff;border:1px solid #e5e7eb;border-radius:8px;box-shadow:0 8px 24px rgba(15,23,42,.14);z-index:61;min-width:190px;max-height:240px;overflow-y:auto;padding:.25rem">
+                          <div style="position:absolute;top:36px;right:0;background:var(--bg-0);border:1px solid var(--border-subtle);border-radius:8px;box-shadow:0 8px 24px rgba(15,23,42,.14);z-index:61;min-width:190px;max-height:240px;overflow-y:auto;padding:.25rem">
                             @for (cat of categorias; track cat) {
                               <div (click)="seleccionarCategoriaTodasEmpresas(fila.doc.url, cat, 'proyecto')"
                                    style="padding:.4rem .65rem;font-size:.8rem;border-radius:6px;cursor:pointer"
                                    [style.font-weight]="cat === fila.doc.categoria ? '700' : '400'"
-                                   [style.color]="cat === fila.doc.categoria ? '#3730a3' : '#374151'"
+                                   [style.color]="cat === fila.doc.categoria ? '#3730a3' : 'var(--fg-2)'"
                                    [style.background]="cat === fila.doc.categoria ? '#eef2ff' : 'transparent'">
                                 {{ cat }}
                               </div>
@@ -1179,14 +1179,14 @@
                       </div>
                       @if (puedeDoc('proyecto', 'vencer')) {
                       <button (click)="abrirModalVencer(fila.doc, fila.centroId, fila.proyectoId, fila.empresaId, 'proyecto')"
-                              style="padding:.35rem .65rem;border-radius:7px;border:none;background:#fffbeb;color:#d97706;cursor:pointer;display:inline-flex;align-items:center;gap:.35rem;font-size:.72rem;font-weight:600;white-space:nowrap">
+                              style="padding:.35rem .65rem;border-radius:7px;border:none;background:var(--warn-bg);color:var(--warn);cursor:pointer;display:inline-flex;align-items:center;gap:.35rem;font-size:.72rem;font-weight:600;white-space:nowrap">
                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                         Marcar vencido
                       </button>
                       }
                       @if (puedeDoc('proyecto', 'eliminar')) {
                       <button (click)="eliminarProyectoEnTodasEmpresas(fila.doc.url, fila.empresaId, fila.centroId, fila.proyectoId, fila.doc.nombre_display)"
-                              style="padding:.35rem .65rem;border-radius:7px;border:none;background:#fef2f2;color:#dc2626;cursor:pointer;display:inline-flex;align-items:center;gap:.35rem;font-size:.72rem;font-weight:600;white-space:nowrap">
+                              style="padding:.35rem .65rem;border-radius:7px;border:none;background:var(--danger-bg);color:var(--danger);cursor:pointer;display:inline-flex;align-items:center;gap:.35rem;font-size:.72rem;font-weight:600;white-space:nowrap">
                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
                         Eliminar
                       </button>
@@ -1205,37 +1205,37 @@
             @if (selectedEmpresaId === 'todos') {
               <p class="empty">Selecciona una empresa específica para ver sus documentos vencidos.</p>
             } @else {
-            <p style="margin:0 0 .75rem;font-size:.8rem;color:#6b7280">Mostrando los últimos 20 documentos vencidos de este contexto.</p>
+            <p style="margin:0 0 .75rem;font-size:.8rem;color:var(--fg-4)">Mostrando los últimos 20 documentos vencidos de este contexto.</p>
             @if (service.documentosVencidos().length === 0) {
               <p class="empty">Sin documentos vencidos.</p>
             } @else {
-              <div style="border:1px solid #e5e7eb;border-radius:8px;overflow:hidden">
-                <div style="display:grid;grid-template-columns:1fr auto auto;padding:.5rem 1rem;background:#f9fafb;border-bottom:1px solid #e5e7eb;gap:1rem">
-                  <span style="font-size:.7rem;font-weight:700;color:#9ca3af;letter-spacing:.07em;text-transform:uppercase">Documento</span>
-                  <span style="font-size:.7rem;font-weight:700;color:#9ca3af;letter-spacing:.07em;text-transform:uppercase">Fechas</span>
-                  <span style="font-size:.7rem;font-weight:700;color:#9ca3af;letter-spacing:.07em;text-transform:uppercase">Acciones</span>
+              <div style="border:1px solid var(--border-subtle);border-radius:8px;overflow:hidden">
+                <div style="display:grid;grid-template-columns:1fr auto auto;padding:.5rem 1rem;background:var(--bg-1);border-bottom:1px solid var(--border-subtle);gap:1rem">
+                  <span style="font-size:.7rem;font-weight:700;color:var(--fg-5);letter-spacing:.07em;text-transform:uppercase">Documento</span>
+                  <span style="font-size:.7rem;font-weight:700;color:var(--fg-5);letter-spacing:.07em;text-transform:uppercase">Fechas</span>
+                  <span style="font-size:.7rem;font-weight:700;color:var(--fg-5);letter-spacing:.07em;text-transform:uppercase">Acciones</span>
                 </div>
                 @for (v of service.documentosVencidos(); track v._id) {
-                  <div style="display:grid;grid-template-columns:1fr auto auto;align-items:center;padding:.6rem 1rem;border-bottom:1px solid #f3f4f6;gap:1rem">
+                  <div style="display:grid;grid-template-columns:1fr auto auto;align-items:center;padding:.6rem 1rem;border-bottom:1px solid var(--bg-2);gap:1rem">
                     <div style="display:flex;align-items:center;gap:.6rem;min-width:0">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                      <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--fg-5)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
                       <div style="min-width:0;overflow:hidden">
                         <div style="display:flex;align-items:center;gap:.4rem;flex-wrap:wrap">
                           @if (v.categoria) {
                             <span style="font-size:.7rem;font-weight:600;padding:.2rem .55rem;border-radius:999px;background:#e0e7ff;color:#3730a3;white-space:nowrap;flex-shrink:0">{{ v.categoria }}</span>
                           }
-                          <span style="font-size:.875rem;color:#1f2937;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ v.nombre_display }}</span>
+                          <span style="font-size:.875rem;color:var(--fg-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ v.nombre_display }}</span>
                           @if (v.tipo_contenido === 'link') {
                             <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:#ecfdf5;color:#047857;flex-shrink:0">🔗 Link</span>
                           }
                         </div>
                         <div style="margin-top:.2rem">
                           @if (v.origen_tipo === 'empresa') {
-                            <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:rgba(0,149,214,.1);color:#0095d6">Empresa{{ v.empresa_nombre ? ' · ' + v.empresa_nombre : '' }}</span>
+                            <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:rgba(0,149,214,.1);color:var(--sc-cyan)">Empresa{{ v.empresa_nombre ? ' · ' + v.empresa_nombre : '' }}</span>
                           } @else if (v.origen_tipo === 'centro') {
-                            <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:rgba(16,185,129,.1);color:#059669">Centro{{ v.centro_nombre ? ' · ' + v.centro_nombre : '' }}</span>
+                            <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:rgba(16,185,129,.1);color:var(--ok)">Centro{{ v.centro_nombre ? ' · ' + v.centro_nombre : '' }}</span>
                           } @else if (v.origen_tipo === 'proyecto') {
-                            <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:rgba(245,158,11,.1);color:#d97706">Proyecto{{ v.proyecto_nombre ? ' · ' + v.proyecto_nombre : '' }}</span>
+                            <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:rgba(245,158,11,.1);color:var(--warn)">Proyecto{{ v.proyecto_nombre ? ' · ' + v.proyecto_nombre : '' }}</span>
                           }
                         </div>
                       </div>
@@ -1247,10 +1247,10 @@
                       @if (v.subido_por_nombre) {
                         <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:#f0fdfa;color:#0f766e;align-self:flex-end">{{ v.subido_por_nombre }}</span>
                       }
-                      <span style="font-size:.72rem;color:#dc2626;font-weight:600">Vencido: {{ formatFechaHora(v.vencido_en) }}</span>
+                      <span style="font-size:.72rem;color:var(--danger);font-weight:600">Vencido: {{ formatFechaHora(v.vencido_en) }}</span>
                     </div>
                     <button [title]="v.tipo_contenido === 'link' ? 'Abrir enlace' : 'Descargar'" (click)="abrirDocumento(v)"
-                            style="width:32px;height:32px;border-radius:7px;border:none;background:#eff6ff;color:#0095d6;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                            style="width:32px;height:32px;border-radius:7px;border:none;background:var(--sc-cyan-tint-6);color:var(--sc-cyan);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0">
                       @if (v.tipo_contenido === 'link') {
                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
                       } @else {
@@ -1273,10 +1273,10 @@
 
           <!-- Formulario nueva solicitud -->
           @if (showSolicitudForm()) {
-            <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:.5rem;padding:1rem;margin-bottom:.75rem">
-              <p style="margin:0 0 .75rem;font-size:.82rem;color:#6b7280">
+            <div style="background:var(--bg-1);border:1px solid var(--border-subtle);border-radius:.5rem;padding:1rem;margin-bottom:.75rem">
+              <p style="margin:0 0 .75rem;font-size:.82rem;color:var(--fg-4)">
                 Creando solicitud para:
-                <strong style="color:#1f2937">
+                <strong style="color:var(--fg-2)">
                   @if (tabJerarquia() === 'proyecto' && selectedProyectoId && selectedProyectoId !== 'todos') { Proyecto: {{ proyectoNombre }} }
                   @else if (tabJerarquia() === 'centro' && selectedCentroId && selectedCentroId !== 'todos') { Centro: {{ centroNombre }} }
                   @else { Empresa: {{ empresaNombre }} }
@@ -1303,31 +1303,31 @@
 
               <!-- Opciones de notificación -->
               <div style="margin-bottom:.75rem">
-                <label style="display:flex;align-items:center;gap:.5rem;cursor:pointer;font-size:.875rem;font-weight:600;color:#374151">
-                  <input type="checkbox" [checked]="notifSolicitudNotificar()" (change)="toggleNotifSolicitudNotificar()" style="accent-color:#0095d6;width:15px;height:15px" />
+                <label style="display:flex;align-items:center;gap:.5rem;cursor:pointer;font-size:.875rem;font-weight:600;color:var(--fg-2)">
+                  <input type="checkbox" [checked]="notifSolicitudNotificar()" (change)="toggleNotifSolicitudNotificar()" style="accent-color:var(--sc-cyan);width:15px;height:15px" />
                   Notificar por correo
                 </label>
                 @if (notifSolicitudNotificar()) {
-                  <div style="display:flex;gap:0;margin-top:.5rem;border-bottom:2px solid #e5e7eb">
+                  <div style="display:flex;gap:0;margin-top:.5rem;border-bottom:2px solid var(--border-subtle)">
                     <button type="button"
-                      [style.border-bottom]="notifSolicitudTab() === 'usuarios' ? '2px solid #0095d6' : '2px solid transparent'"
-                      [style.color]="notifSolicitudTab() === 'usuarios' ? '#0095d6' : '#6b7280'"
+                      [style.border-bottom]="notifSolicitudTab() === 'usuarios' ? '2px solid var(--sc-cyan)' : '2px solid transparent'"
+                      [style.color]="notifSolicitudTab() === 'usuarios' ? 'var(--sc-cyan)' : 'var(--fg-4)'"
                       style="background:none;border:none;padding:.3rem .7rem;font-size:.78rem;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:.35rem"
                       (click)="notifSolicitudTab.set('usuarios')">
-                      <input type="checkbox" [checked]="notifSolicitudTodosUsuariosSeleccionados()" (change)="toggleSeleccionarTodosUsuariosSolicitud()" (click)="$event.stopPropagation()" style="accent-color:#0095d6;width:12px;height:12px;cursor:pointer;flex-shrink:0" />
+                      <input type="checkbox" [checked]="notifSolicitudTodosUsuariosSeleccionados()" (change)="toggleSeleccionarTodosUsuariosSolicitud()" (click)="$event.stopPropagation()" style="accent-color:var(--sc-cyan);width:12px;height:12px;cursor:pointer;flex-shrink:0" />
                       Usuarios ({{ notifSolicitudUsuariosIds().length }}/{{ usuariosParaSolicitud().length }})
                     </button>
                     <button type="button"
-                      [style.border-bottom]="notifSolicitudTab() === 'admins' ? '2px solid #0095d6' : '2px solid transparent'"
-                      [style.color]="notifSolicitudTab() === 'admins' ? '#0095d6' : '#6b7280'"
+                      [style.border-bottom]="notifSolicitudTab() === 'admins' ? '2px solid var(--sc-cyan)' : '2px solid transparent'"
+                      [style.color]="notifSolicitudTab() === 'admins' ? 'var(--sc-cyan)' : 'var(--fg-4)'"
                       style="background:none;border:none;padding:.3rem .7rem;font-size:.78rem;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:.35rem"
                       (click)="notifSolicitudTab.set('admins')">
-                      <input type="checkbox" [checked]="notifSolicitudTodosAdminsSeleccionados()" (change)="toggleSeleccionarTodosAdminsSolicitud()" (click)="$event.stopPropagation()" style="accent-color:#0095d6;width:12px;height:12px;cursor:pointer;flex-shrink:0" />
+                      <input type="checkbox" [checked]="notifSolicitudTodosAdminsSeleccionados()" (change)="toggleSeleccionarTodosAdminsSolicitud()" (click)="$event.stopPropagation()" style="accent-color:var(--sc-cyan);width:12px;height:12px;cursor:pointer;flex-shrink:0" />
                       Admins ({{ notifSolicitudAdminsIds().length }}/{{ adminsParaSolicitud().length }})
                     </button>
                     <button type="button"
-                      [style.border-bottom]="notifSolicitudTab() === 'super-admins' ? '2px solid #0095d6' : '2px solid transparent'"
-                      [style.color]="notifSolicitudTab() === 'super-admins' ? '#0095d6' : '#6b7280'"
+                      [style.border-bottom]="notifSolicitudTab() === 'super-admins' ? '2px solid var(--sc-cyan)' : '2px solid transparent'"
+                      [style.color]="notifSolicitudTab() === 'super-admins' ? 'var(--sc-cyan)' : 'var(--fg-4)'"
                       style="background:none;border:none;padding:.3rem .7rem;font-size:.78rem;font-weight:600;cursor:pointer"
                       (click)="notifSolicitudTab.set('super-admins')">
                       Super Admins ({{ notifSolicitudSuperAdmins() ? superAdminsParaSolicitud().length : 0 }}/{{ superAdminsParaSolicitud().length }})
@@ -1337,14 +1337,14 @@
                     @if (usuariosParaSolicitud().length > 0) {
                       <div style="display:flex;flex-direction:column;gap:.3rem;max-height:100px;overflow-y:auto;border:1px solid rgba(34,33,33,.2);border-top:none;border-radius:0 0 8px 8px;padding:.4rem .6rem">
                         @for (u of usuariosParaSolicitud(); track u._id) {
-                          <label style="display:flex;align-items:center;gap:.5rem;cursor:pointer;font-size:.82rem;color:#374151">
-                            <input type="checkbox" [checked]="notifSolicitudUsuariosIds().includes(u._id)" (change)="toggleNotifSolicitudUsuario(u._id)" style="accent-color:#0095d6;width:14px;height:14px" />
+                          <label style="display:flex;align-items:center;gap:.5rem;cursor:pointer;font-size:.82rem;color:var(--fg-2)">
+                            <input type="checkbox" [checked]="notifSolicitudUsuariosIds().includes(u._id)" (change)="toggleNotifSolicitudUsuario(u._id)" style="accent-color:var(--sc-cyan);width:14px;height:14px" />
                             {{ u.nombre }}
                           </label>
                         }
                       </div>
                     } @else {
-                      <p style="margin:.3rem 0 0;font-size:.78rem;color:#9ca3af">
+                      <p style="margin:.3rem 0 0;font-size:.78rem;color:var(--fg-5)">
                         {{ selectedCentroId ? 'Sin usuarios asignados al centro.' : 'No hay usuarios para esta empresa.' }}
                       </p>
                     }
@@ -1353,27 +1353,27 @@
                     @if (adminsParaSolicitud().length > 0) {
                       <div style="display:flex;flex-direction:column;gap:.3rem;max-height:100px;overflow-y:auto;border:1px solid rgba(34,33,33,.2);border-top:none;border-radius:0 0 8px 8px;padding:.4rem .6rem">
                         @for (u of adminsParaSolicitud(); track u._id) {
-                          <label style="display:flex;align-items:center;gap:.5rem;font-size:.82rem;color:#374151"
+                          <label style="display:flex;align-items:center;gap:.5rem;font-size:.82rem;color:var(--fg-2)"
                             [style.cursor]="estaSuscritoAdminSolicitud(u) ? 'default' : 'pointer'">
                             <input type="checkbox" [checked]="notifSolicitudAdminsIds().includes(u._id)"
                               [disabled]="estaSuscritoAdminSolicitud(u)"
-                              (change)="toggleNotifSolicitudAdmin(u._id)" style="accent-color:#0095d6;width:14px;height:14px" />
+                              (change)="toggleNotifSolicitudAdmin(u._id)" style="accent-color:var(--sc-cyan);width:14px;height:14px" />
                             <span>{{ u.nombre }}</span>
                             @if (estaSuscritoAdminSolicitud(u)) {
                               <span title="Suscrito: recibe esta notificación siempre, no se puede desmarcar"
-                                style="font-size:.68rem;font-weight:700;color:#15803d;background:#dcfce7;border-radius:999px;padding:.1rem .5rem">Suscrito</span>
+                                style="font-size:.68rem;font-weight:700;color:var(--ok);background:var(--ok-bg);border-radius:999px;padding:.1rem .5rem">Suscrito</span>
                             }
                           </label>
                         }
                       </div>
                     } @else {
-                      <p style="margin:.3rem 0 0;font-size:.78rem;color:#9ca3af">No hay administradores disponibles.</p>
+                      <p style="margin:.3rem 0 0;font-size:.78rem;color:var(--fg-5)">No hay administradores disponibles.</p>
                     }
                   }
                   @if (notifSolicitudTab() === 'super-admins') {
                     <div style="display:flex;flex-direction:column;gap:.5rem;border:1px solid rgba(34,33,33,.2);border-top:none;border-radius:0 0 8px 8px;padding:.5rem .75rem">
-                      <label style="display:flex;align-items:center;gap:.5rem;cursor:pointer;font-size:.82rem;color:#374151;font-weight:600">
-                        <input type="checkbox" [checked]="notifSolicitudSuperAdmins()" (change)="notifSolicitudSuperAdmins.update(v => !v)" style="accent-color:#0095d6;width:15px;height:15px" />
+                      <label style="display:flex;align-items:center;gap:.5rem;cursor:pointer;font-size:.82rem;color:var(--fg-2);font-weight:600">
+                        <input type="checkbox" [checked]="notifSolicitudSuperAdmins()" (change)="notifSolicitudSuperAdmins.update(v => !v)" style="accent-color:var(--sc-cyan);width:15px;height:15px" />
                         <span>Notificar a todos los Super Admins</span>
                       </label>
                     </div>
@@ -1399,20 +1399,20 @@
           @if (sols.length === 0) {
             <p class="empty">Sin solicitudes para este contexto.</p>
           } @else {
-            <div style="border:1px solid #e5e7eb;border-radius:8px;overflow:hidden">
-              <div style="display:flex;gap:.5rem;padding:.5rem 1rem;background:#f9fafb;border-bottom:1px solid #e5e7eb">
-                <span style="flex:1.1;min-width:0;font-size:.7rem;font-weight:700;color:#9ca3af;letter-spacing:.07em;text-transform:uppercase">Solicitud</span>
-                <span style="flex:1;min-width:0;font-size:.7rem;font-weight:700;color:#9ca3af;letter-spacing:.07em;text-transform:uppercase">Motivo</span>
-                <span style="margin-left:auto;flex-shrink:0;font-size:.7rem;font-weight:700;color:#9ca3af;letter-spacing:.07em;text-transform:uppercase">Acciones</span>
+            <div style="border:1px solid var(--border-subtle);border-radius:8px;overflow:hidden">
+              <div style="display:flex;gap:.5rem;padding:.5rem 1rem;background:var(--bg-1);border-bottom:1px solid var(--border-subtle)">
+                <span style="flex:1.1;min-width:0;font-size:.7rem;font-weight:700;color:var(--fg-5);letter-spacing:.07em;text-transform:uppercase">Solicitud</span>
+                <span style="flex:1;min-width:0;font-size:.7rem;font-weight:700;color:var(--fg-5);letter-spacing:.07em;text-transform:uppercase">Motivo</span>
+                <span style="margin-left:auto;flex-shrink:0;font-size:.7rem;font-weight:700;color:var(--fg-5);letter-spacing:.07em;text-transform:uppercase">Acciones</span>
               </div>
               @for (s of sols; track s._id) {
-                <div style="padding:.75rem 1rem;border-bottom:1px solid #f3f4f6">
+                <div style="padding:.75rem 1rem;border-bottom:1px solid var(--bg-2)">
 
                   <div style="display:flex;align-items:center;gap:.5rem">
                     <div style="flex:1.1;min-width:0">
                       <div style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;margin-bottom:.3rem">
                         <span style="font-size:.72rem;font-weight:600;padding:.15rem .5rem;border-radius:999px;background:#e0e7ff;color:#3730a3">{{ s.tipo }}</span>
-                        <strong style="font-size:.9rem;color:#1f2937">{{ s.nombre }}</strong>
+                        <strong style="font-size:.9rem;color:var(--fg-2)">{{ s.nombre }}</strong>
                       </div>
                       <div style="display:flex;align-items:center;gap:.4rem;flex-wrap:wrap;margin:0 0 .35rem">
                         <span style="font-size:.7rem;font-weight:700;padding:.15rem .55rem;border-radius:999px"
@@ -1430,11 +1430,11 @@
                           [style.background]="estadoChipStyle(s.estado).bg">{{ estadoLabel(s.estado) }}</span>
                       </div>
                       @if (s.descripcion) {
-                        <p style="margin:0 0 .4rem;font-size:.82rem;color:#6b7280">{{ s.descripcion }}</p>
+                        <p style="margin:0 0 .4rem;font-size:.82rem;color:var(--fg-4)">{{ s.descripcion }}</p>
                       }
                       @if (s.archivo_nombre) {
                         <div style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap">
-                          <span style="font-size:.8rem;color:#22c55e">✓ {{ s.archivo_nombre }}</span>
+                          <span style="font-size:.8rem;color:var(--ok)">✓ {{ s.archivo_nombre }}</span>
                           @if (s.archivo_url) {
                             <button class="btn-ghost" style="font-size:.75rem;padding:.25rem .6rem"
                               (click)="solicitudesService.descargar(s.archivo_url, s.archivo_nombre)">Descargar</button>
@@ -1447,7 +1447,7 @@
                       @if (s.estado === 'rechazado' && s.motivo_rechazo) {
                         <div style="background:#fff1f2;border:1px solid #fecdd3;border-radius:6px;padding:.5rem .75rem;width:fit-content;max-width:100%">
                           <span style="font-size:.72rem;font-weight:700;color:#9f1239;display:block;margin-bottom:.2rem">Motivo del rechazo</span>
-                          <span style="font-size:.82rem;color:#374151">{{ s.motivo_rechazo }}</span>
+                          <span style="font-size:.82rem;color:var(--fg-2)">{{ s.motivo_rechazo }}</span>
                         </div>
                       }
                     </div>
@@ -1455,19 +1455,19 @@
                     <div style="margin-left:auto;flex-shrink:0;display:flex;flex-direction:row;flex-wrap:wrap;justify-content:flex-end;gap:.35rem">
                       @if (authService.tienePermiso('solicitudes', 'cambiarEstado')) {
                         <button (click)="abrirCambioEstado(s._id)"
-                                style="padding:.35rem .6rem;border-radius:7px;border:none;background:#eff6ff;color:#0095d6;cursor:pointer;display:flex;align-items:center;gap:.4rem;font-size:.78rem;font-weight:600;font-family:inherit;white-space:nowrap">
+                                style="padding:.35rem .6rem;border-radius:7px;border:none;background:var(--sc-cyan-tint-6);color:var(--sc-cyan);cursor:pointer;display:flex;align-items:center;gap:.4rem;font-size:.78rem;font-weight:600;font-family:inherit;white-space:nowrap">
                           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="m17 2 4 4-4 4"/><path d="M3 11v-1a4 4 0 0 1 4-4h14"/><path d="m7 22-4-4 4-4"/><path d="M21 13v1a4 4 0 0 1-4 4H3"/></svg>
                           Cambiar estado
                         </button>
                       }
                       <button (click)="abrirEditarSolicitud(s)"
-                              style="padding:.35rem .6rem;border-radius:7px;border:none;background:#f3f4f6;color:#374151;cursor:pointer;display:flex;align-items:center;gap:.4rem;font-size:.78rem;font-weight:600;font-family:inherit;white-space:nowrap">
+                              style="padding:.35rem .6rem;border-radius:7px;border:none;background:var(--bg-2);color:var(--fg-2);cursor:pointer;display:flex;align-items:center;gap:.4rem;font-size:.78rem;font-weight:600;font-family:inherit;white-space:nowrap">
                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/><path d="m15 5 4 4"/></svg>
                         Editar
                       </button>
                       @if (authService.tienePermiso('solicitudes', 'eliminar')) {
                         <button (click)="eliminarSolicitud(s._id)"
-                                style="padding:.35rem .6rem;border-radius:7px;border:none;background:#fef2f2;color:#dc2626;cursor:pointer;display:flex;align-items:center;gap:.4rem;font-size:.78rem;font-weight:600;font-family:inherit;white-space:nowrap">
+                                style="padding:.35rem .6rem;border-radius:7px;border:none;background:var(--danger-bg);color:var(--danger);cursor:pointer;display:flex;align-items:center;gap:.4rem;font-size:.78rem;font-weight:600;font-family:inherit;white-space:nowrap">
                           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
                           Eliminar
                         </button>
@@ -1477,7 +1477,7 @@
 
                   <!-- Edición inline -->
                   @if (solicitudEditando() === s._id) {
-                    <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:.5rem;padding:.85rem;margin-top:.6rem">
+                    <div style="background:var(--bg-1);border:1px solid var(--border-subtle);border-radius:.5rem;padding:.85rem;margin-top:.6rem">
                       <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem;margin-bottom:.6rem">
                         <label class="field" style="margin:0"><span>Nombre</span><input type="text" [(ngModel)]="solicitudEditForm.nombre" /></label>
                         <label class="field" style="margin:0">
@@ -1501,7 +1501,7 @@
 
                   <!-- Cambio de estado -->
                   @if (solicitudEstadoEdit() === s._id) {
-                    <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.6rem;padding-top:.6rem;border-top:1px solid #f3f4f6">
+                    <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.6rem;padding-top:.6rem;border-top:1px solid var(--bg-2)">
                       @for (e of estadosDestino(s.estado); track e.valor) {
                         <button
                           style="font-size:.78rem;padding:.35rem .75rem;border-radius:.375rem;border:1px solid;cursor:pointer;font-weight:600;transition:opacity .15s"
@@ -1526,22 +1526,22 @@
 
 <!-- ── Modal vencer documento ──────────────────────────────────────────── -->
 @if (modalVencer() !== null) {
-  <div style="position:fixed;inset:0;background:rgba(15,23,42,.45);display:flex;align-items:center;justify-content:center;z-index:200;padding:1rem">
-    <div style="background:#fff;border-radius:16px;box-shadow:0 20px 60px rgba(15,23,42,.18);width:100%;max-width:480px;max-height:85vh;overflow-y:auto;padding:1.5rem"
+  <div style="position:fixed;inset:0;background:var(--overlay);display:flex;align-items:center;justify-content:center;z-index:200;padding:1rem">
+    <div style="background:var(--bg-0);border-radius:16px;box-shadow:0 20px 60px rgba(15,23,42,.18);width:100%;max-width:480px;max-height:85vh;overflow-y:auto;padding:1.5rem"
          (click)="$event.stopPropagation()">
 
       <!-- Header -->
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.1rem">
-        <h3 style="margin:0;font-size:1.05rem;font-weight:700;color:#111827">Marcar documento como vencido</h3>
-        <button (click)="cerrarModalVencer()" style="background:none;border:none;font-size:1.4rem;line-height:1;cursor:pointer;color:#6b7280;padding:0 .25rem">&#x2715;</button>
+        <h3 style="margin:0;font-size:1.05rem;font-weight:700;color:var(--fg-1)">Marcar documento como vencido</h3>
+        <button (click)="cerrarModalVencer()" style="background:none;border:none;font-size:1.4rem;line-height:1;cursor:pointer;color:var(--fg-4);padding:0 .25rem">&#x2715;</button>
       </div>
 
       <!-- Advertencia -->
-      <div style="display:flex;gap:.75rem;align-items:flex-start;padding:.75rem 1rem;background:#fffbeb;border:1px solid #fde68a;border-radius:10px;margin-bottom:1.1rem">
+      <div style="display:flex;gap:.75rem;align-items:flex-start;padding:.75rem 1rem;background:var(--warn-bg);border:1px solid var(--warn-bg);border-radius:10px;margin-bottom:1.1rem">
         <span style="font-size:1.15rem;flex-shrink:0">⏱</span>
         <div>
-          <p style="margin:0 0 .2rem;font-size:.875rem;font-weight:600;color:#92400e">¿Marcar como vencido?</p>
-          <p style="margin:0;font-size:.82rem;color:#78350f;line-height:1.4">
+          <p style="margin:0 0 .2rem;font-size:.875rem;font-weight:600;color:var(--warn)">¿Marcar como vencido?</p>
+          <p style="margin:0;font-size:.82rem;color:var(--warn);line-height:1.4">
             <strong>{{ modalVencer()!.nombre_display }}</strong> se moverá al historial de vencidos. Esta acción no se puede deshacer.
           </p>
         </div>
@@ -1549,32 +1549,32 @@
 
       <!-- Opciones de notificación -->
       <div style="margin-bottom:1rem">
-        <label style="display:flex;align-items:center;gap:.5rem;cursor:pointer;font-size:.875rem;font-weight:600;color:#374151">
-          <input type="checkbox" [checked]="notifVencerNotificar()" (change)="toggleNotifVencerNotificar()" style="accent-color:#0095d6;width:15px;height:15px" />
+        <label style="display:flex;align-items:center;gap:.5rem;cursor:pointer;font-size:.875rem;font-weight:600;color:var(--fg-2)">
+          <input type="checkbox" [checked]="notifVencerNotificar()" (change)="toggleNotifVencerNotificar()" style="accent-color:var(--sc-cyan);width:15px;height:15px" />
           Notificar por correo
         </label>
 
         @if (notifVencerNotificar()) {
-          <div style="display:flex;gap:0;margin-top:.5rem;border-bottom:2px solid #e5e7eb">
+          <div style="display:flex;gap:0;margin-top:.5rem;border-bottom:2px solid var(--border-subtle)">
             <button type="button"
-              [style.border-bottom]="notifVencerTab() === 'usuarios' ? '2px solid #0095d6' : '2px solid transparent'"
-              [style.color]="notifVencerTab() === 'usuarios' ? '#0095d6' : '#6b7280'"
+              [style.border-bottom]="notifVencerTab() === 'usuarios' ? '2px solid var(--sc-cyan)' : '2px solid transparent'"
+              [style.color]="notifVencerTab() === 'usuarios' ? 'var(--sc-cyan)' : 'var(--fg-4)'"
               style="background:none;border:none;padding:.3rem .7rem;font-size:.78rem;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:.35rem"
               (click)="notifVencerTab.set('usuarios')">
-              <input type="checkbox" [checked]="notifVencerTodosUsuariosSeleccionados()" (change)="toggleSeleccionarTodosUsuariosVencer()" (click)="$event.stopPropagation()" style="accent-color:#0095d6;width:12px;height:12px;cursor:pointer;flex-shrink:0" />
+              <input type="checkbox" [checked]="notifVencerTodosUsuariosSeleccionados()" (change)="toggleSeleccionarTodosUsuariosVencer()" (click)="$event.stopPropagation()" style="accent-color:var(--sc-cyan);width:12px;height:12px;cursor:pointer;flex-shrink:0" />
               Usuarios ({{ notifVencerUsuariosIds().length }}/{{ usuariosParaVencer().length }})
             </button>
             <button type="button"
-              [style.border-bottom]="notifVencerTab() === 'admins' ? '2px solid #0095d6' : '2px solid transparent'"
-              [style.color]="notifVencerTab() === 'admins' ? '#0095d6' : '#6b7280'"
+              [style.border-bottom]="notifVencerTab() === 'admins' ? '2px solid var(--sc-cyan)' : '2px solid transparent'"
+              [style.color]="notifVencerTab() === 'admins' ? 'var(--sc-cyan)' : 'var(--fg-4)'"
               style="background:none;border:none;padding:.3rem .7rem;font-size:.78rem;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:.35rem"
               (click)="notifVencerTab.set('admins')">
-              <input type="checkbox" [checked]="notifVencerTodosAdminsSeleccionados()" (change)="toggleSeleccionarTodosAdminsVencer()" (click)="$event.stopPropagation()" style="accent-color:#0095d6;width:12px;height:12px;cursor:pointer;flex-shrink:0" />
+              <input type="checkbox" [checked]="notifVencerTodosAdminsSeleccionados()" (change)="toggleSeleccionarTodosAdminsVencer()" (click)="$event.stopPropagation()" style="accent-color:var(--sc-cyan);width:12px;height:12px;cursor:pointer;flex-shrink:0" />
               Admins ({{ notifVencerAdminsIds().length }}/{{ adminsParaVencer().length }})
             </button>
             <button type="button"
-              [style.border-bottom]="notifVencerTab() === 'super-admins' ? '2px solid #0095d6' : '2px solid transparent'"
-              [style.color]="notifVencerTab() === 'super-admins' ? '#0095d6' : '#6b7280'"
+              [style.border-bottom]="notifVencerTab() === 'super-admins' ? '2px solid var(--sc-cyan)' : '2px solid transparent'"
+              [style.color]="notifVencerTab() === 'super-admins' ? 'var(--sc-cyan)' : 'var(--fg-4)'"
               style="background:none;border:none;padding:.3rem .7rem;font-size:.78rem;font-weight:600;cursor:pointer"
               (click)="notifVencerTab.set('super-admins')">
               Super Admins ({{ notifVencerSuperAdmins() ? superAdminsParaVencer().length : 0 }}/{{ superAdminsParaVencer().length }})
@@ -1585,41 +1585,41 @@
             @if (usuariosParaVencer().length > 0) {
               <div style="display:flex;flex-direction:column;gap:.3rem;max-height:120px;overflow-y:auto;border:1px solid rgba(34,33,33,.2);border-top:none;border-radius:0 0 8px 8px;padding:.4rem .6rem">
                 @for (u of usuariosParaVencer(); track u._id) {
-                  <label style="display:flex;align-items:center;gap:.5rem;cursor:pointer;font-size:.82rem;color:#374151">
-                    <input type="checkbox" [checked]="notifVencerUsuariosIds().includes(u._id)" (change)="toggleNotifVencerUsuario(u._id)" style="accent-color:#0095d6;width:14px;height:14px" />
+                  <label style="display:flex;align-items:center;gap:.5rem;cursor:pointer;font-size:.82rem;color:var(--fg-2)">
+                    <input type="checkbox" [checked]="notifVencerUsuariosIds().includes(u._id)" (change)="toggleNotifVencerUsuario(u._id)" style="accent-color:var(--sc-cyan);width:14px;height:14px" />
                     {{ u.nombre }}
                   </label>
                 }
               </div>
             } @else {
-              <p style="margin:.3rem 0 0;font-size:.78rem;color:#9ca3af">No hay usuarios para esta empresa.</p>
+              <p style="margin:.3rem 0 0;font-size:.78rem;color:var(--fg-5)">No hay usuarios para esta empresa.</p>
             }
           }
           @if (notifVencerTab() === 'admins') {
             @if (adminsParaVencer().length > 0) {
               <div style="display:flex;flex-direction:column;gap:.3rem;max-height:120px;overflow-y:auto;border:1px solid rgba(34,33,33,.2);border-top:none;border-radius:0 0 8px 8px;padding:.4rem .6rem">
                 @for (u of adminsParaVencer(); track u._id) {
-                  <label style="display:flex;align-items:center;gap:.5rem;font-size:.82rem;color:#374151"
+                  <label style="display:flex;align-items:center;gap:.5rem;font-size:.82rem;color:var(--fg-2)"
                     [style.cursor]="estaSuscritoAdminVencer(u) ? 'default' : 'pointer'">
                     <input type="checkbox" [checked]="notifVencerAdminsIds().includes(u._id)"
                       [disabled]="estaSuscritoAdminVencer(u)"
-                      (change)="toggleNotifVencerAdmin(u._id)" style="accent-color:#0095d6;width:14px;height:14px" />
+                      (change)="toggleNotifVencerAdmin(u._id)" style="accent-color:var(--sc-cyan);width:14px;height:14px" />
                     <span>{{ u.nombre }}</span>
                     @if (estaSuscritoAdminVencer(u)) {
                       <span title="Suscrito: recibe esta notificación siempre, no se puede desmarcar"
-                        style="font-size:.68rem;font-weight:700;color:#15803d;background:#dcfce7;border-radius:999px;padding:.1rem .5rem">Suscrito</span>
+                        style="font-size:.68rem;font-weight:700;color:var(--ok);background:var(--ok-bg);border-radius:999px;padding:.1rem .5rem">Suscrito</span>
                     }
                   </label>
                 }
               </div>
             } @else {
-              <p style="margin:.3rem 0 0;font-size:.78rem;color:#9ca3af">No hay administradores disponibles.</p>
+              <p style="margin:.3rem 0 0;font-size:.78rem;color:var(--fg-5)">No hay administradores disponibles.</p>
             }
           }
           @if (notifVencerTab() === 'super-admins') {
             <div style="display:flex;flex-direction:column;gap:.5rem;border:1px solid rgba(34,33,33,.2);border-top:none;border-radius:0 0 8px 8px;padding:.5rem .75rem">
-              <label style="display:flex;align-items:center;gap:.5rem;cursor:pointer;font-size:.82rem;color:#374151;font-weight:600">
-                <input type="checkbox" [checked]="notifVencerSuperAdmins()" (change)="notifVencerSuperAdmins.update(v => !v)" style="accent-color:#0095d6;width:15px;height:15px" />
+              <label style="display:flex;align-items:center;gap:.5rem;cursor:pointer;font-size:.82rem;color:var(--fg-2);font-weight:600">
+                <input type="checkbox" [checked]="notifVencerSuperAdmins()" (change)="notifVencerSuperAdmins.update(v => !v)" style="accent-color:var(--sc-cyan);width:15px;height:15px" />
                 <span>Notificar a todos los Super Admins</span>
               </label>
             </div>
@@ -1631,12 +1631,12 @@
       <div style="display:flex;gap:.6rem;margin-top:.5rem">
         <button
           (click)="confirmarVencer()"
-          style="padding:.45rem 1.1rem;background:#d97706;color:#fff;border:none;border-radius:8px;font-size:.84rem;font-weight:600;cursor:pointer;font-family:inherit">
+          style="padding:.45rem 1.1rem;background:var(--warn);color:var(--bg-0);border:none;border-radius:8px;font-size:.84rem;font-weight:600;cursor:pointer;font-family:inherit">
           Confirmar vencimiento
         </button>
         <button
           (click)="cerrarModalVencer()"
-          style="padding:.45rem 1.1rem;background:none;border:1.5px solid #d1d5db;border-radius:8px;font-size:.84rem;font-weight:600;cursor:pointer;color:#374151;font-family:inherit">
+          style="padding:.45rem 1.1rem;background:none;border:1.5px solid var(--border-default);border-radius:8px;font-size:.84rem;font-weight:600;cursor:pointer;color:var(--fg-2);font-family:inherit">
           Cancelar
         </button>
       </div>
@@ -1647,11 +1647,11 @@
 
 <!-- Modal motivo de rechazo -->
 @if (rechazandoId()) {
-  <div style="position:fixed;inset:0;background:rgba(15,23,42,.45);display:flex;align-items:center;justify-content:center;z-index:200;padding:1rem">
-    <div style="background:#fff;border-radius:16px;box-shadow:0 20px 60px rgba(15,23,42,.18);width:100%;max-width:460px;padding:1.5rem"
+  <div style="position:fixed;inset:0;background:var(--overlay);display:flex;align-items:center;justify-content:center;z-index:200;padding:1rem">
+    <div style="background:var(--bg-0);border-radius:16px;box-shadow:0 20px 60px rgba(15,23,42,.18);width:100%;max-width:460px;padding:1.5rem"
          (click)="$event.stopPropagation()">
-      <h3 style="margin:0 0 .5rem;font-size:1rem;font-weight:700;color:#111827">Rechazar solicitud</h3>
-      <p style="margin:0 0 1rem;font-size:.85rem;color:#6b7280">Escribe el motivo del rechazo. Este texto será visible para el consumidor en el portal y recibirá una notificación por correo.</p>
+      <h3 style="margin:0 0 .5rem;font-size:1rem;font-weight:700;color:var(--fg-1)">Rechazar solicitud</h3>
+      <p style="margin:0 0 1rem;font-size:.85rem;color:var(--fg-4)">Escribe el motivo del rechazo. Este texto será visible para el consumidor en el portal y recibirá una notificación por correo.</p>
       <textarea rows="4" [(ngModel)]="motivoRechazoInput"
         placeholder="Ej. El documento adjunto está ilegible, por favor reenvíe en formato PDF."
         style="width:100%;box-sizing:border-box;resize:vertical;padding:.6rem .75rem;border:1px solid rgba(34,33,33,.2);border-radius:.5rem;font-family:inherit;font-size:.875rem;margin-bottom:.75rem">
@@ -1659,31 +1659,31 @@
 
       <!-- Opciones de notificación rechazo -->
       <div style="margin-bottom:1rem">
-        <label style="display:flex;align-items:center;gap:.5rem;cursor:pointer;font-size:.875rem;font-weight:600;color:#374151">
-          <input type="checkbox" [checked]="notifRechazoNotificar()" (change)="toggleNotifRechazoNotificar()" style="accent-color:#0095d6;width:15px;height:15px" />
+        <label style="display:flex;align-items:center;gap:.5rem;cursor:pointer;font-size:.875rem;font-weight:600;color:var(--fg-2)">
+          <input type="checkbox" [checked]="notifRechazoNotificar()" (change)="toggleNotifRechazoNotificar()" style="accent-color:var(--sc-cyan);width:15px;height:15px" />
           Notificar por correo
         </label>
         @if (notifRechazoNotificar()) {
-          <div style="display:flex;gap:0;margin-top:.5rem;border-bottom:2px solid #e5e7eb">
+          <div style="display:flex;gap:0;margin-top:.5rem;border-bottom:2px solid var(--border-subtle)">
             <button type="button"
-              [style.border-bottom]="notifRechazoTab() === 'usuarios' ? '2px solid #0095d6' : '2px solid transparent'"
-              [style.color]="notifRechazoTab() === 'usuarios' ? '#0095d6' : '#6b7280'"
+              [style.border-bottom]="notifRechazoTab() === 'usuarios' ? '2px solid var(--sc-cyan)' : '2px solid transparent'"
+              [style.color]="notifRechazoTab() === 'usuarios' ? 'var(--sc-cyan)' : 'var(--fg-4)'"
               style="background:none;border:none;padding:.3rem .7rem;font-size:.78rem;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:.35rem"
               (click)="notifRechazoTab.set('usuarios')">
-              <input type="checkbox" [checked]="notifRechazoTodosUsuariosSeleccionados()" (change)="toggleSeleccionarTodosUsuariosRechazo()" (click)="$event.stopPropagation()" style="accent-color:#0095d6;width:12px;height:12px;cursor:pointer;flex-shrink:0" />
+              <input type="checkbox" [checked]="notifRechazoTodosUsuariosSeleccionados()" (change)="toggleSeleccionarTodosUsuariosRechazo()" (click)="$event.stopPropagation()" style="accent-color:var(--sc-cyan);width:12px;height:12px;cursor:pointer;flex-shrink:0" />
               Usuarios ({{ notifRechazoUsuariosIds().length }}/{{ usuariosParaRechazo().length }})
             </button>
             <button type="button"
-              [style.border-bottom]="notifRechazoTab() === 'admins' ? '2px solid #0095d6' : '2px solid transparent'"
-              [style.color]="notifRechazoTab() === 'admins' ? '#0095d6' : '#6b7280'"
+              [style.border-bottom]="notifRechazoTab() === 'admins' ? '2px solid var(--sc-cyan)' : '2px solid transparent'"
+              [style.color]="notifRechazoTab() === 'admins' ? 'var(--sc-cyan)' : 'var(--fg-4)'"
               style="background:none;border:none;padding:.3rem .7rem;font-size:.78rem;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:.35rem"
               (click)="notifRechazoTab.set('admins')">
-              <input type="checkbox" [checked]="notifRechazoTodosAdminsSeleccionados()" (change)="toggleSeleccionarTodosAdminsRechazo()" (click)="$event.stopPropagation()" style="accent-color:#0095d6;width:12px;height:12px;cursor:pointer;flex-shrink:0" />
+              <input type="checkbox" [checked]="notifRechazoTodosAdminsSeleccionados()" (change)="toggleSeleccionarTodosAdminsRechazo()" (click)="$event.stopPropagation()" style="accent-color:var(--sc-cyan);width:12px;height:12px;cursor:pointer;flex-shrink:0" />
               Admins ({{ notifRechazoAdminsIds().length }}/{{ adminsParaRechazo().length }})
             </button>
             <button type="button"
-              [style.border-bottom]="notifRechazoTab() === 'super-admins' ? '2px solid #0095d6' : '2px solid transparent'"
-              [style.color]="notifRechazoTab() === 'super-admins' ? '#0095d6' : '#6b7280'"
+              [style.border-bottom]="notifRechazoTab() === 'super-admins' ? '2px solid var(--sc-cyan)' : '2px solid transparent'"
+              [style.color]="notifRechazoTab() === 'super-admins' ? 'var(--sc-cyan)' : 'var(--fg-4)'"
               style="background:none;border:none;padding:.3rem .7rem;font-size:.78rem;font-weight:600;cursor:pointer"
               (click)="notifRechazoTab.set('super-admins')">
               Super Admins ({{ notifRechazoSuperAdmins() ? superAdminsParaRechazo().length : 0 }}/{{ superAdminsParaRechazo().length }})
@@ -1693,14 +1693,14 @@
             @if (usuariosParaRechazo().length > 0) {
               <div style="display:flex;flex-direction:column;gap:.3rem;max-height:100px;overflow-y:auto;border:1px solid rgba(34,33,33,.2);border-top:none;border-radius:0 0 8px 8px;padding:.4rem .6rem">
                 @for (u of usuariosParaRechazo(); track u._id) {
-                  <label style="display:flex;align-items:center;gap:.5rem;cursor:pointer;font-size:.82rem;color:#374151">
-                    <input type="checkbox" [checked]="notifRechazoUsuariosIds().includes(u._id)" (change)="toggleNotifRechazoUsuario(u._id)" style="accent-color:#0095d6;width:14px;height:14px" />
+                  <label style="display:flex;align-items:center;gap:.5rem;cursor:pointer;font-size:.82rem;color:var(--fg-2)">
+                    <input type="checkbox" [checked]="notifRechazoUsuariosIds().includes(u._id)" (change)="toggleNotifRechazoUsuario(u._id)" style="accent-color:var(--sc-cyan);width:14px;height:14px" />
                     {{ u.nombre }}
                   </label>
                 }
               </div>
             } @else {
-              <p style="margin:.3rem 0 0;font-size:.78rem;color:#9ca3af">
+              <p style="margin:.3rem 0 0;font-size:.78rem;color:var(--fg-5)">
                 {{ rechazandoCentroId() ? 'Sin usuarios asignados al centro.' : 'No hay usuarios para esta empresa.' }}
               </p>
             }
@@ -1709,27 +1709,27 @@
             @if (adminsParaRechazo().length > 0) {
               <div style="display:flex;flex-direction:column;gap:.3rem;max-height:100px;overflow-y:auto;border:1px solid rgba(34,33,33,.2);border-top:none;border-radius:0 0 8px 8px;padding:.4rem .6rem">
                 @for (u of adminsParaRechazo(); track u._id) {
-                  <label style="display:flex;align-items:center;gap:.5rem;font-size:.82rem;color:#374151"
+                  <label style="display:flex;align-items:center;gap:.5rem;font-size:.82rem;color:var(--fg-2)"
                     [style.cursor]="estaSuscritoAdminRechazo(u) ? 'default' : 'pointer'">
                     <input type="checkbox" [checked]="notifRechazoAdminsIds().includes(u._id)"
                       [disabled]="estaSuscritoAdminRechazo(u)"
-                      (change)="toggleNotifRechazoAdmin(u._id)" style="accent-color:#0095d6;width:14px;height:14px" />
+                      (change)="toggleNotifRechazoAdmin(u._id)" style="accent-color:var(--sc-cyan);width:14px;height:14px" />
                     <span>{{ u.nombre }}</span>
                     @if (estaSuscritoAdminRechazo(u)) {
                       <span title="Suscrito: recibe esta notificación siempre, no se puede desmarcar"
-                        style="font-size:.68rem;font-weight:700;color:#15803d;background:#dcfce7;border-radius:999px;padding:.1rem .5rem">Suscrito</span>
+                        style="font-size:.68rem;font-weight:700;color:var(--ok);background:var(--ok-bg);border-radius:999px;padding:.1rem .5rem">Suscrito</span>
                     }
                   </label>
                 }
               </div>
             } @else {
-              <p style="margin:.3rem 0 0;font-size:.78rem;color:#9ca3af">No hay administradores disponibles.</p>
+              <p style="margin:.3rem 0 0;font-size:.78rem;color:var(--fg-5)">No hay administradores disponibles.</p>
             }
           }
           @if (notifRechazoTab() === 'super-admins') {
             <div style="display:flex;flex-direction:column;gap:.5rem;border:1px solid rgba(34,33,33,.2);border-top:none;border-radius:0 0 8px 8px;padding:.5rem .75rem">
-              <label style="display:flex;align-items:center;gap:.5rem;cursor:pointer;font-size:.82rem;color:#374151;font-weight:600">
-                <input type="checkbox" [checked]="notifRechazoSuperAdmins()" (change)="notifRechazoSuperAdmins.update(v => !v)" style="accent-color:#0095d6;width:15px;height:15px" />
+              <label style="display:flex;align-items:center;gap:.5rem;cursor:pointer;font-size:.82rem;color:var(--fg-2);font-weight:600">
+                <input type="checkbox" [checked]="notifRechazoSuperAdmins()" (change)="notifRechazoSuperAdmins.update(v => !v)" style="accent-color:var(--sc-cyan);width:15px;height:15px" />
                 <span>Notificar a todos los Super Admins</span>
               </label>
               @if (superAdminsParaRechazo().length > 0) {

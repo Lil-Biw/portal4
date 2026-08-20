@@ -281,8 +281,8 @@ export class MisActividadesPageComponent implements OnInit {
   }
 
   colorDeActividad(a: Actividad): string {
-    if (typeof a.tipo_id === 'object') return (a.tipo_id as TipoActividad).color ?? '#9ca3af';
-    return this.tiposService.tipos().find(t => t._id === this.tipoIdDe(a))?.color ?? '#9ca3af';
+    if (typeof a.tipo_id === 'object') return (a.tipo_id as TipoActividad).color ?? 'var(--fg-5)';
+    return this.tiposService.tipos().find(t => t._id === this.tipoIdDe(a))?.color ?? 'var(--fg-5)';
   }
 
   protected readonly iconosActividad = ICONOS_ACTIVIDAD;

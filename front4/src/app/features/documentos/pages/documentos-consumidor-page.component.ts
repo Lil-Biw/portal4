@@ -885,11 +885,11 @@ export class DocumentosConsumidorPageComponent implements OnInit {
 
   estadoChipStyle(estado: EstadoSolicitud): { color: string; bg: string } {
     const map: Record<EstadoSolicitud, { color: string; bg: string }> = {
-      pendiente: { color: '#92400e', bg: '#fef3c7' },
+      pendiente: { color: 'var(--warn)', bg: 'var(--warn-bg)' },
       revision:  { color: '#1e40af', bg: '#dbeafe' },
-      aprobado:  { color: '#14532d', bg: '#dcfce7' },
-      rechazado: { color: '#7f1d1d', bg: '#fee2e2' },
-      vencido:   { color: '#374151', bg: '#f3f4f6' },
+      aprobado:  { color: 'var(--ok)', bg: 'var(--ok-bg)' },
+      rechazado: { color: 'var(--danger)', bg: 'var(--danger-bg)' },
+      vencido:   { color: 'var(--fg-2)', bg: 'var(--bg-2)' },
     };
     return map[estado];
   }

@@ -1,7 +1,7 @@
 <!-- Sin empresa seleccionada -->
 @if (!consumidorContext.empresaSeleccionada()) {
   <div class="card">
-    <p style="margin:0;color:#9ca3af;font-size:.9rem">Selecciona una empresa en el menú superior para ver tus documentos.</p>
+    <p style="margin:0;color:var(--fg-5);font-size:.9rem">Selecciona una empresa en el menú superior para ver tus documentos.</p>
   </div>
 }
 
@@ -10,30 +10,30 @@
   <!-- Panel de filtros — primer componente de la página, como en admin -->
   @if (tabConsumidorActiva() === 'documentacion') {
     @let docTipo = tabJerarquia();
-    <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:.5rem;padding:.75rem;margin-bottom:1rem">
+    <div style="background:var(--bg-1);border:1px solid var(--border-subtle);border-radius:.5rem;padding:.75rem;margin-bottom:1rem">
       <div style="display:grid;grid-template-columns:1fr 600px;gap:1.5rem;align-items:start">
         <div>
-          <p style="margin:0 0 .5rem;font-size:.8rem;font-weight:600;color:#374151">Tipo de documento</p>
+          <p style="margin:0 0 .5rem;font-size:.8rem;font-weight:600;color:var(--fg-2)">Tipo de documento</p>
           <div style="display:flex;flex-wrap:wrap;gap:.5rem">
             <button type="button"
               style="font-size:.85rem;padding:.3rem .6rem;border-style:solid;border-width:1px;border-radius:.375rem;cursor:pointer"
-              [style.background]="!panels[docTipo].categoriaFiltro ? '#e0e7ff' : '#fff'"
-              [style.borderColor]="!panels[docTipo].categoriaFiltro ? '#6366f1' : '#d1d5db'"
-              [style.color]="!panels[docTipo].categoriaFiltro ? '#6366f1' : '#374151'"
+              [style.background]="!panels[docTipo].categoriaFiltro ? '#e0e7ff' : 'var(--bg-0)'"
+              [style.borderColor]="!panels[docTipo].categoriaFiltro ? '#6366f1' : 'var(--border-default)'"
+              [style.color]="!panels[docTipo].categoriaFiltro ? '#6366f1' : 'var(--fg-2)'"
               (click)="seleccionarCategoriaFiltro(docTipo, '')">Todos</button>
             @for (cat of categorias; track cat) {
               <button type="button"
                 style="font-size:.85rem;padding:.3rem .6rem;border-style:solid;border-width:1px;border-radius:.375rem;cursor:pointer"
-                [style.background]="panels[docTipo].categoriaFiltro === cat ? '#e0e7ff' : '#fff'"
-                [style.borderColor]="panels[docTipo].categoriaFiltro === cat ? '#6366f1' : '#d1d5db'"
-                [style.color]="panels[docTipo].categoriaFiltro === cat ? '#6366f1' : '#374151'"
+                [style.background]="panels[docTipo].categoriaFiltro === cat ? '#e0e7ff' : 'var(--bg-0)'"
+                [style.borderColor]="panels[docTipo].categoriaFiltro === cat ? '#6366f1' : 'var(--border-default)'"
+                [style.color]="panels[docTipo].categoriaFiltro === cat ? '#6366f1' : 'var(--fg-2)'"
                 (click)="seleccionarCategoriaFiltro(docTipo, cat)">{{ cat }}</button>
             }
           </div>
         </div>
         <div style="display:flex;gap:.5rem;align-items:flex-end">
           <label class="field" style="margin:0;flex:1;min-width:0">
-            <span style="font-size:.8rem;font-weight:600;color:#374151">Buscar por nombre</span>
+            <span style="font-size:.8rem;font-weight:600;color:var(--fg-2)">Buscar por nombre</span>
             <input type="text" [ngModel]="panels[docTipo].busqueda" (ngModelChange)="onBusquedaNombreChange(docTipo, $event)" placeholder="Nombre del documento…" />
           </label>
           <button class="btn-ghost" style="font-size:.8rem;padding:.45rem .7rem;white-space:nowrap"
@@ -44,34 +44,34 @@
   }
 
   @if (tabConsumidorActiva() === 'solicitudes') {
-    <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:.5rem;padding:.75rem;margin-bottom:1rem">
+    <div style="background:var(--bg-1);border:1px solid var(--border-subtle);border-radius:.5rem;padding:.75rem;margin-bottom:1rem">
       <div style="display:grid;grid-template-columns:1fr 600px;gap:1.5rem;align-items:start">
         <div>
-          <p style="margin:0 0 .5rem;font-size:.8rem;font-weight:600;color:#374151">Tipo de documento</p>
+          <p style="margin:0 0 .5rem;font-size:.8rem;font-weight:600;color:var(--fg-2)">Tipo de documento</p>
           <div style="display:flex;flex-wrap:wrap;gap:.5rem">
             <button type="button"
               style="font-size:.85rem;padding:.3rem .6rem;border-style:solid;border-width:1px;border-radius:.375rem;cursor:pointer"
-              [style.background]="!filtroTipoSolicitud() ? '#e0e7ff' : '#fff'"
-              [style.borderColor]="!filtroTipoSolicitud() ? '#6366f1' : '#d1d5db'"
-              [style.color]="!filtroTipoSolicitud() ? '#6366f1' : '#374151'"
+              [style.background]="!filtroTipoSolicitud() ? '#e0e7ff' : 'var(--bg-0)'"
+              [style.borderColor]="!filtroTipoSolicitud() ? '#6366f1' : 'var(--border-default)'"
+              [style.color]="!filtroTipoSolicitud() ? '#6366f1' : 'var(--fg-2)'"
               (click)="filtroTipoSolicitud.set('')">Todos</button>
             @for (cat of categorias; track cat) {
               <button type="button"
                 style="font-size:.85rem;padding:.3rem .6rem;border-style:solid;border-width:1px;border-radius:.375rem;cursor:pointer"
-                [style.background]="filtroTipoSolicitud() === cat ? '#e0e7ff' : '#fff'"
-                [style.borderColor]="filtroTipoSolicitud() === cat ? '#6366f1' : '#d1d5db'"
-                [style.color]="filtroTipoSolicitud() === cat ? '#6366f1' : '#374151'"
+                [style.background]="filtroTipoSolicitud() === cat ? '#e0e7ff' : 'var(--bg-0)'"
+                [style.borderColor]="filtroTipoSolicitud() === cat ? '#6366f1' : 'var(--border-default)'"
+                [style.color]="filtroTipoSolicitud() === cat ? '#6366f1' : 'var(--fg-2)'"
                 (click)="filtroTipoSolicitud.set(cat)">{{ cat }}</button>
             }
           </div>
         </div>
         <div style="display:flex;gap:.5rem;align-items:flex-end;flex-wrap:wrap">
           <label class="field" style="margin:0;flex:1;min-width:160px">
-            <span style="font-size:.8rem;font-weight:600;color:#374151">Buscar por nombre</span>
+            <span style="font-size:.8rem;font-weight:600;color:var(--fg-2)">Buscar por nombre</span>
             <input type="text" [ngModel]="busquedaSolicitudActual()" (ngModelChange)="onBusquedaSolicitudChange($event)" placeholder="Nombre de la solicitud…" />
           </label>
           <label class="field" style="margin:0;min-width:150px">
-            <span style="font-size:.8rem;font-weight:600;color:#374151">Estado</span>
+            <span style="font-size:.8rem;font-weight:600;color:var(--fg-2)">Estado</span>
             <select [ngModel]="filtroEstado()" (ngModelChange)="filtroEstado.set($event)">
               <option value="">Todos</option>
               <option value="pendiente">Pendiente</option>
@@ -93,12 +93,12 @@
   <div class="card" style="padding:0;overflow:hidden;margin-bottom:1rem">
 
     <!-- Tab strip -->
-    <div style="padding:.5rem;border-bottom:1px solid #f0f0f0">
-      <div style="display:flex;gap:.25rem;background:#f3f4f6;border-radius:10px;padding:.25rem">
+    <div style="padding:.5rem;border-bottom:1px solid var(--border-subtle)">
+      <div style="display:flex;gap:.25rem;background:var(--bg-2);border-radius:10px;padding:.25rem">
         <button
           style="flex:1;padding:.55rem 1rem;border-style:solid;border-width:1px;border-radius:8px;font-size:.875rem;font-weight:600;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;justify-content:center;gap:.4rem"
           [style.background]="tabJerarquia() === 'todos' ? 'rgba(124,58,237,.08)' : 'transparent'"
-          [style.color]="tabJerarquia() === 'todos' ? '#7c3aed' : '#6b7280'"
+          [style.color]="tabJerarquia() === 'todos' ? '#7c3aed' : 'var(--fg-4)'"
           [style.borderColor]="tabJerarquia() === 'todos' ? 'rgba(124,58,237,.18)' : 'transparent'"
           (click)="seleccionarTabJerarquiaC('todos')">
           <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -112,7 +112,7 @@
         <button
           style="flex:1;padding:.55rem 1rem;border-style:solid;border-width:1px;border-radius:8px;font-size:.875rem;font-weight:600;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;justify-content:center;gap:.4rem"
           [style.background]="tabJerarquia() === 'empresa' ? 'rgba(0,149,214,.08)' : 'transparent'"
-          [style.color]="tabJerarquia() === 'empresa' ? '#0095d6' : '#6b7280'"
+          [style.color]="tabJerarquia() === 'empresa' ? 'var(--sc-cyan)' : 'var(--fg-4)'"
           [style.borderColor]="tabJerarquia() === 'empresa' ? 'rgba(0,149,214,.18)' : 'transparent'"
           (click)="seleccionarTabJerarquiaC('empresa')">
           <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -122,12 +122,12 @@
             <path d="M10 6h4"/><path d="M10 10h4"/><path d="M10 14h4"/><path d="M10 18h4"/>
           </svg>
           Empresa
-          <span style="font-size:.68rem;font-weight:700;line-height:1;padding:.15rem .4rem;border-radius:999px;background:rgba(0,149,214,.15);color:#0095d6;flex-shrink:0">{{ conteoEmpresa() }}</span>
+          <span style="font-size:.68rem;font-weight:700;line-height:1;padding:.15rem .4rem;border-radius:999px;background:rgba(0,149,214,.15);color:var(--sc-cyan);flex-shrink:0">{{ conteoEmpresa() }}</span>
         </button>
         <button
           style="flex:1;padding:.55rem 1rem;border-style:solid;border-width:1px;border-radius:8px;font-size:.875rem;font-weight:600;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;justify-content:center;gap:.4rem"
           [style.background]="tabJerarquia() === 'centro' ? 'rgba(16,185,129,.08)' : 'transparent'"
-          [style.color]="tabJerarquia() === 'centro' ? '#059669' : '#6b7280'"
+          [style.color]="tabJerarquia() === 'centro' ? 'var(--ok)' : 'var(--fg-4)'"
           [style.borderColor]="tabJerarquia() === 'centro' ? 'rgba(16,185,129,.18)' : 'transparent'"
           (click)="seleccionarTabJerarquiaC('centro')">
           <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -136,12 +136,12 @@
             <polyline points="2 12 12 17 22 12"/>
           </svg>
           Centro de costo
-          <span style="font-size:.68rem;font-weight:700;line-height:1;padding:.15rem .4rem;border-radius:999px;background:rgba(16,185,129,.15);color:#059669;flex-shrink:0">{{ conteoCentro() }}</span>
+          <span style="font-size:.68rem;font-weight:700;line-height:1;padding:.15rem .4rem;border-radius:999px;background:rgba(16,185,129,.15);color:var(--ok);flex-shrink:0">{{ conteoCentro() }}</span>
         </button>
         <button
           style="flex:1;padding:.55rem 1rem;border-style:solid;border-width:1px;border-radius:8px;font-size:.875rem;font-weight:600;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;justify-content:center;gap:.4rem"
           [style.background]="tabJerarquia() === 'proyecto' ? 'rgba(245,158,11,.08)' : 'transparent'"
-          [style.color]="tabJerarquia() === 'proyecto' ? '#d97706' : '#6b7280'"
+          [style.color]="tabJerarquia() === 'proyecto' ? 'var(--warn)' : 'var(--fg-4)'"
           [style.borderColor]="tabJerarquia() === 'proyecto' ? 'rgba(245,158,11,.18)' : 'transparent'"
           [disabled]="!selectedCentroIdC()"
           [style.opacity]="!selectedCentroIdC() ? '0.45' : '1'"
@@ -150,7 +150,7 @@
             <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
           </svg>
           Proyecto
-          <span style="font-size:.68rem;font-weight:700;line-height:1;padding:.15rem .4rem;border-radius:999px;background:rgba(245,158,11,.15);color:#d97706;flex-shrink:0">{{ conteoProyecto() }}</span>
+          <span style="font-size:.68rem;font-weight:700;line-height:1;padding:.15rem .4rem;border-radius:999px;background:rgba(245,158,11,.15);color:var(--warn);flex-shrink:0">{{ conteoProyecto() }}</span>
         </button>
       </div>
     </div>
@@ -167,49 +167,49 @@
             </svg>
           </div>
           <div>
-            <p style="margin:0 0 .15rem;font-size:.9rem;font-weight:700;color:#1f2937">Todos los documentos</p>
-            <p style="margin:0;font-size:.75rem;color:#6b7280">Centros de costos y proyectos de {{ empresaNombreC }} · {{ filasTodos().length }} documentos</p>
+            <p style="margin:0 0 .15rem;font-size:.9rem;font-weight:700;color:var(--fg-2)">Todos los documentos</p>
+            <p style="margin:0;font-size:.75rem;color:var(--fg-4)">Centros de costos y proyectos de {{ empresaNombreC }} · {{ filasTodos().length }} documentos</p>
           </div>
         </div>
         <div style="display:flex;gap:.35rem;flex-wrap:wrap;align-items:center">
-          <span style="font-size:.72rem;font-weight:600;color:#6b7280;margin-right:.15rem">Ordenar por:</span>
+          <span style="font-size:.72rem;font-weight:600;color:var(--fg-4);margin-right:.15rem">Ordenar por:</span>
           <button
             style="padding:.3rem .65rem;border-style:solid;border-width:1px;border-radius:999px;font-size:.75rem;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap"
             [style.background]="ordenTodosC() === 'recientes' ? 'rgba(124,58,237,.08)' : 'transparent'"
-            [style.color]="ordenTodosC() === 'recientes' ? '#7c3aed' : '#6b7280'"
-            [style.borderColor]="ordenTodosC() === 'recientes' ? 'rgba(124,58,237,.3)' : '#e5e7eb'"
+            [style.color]="ordenTodosC() === 'recientes' ? '#7c3aed' : 'var(--fg-4)'"
+            [style.borderColor]="ordenTodosC() === 'recientes' ? 'rgba(124,58,237,.3)' : 'var(--border-subtle)'"
             (click)="ordenTodosC.set('recientes')">
             Recientes
           </button>
           <button
             style="padding:.3rem .65rem;border-style:solid;border-width:1px;border-radius:999px;font-size:.75rem;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap"
             [style.background]="ordenTodosC() === 'alfabetico' ? 'rgba(124,58,237,.08)' : 'transparent'"
-            [style.color]="ordenTodosC() === 'alfabetico' ? '#7c3aed' : '#6b7280'"
-            [style.borderColor]="ordenTodosC() === 'alfabetico' ? 'rgba(124,58,237,.3)' : '#e5e7eb'"
+            [style.color]="ordenTodosC() === 'alfabetico' ? '#7c3aed' : 'var(--fg-4)'"
+            [style.borderColor]="ordenTodosC() === 'alfabetico' ? 'rgba(124,58,237,.3)' : 'var(--border-subtle)'"
             (click)="ordenTodosC.set('alfabetico')">
             Alfabético
           </button>
           <button
             style="padding:.3rem .65rem;border-style:solid;border-width:1px;border-radius:999px;font-size:.75rem;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap"
             [style.background]="ordenTodosC() === 'nivel_empresa' ? 'rgba(124,58,237,.08)' : 'transparent'"
-            [style.color]="ordenTodosC() === 'nivel_empresa' ? '#7c3aed' : '#6b7280'"
-            [style.borderColor]="ordenTodosC() === 'nivel_empresa' ? 'rgba(124,58,237,.3)' : '#e5e7eb'"
+            [style.color]="ordenTodosC() === 'nivel_empresa' ? '#7c3aed' : 'var(--fg-4)'"
+            [style.borderColor]="ordenTodosC() === 'nivel_empresa' ? 'rgba(124,58,237,.3)' : 'var(--border-subtle)'"
             (click)="ordenTodosC.set('nivel_empresa')">
             Nivel empresa
           </button>
           <button
             style="padding:.3rem .65rem;border-style:solid;border-width:1px;border-radius:999px;font-size:.75rem;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap"
             [style.background]="ordenTodosC() === 'nivel_centro' ? 'rgba(124,58,237,.08)' : 'transparent'"
-            [style.color]="ordenTodosC() === 'nivel_centro' ? '#7c3aed' : '#6b7280'"
-            [style.borderColor]="ordenTodosC() === 'nivel_centro' ? 'rgba(124,58,237,.3)' : '#e5e7eb'"
+            [style.color]="ordenTodosC() === 'nivel_centro' ? '#7c3aed' : 'var(--fg-4)'"
+            [style.borderColor]="ordenTodosC() === 'nivel_centro' ? 'rgba(124,58,237,.3)' : 'var(--border-subtle)'"
             (click)="ordenTodosC.set('nivel_centro')">
             Nivel centro
           </button>
           <button
             style="padding:.3rem .65rem;border-style:solid;border-width:1px;border-radius:999px;font-size:.75rem;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap"
             [style.background]="ordenTodosC() === 'nivel_proyecto' ? 'rgba(124,58,237,.08)' : 'transparent'"
-            [style.color]="ordenTodosC() === 'nivel_proyecto' ? '#7c3aed' : '#6b7280'"
-            [style.borderColor]="ordenTodosC() === 'nivel_proyecto' ? 'rgba(124,58,237,.3)' : '#e5e7eb'"
+            [style.color]="ordenTodosC() === 'nivel_proyecto' ? '#7c3aed' : 'var(--fg-4)'"
+            [style.borderColor]="ordenTodosC() === 'nivel_proyecto' ? 'rgba(124,58,237,.3)' : 'var(--border-subtle)'"
             (click)="ordenTodosC.set('nivel_proyecto')">
             Nivel proyecto
           </button>
@@ -219,9 +219,9 @@
 
     <!-- Subcontexto: Empresa -->
     @if (tabJerarquia() === 'empresa') {
-      <div style="padding:.75rem 1rem;border-left:4px solid #0095d6;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.75rem">
+      <div style="padding:.75rem 1rem;border-left:4px solid var(--sc-cyan);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.75rem">
         <div style="display:flex;align-items:center;gap:.75rem">
-          <div style="width:38px;height:38px;border-radius:9px;background:rgba(0,149,214,.1);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#0095d6">
+          <div style="width:38px;height:38px;border-radius:9px;background:rgba(0,149,214,.1);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--sc-cyan)">
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"/>
               <path d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"/>
@@ -230,9 +230,9 @@
             </svg>
           </div>
           <div>
-            <p style="margin:0 0 .15rem;font-size:.9rem;font-weight:700;color:#1f2937">{{ empresaNombreC }}</p>
+            <p style="margin:0 0 .15rem;font-size:.9rem;font-weight:700;color:var(--fg-2)">{{ empresaNombreC }}</p>
             @if (empresaSeleccionadaObj) {
-              <p style="margin:0;font-size:.75rem;color:#6b7280">
+              <p style="margin:0;font-size:.75rem;color:var(--fg-4)">
                 RUT: {{ empresaSeleccionadaObj.rut }}
                 @if (empresaSeleccionadaObj.direccion?.ciudad) { · {{ empresaSeleccionadaObj.direccion!.ciudad }} }
               </p>
@@ -247,13 +247,13 @@
     @if (tabJerarquia() === 'centro') {
       <div style="padding:1rem;display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1rem">
         @if (!selectedCentroIdC()) {
-          <div style="border-left:4px solid #e5e7eb;border-radius:8px;background:#f9fafb;padding:.75rem .85rem;display:flex;align-items:center">
-            <p style="margin:0;color:#9ca3af;font-size:.875rem">Selecciona un centro de costos para ver su documentación.</p>
+          <div style="border-left:4px solid var(--border-subtle);border-radius:8px;background:var(--bg-1);padding:.75rem .85rem;display:flex;align-items:center">
+            <p style="margin:0;color:var(--fg-5);font-size:.875rem">Selecciona un centro de costos para ver su documentación.</p>
           </div>
         } @else if (selectedCentroIdC() === 'todos') {
-          <div style="border-left:4px solid #10b981;border-radius:8px;background:#fafbfc;padding:.75rem .85rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.75rem">
+          <div style="border-left:4px solid var(--ok);border-radius:8px;background:var(--bg-1);padding:.75rem .85rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.75rem">
             <div style="display:flex;align-items:center;gap:.75rem">
-              <div style="width:38px;height:38px;border-radius:9px;background:rgba(16,185,129,.1);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#059669">
+              <div style="width:38px;height:38px;border-radius:9px;background:rgba(16,185,129,.1);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--ok)">
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <polygon points="12 2 2 7 12 12 22 7 12 2"/>
                   <polyline points="2 17 12 22 22 17"/>
@@ -261,16 +261,16 @@
                 </svg>
               </div>
               <div>
-                <p style="margin:0 0 .15rem;font-size:.9rem;font-weight:700;color:#1f2937">Documentación total de centros de costos</p>
-                <p style="margin:0;font-size:.75rem;color:#6b7280">{{ centrosFiltradosC.length }} centros de costos</p>
+                <p style="margin:0 0 .15rem;font-size:.9rem;font-weight:700;color:var(--fg-2)">Documentación total de centros de costos</p>
+                <p style="margin:0;font-size:.75rem;color:var(--fg-4)">{{ centrosFiltradosC.length }} centros de costos</p>
               </div>
             </div>
             <ng-container *ngTemplateOutlet="ordenCentroChipsC"></ng-container>
           </div>
         } @else {
-          <div style="border-left:4px solid #10b981;border-radius:8px;background:#fafbfc;padding:.75rem .85rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.75rem">
+          <div style="border-left:4px solid var(--ok);border-radius:8px;background:var(--bg-1);padding:.75rem .85rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.75rem">
             <div style="display:flex;align-items:center;gap:.75rem">
-              <div style="width:38px;height:38px;border-radius:9px;background:rgba(16,185,129,.1);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#059669">
+              <div style="width:38px;height:38px;border-radius:9px;background:rgba(16,185,129,.1);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--ok)">
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <polygon points="12 2 2 7 12 12 22 7 12 2"/>
                   <polyline points="2 17 12 22 22 17"/>
@@ -278,9 +278,9 @@
                 </svg>
               </div>
               <div>
-                <p style="margin:0 0 .15rem;font-size:.9rem;font-weight:700;color:#1f2937">{{ centroNombreC }}</p>
+                <p style="margin:0 0 .15rem;font-size:.9rem;font-weight:700;color:var(--fg-2)">{{ centroNombreC }}</p>
                 @if (centroSeleccionado) {
-                  <p style="margin:0;font-size:.75rem;color:#6b7280">
+                  <p style="margin:0;font-size:.75rem;color:var(--fg-4)">
                     Código: {{ centroSeleccionado.codigo }}
                     @if (centroSeleccionado.ubicacion_ciudad) { · {{ centroSeleccionado.ubicacion_ciudad }}@if (centroSeleccionado.ubicacion_region) {, {{ centroSeleccionado.ubicacion_region }}} }
                   </p>
@@ -306,29 +306,29 @@
     @if (tabJerarquia() === 'proyecto') {
       <div style="padding:1rem;display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1rem">
         @if (!selectedCentroIdC()) {
-          <div style="border-left:4px solid #e5e7eb;border-radius:8px;background:#f9fafb;padding:.75rem .85rem;display:flex;align-items:center">
-            <p style="margin:0;color:#9ca3af;font-size:.875rem">Selecciona primero un centro de costos para ver sus proyectos.</p>
+          <div style="border-left:4px solid var(--border-subtle);border-radius:8px;background:var(--bg-1);padding:.75rem .85rem;display:flex;align-items:center">
+            <p style="margin:0;color:var(--fg-5);font-size:.875rem">Selecciona primero un centro de costos para ver sus proyectos.</p>
           </div>
         } @else if (!selectedProyectoIdC()) {
-          <div style="border-left:4px solid #e5e7eb;border-radius:8px;background:#f9fafb;padding:.75rem .85rem;display:flex;align-items:center">
-            <p style="margin:0;color:#9ca3af;font-size:.875rem">Selecciona un proyecto para ver su documentación.</p>
+          <div style="border-left:4px solid var(--border-subtle);border-radius:8px;background:var(--bg-1);padding:.75rem .85rem;display:flex;align-items:center">
+            <p style="margin:0;color:var(--fg-5);font-size:.875rem">Selecciona un proyecto para ver su documentación.</p>
           </div>
         } @else if (selectedProyectoIdC() === 'todos') {
-          <div style="border-left:4px solid #f59e0b;border-radius:8px;background:#fafbfc;padding:.75rem .85rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.75rem">
+          <div style="border-left:4px solid var(--warn);border-radius:8px;background:var(--bg-1);padding:.75rem .85rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.75rem">
             <div style="display:flex;align-items:center;gap:.75rem">
-              <div style="width:38px;height:38px;border-radius:9px;background:rgba(245,158,11,.1);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#d97706">
+              <div style="width:38px;height:38px;border-radius:9px;background:rgba(245,158,11,.1);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--warn)">
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
                 </svg>
               </div>
               <div>
                 @if (selectedCentroIdC() === 'todos') {
-                  <p style="margin:0 0 .15rem;font-size:.9rem;font-weight:700;color:#1f2937">Todos los proyectos</p>
-                  <p style="margin:0;font-size:.75rem;color:#6b7280">Todos los centros de costos</p>
+                  <p style="margin:0 0 .15rem;font-size:.9rem;font-weight:700;color:var(--fg-2)">Todos los proyectos</p>
+                  <p style="margin:0;font-size:.75rem;color:var(--fg-4)">Todos los centros de costos</p>
                 } @else {
-                  <p style="margin:0 0 .15rem;font-size:.9rem;font-weight:700;color:#1f2937">Todos los proyectos de: {{ centroNombreC }}</p>
+                  <p style="margin:0 0 .15rem;font-size:.9rem;font-weight:700;color:var(--fg-2)">Todos los proyectos de: {{ centroNombreC }}</p>
                   @if (centroSeleccionado) {
-                    <p style="margin:0;font-size:.75rem;color:#6b7280">Código: {{ centroSeleccionado.codigo }}</p>
+                    <p style="margin:0;font-size:.75rem;color:var(--fg-4)">Código: {{ centroSeleccionado.codigo }}</p>
                   }
                 }
               </div>
@@ -336,17 +336,17 @@
             <ng-container *ngTemplateOutlet="ordenProyectoChipsC"></ng-container>
           </div>
         } @else {
-          <div style="border-left:4px solid #f59e0b;border-radius:8px;background:#fafbfc;padding:.75rem .85rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.75rem">
+          <div style="border-left:4px solid var(--warn);border-radius:8px;background:var(--bg-1);padding:.75rem .85rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.75rem">
             <div style="display:flex;align-items:center;gap:.75rem">
-              <div style="width:38px;height:38px;border-radius:9px;background:rgba(245,158,11,.1);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#d97706">
+              <div style="width:38px;height:38px;border-radius:9px;background:rgba(245,158,11,.1);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--warn)">
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
                 </svg>
               </div>
               <div>
-                <p style="margin:0 0 .15rem;font-size:.9rem;font-weight:700;color:#1f2937">{{ proyectoNombreC }}</p>
+                <p style="margin:0 0 .15rem;font-size:.9rem;font-weight:700;color:var(--fg-2)">{{ proyectoNombreC }}</p>
                 @if (proyectoSeleccionado) {
-                  <p style="margin:0;font-size:.75rem;color:#6b7280">
+                  <p style="margin:0;font-size:.75rem;color:var(--fg-4)">
                     Código: {{ proyectoSeleccionado.codigo }}
                     @if (proyectoSeleccionado.fecha_inicio) { · Inicio: {{ formatFecha(proyectoSeleccionado.fecha_inicio) }} }
                     @if (proyectoSeleccionado.fecha_fin) { — Término: {{ formatFecha(proyectoSeleccionado.fecha_fin) }} }
@@ -378,20 +378,20 @@
   <!-- Chips "Ordenar por" reutilizados dentro de las tarjetas de resumen de Empresa/Centro/Proyecto -->
   <ng-template #ordenEmpresaChipsC>
     <div style="display:flex;align-items:center;gap:.35rem;flex-wrap:wrap">
-      <span style="font-size:.72rem;font-weight:600;color:#6b7280;margin-right:.15rem">Ordenar por:</span>
+      <span style="font-size:.72rem;font-weight:600;color:var(--fg-4);margin-right:.15rem">Ordenar por:</span>
       <button
         style="padding:.3rem .65rem;border-style:solid;border-width:1px;border-radius:999px;font-size:.75rem;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap"
         [style.background]="ordenEmpresaC() === 'recientes' ? 'rgba(0,149,214,.08)' : 'transparent'"
-        [style.color]="ordenEmpresaC() === 'recientes' ? '#0095d6' : '#6b7280'"
-        [style.borderColor]="ordenEmpresaC() === 'recientes' ? 'rgba(0,149,214,.3)' : '#e5e7eb'"
+        [style.color]="ordenEmpresaC() === 'recientes' ? 'var(--sc-cyan)' : 'var(--fg-4)'"
+        [style.borderColor]="ordenEmpresaC() === 'recientes' ? 'rgba(0,149,214,.3)' : 'var(--border-subtle)'"
         (click)="ordenEmpresaC.set('recientes')">
         Recientes
       </button>
       <button
         style="padding:.3rem .65rem;border-style:solid;border-width:1px;border-radius:999px;font-size:.75rem;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap"
         [style.background]="ordenEmpresaC() === 'alfabetico' ? 'rgba(0,149,214,.08)' : 'transparent'"
-        [style.color]="ordenEmpresaC() === 'alfabetico' ? '#0095d6' : '#6b7280'"
-        [style.borderColor]="ordenEmpresaC() === 'alfabetico' ? 'rgba(0,149,214,.3)' : '#e5e7eb'"
+        [style.color]="ordenEmpresaC() === 'alfabetico' ? 'var(--sc-cyan)' : 'var(--fg-4)'"
+        [style.borderColor]="ordenEmpresaC() === 'alfabetico' ? 'rgba(0,149,214,.3)' : 'var(--border-subtle)'"
         (click)="ordenEmpresaC.set('alfabetico')">
         Alfabético
       </button>
@@ -400,20 +400,20 @@
 
   <ng-template #ordenCentroChipsC>
     <div style="display:flex;align-items:center;gap:.35rem;flex-wrap:wrap">
-      <span style="font-size:.72rem;font-weight:600;color:#6b7280;margin-right:.15rem">Ordenar por:</span>
+      <span style="font-size:.72rem;font-weight:600;color:var(--fg-4);margin-right:.15rem">Ordenar por:</span>
       <button
         style="padding:.3rem .65rem;border-style:solid;border-width:1px;border-radius:999px;font-size:.75rem;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap"
         [style.background]="ordenCentroC() === 'recientes' ? 'rgba(16,185,129,.08)' : 'transparent'"
-        [style.color]="ordenCentroC() === 'recientes' ? '#059669' : '#6b7280'"
-        [style.borderColor]="ordenCentroC() === 'recientes' ? 'rgba(16,185,129,.3)' : '#e5e7eb'"
+        [style.color]="ordenCentroC() === 'recientes' ? 'var(--ok)' : 'var(--fg-4)'"
+        [style.borderColor]="ordenCentroC() === 'recientes' ? 'rgba(16,185,129,.3)' : 'var(--border-subtle)'"
         (click)="ordenCentroC.set('recientes')">
         Recientes
       </button>
       <button
         style="padding:.3rem .65rem;border-style:solid;border-width:1px;border-radius:999px;font-size:.75rem;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap"
         [style.background]="ordenCentroC() === 'alfabetico' ? 'rgba(16,185,129,.08)' : 'transparent'"
-        [style.color]="ordenCentroC() === 'alfabetico' ? '#059669' : '#6b7280'"
-        [style.borderColor]="ordenCentroC() === 'alfabetico' ? 'rgba(16,185,129,.3)' : '#e5e7eb'"
+        [style.color]="ordenCentroC() === 'alfabetico' ? 'var(--ok)' : 'var(--fg-4)'"
+        [style.borderColor]="ordenCentroC() === 'alfabetico' ? 'rgba(16,185,129,.3)' : 'var(--border-subtle)'"
         (click)="ordenCentroC.set('alfabetico')">
         Alfabético
       </button>
@@ -422,20 +422,20 @@
 
   <ng-template #ordenProyectoChipsC>
     <div style="display:flex;align-items:center;gap:.35rem;flex-wrap:wrap">
-      <span style="font-size:.72rem;font-weight:600;color:#6b7280;margin-right:.15rem">Ordenar por:</span>
+      <span style="font-size:.72rem;font-weight:600;color:var(--fg-4);margin-right:.15rem">Ordenar por:</span>
       <button
         style="padding:.3rem .65rem;border-style:solid;border-width:1px;border-radius:999px;font-size:.75rem;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap"
         [style.background]="ordenProyectoC() === 'recientes' ? 'rgba(245,158,11,.08)' : 'transparent'"
-        [style.color]="ordenProyectoC() === 'recientes' ? '#d97706' : '#6b7280'"
-        [style.borderColor]="ordenProyectoC() === 'recientes' ? 'rgba(245,158,11,.3)' : '#e5e7eb'"
+        [style.color]="ordenProyectoC() === 'recientes' ? 'var(--warn)' : 'var(--fg-4)'"
+        [style.borderColor]="ordenProyectoC() === 'recientes' ? 'rgba(245,158,11,.3)' : 'var(--border-subtle)'"
         (click)="ordenProyectoC.set('recientes')">
         Recientes
       </button>
       <button
         style="padding:.3rem .65rem;border-style:solid;border-width:1px;border-radius:999px;font-size:.75rem;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap"
         [style.background]="ordenProyectoC() === 'alfabetico' ? 'rgba(245,158,11,.08)' : 'transparent'"
-        [style.color]="ordenProyectoC() === 'alfabetico' ? '#d97706' : '#6b7280'"
-        [style.borderColor]="ordenProyectoC() === 'alfabetico' ? 'rgba(245,158,11,.3)' : '#e5e7eb'"
+        [style.color]="ordenProyectoC() === 'alfabetico' ? 'var(--warn)' : 'var(--fg-4)'"
+        [style.borderColor]="ordenProyectoC() === 'alfabetico' ? 'rgba(245,158,11,.3)' : 'var(--border-subtle)'"
         (click)="ordenProyectoC.set('alfabetico')">
         Alfabético
       </button>
@@ -455,12 +455,12 @@
     <div class="card" style="padding:0;overflow:hidden">
 
       <!-- Sub-tab strip + botones de acción centrados -->
-      <div style="border-bottom:1px solid #f0f0f0">
-        <div style="display:flex;gap:.25rem;background:#f3f4f6;border-radius:10px;padding:.25rem">
+      <div style="border-bottom:1px solid var(--border-subtle)">
+        <div style="display:flex;gap:.25rem;background:var(--bg-2);border-radius:10px;padding:.25rem">
           <button
             style="flex:1;padding:.55rem 1rem;border-style:solid;border-width:1px;border-radius:8px;font-size:.875rem;font-weight:600;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;justify-content:center;gap:.4rem"
             [style.background]="tabConsumidorActiva() === 'documentacion' ? 'rgba(0,149,214,.08)' : 'transparent'"
-            [style.color]="tabConsumidorActiva() === 'documentacion' ? '#0095d6' : '#6b7280'"
+            [style.color]="tabConsumidorActiva() === 'documentacion' ? 'var(--sc-cyan)' : 'var(--fg-4)'"
             [style.borderColor]="tabConsumidorActiva() === 'documentacion' ? 'rgba(0,149,214,.18)' : 'transparent'"
             (click)="tabConsumidorActiva.set('documentacion')">
             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -475,7 +475,7 @@
             <button
               style="flex:1;padding:.55rem 1rem;border-style:solid;border-width:1px;border-radius:8px;font-size:.875rem;font-weight:600;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;justify-content:center;gap:.4rem;position:relative"
               [style.background]="tabConsumidorActiva() === 'solicitudes' ? 'rgba(22,163,74,.08)' : 'transparent'"
-              [style.color]="tabConsumidorActiva() === 'solicitudes' ? '#16a34a' : '#6b7280'"
+              [style.color]="tabConsumidorActiva() === 'solicitudes' ? 'var(--ok)' : 'var(--fg-4)'"
               [style.borderColor]="tabConsumidorActiva() === 'solicitudes' ? 'rgba(22,163,74,.18)' : 'transparent'"
               (click)="tabConsumidorActiva.set('solicitudes')">
               <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -484,7 +484,7 @@
               </svg>
               Solicitudes
               @if (haySolicitudesActivas() && tabConsumidorActiva() !== 'solicitudes') {
-                <span style="position:absolute;top:6px;right:10px;width:8px;height:8px;border-radius:50%;background:#ef4444;flex-shrink:0"></span>
+                <span style="position:absolute;top:6px;right:10px;width:8px;height:8px;border-radius:50%;background:var(--danger);flex-shrink:0"></span>
               }
             </button>
           }
@@ -505,9 +505,9 @@
             }
             <button
               style="flex:1;padding:.3rem .5rem;border-style:solid;border-width:1px;border-radius:6px;font-size:.78rem;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap;display:inline-flex;align-items:center;justify-content:center;gap:.35rem"
-              [style.background]="tabDocConsumidor() === 'activos' ? '#f0f9ff' : 'transparent'"
-              [style.color]="tabDocConsumidor() === 'activos' ? '#0095d6' : '#6b7280'"
-              [style.borderColor]="tabDocConsumidor() === 'activos' ? 'rgba(0,149,214,.25)' : '#e5e7eb'"
+              [style.background]="tabDocConsumidor() === 'activos' ? 'var(--sc-cyan-tint-6)' : 'transparent'"
+              [style.color]="tabDocConsumidor() === 'activos' ? 'var(--sc-cyan)' : 'var(--fg-4)'"
+              [style.borderColor]="tabDocConsumidor() === 'activos' ? 'rgba(0,149,214,.25)' : 'var(--border-subtle)'"
               (click)="tabDocConsumidor.set('activos')">
               <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0">
                 <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
@@ -517,8 +517,8 @@
             <button
               style="flex:1;padding:.3rem .5rem;border-style:solid;border-width:1px;border-radius:6px;font-size:.78rem;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap;display:inline-flex;align-items:center;justify-content:center;gap:.35rem"
               [style.background]="tabDocConsumidor() === 'vencidos' ? 'rgba(239,68,68,.06)' : 'transparent'"
-              [style.color]="tabDocConsumidor() === 'vencidos' ? '#dc2626' : '#6b7280'"
-              [style.borderColor]="tabDocConsumidor() === 'vencidos' ? 'rgba(239,68,68,.25)' : '#e5e7eb'"
+              [style.color]="tabDocConsumidor() === 'vencidos' ? 'var(--danger)' : 'var(--fg-4)'"
+              [style.borderColor]="tabDocConsumidor() === 'vencidos' ? 'rgba(239,68,68,.25)' : 'var(--border-subtle)'"
               (click)="activarTabVencidosConsumidor()">
               <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0">
                 <path d="m21.73 18-8-14a2 2 0 0 0-3.46 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
@@ -543,32 +543,32 @@
             @if (filasTodos().length === 0) {
               <p class="empty">{{ service.busquedaCascadaError() ? 'No se pudo cargar la búsqueda total. Intenta de nuevo.' : 'Sin documentos para el filtro actual.' }}</p>
             } @else {
-              <div style="border:1px solid #e5e7eb;border-radius:8px;overflow:hidden">
-                <div style="display:flex;justify-content:space-between;padding:.5rem 1rem;background:#f9fafb;border-bottom:1px solid #e5e7eb">
-                  <span style="font-size:.7rem;font-weight:700;color:#9ca3af;letter-spacing:.07em;text-transform:uppercase">Documento</span>
-                  <span style="font-size:.7rem;font-weight:700;color:#9ca3af;letter-spacing:.07em;text-transform:uppercase">Acciones</span>
+              <div style="border:1px solid var(--border-subtle);border-radius:8px;overflow:hidden">
+                <div style="display:flex;justify-content:space-between;padding:.5rem 1rem;background:var(--bg-1);border-bottom:1px solid var(--border-subtle)">
+                  <span style="font-size:.7rem;font-weight:700;color:var(--fg-5);letter-spacing:.07em;text-transform:uppercase">Documento</span>
+                  <span style="font-size:.7rem;font-weight:700;color:var(--fg-5);letter-spacing:.07em;text-transform:uppercase">Acciones</span>
                 </div>
                 @for (fila of filasTodos(); track fila.doc._id) {
-                  <div style="display:flex;align-items:center;justify-content:space-between;padding:.6rem 1rem;border-bottom:1px solid #f3f4f6">
+                  <div style="display:flex;align-items:center;justify-content:space-between;padding:.6rem 1rem;border-bottom:1px solid var(--bg-2)">
                     <div style="display:flex;align-items:center;gap:.6rem;min-width:0">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                      <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--fg-5)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
                       <div style="min-width:0;overflow:hidden">
                         <div style="display:flex;align-items:center;gap:.4rem;flex-wrap:wrap">
                           <span style="font-size:.7rem;font-weight:600;padding:.2rem .55rem;border-radius:999px;background:#e0e7ff;color:#3730a3;white-space:nowrap;flex-shrink:0">{{ fila.doc.categoria }}</span>
-                          <span style="font-size:.875rem;color:#1f2937;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ fila.doc.nombre_display }}</span>
+                          <span style="font-size:.875rem;color:var(--fg-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ fila.doc.nombre_display }}</span>
                           @if (fila.doc.tipo_contenido === 'link') {
                             <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:#ecfdf5;color:#047857;flex-shrink:0">🔗 Link</span>
                           }
                         </div>
                         <div style="margin-top:.2rem;display:flex;align-items:center;gap:.5rem;flex-wrap:wrap">
                           @if (fila.tipo === 'empresa') {
-                            <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:rgba(0,149,214,.1);color:#0095d6">Empresa · {{ empresaNombreC }}</span>
+                            <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:rgba(0,149,214,.1);color:var(--sc-cyan)">Empresa · {{ empresaNombreC }}</span>
                           }
                           @if (fila.centroId) {
-                            <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:rgba(16,185,129,.1);color:#059669">Centro · {{ fila.centroNombre }}</span>
+                            <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:rgba(16,185,129,.1);color:var(--ok)">Centro · {{ fila.centroNombre }}</span>
                           }
                           @if (fila.proyectoId) {
-                            <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:rgba(245,158,11,.1);color:#d97706">Proyecto · {{ fila.proyectoNombre }}</span>
+                            <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:rgba(245,158,11,.1);color:var(--warn)">Proyecto · {{ fila.proyectoNombre }}</span>
                           }
                           <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:#f1f5f9;color:#475569">Subido: {{ formatFechaHora(fila.doc.subido_en) }}</span>
                           @if (fila.doc.subido_por_nombre) {
@@ -579,7 +579,7 @@
                     </div>
                     <div style="display:flex;gap:.35rem;flex-shrink:0">
                       <button [title]="fila.doc.tipo_contenido === 'link' ? 'Abrir enlace' : 'Descargar'" (click)="abrirDocumento(fila.doc)"
-                              style="width:32px;height:32px;border-radius:7px;border:none;background:#eff6ff;color:#0095d6;cursor:pointer;display:flex;align-items:center;justify-content:center">
+                              style="width:32px;height:32px;border-radius:7px;border:none;background:var(--sc-cyan-tint-6);color:var(--sc-cyan);cursor:pointer;display:flex;align-items:center;justify-content:center">
                         @if (fila.doc.tipo_contenido === 'link') {
                           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
                         } @else {
@@ -594,12 +594,12 @@
                         </button>
                         @if (categoriaMenuAbierto() === fila.doc._id) {
                           <div style="position:fixed;inset:0;z-index:60" (click)="categoriaMenuAbierto.set(null)"></div>
-                          <div style="position:absolute;top:36px;right:0;background:#fff;border:1px solid #e5e7eb;border-radius:8px;box-shadow:0 8px 24px rgba(15,23,42,.14);z-index:61;min-width:190px;max-height:240px;overflow-y:auto;padding:.25rem">
+                          <div style="position:absolute;top:36px;right:0;background:var(--bg-0);border:1px solid var(--border-subtle);border-radius:8px;box-shadow:0 8px 24px rgba(15,23,42,.14);z-index:61;min-width:190px;max-height:240px;overflow-y:auto;padding:.25rem">
                             @for (cat of categorias; track cat) {
                               <div (click)="seleccionarCategoriaTodosC(fila.doc.url, cat)"
                                    style="padding:.4rem .65rem;font-size:.8rem;border-radius:6px;cursor:pointer"
                                    [style.font-weight]="cat === fila.doc.categoria ? '700' : '400'"
-                                   [style.color]="cat === fila.doc.categoria ? '#3730a3' : '#374151'"
+                                   [style.color]="cat === fila.doc.categoria ? '#3730a3' : 'var(--fg-2)'"
                                    [style.background]="cat === fila.doc.categoria ? '#eef2ff' : 'transparent'">
                                 {{ cat }}
                               </div>
@@ -610,13 +610,13 @@
                       }
                       @if (puedeDoc(fila.tipo, 'vencer')) {
                       <button title="Marcar vencido" (click)="marcarVencidoConsumidor(fila.doc.url, fila.tipo)"
-                              style="width:32px;height:32px;border-radius:7px;border:none;background:#fffbeb;color:#d97706;cursor:pointer;display:flex;align-items:center;justify-content:center">
+                              style="width:32px;height:32px;border-radius:7px;border:none;background:var(--warn-bg);color:var(--warn);cursor:pointer;display:flex;align-items:center;justify-content:center">
                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                       </button>
                       }
                       @if (puedeDoc(fila.tipo, 'eliminar')) {
                       <button title="Eliminar" (click)="eliminarEnTodos(fila.doc.url, fila.doc.nombre_display)"
-                              style="width:32px;height:32px;border-radius:7px;border:none;background:#fef2f2;color:#dc2626;cursor:pointer;display:flex;align-items:center;justify-content:center">
+                              style="width:32px;height:32px;border-radius:7px;border:none;background:var(--danger-bg);color:var(--danger);cursor:pointer;display:flex;align-items:center;justify-content:center">
                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
                       </button>
                       }
@@ -677,30 +677,30 @@
             <!-- Lista documentos específicos -->
             @if (docsFiltrados(docTipo).length === 0) { <p class="empty">Sin documentos.</p> }
             @else {
-              <div style="border:1px solid #e5e7eb;border-radius:8px;overflow:hidden">
-                <div style="display:flex;justify-content:space-between;padding:.5rem 1rem;background:#f9fafb;border-bottom:1px solid #e5e7eb">
-                  <span style="font-size:.7rem;font-weight:700;color:#9ca3af;letter-spacing:.07em;text-transform:uppercase">Documento</span>
-                  <span style="font-size:.7rem;font-weight:700;color:#9ca3af;letter-spacing:.07em;text-transform:uppercase">Acciones</span>
+              <div style="border:1px solid var(--border-subtle);border-radius:8px;overflow:hidden">
+                <div style="display:flex;justify-content:space-between;padding:.5rem 1rem;background:var(--bg-1);border-bottom:1px solid var(--border-subtle)">
+                  <span style="font-size:.7rem;font-weight:700;color:var(--fg-5);letter-spacing:.07em;text-transform:uppercase">Documento</span>
+                  <span style="font-size:.7rem;font-weight:700;color:var(--fg-5);letter-spacing:.07em;text-transform:uppercase">Acciones</span>
                 </div>
                 @for (d of docsFiltrados(docTipo); track d._id) {
-                  <div style="display:flex;align-items:center;justify-content:space-between;padding:.6rem 1rem;border-bottom:1px solid #f3f4f6">
+                  <div style="display:flex;align-items:center;justify-content:space-between;padding:.6rem 1rem;border-bottom:1px solid var(--bg-2)">
                     <div style="display:flex;align-items:center;gap:.6rem;min-width:0">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                      <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--fg-5)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
                       <div style="min-width:0;overflow:hidden">
                         <div style="display:flex;align-items:center;gap:.4rem;flex-wrap:wrap">
                           <span style="font-size:.7rem;font-weight:600;padding:.2rem .55rem;border-radius:999px;background:#e0e7ff;color:#3730a3;white-space:nowrap;flex-shrink:0">{{ d.categoria }}</span>
-                          <span style="font-size:.875rem;color:#1f2937;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ d.nombre_display }}</span>
+                          <span style="font-size:.875rem;color:var(--fg-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ d.nombre_display }}</span>
                           @if (d.tipo_contenido === 'link') {
                             <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:#ecfdf5;color:#047857;flex-shrink:0">🔗 Link</span>
                           }
                         </div>
                         <div style="margin-top:.2rem;display:flex;align-items:center;gap:.5rem;flex-wrap:wrap">
                           @if (docTipo === 'empresa') {
-                            <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:rgba(0,149,214,.1);color:#0095d6">Empresa</span>
+                            <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:rgba(0,149,214,.1);color:var(--sc-cyan)">Empresa</span>
                           } @else if (docTipo === 'centro') {
-                            <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:rgba(16,185,129,.1);color:#059669">Centro{{ centroNombreC ? ' · ' + centroNombreC : '' }}</span>
+                            <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:rgba(16,185,129,.1);color:var(--ok)">Centro{{ centroNombreC ? ' · ' + centroNombreC : '' }}</span>
                           } @else if (docTipo === 'proyecto') {
-                            <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:rgba(245,158,11,.1);color:#d97706">Proyecto{{ proyectoNombreC ? ' · ' + proyectoNombreC : '' }}</span>
+                            <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:rgba(245,158,11,.1);color:var(--warn)">Proyecto{{ proyectoNombreC ? ' · ' + proyectoNombreC : '' }}</span>
                           }
                           <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:#f1f5f9;color:#475569">Subido: {{ formatFechaHora(d.subido_en) }}</span>
                           @if (d.subido_por_nombre) {
@@ -711,7 +711,7 @@
                     </div>
                     <div style="display:flex;gap:.35rem;flex-shrink:0">
                       <button [title]="d.tipo_contenido === 'link' ? 'Abrir enlace' : 'Descargar'" (click)="abrirDocumento(d)"
-                              style="width:32px;height:32px;border-radius:7px;border:none;background:#eff6ff;color:#0095d6;cursor:pointer;display:flex;align-items:center;justify-content:center">
+                              style="width:32px;height:32px;border-radius:7px;border:none;background:var(--sc-cyan-tint-6);color:var(--sc-cyan);cursor:pointer;display:flex;align-items:center;justify-content:center">
                         @if (d.tipo_contenido === 'link') {
                           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
                         } @else {
@@ -726,12 +726,12 @@
   </button>
   @if (categoriaMenuAbierto() === d._id) {
     <div style="position:fixed;inset:0;z-index:60" (click)="categoriaMenuAbierto.set(null)"></div>
-    <div style="position:absolute;top:36px;right:0;background:#fff;border:1px solid #e5e7eb;border-radius:8px;box-shadow:0 8px 24px rgba(15,23,42,.14);z-index:61;min-width:190px;max-height:240px;overflow-y:auto;padding:.25rem">
+    <div style="position:absolute;top:36px;right:0;background:var(--bg-0);border:1px solid var(--border-subtle);border-radius:8px;box-shadow:0 8px 24px rgba(15,23,42,.14);z-index:61;min-width:190px;max-height:240px;overflow-y:auto;padding:.25rem">
       @for (cat of categorias; track cat) {
         <div (click)="seleccionarCategoriaC(d.url, cat, docTipo)"
              style="padding:.4rem .65rem;font-size:.8rem;border-radius:6px;cursor:pointer"
              [style.font-weight]="cat === d.categoria ? '700' : '400'"
-             [style.color]="cat === d.categoria ? '#3730a3' : '#374151'"
+             [style.color]="cat === d.categoria ? '#3730a3' : 'var(--fg-2)'"
              [style.background]="cat === d.categoria ? '#eef2ff' : 'transparent'">
           {{ cat }}
         </div>
@@ -742,13 +742,13 @@
 }
 @if (puedeDoc(docTipo, 'vencer')) {
 <button title="Marcar vencido" (click)="marcarVencidoConsumidor(d.url, docTipo)"
-                              style="width:32px;height:32px;border-radius:7px;border:none;background:#fffbeb;color:#d97706;cursor:pointer;display:flex;align-items:center;justify-content:center">
+                              style="width:32px;height:32px;border-radius:7px;border:none;background:var(--warn-bg);color:var(--warn);cursor:pointer;display:flex;align-items:center;justify-content:center">
                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                       </button>
                       }
 @if (puedeDoc(docTipo, 'eliminar')) {
 <button title="Eliminar" (click)="eliminar(d.url, docTipo, d.nombre_display)"
-                              style="width:32px;height:32px;border-radius:7px;border:none;background:#fef2f2;color:#dc2626;cursor:pointer;display:flex;align-items:center;justify-content:center">
+                              style="width:32px;height:32px;border-radius:7px;border:none;background:var(--danger-bg);color:var(--danger);cursor:pointer;display:flex;align-items:center;justify-content:center">
                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
                       </button>
                       }
@@ -766,26 +766,26 @@
             }
             @for (item of filteredDocsPorCentro(); track item.nombre) {
               <div style="margin-bottom:1rem">
-                <p style="margin:0 0 .5rem;font-size:.875rem;font-weight:700;color:#374151">{{ item.nombre }}</p>
-                <div style="border:1px solid #e5e7eb;border-radius:8px;overflow:hidden">
-                  <div style="display:flex;justify-content:space-between;padding:.5rem 1rem;background:#f9fafb;border-bottom:1px solid #e5e7eb">
-                    <span style="font-size:.7rem;font-weight:700;color:#9ca3af;letter-spacing:.07em;text-transform:uppercase">Documento</span>
-                    <span style="font-size:.7rem;font-weight:700;color:#9ca3af;letter-spacing:.07em;text-transform:uppercase">Acciones</span>
+                <p style="margin:0 0 .5rem;font-size:.875rem;font-weight:700;color:var(--fg-2)">{{ item.nombre }}</p>
+                <div style="border:1px solid var(--border-subtle);border-radius:8px;overflow:hidden">
+                  <div style="display:flex;justify-content:space-between;padding:.5rem 1rem;background:var(--bg-1);border-bottom:1px solid var(--border-subtle)">
+                    <span style="font-size:.7rem;font-weight:700;color:var(--fg-5);letter-spacing:.07em;text-transform:uppercase">Documento</span>
+                    <span style="font-size:.7rem;font-weight:700;color:var(--fg-5);letter-spacing:.07em;text-transform:uppercase">Acciones</span>
                   </div>
                   @for (d of item.docs; track d._id) {
-                    <div style="display:flex;align-items:center;justify-content:space-between;padding:.6rem 1rem;border-bottom:1px solid #f3f4f6">
+                    <div style="display:flex;align-items:center;justify-content:space-between;padding:.6rem 1rem;border-bottom:1px solid var(--bg-2)">
                       <div style="display:flex;align-items:center;gap:.6rem;min-width:0">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--fg-5)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
                         <div style="min-width:0;overflow:hidden">
                           <div style="display:flex;align-items:center;gap:.4rem;flex-wrap:wrap">
                             <span style="font-size:.7rem;font-weight:600;padding:.2rem .55rem;border-radius:999px;background:#e0e7ff;color:#3730a3;white-space:nowrap;flex-shrink:0">{{ d.categoria }}</span>
-                            <span style="font-size:.875rem;color:#1f2937;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ d.nombre_display }}</span>
+                            <span style="font-size:.875rem;color:var(--fg-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ d.nombre_display }}</span>
                             @if (d.tipo_contenido === 'link') {
                               <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:#ecfdf5;color:#047857;flex-shrink:0">🔗 Link</span>
                             }
                           </div>
                           <div style="margin-top:.2rem;display:flex;align-items:center;gap:.5rem;flex-wrap:wrap">
-                            <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:rgba(16,185,129,.1);color:#059669">Centro · {{ item.nombre }}</span>
+                            <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:rgba(16,185,129,.1);color:var(--ok)">Centro · {{ item.nombre }}</span>
                             <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:#f1f5f9;color:#475569">Subido: {{ formatFechaHora(d.subido_en) }}</span>
                             @if (d.subido_por_nombre) {
                               <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:#f0fdfa;color:#0f766e">{{ d.subido_por_nombre }}</span>
@@ -794,7 +794,7 @@
                         </div>
                       </div>
                       <button [title]="d.tipo_contenido === 'link' ? 'Abrir enlace' : 'Descargar'" (click)="abrirDocumento(d)"
-                              style="width:32px;height:32px;border-radius:7px;border:none;background:#eff6ff;color:#0095d6;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                              style="width:32px;height:32px;border-radius:7px;border:none;background:var(--sc-cyan-tint-6);color:var(--sc-cyan);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0">
                         @if (d.tipo_contenido === 'link') {
                           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
                         } @else {
@@ -815,29 +815,29 @@
             }
             @for (item of filteredDocsPorProyecto(); track item.nombre) {
               <div style="margin-bottom:1rem">
-                <p style="margin:0 0 .15rem;font-size:.875rem;font-weight:700;color:#374151">{{ item.nombre }}</p>
+                <p style="margin:0 0 .15rem;font-size:.875rem;font-weight:700;color:var(--fg-2)">{{ item.nombre }}</p>
                 @if (item.centroNombres) {
-                  <p style="margin:0 0 .5rem;font-size:.75rem;color:#9ca3af">Centro: {{ item.centroNombres }}</p>
+                  <p style="margin:0 0 .5rem;font-size:.75rem;color:var(--fg-5)">Centro: {{ item.centroNombres }}</p>
                 }
-                <div style="border:1px solid #e5e7eb;border-radius:8px;overflow:hidden">
-                  <div style="display:flex;justify-content:space-between;padding:.5rem 1rem;background:#f9fafb;border-bottom:1px solid #e5e7eb">
-                    <span style="font-size:.7rem;font-weight:700;color:#9ca3af;letter-spacing:.07em;text-transform:uppercase">Documento</span>
-                    <span style="font-size:.7rem;font-weight:700;color:#9ca3af;letter-spacing:.07em;text-transform:uppercase">Acciones</span>
+                <div style="border:1px solid var(--border-subtle);border-radius:8px;overflow:hidden">
+                  <div style="display:flex;justify-content:space-between;padding:.5rem 1rem;background:var(--bg-1);border-bottom:1px solid var(--border-subtle)">
+                    <span style="font-size:.7rem;font-weight:700;color:var(--fg-5);letter-spacing:.07em;text-transform:uppercase">Documento</span>
+                    <span style="font-size:.7rem;font-weight:700;color:var(--fg-5);letter-spacing:.07em;text-transform:uppercase">Acciones</span>
                   </div>
                   @for (d of item.docs; track d._id) {
-                    <div style="display:flex;align-items:center;justify-content:space-between;padding:.6rem 1rem;border-bottom:1px solid #f3f4f6">
+                    <div style="display:flex;align-items:center;justify-content:space-between;padding:.6rem 1rem;border-bottom:1px solid var(--bg-2)">
                       <div style="display:flex;align-items:center;gap:.6rem;min-width:0">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--fg-5)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
                         <div style="min-width:0;overflow:hidden">
                           <div style="display:flex;align-items:center;gap:.4rem;flex-wrap:wrap">
                             <span style="font-size:.7rem;font-weight:600;padding:.2rem .55rem;border-radius:999px;background:#e0e7ff;color:#3730a3;white-space:nowrap;flex-shrink:0">{{ d.categoria }}</span>
-                            <span style="font-size:.875rem;color:#1f2937;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ d.nombre_display }}</span>
+                            <span style="font-size:.875rem;color:var(--fg-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ d.nombre_display }}</span>
                             @if (d.tipo_contenido === 'link') {
                               <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:#ecfdf5;color:#047857;flex-shrink:0">🔗 Link</span>
                             }
                           </div>
                           <div style="margin-top:.2rem;display:flex;align-items:center;gap:.5rem;flex-wrap:wrap">
-                            <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:rgba(245,158,11,.1);color:#d97706">Proyecto · {{ item.nombre }}</span>
+                            <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:rgba(245,158,11,.1);color:var(--warn)">Proyecto · {{ item.nombre }}</span>
                             <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:#f1f5f9;color:#475569">Subido: {{ formatFechaHora(d.subido_en) }}</span>
                             @if (d.subido_por_nombre) {
                               <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:#f0fdfa;color:#0f766e">{{ d.subido_por_nombre }}</span>
@@ -846,7 +846,7 @@
                         </div>
                       </div>
                       <button [title]="d.tipo_contenido === 'link' ? 'Abrir enlace' : 'Descargar'" (click)="abrirDocumento(d)"
-                              style="width:32px;height:32px;border-radius:7px;border:none;background:#eff6ff;color:#0095d6;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                              style="width:32px;height:32px;border-radius:7px;border:none;background:var(--sc-cyan-tint-6);color:var(--sc-cyan);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0">
                         @if (d.tipo_contenido === 'link') {
                           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
                         } @else {
@@ -864,37 +864,37 @@
 
           <!-- Sub-vista vencidos -->
           @if (tabDocConsumidor() === 'vencidos') {
-            <p style="margin:0 0 .75rem;font-size:.8rem;color:#6b7280">Mostrando los últimos 20 documentos vencidos de este contexto.</p>
+            <p style="margin:0 0 .75rem;font-size:.8rem;color:var(--fg-4)">Mostrando los últimos 20 documentos vencidos de este contexto.</p>
             @if (service.documentosVencidos().length === 0) {
               <p class="empty">Sin documentos vencidos.</p>
             } @else {
-              <div style="border:1px solid #e5e7eb;border-radius:8px;overflow:hidden">
-                <div style="display:grid;grid-template-columns:1fr auto auto;padding:.5rem 1rem;background:#f9fafb;border-bottom:1px solid #e5e7eb;gap:1rem">
-                  <span style="font-size:.7rem;font-weight:700;color:#9ca3af;letter-spacing:.07em;text-transform:uppercase">Documento</span>
-                  <span style="font-size:.7rem;font-weight:700;color:#9ca3af;letter-spacing:.07em;text-transform:uppercase">Fechas</span>
-                  <span style="font-size:.7rem;font-weight:700;color:#9ca3af;letter-spacing:.07em;text-transform:uppercase">Acciones</span>
+              <div style="border:1px solid var(--border-subtle);border-radius:8px;overflow:hidden">
+                <div style="display:grid;grid-template-columns:1fr auto auto;padding:.5rem 1rem;background:var(--bg-1);border-bottom:1px solid var(--border-subtle);gap:1rem">
+                  <span style="font-size:.7rem;font-weight:700;color:var(--fg-5);letter-spacing:.07em;text-transform:uppercase">Documento</span>
+                  <span style="font-size:.7rem;font-weight:700;color:var(--fg-5);letter-spacing:.07em;text-transform:uppercase">Fechas</span>
+                  <span style="font-size:.7rem;font-weight:700;color:var(--fg-5);letter-spacing:.07em;text-transform:uppercase">Acciones</span>
                 </div>
                 @for (v of service.documentosVencidos(); track v._id) {
-                  <div style="display:grid;grid-template-columns:1fr auto auto;align-items:center;padding:.6rem 1rem;border-bottom:1px solid #f3f4f6;gap:1rem">
+                  <div style="display:grid;grid-template-columns:1fr auto auto;align-items:center;padding:.6rem 1rem;border-bottom:1px solid var(--bg-2);gap:1rem">
                     <div style="display:flex;align-items:center;gap:.6rem;min-width:0">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                      <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--fg-5)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
                       <div style="min-width:0;overflow:hidden">
                         <div style="display:flex;align-items:center;gap:.4rem;flex-wrap:wrap">
                           @if (v.categoria) {
                             <span style="font-size:.7rem;font-weight:600;padding:.2rem .55rem;border-radius:999px;background:#e0e7ff;color:#3730a3;white-space:nowrap;flex-shrink:0">{{ v.categoria }}</span>
                           }
-                          <span style="font-size:.875rem;color:#1f2937;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ v.nombre_display }}</span>
+                          <span style="font-size:.875rem;color:var(--fg-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ v.nombre_display }}</span>
                           @if (v.tipo_contenido === 'link') {
                             <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:#ecfdf5;color:#047857;flex-shrink:0">🔗 Link</span>
                           }
                         </div>
                         <div style="margin-top:.2rem">
                           @if (v.origen_tipo === 'empresa') {
-                            <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:rgba(0,149,214,.1);color:#0095d6">Empresa</span>
+                            <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:rgba(0,149,214,.1);color:var(--sc-cyan)">Empresa</span>
                           } @else if (v.origen_tipo === 'centro') {
-                            <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:rgba(16,185,129,.1);color:#059669">Centro{{ v.centro_nombre ? ' · ' + v.centro_nombre : '' }}</span>
+                            <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:rgba(16,185,129,.1);color:var(--ok)">Centro{{ v.centro_nombre ? ' · ' + v.centro_nombre : '' }}</span>
                           } @else if (v.origen_tipo === 'proyecto') {
-                            <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:rgba(245,158,11,.1);color:#d97706">Proyecto{{ v.proyecto_nombre ? ' · ' + v.proyecto_nombre : '' }}</span>
+                            <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:rgba(245,158,11,.1);color:var(--warn)">Proyecto{{ v.proyecto_nombre ? ' · ' + v.proyecto_nombre : '' }}</span>
                           }
                         </div>
                       </div>
@@ -906,10 +906,10 @@
                       @if (v.subido_por_nombre) {
                         <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:#f0fdfa;color:#0f766e;align-self:flex-end">{{ v.subido_por_nombre }}</span>
                       }
-                      <span style="font-size:.72rem;color:#dc2626;font-weight:600">Vencido: {{ formatFechaHora(v.vencido_en) }}</span>
+                      <span style="font-size:.72rem;color:var(--danger);font-weight:600">Vencido: {{ formatFechaHora(v.vencido_en) }}</span>
                     </div>
                     <button [title]="v.tipo_contenido === 'link' ? 'Abrir enlace' : 'Descargar'" (click)="abrirDocumento(v)"
-                            style="width:32px;height:32px;border-radius:7px;border:none;background:#eff6ff;color:#0095d6;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                            style="width:32px;height:32px;border-radius:7px;border:none;background:var(--sc-cyan-tint-6);color:var(--sc-cyan);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0">
                       @if (v.tipo_contenido === 'link') {
                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
                       } @else {
@@ -945,9 +945,9 @@
 
   <!-- ─── Template reutilizable: card de solicitud consumidor ─── -->
   <ng-template #solicitudConsumidorCard let-s="s">
-    <div style="border:1px solid #e5e7eb;border-radius:.5rem;padding:.85rem;margin-bottom:.6rem">
+    <div style="border:1px solid var(--border-subtle);border-radius:.5rem;padding:.85rem;margin-bottom:.6rem">
       <div style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;margin-bottom:.3rem">
-        <strong style="font-size:.9rem;color:#1f2937">{{ s.nombre }}</strong>
+        <strong style="font-size:.9rem;color:var(--fg-2)">{{ s.nombre }}</strong>
         <span style="font-size:.75rem;font-weight:600;padding:.2rem .55rem;border-radius:999px;background:#e0e7ff;color:#3730a3">{{ s.tipo }}</span>
       </div>
       <div style="display:flex;align-items:center;gap:.4rem;flex-wrap:wrap;margin:0 0 .4rem">
@@ -963,17 +963,17 @@
           [style.background]="estadoChipStyle(s.estado).bg">{{ estadoLabel(s.estado) }}</span>
       </div>
       @if (s.descripcion) {
-        <p style="margin:0 0 .6rem;font-size:.82rem;color:#6b7280;font-style:italic">{{ s.descripcion }}</p>
+        <p style="margin:0 0 .6rem;font-size:.82rem;color:var(--fg-4);font-style:italic">{{ s.descripcion }}</p>
       }
       @if (s.estado === 'rechazado' && s.motivo_rechazo) {
         <div style="background:#fff1f2;border:1px solid #fecdd3;border-radius:6px;padding:.5rem .75rem;margin-bottom:.5rem">
           <span style="font-size:.72rem;font-weight:700;color:#9f1239;display:block;margin-bottom:.2rem">Motivo del rechazo</span>
-          <span style="font-size:.85rem;color:#374151">{{ s.motivo_rechazo }}</span>
+          <span style="font-size:.85rem;color:var(--fg-2)">{{ s.motivo_rechazo }}</span>
         </div>
       }
       @if (s.archivo_nombre) {
         <div style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;margin-bottom:.5rem">
-          <span style="font-size:.8rem;color:#22c55e">✓ {{ s.archivo_nombre }}</span>
+          <span style="font-size:.8rem;color:var(--ok)">✓ {{ s.archivo_nombre }}</span>
           @if (s.tipo_contenido === 'link') {
             <button class="btn-ghost" style="font-size:.75rem;padding:.25rem .6rem"
               (click)="s.link_url && abrirLinkSolicitud(s.link_url)">Abrir</button>

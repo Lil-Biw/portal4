@@ -447,7 +447,7 @@ export class ActividadesPageComponent implements OnInit {
   }
 
   colorDeActividad(a: Actividad): string {
-    return this.tipoDeActividad(a)?.color ?? '#9ca3af';
+    return this.tipoDeActividad(a)?.color ?? 'var(--fg-5)';
   }
 
   tipoActivoNombre(a: Activo): string {

@@ -1250,23 +1250,23 @@ export class DocumentosAdminPageComponent implements OnInit {
     const map: Record<EstadoSolicitud, EstadoDestino[]> = {
       pendiente: [
         { valor: 'revision',  label: 'Poner en revisión', colorBg: '#dbeafe', colorText: '#1e40af' },
-        { valor: 'aprobado',  label: 'Aprobar',           colorBg: '#dcfce7', colorText: '#14532d' },
-        { valor: 'rechazado', label: 'Rechazar',          colorBg: '#fee2e2', colorText: '#7f1d1d' },
+        { valor: 'aprobado',  label: 'Aprobar',           colorBg: 'var(--ok-bg)', colorText: 'var(--ok)' },
+        { valor: 'rechazado', label: 'Rechazar',          colorBg: 'var(--danger-bg)', colorText: 'var(--danger)' },
       ],
       revision: [
-        { valor: 'aprobado',  label: 'Aprobar',           colorBg: '#dcfce7', colorText: '#14532d' },
-        { valor: 'rechazado', label: 'Rechazar',          colorBg: '#fee2e2', colorText: '#7f1d1d' },
-        { valor: 'pendiente', label: 'Devolver',          colorBg: '#fef3c7', colorText: '#92400e' },
+        { valor: 'aprobado',  label: 'Aprobar',           colorBg: 'var(--ok-bg)', colorText: 'var(--ok)' },
+        { valor: 'rechazado', label: 'Rechazar',          colorBg: 'var(--danger-bg)', colorText: 'var(--danger)' },
+        { valor: 'pendiente', label: 'Devolver',          colorBg: 'var(--warn-bg)', colorText: 'var(--warn)' },
       ],
       aprobado: [],
       rechazado: [
-        { valor: 'pendiente', label: 'Reabrir',           colorBg: '#fef3c7', colorText: '#92400e' },
-        { valor: 'aprobado',  label: 'Aprobar',           colorBg: '#dcfce7', colorText: '#14532d' },
+        { valor: 'pendiente', label: 'Reabrir',           colorBg: 'var(--warn-bg)', colorText: 'var(--warn)' },
+        { valor: 'aprobado',  label: 'Aprobar',           colorBg: 'var(--ok-bg)', colorText: 'var(--ok)' },
       ],
       vencido: [
         { valor: 'revision',  label: 'Poner en revisión', colorBg: '#dbeafe', colorText: '#1e40af' },
-        { valor: 'aprobado',  label: 'Aprobar',           colorBg: '#dcfce7', colorText: '#14532d' },
-        { valor: 'rechazado', label: 'Rechazar',          colorBg: '#fee2e2', colorText: '#7f1d1d' },
+        { valor: 'aprobado',  label: 'Aprobar',           colorBg: 'var(--ok-bg)', colorText: 'var(--ok)' },
+        { valor: 'rechazado', label: 'Rechazar',          colorBg: 'var(--danger-bg)', colorText: 'var(--danger)' },
       ],
     };
     return map[actual] ?? [];
@@ -1285,18 +1285,18 @@ export class DocumentosAdminPageComponent implements OnInit {
   }
 
   contextoTagStyle(s: Solicitud): { color: string; bg: string } {
-    if (s.proyecto_id) return { color: '#d97706', bg: 'rgba(245,158,11,.1)' };
-    if (s.centro_costo_id) return { color: '#059669', bg: 'rgba(16,185,129,.1)' };
-    return { color: '#0095d6', bg: 'rgba(0,149,214,.1)' };
+    if (s.proyecto_id) return { color: 'var(--warn)', bg: 'rgba(245,158,11,.1)' };
+    if (s.centro_costo_id) return { color: 'var(--ok)', bg: 'rgba(16,185,129,.1)' };
+    return { color: 'var(--sc-cyan)', bg: 'rgba(0,149,214,.1)' };
   }
 
   estadoChipStyle(estado: EstadoSolicitud): { color: string; bg: string } {
     const map: Record<EstadoSolicitud, { color: string; bg: string }> = {
-      pendiente: { color: '#92400e', bg: '#fef3c7' },
+      pendiente: { color: 'var(--warn)', bg: 'var(--warn-bg)' },
       revision:  { color: '#1e40af', bg: '#dbeafe' },
-      aprobado:  { color: '#14532d', bg: '#dcfce7' },
-      rechazado: { color: '#7f1d1d', bg: '#fee2e2' },
-      vencido:   { color: '#374151', bg: '#f3f4f6' },
+      aprobado:  { color: 'var(--ok)', bg: 'var(--ok-bg)' },
+      rechazado: { color: 'var(--danger)', bg: 'var(--danger-bg)' },
+      vencido:   { color: 'var(--fg-2)', bg: 'var(--bg-2)' },
     };
     return map[estado];
   }

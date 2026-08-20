@@ -35,7 +35,7 @@
         class="cal-legend-item"
         [class.cal-legend-item--active]="activo"
         [style.background]="activo ? t.color : ''"
-        [style.color]="activo ? '#fff' : ''"
+        [style.color]="activo ? 'var(--bg-0)' : ''"
         (click)="toggleFiltroTipo(t._id)"
         [title]="'Filtrar por ' + t.nombre">
         <span class="cal-legend-dot"
@@ -273,7 +273,7 @@
           @if (det) {
             <div class="cal-day-detail-content">
               <div class="cal-day-detail-header">
-                <app-actividad-icono [icono]="det.tipo?.icono" [color]="det.tipo?.color ?? '#9ca3af'" [size]="18"></app-actividad-icono>
+                <app-actividad-icono [icono]="det.tipo?.icono" [color]="det.tipo?.color ?? 'var(--fg-5)'" [size]="18"></app-actividad-icono>
                 <h3 class="cal-day-detail-nombre">{{ det.a.nombre }}</h3>
               </div>
               <div class="cal-day-detail-fields">
@@ -321,7 +321,7 @@
                   </span>
                   @if (detalleActivos().length > 0) {
                     <button type="button" (click)="lupaDetalleDia.set(true)"
-                      style="margin-left:auto;background:none;border:none;cursor:pointer;padding:0;color:#9ca3af;display:flex;align-items:center;flex-shrink:0"
+                      style="margin-left:auto;background:none;border:none;cursor:pointer;padding:0;color:var(--fg-5);display:flex;align-items:center;flex-shrink:0"
                       title="Ver activos">
                       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                         <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
@@ -359,7 +359,7 @@
                       }
                       @if (service.documentosActividad().length > 5) {
                         <button type="button" class="actividad-detalle-doc-row"
-                          style="cursor:pointer;background:none;border:none;width:100%;justify-content:flex-start;gap:.4rem;color:#6b7280;font-size:.83rem"
+                          style="cursor:pointer;background:none;border:none;width:100%;justify-content:flex-start;gap:.4rem;color:var(--fg-4);font-size:.83rem"
                           (click)="lupaDocsDia.set(true)">
                           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                             <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
@@ -436,7 +436,7 @@
 
 <!-- Mensaje cuando no hay actividades -->
 @if (!service.loading() && service.actividades().length === 0) {
-  <div class="card" style="text-align:center;padding:1.5rem;color:#9ca3af;font-size:.85rem;margin-bottom:1rem">
+  <div class="card" style="text-align:center;padding:1.5rem;color:var(--fg-5);font-size:.85rem;margin-bottom:1rem">
     No hay actividades registradas. Haz clic en <strong>+ Actividad</strong> para agregar la primera, o en cualquier día del calendario.
   </div>
 }
@@ -451,7 +451,7 @@
         <!-- Cabecera -->
         <div class="actividad-detalle-header">
           <div class="actividad-detalle-header-info">
-            <app-actividad-icono [icono]="det.tipo?.icono" [color]="det.tipo?.color ?? '#9ca3af'" [size]="16"></app-actividad-icono>
+            <app-actividad-icono [icono]="det.tipo?.icono" [color]="det.tipo?.color ?? 'var(--fg-5)'" [size]="16"></app-actividad-icono>
             <div>
               <h3 class="actividad-detalle-nombre">{{ det.a.nombre }}</h3>
               <p class="actividad-detalle-centro">{{ det.centro?.nombre ?? '' }}</p>
@@ -638,9 +638,9 @@
                     <span class="cal-legend-dot" [style.background]="tipoSeleccionado()!.color"></span>
                     <span>{{ tipoSeleccionado()!.nombre }}</span>
                   } @else {
-                    <span style="color:#9ca3af">Selecciona un tipo</span>
+                    <span style="color:var(--fg-5)">Selecciona un tipo</span>
                   }
-                  <svg style="margin-left:auto;flex-shrink:0;width:14px;height:14px;color:#6b7280;transition:transform .15s"
+                  <svg style="margin-left:auto;flex-shrink:0;width:14px;height:14px;color:var(--fg-4);transition:transform .15s"
                     [style.transform]="tipoDropdownOpen() ? 'rotate(180deg)' : 'rotate(0)'"
                     viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                     <polyline points="6 9 12 15 18 9"/>
@@ -657,7 +657,7 @@
                       </button>
                     }
                     @if (tiposService.tipos().length === 0) {
-                      <p style="margin:0;padding:.5rem .75rem;font-size:.82rem;color:#9ca3af">Sin tipos creados</p>
+                      <p style="margin:0;padding:.5rem .75rem;font-size:.82rem;color:var(--fg-5)">Sin tipos creados</p>
                     }
                   </div>
                 }
@@ -675,9 +675,9 @@
                   @if (liderSeleccionado()) {
                     <span>{{ liderSeleccionado()!.nombre }}</span>
                   } @else {
-                    <span style="color:#9ca3af">Sin líder asignado</span>
+                    <span style="color:var(--fg-5)">Sin líder asignado</span>
                   }
-                  <svg style="margin-left:auto;flex-shrink:0;width:14px;height:14px;color:#6b7280;transition:transform .15s"
+                  <svg style="margin-left:auto;flex-shrink:0;width:14px;height:14px;color:var(--fg-4);transition:transform .15s"
                     [style.transform]="liderDropdownOpen() ? 'rotate(180deg)' : 'rotate(0)'"
                     viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                     <polyline points="6 9 12 15 18 9"/>
@@ -692,11 +692,11 @@
                       <button type="button" class="tipo-option"
                         [class.tipo-option--selected]="form().lider_id === u._id"
                         (click)="seleccionarLider(u._id)">
-                        {{ u.nombre }} <span style="color:#9ca3af;font-size:.78rem">({{ u.rol === 'super_admin' ? 'Super admin' : 'Admin' }})</span>
+                        {{ u.nombre }} <span style="color:var(--fg-5);font-size:.78rem">({{ u.rol === 'super_admin' ? 'Super admin' : 'Admin' }})</span>
                       </button>
                     }
                     @if (lideresDisponibles().length === 0) {
-                      <p style="margin:0;padding:.5rem .75rem;font-size:.82rem;color:#9ca3af">Sin administradores disponibles</p>
+                      <p style="margin:0;padding:.5rem .75rem;font-size:.82rem;color:var(--fg-5)">Sin administradores disponibles</p>
                     }
                   </div>
                 }
@@ -1013,7 +1013,7 @@
               <span class="wz-resumen-value">{{ resumenActivosTexto() }}</span>
               @if (form().activo_ids.length > 0) {
                 <button type="button" (click)="modalLupa.set('activos')"
-                  style="margin-left:auto;background:none;border:none;cursor:pointer;padding:0;color:#9ca3af;display:flex;align-items:center;flex-shrink:0"
+                  style="margin-left:auto;background:none;border:none;cursor:pointer;padding:0;color:var(--fg-5);display:flex;align-items:center;flex-shrink:0"
                   title="Ver activos">
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                     <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
@@ -1026,7 +1026,7 @@
               <span class="wz-resumen-value">{{ resumenNotificaciones() }}</span>
               @if (notifNotificar() && resumenNotifLista().length > 0) {
                 <button type="button" (click)="modalLupa.set('notif')"
-                  style="margin-left:auto;background:none;border:none;cursor:pointer;padding:0;color:#9ca3af;display:flex;align-items:center;flex-shrink:0"
+                  style="margin-left:auto;background:none;border:none;cursor:pointer;padding:0;color:var(--fg-5);display:flex;align-items:center;flex-shrink:0"
                   title="Ver destinatarios">
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                     <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
@@ -1039,7 +1039,7 @@
               <span class="wz-resumen-value">{{ resumenDocumentosTexto }}</span>
               @if (resumenDocumentosLista().length > 0) {
                 <button type="button" (click)="modalLupa.set('docs')"
-                  style="margin-left:auto;background:none;border:none;cursor:pointer;padding:0;color:#9ca3af;display:flex;align-items:center;flex-shrink:0"
+                  style="margin-left:auto;background:none;border:none;cursor:pointer;padding:0;color:var(--fg-5);display:flex;align-items:center;flex-shrink:0"
                   title="Ver documentos">
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                     <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
@@ -1069,7 +1069,7 @@
             <button class="btn-primary" (click)="avanzar()">Siguiente →</button>
           } @else if (editingId() ? authService.tienePermiso('actividades', 'editar') : authService.tienePermiso('actividades', 'crear')) {
             <button class="btn-primary" [class.btn-loading]="service.saving() || subiendoDocs" (click)="guardar()" [disabled]="service.saving() || subiendoDocs"
-              style="background:#22c55e;border-color:#22c55e">
+              style="background:var(--ok);border-color:var(--ok)">
               @if (subiendoDocs) { Subiendo... }
               @else if (service.saving()) { Guardando... }
               @else { Guardar ✓ }
@@ -1163,7 +1163,7 @@
             placeholder="Descripción (opcional)"
             [ngModel]="tipoForm().descripcion"
             (ngModelChange)="patchTipoForm('descripcion', $event)" />
-          <p style="font-size:.78rem;color:#6b7280;margin:0 0 .4rem">Ícono</p>
+          <p style="font-size:.78rem;color:var(--fg-4);margin:0 0 .4rem">Ícono</p>
           <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:.75rem">
             @for (clave of iconosActividad; track clave) {
               <button type="button"
@@ -1177,12 +1177,12 @@
               </button>
             }
           </div>
-          <p style="font-size:.78rem;color:#6b7280;margin:0 0 .4rem">Color</p>
+          <p style="font-size:.78rem;color:var(--fg-4);margin:0 0 .4rem">Color</p>
           <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.75rem">
             <input type="color"
               [ngModel]="tipoForm().color"
               (ngModelChange)="patchTipoForm('color', $event)"
-              style="width:36px;height:36px;padding:0;border:1px solid #e5e7eb;border-radius:8px;cursor:pointer" />
+              style="width:36px;height:36px;padding:0;border:1px solid var(--border-subtle);border-radius:8px;cursor:pointer" />
             <input type="text"
               class="tipo-input"
               style="margin-bottom:0;max-width:110px"
