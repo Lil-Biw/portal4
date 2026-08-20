@@ -253,34 +253,34 @@ export interface DescargarActividadDocEvt {
       display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 1.25rem;
     }
     .modal-title-group { display: flex; align-items: flex-start; gap: .6rem; }
-    .modal-title-group h3 { margin: 0; font-size: 1.1rem; font-weight: 700; color: #1f2937; }
+    .modal-title-group h3 { margin: 0; font-size: 1.1rem; font-weight: 700; color: var(--fg-2); }
     .tipo-badge { font-size: .75rem; font-weight: 600; }
     .modal-header-actions { display: flex; align-items: center; gap: .5rem; flex-shrink: 0; }
     .modal-close {
       background: none; border: none; font-size: 1.4rem; line-height: 1;
-      cursor: pointer; color: #6b7280; padding: 0 .25rem; flex-shrink: 0;
+      cursor: pointer; color: var(--fg-4); padding: 0 .25rem; flex-shrink: 0;
     }
-    .modal-close:hover { color: #1f2937; }
+    .modal-close:hover { color: var(--fg-2); }
 
     .folder-btn {
       display: flex; align-items: center; gap: .3rem; flex-shrink: 0;
-      background: #f3f4f6; border: none; border-radius: 8px; cursor: pointer;
-      color: #6b7280; padding: .4rem .6rem; transition: background .12s, color .12s;
+      background: var(--bg-2); border: none; border-radius: 8px; cursor: pointer;
+      color: var(--fg-4); padding: .4rem .6rem; transition: background .12s, color .12s;
     }
-    .folder-btn:hover { background: #e5e7eb; color: #374151; }
-    .folder-btn--active { background: #dbeafe; color: #0095d6; }
+    .folder-btn:hover { background: var(--bg-2); color: var(--fg-2); }
+    .folder-btn--active { background: var(--sc-cyan-tint-12); color: var(--sc-cyan); }
     .folder-count { font-size: .75rem; font-weight: 700; }
 
     .seccion { margin-bottom: 1.5rem; }
     .sec-label {
       font-size: .78rem; font-weight: 700; text-transform: uppercase;
-      letter-spacing: .04em; color: #6b7280; margin: 0 0 .6rem;
+      letter-spacing: .04em; color: var(--fg-4); margin: 0 0 .6rem;
     }
     .descripcion-texto {
-      font-size: .875rem; color: #374151; margin: 0;
+      font-size: .875rem; color: var(--fg-2); margin: 0;
       background: #f9fafb; border-radius: 8px; padding: .6rem .8rem;
     }
-    .empty-text { font-size: .85rem; color: #9ca3af; margin: 0; }
+    .empty-text { font-size: .85rem; color: var(--fg-5); margin: 0; }
 
     .docs-list {
       display: flex; flex-direction: column; gap: 0;
@@ -293,13 +293,13 @@ export interface DescargarActividadDocEvt {
     }
     .doc-row:last-child { border-bottom: none; }
     .doc-row:hover { background: #f9fafb; }
-    .doc-icon { width: 18px; height: 18px; flex-shrink: 0; color: #6b7280; }
+    .doc-icon { width: 18px; height: 18px; flex-shrink: 0; color: var(--fg-4); }
     .doc-info { flex: 1; min-width: 0; }
     .doc-nombre {
-      display: block; font-size: .85rem; font-weight: 600; color: #1f2937;
+      display: block; font-size: .85rem; font-weight: 600; color: var(--fg-2);
       white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
-    .doc-meta { font-size: .75rem; color: #9ca3af; }
+    .doc-meta { font-size: .75rem; color: var(--fg-5); }
     .doc-accion-btn { display: inline-flex; align-items: center; gap: .35rem; flex-shrink: 0; }
 
     .historial-list { display: flex; flex-direction: column; gap: .5rem; }
@@ -307,21 +307,21 @@ export interface DescargarActividadDocEvt {
       border: 1px solid rgba(34,33,33,.08); border-radius: 10px; overflow: hidden;
       cursor: pointer; transition: box-shadow .12s, border-color .12s;
     }
-    .hist-card:hover { border-color: #0095d6; box-shadow: 0 2px 8px rgba(0,149,214,.1); }
+    .hist-card:hover { border-color: var(--sc-cyan); box-shadow: 0 2px 8px rgba(0,149,214,.1); }
     .hist-card-header {
       display: grid; grid-template-columns: 100px 1fr 190px;
       gap: .5rem; align-items: center; padding: .6rem .8rem;
       background: #fff; transition: background .1s;
     }
     .hist-card-header:hover { background: #f9fafb; }
-    .hist-fecha { font-size: .82rem; color: #6b7280; }
+    .hist-fecha { font-size: .82rem; color: var(--fg-4); }
     .hist-nombre-wrap { min-width: 0; }
     .hist-nombre {
-      display: block; font-size: .875rem; font-weight: 600; color: #1f2937;
+      display: block; font-size: .875rem; font-weight: 600; color: var(--fg-2);
       white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
     .hist-desc {
-      display: block; font-size: .75rem; color: #9ca3af;
+      display: block; font-size: .75rem; color: var(--fg-5);
       white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
     .hist-tipo {
@@ -331,7 +331,7 @@ export interface DescargarActividadDocEvt {
     }
 
     .detalle-backdrop {
-      position: fixed; inset: 0; background: rgba(15,23,42,.5);
+      position: fixed; inset: 0; background: var(--overlay);
       display: flex; align-items: center; justify-content: center;
       z-index: 300; padding: 1rem;
     }
@@ -353,7 +353,7 @@ export interface DescargarActividadDocEvt {
       display: flex; flex-direction: column; gap: .65rem;
       max-height: 580px; overflow-y: auto; padding-right: .25rem;
     }
-    .sec-count { font-weight: 600; color: #9ca3af; text-transform: none; letter-spacing: 0; }
+    .sec-count { font-weight: 600; color: var(--fg-5); text-transform: none; letter-spacing: 0; }
 
     .thumb {
       position: relative; border-radius: 10px; overflow: hidden; flex-shrink: 0;
@@ -362,18 +362,18 @@ export interface DescargarActividadDocEvt {
     .thumb-img { display: block; width: 100%; aspect-ratio: 4 / 3; object-fit: cover; }
     .thumb-fallback {
       width: 100%; aspect-ratio: 4 / 3; display: flex; align-items: center; justify-content: center;
-      background: #f3f4f6; color: #9ca3af;
+      background: #f3f4f6; color: var(--fg-5);
     }
     .thumb-fallback--loading { animation: thumb-pulse 1.2s ease-in-out infinite; }
-    .thumb-fallback--error { color: #d1d5db; }
+    .thumb-fallback--error { color: var(--border-default); }
     @keyframes thumb-pulse { 0%, 100% { opacity: .5; } 50% { opacity: 1; } }
     .fmt-badge {
       position: absolute; top: .35rem; right: .35rem;
       font-size: .62rem; font-weight: 700; letter-spacing: .02em; color: #fff;
-      background: rgba(15,23,42,.65); padding: .12rem .4rem; border-radius: 5px;
+      background: var(--overlay); padding: .12rem .4rem; border-radius: 5px;
     }
     .thumb-caption {
-      padding: .35rem .5rem .45rem; font-size: .72rem; color: #6b7280;
+      padding: .35rem .5rem .45rem; font-size: .72rem; color: var(--fg-4);
       white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
   `],
@@ -454,8 +454,11 @@ export class ActivoRevisarModalComponent implements OnChanges {
   }
 
   protected tipoActividadColor(item: ActividadHistorialItem): string {
-    if (typeof item.tipo_id === 'object') return (item.tipo_id as TipoActividad).color ?? '#6b7280';
-    return '#6b7280';
+    // Literal (no var()): este valor se concatena con un sufijo de alpha hex
+    // en el template ([style.background]="tipoActividadColor(item) + '18'"),
+    // por lo que debe seguir siendo un hex válido. Equivale a --fg-4.
+    if (typeof item.tipo_id === 'object') return (item.tipo_id as TipoActividad).color ?? '#7A8590';
+    return '#7A8590';
   }
 
   protected formatBytes(bytes?: number): string {

@@ -32,12 +32,12 @@ function emptyTipoForm(): TipoForm { return { nombre: '', color: '#0095d6', icon
       justify-content: space-between;
       margin-bottom: 1.25rem;
     }
-    .page-header h2 { margin: 0; font-size: 1.25rem; font-weight: 700; color: #1f2937; }
+    .page-header h2 { margin: 0; font-size: 1.25rem; font-weight: 700; color: var(--fg-2); }
     .header-actions { display: flex; gap: .6rem; }
     .modal-backdrop {
       position: fixed;
       inset: 0;
-      background: rgba(15,23,42,.45);
+      background: var(--overlay);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -45,9 +45,9 @@ function emptyTipoForm(): TipoForm { return { nombre: '', color: '#0095d6', icon
       padding: 1rem;
     }
     .modal {
-      background: #fff;
+      background: var(--bg-0);
       border-radius: 16px;
-      box-shadow: 0 20px 60px rgba(15,23,42,.18);
+      box-shadow: var(--shadow-4);
       width: 100%;
       max-width: 960px;
       max-height: 90vh;
@@ -67,21 +67,21 @@ function emptyTipoForm(): TipoForm { return { nombre: '', color: '#0095d6', icon
       font-size: 1.4rem;
       line-height: 1;
       cursor: pointer;
-      color: #6b7280;
+      color: var(--fg-4);
       padding: 0 .25rem;
     }
-    .modal-close:hover { color: #1f2937; }
+    .modal-close:hover { color: var(--fg-2); }
     .search-input {
       width: 100%;
       padding: .65rem .9rem;
       border-radius: 8px;
-      border: 1px solid rgba(34,33,33,.2);
+      border: 1px solid var(--border-strong);
       font-size: .9rem;
       font-family: inherit;
       margin-bottom: 1rem;
       box-sizing: border-box;
     }
-    .search-input:focus { outline: none; border-color: #0095d6; }
+    .search-input:focus { outline: none; border-color: var(--sc-cyan); }
     .tipos-modal {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -91,64 +91,64 @@ function emptyTipoForm(): TipoForm { return { nombre: '', color: '#0095d6', icon
     .tipos-col-title {
       font-size: .9rem;
       font-weight: 700;
-      color: #374151;
+      color: var(--fg-2);
       margin: 0 0 .75rem;
     }
-    .tipos-empty { color: #9ca3af; font-size: .85rem; margin: .5rem 0; }
+    .tipos-empty { color: var(--fg-5); font-size: .85rem; margin: .5rem 0; }
     .tipos-list { display: flex; flex-direction: column; gap: 0; max-height: 320px; overflow-y: auto; padding-right: .25rem; }
     .tipo-item {
       display: flex;
       align-items: center;
       gap: .6rem;
       padding: .5rem 0;
-      border-bottom: 1px solid rgba(34,33,33,.06);
+      border-bottom: 1px solid var(--border-subtle);
     }
     .tipo-item:last-child { border-bottom: none; }
     .tipo-texto { flex: 1; min-width: 0; }
-    .tipo-nombre { font-size: .85rem; font-weight: 600; color: #1f2937; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .tipo-nombre { font-size: .85rem; font-weight: 600; color: var(--fg-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .tipo-actions { display: flex; gap: .35rem; flex-shrink: 0; }
     .tipo-input {
       width: 100%;
       padding: .5rem .7rem;
-      border: 1px solid rgba(34,33,33,.2);
+      border: 1px solid var(--border-strong);
       border-radius: 8px;
       font-size: .85rem;
       font-family: inherit;
       box-sizing: border-box;
       margin-bottom: .5rem;
     }
-    .tipo-input:focus { outline: 2px solid #0095d6; border-color: transparent; }
+    .tipo-input:focus { outline: 2px solid var(--sc-cyan); border-color: transparent; }
 
     /* ── Tipo-combo (context card) ───────────────────────────── */
     .tipo-combo { position: relative; }
     .tipo-combo-input {
       width: 100%; box-sizing: border-box;
       padding: .55rem .75rem; padding-right: 2rem;
-      border: 1px solid rgba(34,33,33,.15); border-radius: 8px;
-      font-size: .875rem; color: #1f2937; font-family: inherit;
-      background: #fff; cursor: text; outline: none;
+      border: 1px solid var(--border-default); border-radius: 8px;
+      font-size: .875rem; color: var(--fg-2); font-family: inherit;
+      background: var(--bg-0); cursor: text; outline: none;
       transition: border-color .15s;
     }
-    .tipo-combo-input:focus { border-color: #0095d6; }
-    .tipo-combo-input::placeholder { color: #9ca3af; }
+    .tipo-combo-input:focus { border-color: var(--sc-cyan); }
+    .tipo-combo-input::placeholder { color: var(--fg-5); }
     .tipo-combo-arrow {
       position: absolute; right: .65rem; top: 50%; transform: translateY(-50%);
-      pointer-events: none; color: #9ca3af; display: flex; align-items: center;
+      pointer-events: none; color: var(--fg-5); display: flex; align-items: center;
     }
     .tipo-combo-dropdown {
       position: absolute; top: calc(100% + 4px); left: 0; right: 0;
-      background: #fff; border: 1px solid rgba(34,33,33,.15); border-radius: 8px;
-      box-shadow: 0 8px 24px rgba(15,23,42,.12); z-index: 200;
+      background: var(--bg-0); border: 1px solid var(--border-default); border-radius: 8px;
+      box-shadow: var(--shadow-3); z-index: 200;
       max-height: 200px; overflow-y: auto;
     }
     .tipo-combo-option {
-      padding: .5rem .75rem; font-size: .875rem; color: #374151;
+      padding: .5rem .75rem; font-size: .875rem; color: var(--fg-2);
       cursor: pointer; display: flex; align-items: center; gap: .5rem;
       transition: background .1s;
     }
-    .tipo-combo-option:hover, .tipo-combo-option--active { background: #f0f9ff; color: #0095d6; }
+    .tipo-combo-option:hover, .tipo-combo-option--active { background: var(--sc-cyan-tint-6); color: var(--sc-cyan); }
     .tipo-combo-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
-    .tipo-combo-empty { padding: .5rem .75rem; font-size: .83rem; color: #9ca3af; }
+    .tipo-combo-empty { padding: .5rem .75rem; font-size: .83rem; color: var(--fg-5); }
 
   `],
 })

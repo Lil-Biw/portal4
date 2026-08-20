@@ -117,26 +117,26 @@ type ActivoModal = 'crear' | 'editar' | null;
       gap: .6rem;
       margin-bottom: 1.25rem;
     }
-    .page-header h2 { margin: 0; font-size: 1.25rem; font-weight: 700; color: #1f2937; flex: 1; }
+    .page-header h2 { margin: 0; font-size: 1.25rem; font-weight: 700; color: var(--fg-2); flex: 1; }
     .header-actions { display: flex; gap: .6rem; align-items: center; }
     .search-input {
       padding: .55rem .9rem;
       border-radius: 8px;
-      border: 1px solid rgba(34,33,33,.2);
+      border: 1px solid var(--border-strong);
       font-size: .9rem;
       font-family: inherit;
       width: 220px;
       box-sizing: border-box;
     }
-    .search-input:focus { outline: none; border-color: #0095d6; }
+    .search-input:focus { outline: none; border-color: var(--sc-cyan); }
     .modal-backdrop {
-      position: fixed; inset: 0; background: rgba(15,23,42,.45);
+      position: fixed; inset: 0; background: var(--overlay);
       display: flex; align-items: center; justify-content: center;
       z-index: 100; padding: 1rem;
     }
     .modal {
-      background: #fff; border-radius: 16px;
-      box-shadow: 0 20px 60px rgba(15,23,42,.18);
+      background: var(--bg-0); border-radius: 16px;
+      box-shadow: var(--shadow-4);
       width: 100%; max-height: 90vh; overflow-y: auto; padding: 1.5rem;
     }
     .modal-revisar { max-width: 960px; }
@@ -148,9 +148,9 @@ type ActivoModal = 'crear' | 'editar' | null;
     .modal-header h3 { margin: 0; font-size: 1.1rem; font-weight: 700; }
     .modal-close {
       background: none; border: none; font-size: 1.4rem; line-height: 1;
-      cursor: pointer; color: #6b7280; padding: 0 .25rem;
+      cursor: pointer; color: var(--fg-4); padding: 0 .25rem;
     }
-    .modal-close:hover { color: #1f2937; }
+    .modal-close:hover { color: var(--fg-2); }
   `],
 })
 export class MisActivosPageComponent implements OnInit {

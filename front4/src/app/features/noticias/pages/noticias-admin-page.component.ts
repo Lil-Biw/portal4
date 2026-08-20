@@ -97,7 +97,7 @@ export class NoticiasAdminPageComponent implements OnInit {
   }
 
   seccionColor(seccion: SeccionNoticia): string {
-    return this.secciones.find(s => s.value === seccion)?.color ?? '#0095d6';
+    return this.secciones.find(s => s.value === seccion)?.color ?? '#00AEEF';
   }
 
   seccionLabel(seccion: SeccionNoticia): string {

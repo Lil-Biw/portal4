@@ -13,7 +13,7 @@
 
 <!-- Recuadro de contexto -->
 <div class="card" style="margin-bottom:1rem">
-  <p style="margin:0 0 .75rem;font-size:.85rem;font-weight:600;color:#374151">Selecciona el contexto</p>
+  <p style="margin:0 0 .75rem;font-size:.85rem;font-weight:600;color:var(--fg-2)">Selecciona el contexto</p>
   <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:.75rem">
     <label class="field">
       <span>Empresa</span>
@@ -210,7 +210,7 @@
               [ngModel]="tipoForm().nombre"
               (ngModelChange)="patchTipoForm('nombre', $event)" />
             <!-- Selector de ícono/color -->
-            <p style="font-size:.78rem;color:#6b7280;margin:0 0 .4rem">Ícono</p>
+            <p style="font-size:.78rem;color:var(--fg-4);margin:0 0 .4rem">Ícono</p>
             <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:.75rem">
               @for (clave of iconosActivo; track clave) {
                 <button type="button"
@@ -224,12 +224,12 @@
                 </button>
               }
             </div>
-            <p style="font-size:.78rem;color:#6b7280;margin:0 0 .4rem">Color</p>
+            <p style="font-size:.78rem;color:var(--fg-4);margin:0 0 .4rem">Color</p>
             <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.75rem">
               <input type="color"
                 [ngModel]="tipoForm().color"
                 (ngModelChange)="patchTipoForm('color', $event)"
-                style="width:36px;height:36px;padding:0;border:1px solid #e5e7eb;border-radius:8px;cursor:pointer" />
+                style="width:36px;height:36px;padding:0;border:1px solid var(--border-subtle);border-radius:8px;cursor:pointer" />
               <input type="text"
                 class="tipo-input"
                 style="margin-bottom:0;max-width:110px"

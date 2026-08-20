@@ -18,8 +18,8 @@ interface GrupoEmpresa { empresa: Cliente; centros: GrupoCentro[]; }
       display: flex;
       flex-direction: column;
       gap: 0;
-      background: #fff;
-      border: 1px solid rgba(34,33,33,.08);
+      background: var(--bg-0);
+      border: 1px solid var(--border-subtle);
       border-radius: 12px;
       overflow: hidden;
     }
@@ -28,11 +28,11 @@ interface GrupoEmpresa { empresa: Cliente; centros: GrupoCentro[]; }
       align-items: center;
       gap: .75rem;
       padding: .6rem .9rem;
-      border-bottom: 1px solid rgba(34,33,33,.06);
+      border-bottom: 1px solid var(--border-subtle);
       transition: background .12s;
     }
     .activo-row:last-child { border-bottom: none; }
-    .activo-row:hover { background: #f9fafb; }
+    .activo-row:hover { background: var(--bg-1); }
     .activo-icono-placeholder {
       width: 38px;
       height: 38px;
@@ -54,7 +54,7 @@ interface GrupoEmpresa { empresa: Cliente; centros: GrupoCentro[]; }
     .activo-nombre {
       font-size: .875rem;
       font-weight: 600;
-      color: #1f2937;
+      color: var(--fg-2);
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -67,7 +67,7 @@ interface GrupoEmpresa { empresa: Cliente; centros: GrupoCentro[]; }
     }
     .activo-desc {
       font-size: .75rem;
-      color: #9ca3af;
+      color: var(--fg-5);
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;

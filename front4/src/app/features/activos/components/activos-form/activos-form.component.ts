@@ -31,7 +31,7 @@ export interface DocPendiente { localId?: string; file?: File; linkUrl?: string;
       margin: 0 0 .4rem;
       font-size: .85rem;
       font-weight: 700;
-      color: #374151;
+      color: var(--fg-2);
     }
     .form-footer {
       display: flex;
@@ -48,31 +48,31 @@ export interface DocPendiente { localId?: string; file?: File; linkUrl?: string;
     .tipo-combo-input {
       width: 100%; box-sizing: border-box;
       padding: .55rem .75rem; padding-right: 2rem;
-      border: 1px solid rgba(34,33,33,.15); border-radius: 8px;
-      font-size: .875rem; color: #1f2937; font-family: inherit;
-      background: #fff; cursor: text; outline: none;
+      border: 1px solid var(--border-default); border-radius: 8px;
+      font-size: .875rem; color: var(--fg-2); font-family: inherit;
+      background: var(--bg-0); cursor: text; outline: none;
       transition: border-color .15s;
     }
-    .tipo-combo-input:focus { border-color: #0095d6; }
-    .tipo-combo-input::placeholder { color: #9ca3af; }
+    .tipo-combo-input:focus { border-color: var(--sc-cyan); }
+    .tipo-combo-input::placeholder { color: var(--fg-5); }
     .tipo-combo-arrow {
       position: absolute; right: .65rem; top: 50%; transform: translateY(-50%);
-      pointer-events: none; color: #9ca3af; display: flex; align-items: center;
+      pointer-events: none; color: var(--fg-5); display: flex; align-items: center;
     }
     .tipo-combo-dropdown {
       position: absolute; top: calc(100% + 4px); left: 0; right: 0;
-      background: #fff; border: 1px solid rgba(34,33,33,.15); border-radius: 8px;
-      box-shadow: 0 8px 24px rgba(15,23,42,.12); z-index: 200;
+      background: var(--bg-0); border: 1px solid var(--border-default); border-radius: 8px;
+      box-shadow: var(--shadow-3); z-index: 200;
       max-height: 200px; overflow-y: auto;
     }
     .tipo-combo-option {
-      padding: .5rem .75rem; font-size: .875rem; color: #374151;
+      padding: .5rem .75rem; font-size: .875rem; color: var(--fg-2);
       cursor: pointer; display: flex; align-items: center; gap: .5rem;
       transition: background .1s;
     }
-    .tipo-combo-option:hover, .tipo-combo-option--active { background: #f0f9ff; color: #0095d6; }
+    .tipo-combo-option:hover, .tipo-combo-option--active { background: var(--sc-cyan-tint-6); color: var(--sc-cyan); }
     .tipo-combo-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
-    .tipo-combo-empty { padding: .5rem .75rem; font-size: .83rem; color: #9ca3af; }
+    .tipo-combo-empty { padding: .5rem .75rem; font-size: .83rem; color: var(--fg-5); }
   `],
   template: `
     <form (ngSubmit)="enviar()">
