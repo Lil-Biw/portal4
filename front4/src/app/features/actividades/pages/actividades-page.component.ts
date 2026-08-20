@@ -447,7 +447,9 @@ export class ActividadesPageComponent implements OnInit {
   }
 
   colorDeActividad(a: Actividad): string {
-    return this.tipoDeActividad(a)?.color ?? 'var(--fg-5)';
+    // Literal hex (== --fg-5): ActividadIconoComponent hace `color + '26'` para el
+    // fondo tintado, y eso solo produce un hex válido si `color` es un hex literal.
+    return this.tipoDeActividad(a)?.color ?? '#A6AFB8';
   }
 
   tipoActivoNombre(a: Activo): string {

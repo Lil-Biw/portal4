@@ -281,8 +281,10 @@ export class MisActividadesPageComponent implements OnInit {
   }
 
   colorDeActividad(a: Actividad): string {
-    if (typeof a.tipo_id === 'object') return (a.tipo_id as TipoActividad).color ?? 'var(--fg-5)';
-    return this.tiposService.tipos().find(t => t._id === this.tipoIdDe(a))?.color ?? 'var(--fg-5)';
+    // Literal hex (== --fg-5): ActividadIconoComponent hace `color + '26'` para el
+    // fondo tintado, y eso solo produce un hex válido si `color` es un hex literal.
+    if (typeof a.tipo_id === 'object') return (a.tipo_id as TipoActividad).color ?? '#A6AFB8';
+    return this.tiposService.tipos().find(t => t._id === this.tipoIdDe(a))?.color ?? '#A6AFB8';
   }
 
   protected readonly iconosActividad = ICONOS_ACTIVIDAD;
