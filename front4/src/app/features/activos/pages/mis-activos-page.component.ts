@@ -99,6 +99,7 @@ type ActivoModal = 'crear' | 'editar' | null;
             [docsExistentes]="docsExistentes"
             [subiendoCards]="subiendoCards()"
             [eliminandoDocIds]="eliminandoDocIds()"
+            [puedeEliminarDoc]="authService.tienePermiso('docActivo', 'eliminar')"
             [submitLabel]="modal() === 'crear' ? 'Crear activo' : 'Guardar activo'"
             (submitted)="onFormSubmitted($event)"
             (cancelar)="cerrarModal()"

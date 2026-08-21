@@ -9,7 +9,6 @@ export class CreateUsuarioDto {
   @IsString() nombre: string;
   @IsEmail() email: string;
   @IsEnum(['super_admin', 'admin_smartclarity', 'usuario']) @IsOptional() rol?: string;
-  @IsEnum(['ver', 'editar']) @IsOptional() permiso_acceso?: 'ver' | 'editar';
   @IsArray() @IsMongoId({ each: true }) @IsOptional() centros_asignados?: string[];
 }
 

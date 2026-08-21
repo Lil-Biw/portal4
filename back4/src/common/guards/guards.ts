@@ -8,12 +8,10 @@ import { permisosPorDefectoSegunRol } from '../permisos-defaults';
 // ── Decoradores ──────────────────────────────────────────────────────────────
 
 export const ROLES_KEY      = 'roles';
-export const PERMISO_KEY    = 'permiso_requerido';
 export const IS_PUBLIC_KEY  = 'isPublic';
 export const PERMISO_ACCION_KEY = 'permiso_accion_requerido';
 
 export const Roles          = (...roles: string[]) => SetMetadata(ROLES_KEY, roles);
-export const RequierePermiso = (tipo: 'ver' | 'editar') => SetMetadata(PERMISO_KEY, tipo);
 export const Public         = () => SetMetadata(IS_PUBLIC_KEY, true);
 
 // Permiso granular de acción por módulo (catálogo PERM_SCHEMA del frontend:
@@ -60,29 +58,6 @@ export class RolesGuard implements CanActivate {
     if (!user) return false;
     if (user.rol === 'super_admin') return true;
     return roles.includes(user.rol);
-  }
-}
-
-// ── PermisosGuard ─────────────────────────────────────────────────────────────
-// Verifica el nivel de permiso del usuario (@RequierePermiso).
-// super_admin siempre tiene acceso. 'ver' permite ambos niveles.
-
-@Injectable()
-export class PermisosGuard implements CanActivate {
-  constructor(private reflector: Reflector) {}
-
-  canActivate(context: ExecutionContext): boolean {
-    const permiso = this.reflector.getAllAndOverride<string>(PERMISO_KEY, [
-      context.getHandler(),
-      context.getClass(),
-    ]);
-    if (!permiso) return true;
-
-    const user = context.switchToHttp().getRequest().user;
-    if (!user) return false;
-    if (user.rol === 'super_admin') return true;
-    if (permiso === 'ver') return true;
-    return user.permiso_acceso === 'editar';
   }
 }
 

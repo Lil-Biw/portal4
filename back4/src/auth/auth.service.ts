@@ -63,6 +63,26 @@ export class AuthService {
     };
   }
 
+  // Relee el usuario desde la base para refrescar una sesión ya abierta: rol,
+  // permisos, centros_asignados y demás pueden cambiar mientras el usuario
+  // sigue logueado (a diferencia del JWT, que no se puede invalidar/reemitir
+  // sin que el usuario vuelva a iniciar sesión).
+  async me(userId: string) {
+    const usuario: any = await this.usuarioModel.findById(userId).lean();
+    if (!usuario || !usuario.activo) throw new UnauthorizedException('Sesión inválida');
+
+    return {
+      id: usuario._id,
+      nombre: usuario.nombre,
+      email: usuario.email,
+      rol: usuario.rol,
+      cliente_id: usuario.cliente_id ? usuario.cliente_id.toString() : null,
+      debe_cambiar_password: usuario.debe_cambiar_password ?? false,
+      permisos: usuario.permisos ?? {},
+      centros_asignados: (usuario.centros_asignados ?? []).map((c: any) => String(c)),
+    };
+  }
+
   // Siempre resuelve sin distinguir si el email existe o no (evita enumeración
   // de cuentas desde el formulario de "olvidé mi contraseña").
   async solicitarResetPassword(email: string): Promise<void> {

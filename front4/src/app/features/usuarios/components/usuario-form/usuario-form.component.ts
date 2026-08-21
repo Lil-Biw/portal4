@@ -4,18 +4,11 @@ import { NgFor, NgIf } from '@angular/common';
 import { Usuario, CreateUsuarioDto, RolUsuario } from '../../../../shared/models/usuario.model';
 import { Cliente } from '../../../../shared/models/cliente.model';
 import { CentroCosto } from '../../../../shared/models/centro.model';
-import {
-  PermisosUsuario,
-  permisosIguales,
-  permisosPorDefectoSegunRol,
-} from '../../../../shared/models/permisos.model';
 import { asId } from '../../../../shared/utils';
 
 export interface UsuarioFormOutput {
   dto: CreateUsuarioDto;
 }
-
-type RolOpcion = RolUsuario | 'personalizado';
 
 @Component({
   selector: 'app-usuario-form',
@@ -30,29 +23,20 @@ export class UsuarioFormComponent implements OnChanges {
   @Input() centrosSeleccionados: string[] = [];
   @Input() submitLabel = 'Guardar';
   @Input() isEdit = false;
-  @Input() esAdminCliente = false;
   @Output() submitted = new EventEmitter<UsuarioFormOutput>();
   @Output() clienteChange = new EventEmitter<string>();
   @Output() centroToggle = new EventEmitter<{ centroId: string; checked: boolean }>();
 
   form: CreateUsuarioDto = this.empty();
 
-  rolUI: RolOpcion = 'usuario';
-
-  private readonly todosLosRoles: { value: RolUsuario; label: string }[] = [
-    { value: 'usuario', label: 'Usuario' },
-    { value: 'admin_smartclarity', label: 'Admin SmartClarity' },
-  ];
-
-  get roles() {
-    return this.esAdminCliente
-      ? [{ value: 'usuario' as RolUsuario, label: 'Usuario' }]
-      : this.todosLosRoles;
-  }
-
-  get rolOpciones(): { value: RolOpcion; label: string }[] {
-    if (!this.isEdit) return this.roles;
-    return [...this.roles, { value: 'personalizado', label: 'Personalizado' }];
+  // El rol no se puede cambiar desde este formulario: cambiarlo puede
+  // encerrar al propio admin que edita (bajarse de admin_smartclarity a
+  // usuario deja sin acceso a esta misma pantalla). Cambios de rol se hacen
+  // desde el flujo dedicado (crear administrador / Roles).
+  rolLabel(rol: RolUsuario | undefined): string {
+    if (rol === 'super_admin') return 'Super Admin';
+    if (rol === 'admin_smartclarity') return 'Admin SmartClarity';
+    return 'Usuario';
   }
 
   ngOnChanges(): void {
@@ -62,15 +46,8 @@ export class UsuarioFormComponent implements OnChanges {
         nombre: this.initial.nombre,
         email: this.initial.email,
         rol: this.initial.rol,
-        permiso_acceso: this.initial.permiso_acceso,
         permisos: structuredClone(this.initial.permisos ?? {}),
       };
-      // Si los permisos actuales no son los por defecto del rol, mostramos
-      // "Personalizado" para que no se reseteen al guardar sin tocar nada.
-      const actuales = this.form.permisos;
-      this.rolUI = permisosIguales(actuales, permisosPorDefectoSegunRol(this.initial.rol))
-        ? this.initial.rol
-        : 'personalizado';
     }
   }
 
@@ -81,18 +58,6 @@ export class UsuarioFormComponent implements OnChanges {
 
   onClienteChange(id: string): void {
     this.clienteChange.emit(id);
-  }
-
-  onRolChange(v: RolOpcion): void {
-    this.rolUI = v;
-    if (v === 'personalizado') {
-      this.form.rol = this.initial?.rol ?? 'usuario';
-      this.form.permisos = structuredClone(this.initial?.permisos ?? {});
-      return;
-    }
-    this.form.rol = v;
-    // Cambiar el rol aplica los permisos por defecto de ese rol.
-    this.form.permisos = structuredClone(permisosPorDefectoSegunRol(v));
   }
 
   submit(): void {
@@ -106,6 +71,6 @@ export class UsuarioFormComponent implements OnChanges {
   }
 
   private empty(): CreateUsuarioDto {
-    return { cliente_id: '', nombre: '', email: '', rol: 'usuario', permiso_acceso: 'ver' };
+    return { cliente_id: '', nombre: '', email: '', rol: 'usuario' };
   }
 }

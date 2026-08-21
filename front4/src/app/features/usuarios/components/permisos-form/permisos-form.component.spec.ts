@@ -7,7 +7,7 @@ import { Rol } from '../../../../shared/models/permisos.model';
 function usuario(over: Partial<Usuario> = {}): Usuario {
   return {
     _id: 'u1', cliente_id: 'c1', nombre: 'Jorge Muñoz', email: 'jorge@example.com',
-    rol: 'usuario', permiso_acceso: 'ver', centros_asignados: [], activo: true, ...over,
+    rol: 'usuario', centros_asignados: [], activo: true, ...over,
   };
 }
 

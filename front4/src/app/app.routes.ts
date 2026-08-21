@@ -3,6 +3,7 @@ import { MainLayoutComponent } from './layout/main-layout/main-layout.component'
 import {
   authGuard,
   homeGuard,
+  refrescarSesionGuard,
   soloAdminGuard,
   soloConsumidorGuard,
   usuariosAdminGuard,
@@ -51,6 +52,7 @@ export const routes: Routes = [
     path: '',
     component: MainLayoutComponent,
     canActivate: [authGuard],
+    canActivateChild: [refrescarSesionGuard],
     children: [
       // ── Dashboard ─────────────────────────────────────────────────
       {

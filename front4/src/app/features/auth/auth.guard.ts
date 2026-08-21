@@ -14,6 +14,17 @@ export const authGuard: CanActivateFn = () => {
   return true;
 };
 
+// canActivateChild del layout: a diferencia de canActivate en el padre (que
+// solo corre al entrar al layout desde afuera), este vuelve a ejecutarse en
+// cada navegación entre rutas hijas — es el punto donde refrescamos
+// rol/permisos/centros_asignados por si un admin los cambió mientras esta
+// sesión seguía abierta (ver AuthService.refrescarSesion).
+export const refrescarSesionGuard: CanActivateFn = async () => {
+  const auth = inject(AuthService);
+  await auth.refrescarSesion();
+  return true;
+};
+
 // Impide que un consumidor acceda a rutas del portal admin
 export const soloAdminGuard: CanActivateFn = () => {
   const auth = inject(AuthService);

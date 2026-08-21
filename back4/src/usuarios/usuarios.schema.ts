@@ -10,7 +10,6 @@ export class Usuario {
   @Prop({ required: true, unique: true, lowercase: true, trim: true }) email: string;
   @Prop({ required: true, select: false }) password_hash: string;
   @Prop({ enum: ['super_admin', 'admin_smartclarity', 'usuario'], default: 'usuario' }) rol: string;
-  @Prop({ enum: ['ver', 'editar'], default: 'ver' }) permiso_acceso: string;
   // OJO: dentro de un array, el tipo debe ser SchemaTypes.ObjectId; con Types.ObjectId
   // el SchemaFactory de Nest lo degrada a Mixed sin ref y populate() no hace nada.
   @Prop({ type: [{ type: SchemaTypes.ObjectId, ref: 'CentroCosto' }], default: [] }) centros_asignados: Types.ObjectId[];

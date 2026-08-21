@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ConfigModule } from '@nestjs/config';
-import { JwtAuthGuard, RolesGuard, PermisosGuard, PermisoAccionGuard } from './common/guards/guards';
+import { JwtAuthGuard, RolesGuard, PermisoAccionGuard } from './common/guards/guards';
 import { UsuarioSchema } from './usuarios/usuarios.schema';
 import { S3Module } from './common/s3/s3.module';
 import { AuthModule } from './auth/auth.module';
@@ -50,7 +50,6 @@ import { TareasModule } from './tareas/tareas.module';
   providers: [
     { provide: APP_GUARD, useClass: JwtAuthGuard },
     { provide: APP_GUARD, useClass: RolesGuard },
-    { provide: APP_GUARD, useClass: PermisosGuard },
     { provide: APP_GUARD, useClass: PermisoAccionGuard },
   ],
 })

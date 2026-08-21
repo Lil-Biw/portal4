@@ -61,14 +61,6 @@ import { Usuario, RolUsuario } from '../../../../shared/models/usuario.model';
     .badge-admin   { background: var(--sc-cyan-tint-12); color: var(--sc-cyan-pressed); }
     .badge-super   { background: var(--warn-bg);         color: var(--warn); }
 
-    .permiso-badge {
-      font-size: 0.72rem;
-      font-weight: 600;
-      color: var(--fg-5);
-      white-space: nowrap;
-      flex-shrink: 0;
-    }
-
     .user-actions {
       display: flex;
       align-items: center;
@@ -133,8 +125,4 @@ export class UsuariosListComponent {
     return 'Usuario';
   }
 
-  accionLabel(u: Usuario): string {
-    if (u.rol === 'super_admin') return 'Total';
-    return u.permiso_acceso === 'editar' ? 'Editar' : 'Ver';
-  }
 }

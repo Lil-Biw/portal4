@@ -80,11 +80,9 @@ export class UsuariosService {
     if (existe)
       throw new ConflictException(`El email ${email} ya está registrado`);
 
-    const { permiso_acceso, centros_asignados, ...rest } = dto;
+    const { centros_asignados, ...rest } = dto;
     const password = generarPassword();
     const password_hash = await bcrypt.hash(password, SALT_ROUNDS);
-    const permisoPorDefecto =
-      permiso_acceso || (rest.rol === 'admin_smartclarity' ? 'editar' : 'ver');
 
     const cliente_id = rest.cliente_id
       ? this.toObjectId(rest.cliente_id)
@@ -98,7 +96,6 @@ export class UsuariosService {
       ...rest,
       email,
       cliente_id,
-      permiso_acceso: permisoPorDefecto,
       password_hash,
       centros_asignados: centrosIds,
       permisos: permisosPorDefectoSegunRol(rest.rol),

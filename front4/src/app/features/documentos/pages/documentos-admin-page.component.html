@@ -601,6 +601,7 @@
                         }
                         {{ fila.doc.tipo_contenido === 'link' ? 'Abrir enlace' : 'Descargar' }}
                       </button>
+                      @if (puedeDoc(fila.tipo, 'editarCategoria')) {
                       <div style="position:relative">
                         <button title="Cambiar categoría" (click)="toggleCategoriaMenu(fila.doc._id)"
                                 style="width:auto;height:30px;padding:0 .55rem;gap:.35rem;border-radius:7px;border:none;background:#eef2ff;color:#4f46e5;cursor:pointer;display:flex;align-items:center;justify-content:center">
@@ -621,6 +622,7 @@
                           </div>
                         }
                       </div>
+                      }
                       @if (puedeDoc(fila.tipo, 'vencer')) {
                       <button (click)="abrirModalVencer(fila.doc, fila.centroId, fila.proyectoId, fila.empresaId, fila.tipo)"
                               style="padding:.35rem .65rem;border-radius:7px;border:none;background:var(--warn-bg);color:var(--warn);cursor:pointer;display:inline-flex;align-items:center;gap:.35rem;font-size:.72rem;font-weight:600;white-space:nowrap">
@@ -733,6 +735,7 @@
                         }
                         {{ d.tipo_contenido === 'link' ? 'Abrir enlace' : 'Descargar' }}
                       </button>
+                      @if (puedeDoc(docTipo, 'editarCategoria')) {
                       <div style="position:relative">
                         <button title="Cambiar categoría" (click)="toggleCategoriaMenu(d._id)"
                                 style="width:auto;height:30px;padding:0 .55rem;gap:.35rem;border-radius:7px;border:none;background:#eef2ff;color:#4f46e5;cursor:pointer;display:flex;align-items:center;justify-content:center">
@@ -753,6 +756,7 @@
                           </div>
                         }
                       </div>
+                      }
                       @if (puedeDoc(docTipo, 'vencer')) {
                       <button (click)="abrirModalVencer(d)"
                               style="padding:.35rem .65rem;border-radius:7px;border:none;background:var(--warn-bg);color:var(--warn);cursor:pointer;display:inline-flex;align-items:center;gap:.35rem;font-size:.72rem;font-weight:600;white-space:nowrap">
@@ -815,6 +819,7 @@
                         }
                         {{ fila.doc.tipo_contenido === 'link' ? 'Abrir enlace' : 'Descargar' }}
                       </button>
+                      @if (puedeDoc('empresa', 'editarCategoria')) {
                       <div style="position:relative">
                         <button title="Cambiar categoría" (click)="toggleCategoriaMenu(fila.doc._id)"
                                 style="width:auto;height:30px;padding:0 .55rem;gap:.35rem;border-radius:7px;border:none;background:#eef2ff;color:#4f46e5;cursor:pointer;display:flex;align-items:center;justify-content:center">
@@ -835,6 +840,7 @@
                           </div>
                         }
                       </div>
+                      }
                       @if (puedeDoc('empresa', 'vencer')) {
                       <button (click)="abrirModalVencer(fila.doc, undefined, undefined, fila.empresaId, 'empresa')"
                               style="padding:.35rem .65rem;border-radius:7px;border:none;background:var(--warn-bg);color:var(--warn);cursor:pointer;display:inline-flex;align-items:center;gap:.35rem;font-size:.72rem;font-weight:600;white-space:nowrap">
@@ -900,6 +906,7 @@
                           }
                           {{ d.tipo_contenido === 'link' ? 'Abrir enlace' : 'Descargar' }}
                         </button>
+                        @if (puedeDoc('centro', 'editarCategoria')) {
                         <div style="position:relative">
                           <button title="Cambiar categoría" (click)="toggleCategoriaMenu(d._id)"
                                   style="width:auto;height:30px;padding:0 .55rem;gap:.35rem;border-radius:7px;border:none;background:#eef2ff;color:#4f46e5;cursor:pointer;display:flex;align-items:center;justify-content:center">
@@ -920,6 +927,7 @@
                             </div>
                           }
                         </div>
+                        }
                         @if (puedeDoc('centro', 'vencer')) {
                         <button (click)="abrirModalVencer(d, item.centroId)"
                                 style="padding:.35rem .65rem;border-radius:7px;border:none;background:var(--warn-bg);color:var(--warn);cursor:pointer;display:inline-flex;align-items:center;gap:.35rem;font-size:.72rem;font-weight:600;white-space:nowrap">
@@ -984,6 +992,7 @@
                         }
                         {{ fila.doc.tipo_contenido === 'link' ? 'Abrir enlace' : 'Descargar' }}
                       </button>
+                      @if (puedeDoc('centro', 'editarCategoria')) {
                       <div style="position:relative">
                         <button title="Cambiar categoría" (click)="toggleCategoriaMenu(fila.doc._id)"
                                 style="width:auto;height:30px;padding:0 .55rem;gap:.35rem;border-radius:7px;border:none;background:#eef2ff;color:#4f46e5;cursor:pointer;display:flex;align-items:center;justify-content:center">
@@ -1004,6 +1013,7 @@
                           </div>
                         }
                       </div>
+                      }
                       @if (puedeDoc('centro', 'vencer')) {
                       <button (click)="abrirModalVencer(fila.doc, fila.centroId, undefined, fila.empresaId, 'centro')"
                               style="padding:.35rem .65rem;border-radius:7px;border:none;background:var(--warn-bg);color:var(--warn);cursor:pointer;display:inline-flex;align-items:center;gap:.35rem;font-size:.72rem;font-weight:600;white-space:nowrap">
@@ -1072,6 +1082,7 @@
                           }
                           {{ d.tipo_contenido === 'link' ? 'Abrir enlace' : 'Descargar' }}
                         </button>
+                        @if (puedeDoc('proyecto', 'editarCategoria')) {
                         <div style="position:relative">
                           <button title="Cambiar categoría" (click)="toggleCategoriaMenu(d._id)"
                                   style="width:auto;height:30px;padding:0 .55rem;gap:.35rem;border-radius:7px;border:none;background:#eef2ff;color:#4f46e5;cursor:pointer;display:flex;align-items:center;justify-content:center">
@@ -1092,6 +1103,7 @@
                             </div>
                           }
                         </div>
+                        }
                         @if (puedeDoc('proyecto', 'vencer')) {
                         <button (click)="abrirModalVencer(d, undefined, item.proyectoId)"
                                 style="padding:.35rem .65rem;border-radius:7px;border:none;background:var(--warn-bg);color:var(--warn);cursor:pointer;display:inline-flex;align-items:center;gap:.35rem;font-size:.72rem;font-weight:600;white-space:nowrap">
@@ -1157,6 +1169,7 @@
                         }
                         {{ fila.doc.tipo_contenido === 'link' ? 'Abrir enlace' : 'Descargar' }}
                       </button>
+                      @if (puedeDoc('proyecto', 'editarCategoria')) {
                       <div style="position:relative">
                         <button title="Cambiar categoría" (click)="toggleCategoriaMenu(fila.doc._id)"
                                 style="width:auto;height:30px;padding:0 .55rem;gap:.35rem;border-radius:7px;border:none;background:#eef2ff;color:#4f46e5;cursor:pointer;display:flex;align-items:center;justify-content:center">
@@ -1177,6 +1190,7 @@
                           </div>
                         }
                       </div>
+                      }
                       @if (puedeDoc('proyecto', 'vencer')) {
                       <button (click)="abrirModalVencer(fila.doc, fila.centroId, fila.proyectoId, fila.empresaId, 'proyecto')"
                               style="padding:.35rem .65rem;border-radius:7px;border:none;background:var(--warn-bg);color:var(--warn);cursor:pointer;display:inline-flex;align-items:center;gap:.35rem;font-size:.72rem;font-weight:600;white-space:nowrap">

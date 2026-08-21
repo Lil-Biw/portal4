@@ -141,6 +141,7 @@
           [docsExistentes]="docsExistentes"
           [subiendoCards]="subiendoCards()"
           [eliminandoDocIds]="eliminandoDocIds()"
+          [puedeEliminarDoc]="authService.tienePermiso('docActivo', 'eliminar')"
           submitLabel="Guardar cambios"
           (submitted)="actualizar($event)"
           (cancelar)="cerrar()"

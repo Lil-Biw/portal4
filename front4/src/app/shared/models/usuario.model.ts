@@ -1,7 +1,6 @@
 import { PermisosUsuario } from './permisos.model';
 
 export type RolUsuario = 'super_admin' | 'admin_smartclarity' | 'usuario';
-export type PermisoAcceso = 'ver' | 'editar';
 
 export interface Usuario {
   _id: string;
@@ -9,7 +8,6 @@ export interface Usuario {
   nombre: string;
   email: string;
   rol: RolUsuario;
-  permiso_acceso: PermisoAcceso;
   centros_asignados: string[];
   permisos?: PermisosUsuario;
   activo: boolean;
@@ -34,7 +32,6 @@ export interface CreateUsuarioDto {
   nombre: string;
   email: string;
   rol?: RolUsuario;
-  permiso_acceso?: PermisoAcceso;
   centros_asignados?: string[];
   permisos?: PermisosUsuario;
 }
@@ -43,7 +40,6 @@ export interface UpdateUsuarioDto {
   nombre?: string;
   email?: string;
   rol?: RolUsuario;
-  permiso_acceso?: PermisoAcceso;
   centros_asignados?: string[];
   permisos?: PermisosUsuario;
 }

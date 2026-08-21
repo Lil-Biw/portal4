@@ -329,7 +329,6 @@ export class UsuariosPageComponent implements OnInit {
       nombre: this.adminForm.nombre,
       email: this.adminForm.email,
       rol: 'admin_smartclarity',
-      permiso_acceso: 'editar',
     });
   }
 
@@ -344,7 +343,6 @@ export class UsuariosPageComponent implements OnInit {
       nombre: output.dto.nombre,
       email: output.dto.email,
       rol: this.esAdminSmartclarity() ? 'usuario' : output.dto.rol,
-      permiso_acceso: output.dto.permiso_acceso,
       centros_asignados: output.dto.centros_asignados,
       permisos: output.dto.permisos,
     });

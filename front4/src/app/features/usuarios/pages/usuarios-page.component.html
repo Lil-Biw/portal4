@@ -86,7 +86,6 @@
         [clientes]="clientesVisibles()"
         [centros]="centrosVisibles()"
         [centrosSeleccionados]="service.centrosSeleccionados()"
-        [esAdminCliente]="esAdminSmartclarity()"
         (centroToggle)="service.toggleCentro($event.centroId, $event.checked)"
         (submitted)="crear($event)"
       >
@@ -106,7 +105,6 @@
         [centros]="centrosVisibles()"
         [centrosSeleccionados]="service.centrosSeleccionados()"
         [isEdit]="true"
-        [esAdminCliente]="esAdminSmartclarity()"
         submitLabel="Guardar cambios"
         (centroToggle)="service.toggleCentro($event.centroId, $event.checked)"
         (submitted)="actualizar($event)"

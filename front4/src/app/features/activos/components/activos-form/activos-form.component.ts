@@ -163,6 +163,7 @@ export interface DocPendiente { localId?: string; file?: File; linkUrl?: string;
           } @else {
             <app-document-card-list
               [documentos]="docsExistentesTarjetas"
+              [puedeEliminar]="puedeEliminarDoc"
               (descargar)="onDescargarDocId($event)"
               (abrirLink)="onAbrirDoc($event)"
               (eliminar)="onEliminarDoc($event)"
@@ -209,6 +210,7 @@ export class ActivosFormComponent implements OnChanges {
   @Input() docsExistentes: DocActivo[] = [];
   @Input() subiendoCards: { id: string; nombre: string }[] = [];
   @Input() eliminandoDocIds: Set<string> = new Set();
+  @Input() puedeEliminarDoc = true;
   @Input() submitLabel = 'Guardar activo';
 
   @Output() submitted       = new EventEmitter<CreateActivoDto>();

@@ -12,7 +12,6 @@
           <span class="user-email">{{ u.email }}</span>
         </div>
         <span class="role-badge badge-{{ rolClass(u.rol) }}">{{ rolLabel(u.rol) }}</span>
-        <span class="permiso-badge">{{ accionLabel(u) }}</span>
         <div class="user-actions">
           @if (esAdmin(u)) {
             <button

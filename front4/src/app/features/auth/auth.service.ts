@@ -1,5 +1,6 @@
 import { Injectable, PLATFORM_ID, computed, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { firstValueFrom } from 'rxjs';
 import { isPlatformBrowser } from '@angular/common';
 import { Router } from '@angular/router';
 import { ApiService } from '../../core/services/api.service';
@@ -109,6 +110,29 @@ export class AuthService {
     const valor = usuario.permisos?.[seccion]?.[accion];
     if (typeof valor === 'boolean') return valor;
     return permisosPorDefectoSegunRol(usuario.rol as RolUsuario)?.[seccion]?.[accion] === true;
+  }
+
+  // Relee el usuario desde el backend (rol, permisos, centros_asignados):
+  // el JWT y el usuario cacheado en localStorage no se enteran de cambios
+  // hechos por un admin mientras esta sesión sigue abierta. Se llama al
+  // navegar entre rutas protegidas (ver refrescarSesionGuard). Si el usuario
+  // fue desactivado, el backend responde 401 y se cierra la sesión.
+  async refrescarSesion(): Promise<void> {
+    if (!this.estaAutenticado()) return;
+    try {
+      const usuario = await firstValueFrom(
+        this.http.get<UsuarioAuth>(this.api.url('/auth/me')),
+      );
+      const actual = this.usuarioActual();
+      if (!actual) return;
+      const actualizado = { ...actual, ...usuario };
+      if (isPlatformBrowser(this.platformId)) {
+        localStorage.setItem(USER_KEY, JSON.stringify(actualizado));
+      }
+      this.usuarioActual.set(actualizado);
+    } catch (err: any) {
+      if (err?.status === 401) this.logout();
+    }
   }
 
   actualizarUsuario(cambios: Partial<UsuarioAuth>): void {
