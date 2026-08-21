@@ -34,30 +34,25 @@ import { asId } from '../../../../shared/utils';
     .score-num { font-size: 1.5rem; font-weight: 800; line-height: 1.1; }
     .score-empty { font-size: .75rem; color: var(--fg-5); font-weight: 600; }
     .card-actions { display: flex; align-items: center; gap: .4rem; flex-shrink: 0; }
-    .btn-ficha {
-      display: flex; align-items: center; gap: .3rem;
-      padding: .38rem .75rem;
-      border-radius: 8px;
-      border: 1px solid rgba(0,0,0,.15);
-      background: transparent;
-      color: var(--fg-2);
-      font-size: .8rem; font-weight: 600;
-      cursor: pointer;
-      font-family: inherit;
-      transition: all .15s;
+    .btn-ver {
+      display: inline-flex;
+      align-items: center;
+      gap: .35rem;
       white-space: nowrap;
     }
-    .btn-ficha:hover { border-color: var(--sc-cyan); color: var(--sc-cyan); background: var(--sc-cyan-tint-6); }
     .btn-icon {
       display: flex; align-items: center; justify-content: center;
-      width: 32px; height: 32px;
+      width: auto; height: 32px;
+      padding: 0 .55rem;
+      gap: .35rem;
       border-radius: 8px;
       border: 1px solid rgba(0,0,0,.12);
       background: transparent;
       cursor: pointer;
       transition: all .15s;
       color: var(--fg-4);
-      padding: 0;
+      font-size: .72rem;
+      font-weight: 600;
     }
     .btn-icon:hover { border-color: var(--fg-2); color: var(--fg-2); background: rgba(0,0,0,.04); }
     .btn-icon.danger { color: var(--danger); border-color: var(--danger-bg); }

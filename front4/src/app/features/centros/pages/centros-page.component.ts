@@ -154,6 +154,13 @@ export class CentrosPageComponent implements OnInit {
       }
     });
     effect(() => {
+      const status = this.service.status();
+      const modo = this.modal();
+      if (status?.type === 'ok' && (modo === 'crear' || modo === 'editar')) {
+        this.cerrar();
+      }
+    });
+    effect(() => {
       const clientes = this.clientesService.clientes();
       if (clientes.length > 0) {
         untracked(() => this.cargarSolicitudesGlobal(clientes.map(c => asId(c._id))));

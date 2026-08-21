@@ -11,7 +11,7 @@
   @if (tabConsumidorActiva() === 'documentacion') {
     @let docTipo = tabJerarquia();
     <div style="background:var(--bg-1);border:1px solid var(--border-subtle);border-radius:.5rem;padding:.75rem;margin-bottom:1rem">
-      <div style="display:grid;grid-template-columns:1fr 600px;gap:1.5rem;align-items:start">
+      <div style="display:grid;grid-template-columns:1fr 400px;gap:1.5rem;align-items:start">
         <div>
           <p style="margin:0 0 .5rem;font-size:.8rem;font-weight:600;color:var(--fg-2)">Tipo de documento</p>
           <div style="display:flex;flex-wrap:wrap;gap:.5rem">
@@ -45,7 +45,7 @@
 
   @if (tabConsumidorActiva() === 'solicitudes') {
     <div style="background:var(--bg-1);border:1px solid var(--border-subtle);border-radius:.5rem;padding:.75rem;margin-bottom:1rem">
-      <div style="display:grid;grid-template-columns:1fr 600px;gap:1.5rem;align-items:start">
+      <div style="display:grid;grid-template-columns:1fr 400px;gap:1.5rem;align-items:start">
         <div>
           <p style="margin:0 0 .5rem;font-size:.8rem;font-weight:600;color:var(--fg-2)">Tipo de documento</p>
           <div style="display:flex;flex-wrap:wrap;gap:.5rem">
@@ -579,18 +579,18 @@
                     </div>
                     <div style="display:flex;gap:.35rem;flex-shrink:0">
                       <button [title]="fila.doc.tipo_contenido === 'link' ? 'Abrir enlace' : 'Descargar'" (click)="abrirDocumento(fila.doc)"
-                              style="width:32px;height:32px;border-radius:7px;border:none;background:var(--sc-cyan-tint-6);color:var(--sc-cyan);cursor:pointer;display:flex;align-items:center;justify-content:center">
+                              style="width:auto;height:30px;padding:0 .55rem;gap:.35rem;border-radius:7px;border:none;background:var(--sc-cyan-tint-6);color:var(--sc-cyan);cursor:pointer;display:flex;align-items:center;justify-content:center">
                         @if (fila.doc.tipo_contenido === 'link') {
                           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
                         } @else {
                           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                         }
-                      </button>
+                      <span style="font-size:.72rem;font-weight:600">{{ fila.doc.tipo_contenido === 'link' ? 'Abrir' : 'Descargar' }}</span></button>
                       @if (puedeDoc(fila.tipo, 'editarCategoria')) {
                       <div style="position:relative">
                         <button title="Cambiar categoría" (click)="toggleCategoriaMenu(fila.doc._id)"
-                                style="width:32px;height:32px;border-radius:7px;border:none;background:#eef2ff;color:#4f46e5;cursor:pointer;display:flex;align-items:center;justify-content:center">
-                          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m20.59 13.41-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82Z"/><circle cx="7" cy="7" r="1"/></svg>
+                                style="width:auto;height:30px;padding:0 .55rem;gap:.35rem;border-radius:7px;border:none;background:#eef2ff;color:#4f46e5;cursor:pointer;display:flex;align-items:center;justify-content:center">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m20.59 13.41-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82Z"/><circle cx="7" cy="7" r="1"/></svg><span style="font-size:.72rem;font-weight:600">Categoría</span>
                         </button>
                         @if (categoriaMenuAbierto() === fila.doc._id) {
                           <div style="position:fixed;inset:0;z-index:60" (click)="categoriaMenuAbierto.set(null)"></div>
@@ -610,14 +610,14 @@
                       }
                       @if (puedeDoc(fila.tipo, 'vencer')) {
                       <button title="Marcar vencido" (click)="marcarVencidoConsumidor(fila.doc.url, fila.tipo)"
-                              style="width:32px;height:32px;border-radius:7px;border:none;background:var(--warn-bg);color:var(--warn);cursor:pointer;display:flex;align-items:center;justify-content:center">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                              style="width:auto;height:30px;padding:0 .55rem;gap:.35rem;border-radius:7px;border:none;background:var(--warn-bg);color:var(--warn);cursor:pointer;display:flex;align-items:center;justify-content:center">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><span style="font-size:.72rem;font-weight:600">Vencer</span>
                       </button>
                       }
                       @if (puedeDoc(fila.tipo, 'eliminar')) {
                       <button title="Eliminar" (click)="eliminarEnTodos(fila.doc.url, fila.doc.nombre_display)"
-                              style="width:32px;height:32px;border-radius:7px;border:none;background:var(--danger-bg);color:var(--danger);cursor:pointer;display:flex;align-items:center;justify-content:center">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                              style="width:auto;height:30px;padding:0 .55rem;gap:.35rem;border-radius:7px;border:none;background:var(--danger-bg);color:var(--danger);cursor:pointer;display:flex;align-items:center;justify-content:center">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg><span style="font-size:.72rem;font-weight:600">Eliminar</span>
                       </button>
                       }
                     </div>
@@ -711,18 +711,18 @@
                     </div>
                     <div style="display:flex;gap:.35rem;flex-shrink:0">
                       <button [title]="d.tipo_contenido === 'link' ? 'Abrir enlace' : 'Descargar'" (click)="abrirDocumento(d)"
-                              style="width:32px;height:32px;border-radius:7px;border:none;background:var(--sc-cyan-tint-6);color:var(--sc-cyan);cursor:pointer;display:flex;align-items:center;justify-content:center">
+                              style="width:auto;height:30px;padding:0 .55rem;gap:.35rem;border-radius:7px;border:none;background:var(--sc-cyan-tint-6);color:var(--sc-cyan);cursor:pointer;display:flex;align-items:center;justify-content:center">
                         @if (d.tipo_contenido === 'link') {
                           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
                         } @else {
                           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                         }
-                      </button>
+                      <span style="font-size:.72rem;font-weight:600">{{ d.tipo_contenido === 'link' ? 'Abrir' : 'Descargar' }}</span></button>
 @if (puedeDoc(docTipo, 'editarCategoria')) {
 <div style="position:relative">
   <button title="Cambiar categoría" (click)="toggleCategoriaMenu(d._id)"
-          style="width:32px;height:32px;border-radius:7px;border:none;background:#eef2ff;color:#4f46e5;cursor:pointer;display:flex;align-items:center;justify-content:center">
-    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m20.59 13.41-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82Z"/><circle cx="7" cy="7" r="1"/></svg>
+          style="width:auto;height:30px;padding:0 .55rem;gap:.35rem;border-radius:7px;border:none;background:#eef2ff;color:#4f46e5;cursor:pointer;display:flex;align-items:center;justify-content:center">
+    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m20.59 13.41-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82Z"/><circle cx="7" cy="7" r="1"/></svg><span style="font-size:.72rem;font-weight:600">Categoría</span>
   </button>
   @if (categoriaMenuAbierto() === d._id) {
     <div style="position:fixed;inset:0;z-index:60" (click)="categoriaMenuAbierto.set(null)"></div>
@@ -742,14 +742,14 @@
 }
 @if (puedeDoc(docTipo, 'vencer')) {
 <button title="Marcar vencido" (click)="marcarVencidoConsumidor(d.url, docTipo)"
-                              style="width:32px;height:32px;border-radius:7px;border:none;background:var(--warn-bg);color:var(--warn);cursor:pointer;display:flex;align-items:center;justify-content:center">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                              style="width:auto;height:30px;padding:0 .55rem;gap:.35rem;border-radius:7px;border:none;background:var(--warn-bg);color:var(--warn);cursor:pointer;display:flex;align-items:center;justify-content:center">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><span style="font-size:.72rem;font-weight:600">Vencer</span>
                       </button>
                       }
 @if (puedeDoc(docTipo, 'eliminar')) {
 <button title="Eliminar" (click)="eliminar(d.url, docTipo, d.nombre_display)"
-                              style="width:32px;height:32px;border-radius:7px;border:none;background:var(--danger-bg);color:var(--danger);cursor:pointer;display:flex;align-items:center;justify-content:center">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                              style="width:auto;height:30px;padding:0 .55rem;gap:.35rem;border-radius:7px;border:none;background:var(--danger-bg);color:var(--danger);cursor:pointer;display:flex;align-items:center;justify-content:center">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg><span style="font-size:.72rem;font-weight:600">Eliminar</span>
                       </button>
                       }
                     </div>
@@ -794,13 +794,13 @@
                         </div>
                       </div>
                       <button [title]="d.tipo_contenido === 'link' ? 'Abrir enlace' : 'Descargar'" (click)="abrirDocumento(d)"
-                              style="width:32px;height:32px;border-radius:7px;border:none;background:var(--sc-cyan-tint-6);color:var(--sc-cyan);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                              style="width:auto;height:30px;padding:0 .55rem;gap:.35rem;border-radius:7px;border:none;background:var(--sc-cyan-tint-6);color:var(--sc-cyan);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0">
                         @if (d.tipo_contenido === 'link') {
                           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
                         } @else {
                           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                         }
-                      </button>
+                      <span style="font-size:.72rem;font-weight:600">{{ d.tipo_contenido === 'link' ? 'Abrir' : 'Descargar' }}</span></button>
                     </div>
                   }
                 </div>
@@ -846,13 +846,13 @@
                         </div>
                       </div>
                       <button [title]="d.tipo_contenido === 'link' ? 'Abrir enlace' : 'Descargar'" (click)="abrirDocumento(d)"
-                              style="width:32px;height:32px;border-radius:7px;border:none;background:var(--sc-cyan-tint-6);color:var(--sc-cyan);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                              style="width:auto;height:30px;padding:0 .55rem;gap:.35rem;border-radius:7px;border:none;background:var(--sc-cyan-tint-6);color:var(--sc-cyan);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0">
                         @if (d.tipo_contenido === 'link') {
                           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
                         } @else {
                           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                         }
-                      </button>
+                      <span style="font-size:.72rem;font-weight:600">{{ d.tipo_contenido === 'link' ? 'Abrir' : 'Descargar' }}</span></button>
                     </div>
                   }
                 </div>
@@ -909,13 +909,13 @@
                       <span style="font-size:.72rem;color:var(--danger);font-weight:600">Vencido: {{ formatFechaHora(v.vencido_en) }}</span>
                     </div>
                     <button [title]="v.tipo_contenido === 'link' ? 'Abrir enlace' : 'Descargar'" (click)="abrirDocumento(v)"
-                            style="width:32px;height:32px;border-radius:7px;border:none;background:var(--sc-cyan-tint-6);color:var(--sc-cyan);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                            style="width:auto;height:30px;padding:0 .55rem;gap:.35rem;border-radius:7px;border:none;background:var(--sc-cyan-tint-6);color:var(--sc-cyan);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0">
                       @if (v.tipo_contenido === 'link') {
                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
                       } @else {
                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                       }
-                    </button>
+                    <span style="font-size:.72rem;font-weight:600">{{ v.tipo_contenido === 'link' ? 'Abrir' : 'Descargar' }}</span></button>
                   </div>
                 }
               </div>

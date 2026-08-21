@@ -32,7 +32,8 @@ function emptyTipoForm(): TipoForm { return { nombre: '', color: '#0095d6', icon
       justify-content: space-between;
       margin-bottom: 1.25rem;
     }
-    .page-header h2 { margin: 0; font-size: 1.25rem; font-weight: 700; color: var(--fg-2); }
+    .page-header h2 { margin: 0 0 .15rem; font-size: 1.5rem; font-weight: 700; color: var(--fg-2); }
+    .page-subtitle { margin: 0; font-size: .875rem; color: var(--fg-4); }
     .header-actions { display: flex; gap: .6rem; }
     .modal-backdrop {
       position: fixed;

@@ -124,13 +124,17 @@ interface GrupoEmpresa { empresa: Cliente; proyectos: Proyecto[]; }
       display: flex;
       align-items: center;
       justify-content: center;
-      width: 32px;
+      width: auto;
       height: 32px;
+      padding: 0 .55rem;
+      gap: .35rem;
       border-radius: 8px;
       border: 1px solid var(--border-default);
       background: transparent;
       color: var(--fg-4);
       cursor: pointer;
+      font-size: .72rem;
+      font-weight: 600;
       transition: all .15s;
     }
     .btn-icon:hover { border-color: var(--border-strong); background: var(--bg-2); color: var(--fg-2); }

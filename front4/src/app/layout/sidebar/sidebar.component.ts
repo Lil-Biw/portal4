@@ -119,6 +119,11 @@ const BUILDING_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="32" height
         }
       </div>
 
+      <!-- Footer SmartClarity -->
+      <a class="smartclarity-link" href="https://www.smartclarity.com/" target="_blank" rel="noopener">
+        <img src="/SM_Isotipo_blanco_fondo_cyan.png" alt="SmartClarity" class="smartclarity-logo" />
+        <span class="smartclarity-text">SmartClarity</span>
+      </a>
       <!-- Footer Eclariti -->
       <a class="eclariti-link" href="https://app.clarityenergy.cl/loginv5/" target="_blank" rel="noopener">
         <img src="/logotipo_eclarity_transparent_upscaled.png" alt="Eclariti" class="eclariti-logo" />
@@ -316,13 +321,37 @@ const BUILDING_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="32" height
         font-size: 0.74rem;
       }
 
+      /* --- Footer SmartClarity --- */
+      .smartclarity-link {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 1.25rem 0.75rem 1rem;
+        border-top: 1px solid rgba(255, 255, 255, 0.07);
+        text-decoration: none;
+        transition: opacity 0.15s;
+      }
+      .smartclarity-link:hover {
+        opacity: 0.75;
+      }
+      .smartclarity-logo {
+        width: 20px;
+        height: 20px;
+        object-fit: contain;
+        flex-shrink: 0;
+      }
+      .smartclarity-text {
+        font-size: 0.82rem;
+        font-weight: 600;
+        color: var(--sc-cyan);
+      }
+
       /* --- Footer Eclariti --- */
       .eclariti-link {
         display: flex;
         align-items: center;
         gap: 0.5rem;
-        padding: 1.25rem 0.75rem 0.6rem;
-        border-top: 1px solid rgba(255, 255, 255, 0.07);
+        padding: 0.25rem 0.75rem 0.6rem;
         text-decoration: none;
         transition: opacity 0.15s;
       }

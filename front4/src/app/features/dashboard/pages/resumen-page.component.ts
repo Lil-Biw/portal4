@@ -52,8 +52,8 @@ export interface ScoreEmpresa {
     .page { display: flex; flex-direction: column; gap: 1.5rem; }
 
     /* ── Saludo ─────────────────────────────────────── */
-    .greeting h1 { margin: 0 0 .25rem; font-size: 1.75rem; font-weight: 800; color: var(--fg-1); }
-    .greeting p  { margin: 0; font-size: .95rem; color: var(--fg-4); }
+    .greeting h1 { margin: 0 0 .25rem; font-size: 1.75rem; font-weight: 700; color: var(--fg-1); }
+    .greeting p  { margin: 0; font-size: .875rem; color: var(--fg-4); }
 
     /* ── Stats ──────────────────────────────────────── */
     .stats {
@@ -345,7 +345,10 @@ export class ResumenPageComponent implements OnInit {
   }
 
   protected noticiaFecha(iso: string): string {
-    return new Date(iso).toLocaleDateString('es-CL', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+    if (!iso) return '';
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return '';
+    return d.toLocaleDateString('es-CL', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
   }
 
   // ── Helpers ──────────────────────────────────────────────────────────────

@@ -36,6 +36,7 @@ type ProyectoModal = 'crear' | 'editar' | null;
       justify-content: center;
       width: 30px;
       height: 30px;
+      padding: 0;
       border: 1px solid var(--border-default);
       border-radius: 7px;
       background: none;

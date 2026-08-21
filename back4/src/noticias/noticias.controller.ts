@@ -1,5 +1,5 @@
 import {
-  Controller, Get, Post, Delete, Param, Body,
+  Controller, Get, Post, Put, Delete, Param, Body,
   UseInterceptors, UploadedFile, Res,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -35,6 +35,12 @@ export class NoticiasController {
   @RequiereAccion('noticias', 'crear')
   create(@Body() dto: CreateNoticiaDto) {
     return this.noticiasService.create(dto);
+  }
+
+  @Put(':id')
+  @RequiereAccion('noticias', 'crear')
+  update(@Param('id') id: string, @Body() dto: CreateNoticiaDto) {
+    return this.noticiasService.update(id, dto);
   }
 
   @Post(':id/imagen')

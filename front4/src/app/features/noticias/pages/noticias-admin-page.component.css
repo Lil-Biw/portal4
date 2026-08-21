@@ -102,28 +102,6 @@
 
 .card-actions { display:flex; gap:.35rem; }
 
-.btn-edit, .btn-delete {
-  width:30px; height:30px; border-radius:6px;
-  border:1px solid;
-  cursor:pointer; display:flex; align-items:center; justify-content:center;
-  transition:all .15s; flex-shrink:0;
-}
-.btn-edit svg, .btn-delete svg { width:14px; height:14px; pointer-events:none; }
-
-.btn-edit {
-  border-color:var(--border-default);
-  background:var(--bg-2);
-  color:var(--fg-4);
-}
-.btn-edit:hover { background:var(--fg-4); color:#fff; border-color:var(--fg-4); }
-
-.btn-delete {
-  border-color:var(--danger);
-  background:var(--danger-bg);
-  color:var(--danger);
-}
-.btn-delete:hover { background:var(--danger); color:#fff; border-color:var(--danger); }
-
 /* Modal */
 .backdrop { position:fixed; inset:0; background:var(--overlay); z-index:1000; }
 .modal {

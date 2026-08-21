@@ -31,6 +31,14 @@ export class NoticiasService {
     return new this.noticiaModel(dto).save();
   }
 
+  async update(id: string, dto: CreateNoticiaDto) {
+    const actualizada = await this.noticiaModel
+      .findByIdAndUpdate(id, dto, { new: true })
+      .lean();
+    if (!actualizada) throw new NotFoundException(`Noticia ${id} no encontrada`);
+    return actualizada;
+  }
+
   private async notificarTodosLosUsuarios(noticia: {
     titulo: string; resumen: string; enlace: string; seccion: string;
     imagenBuffer?: Buffer; imagenMimetype?: string;

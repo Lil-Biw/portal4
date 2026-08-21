@@ -47,14 +47,14 @@ type ModalMode = 'crear-admin' | 'crear-usuario' | 'editar' | 'suscripciones' | 
       .header-title { display: flex; flex-direction: column; gap: 2px; }
       .page-header h2 {
         margin: 0;
-        font-size: 1.35rem;
+        font-size: 1.5rem;
         font-weight: 700;
         color: var(--fg-2);
       }
       .header-subtitle {
         margin: 0;
-        font-size: 0.82rem;
-        color: var(--fg-5);
+        font-size: .875rem;
+        color: var(--fg-4);
       }
       .header-actions {
         display: flex;
@@ -170,7 +170,15 @@ export class UsuariosPageComponent implements OnInit {
 
   constructor() {
     effect(() => {
-      if (this.service.status()?.type === 'ok' && (this.modal() === 'suscripciones' || this.modal() === 'permisos')) {
+      const modo = this.modal();
+      if (
+        this.service.status()?.type === 'ok' &&
+        (modo === 'suscripciones' ||
+          modo === 'permisos' ||
+          modo === 'crear-usuario' ||
+          modo === 'crear-admin' ||
+          modo === 'editar')
+      ) {
         this.cerrar();
       }
     });

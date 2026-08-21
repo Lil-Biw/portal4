@@ -39,6 +39,8 @@
   --info: #00AEEF;       --info-bg: #E5F7FD;
   --revision: #B45309;   --revision-bg: #FEF3C7;
   --rechazado: #9D174D;  --rechazado-bg: #FCE7F3;
+  --sc-violet: #7C3AED;  --sc-violet-bg: #F3EBFD;
+  --sc-indigo: #4F46E5;  --sc-indigo-bg: #EEF2FF;
   --overlay: rgba(11, 15, 20, .45);
 
   /* ---------- Type families ---------- */
@@ -168,6 +170,58 @@ h1, h2, h3, h4, h5, h6 { font-family: var(--font-display); }
   transition: all .15s;
 }
 .btn-danger:hover { filter: brightness(.95); }
+
+/* ── Botones de acción de tarjeta: Editar / Permisos / Eliminar (uniforme en todo el portal) ── */
+.btn-edit,
+.btn-permisos,
+.btn-delete {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: .35rem;
+  height: 30px;
+  padding: 0 .6rem;
+  border-radius: 7px;
+  border: 1px solid var(--border-default);
+  background: transparent;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: .72rem;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: border-color .15s, color .15s, background .15s;
+}
+.btn-edit svg,
+.btn-permisos svg,
+.btn-delete svg {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}
+.btn-edit {
+  color: var(--fg-4);
+}
+.btn-edit:hover {
+  color: var(--sc-cyan);
+  border-color: var(--sc-cyan);
+  background: var(--sc-cyan-tint-6);
+}
+.btn-permisos {
+  color: var(--sc-indigo);
+  border-color: rgba(79, 70, 229, .35);
+}
+.btn-permisos:hover {
+  background: var(--sc-indigo-bg);
+  border-color: var(--sc-indigo);
+}
+.btn-delete {
+  color: var(--danger);
+  border-color: rgba(229, 72, 77, .4);
+}
+.btn-delete:hover {
+  background: var(--danger-bg);
+  border-color: var(--danger);
+}
 
 /* ── Botón con progreso indeterminado ─────────────────── */
 .btn-loading {

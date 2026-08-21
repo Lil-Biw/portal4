@@ -47,13 +47,17 @@ interface GrupoEmpresa { empresa: Cliente; centros: CentroCosto[]; }
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      width: 30px;
+      width: auto;
       height: 30px;
+      padding: 0 .55rem;
+      gap: .35rem;
       border: 1px solid var(--border-default);
       border-radius: 7px;
       background: none;
       cursor: pointer;
       color: var(--fg-4);
+      font-size: .72rem;
+      font-weight: 600;
       transition: border-color .15s, color .15s, background .15s;
     }
     .btn-icon-sq:hover { border-color: var(--sc-cyan); color: var(--sc-cyan); background: var(--sc-cyan-tint-6); }
@@ -62,13 +66,17 @@ interface GrupoEmpresa { empresa: Cliente; centros: CentroCosto[]; }
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      width: 30px;
+      width: auto;
       height: 30px;
+      padding: 0 .55rem;
+      gap: .35rem;
       border: none;
       background: none;
       cursor: pointer;
       color: var(--fg-5);
       border-radius: 6px;
+      font-size: .72rem;
+      font-weight: 600;
       transition: color .15s, background .15s;
     }
     .btn-action:hover { color: var(--fg-2); background: rgba(0,0,0,.06); }

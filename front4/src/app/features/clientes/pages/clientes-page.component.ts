@@ -34,12 +34,12 @@ type ModalMode = 'crear' | 'editar' | 'buscar' | 'score' | null;
     .page-header h2 {
       margin: 0 0 .2rem;
       font-size: 1.5rem;
-      font-weight: 800;
+      font-weight: 700;
       color: var(--fg-1);
     }
     .page-subtitle {
       margin: 0;
-      font-size: .83rem;
+      font-size: .875rem;
       color: var(--fg-4);
     }
     .header-actions { display: flex; gap: .6rem; align-items: center; }
@@ -136,6 +136,13 @@ export class ClientesPageComponent implements OnInit {
           this.cargarSolicitudesGlobal(clientes.map(c => asId(c._id)));
           this.cargarDocsPorEmpresa(clientes.map(c => asId(c._id)));
         });
+      }
+    });
+    effect(() => {
+      const status = this.service.status();
+      const modo = this.modal();
+      if (status?.type === 'ok' && (modo === 'crear' || modo === 'editar')) {
+        this.cerrar();
       }
     });
   }
@@ -241,6 +248,7 @@ export class ClientesPageComponent implements OnInit {
     this.clienteParaScore.set(null);
     this.guardandoScore.set(false);
     this.scoreError.set(null);
+    this.busqueda.set('');
   }
 
   protected abrirEditarScore(cliente: Cliente): void {

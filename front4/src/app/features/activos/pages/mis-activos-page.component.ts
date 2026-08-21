@@ -21,7 +21,10 @@ type ActivoModal = 'crear' | 'editar' | null;
   imports: [FormsModule, StatusBannerComponent, ActivosListComponent, ActivoRevisarModalComponent, ActivosFormComponent],
   template: `
     <div class="page-header">
-      <h2>Mis activos</h2>
+      <div class="header-title">
+        <h2>Mis activos</h2>
+        <p class="page-subtitle">Equipos y maquinaria de tu empresa.</p>
+      </div>
       @if (busquedaVisible()) {
         <input
           class="search-input"
@@ -117,7 +120,9 @@ type ActivoModal = 'crear' | 'editar' | null;
       gap: .6rem;
       margin-bottom: 1.25rem;
     }
-    .page-header h2 { margin: 0; font-size: 1.25rem; font-weight: 700; color: var(--fg-2); flex: 1; }
+    .header-title { flex: 1; }
+    .page-header h2 { margin: 0 0 .15rem; font-size: 1.5rem; font-weight: 700; color: var(--fg-2); }
+    .page-subtitle { margin: 0; font-size: .875rem; color: var(--fg-4); }
     .header-actions { display: flex; gap: .6rem; align-items: center; }
     .search-input {
       padding: .55rem .9rem;

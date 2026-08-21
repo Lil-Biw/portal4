@@ -32,8 +32,8 @@ function emptyTipoForm(): TipoForm { return { nombre: '', color: '#00AEEF', icon
       margin-bottom: 1.25rem;
       gap: 1rem;
     }
-    .page-header h2 { margin: 0 0 .15rem; font-size: 1.4rem; font-weight: 700; color: var(--fg-2); }
-    .page-subtitle { margin: 0; font-size: .85rem; color: var(--fg-4); }
+    .page-header h2 { margin: 0 0 .15rem; font-size: 1.5rem; font-weight: 700; color: var(--fg-2); }
+    .page-subtitle { margin: 0; font-size: .875rem; color: var(--fg-4); }
     .header-actions { display: flex; gap: .6rem; flex-shrink: 0; align-items: flex-start; }
 
     .modal-backdrop {
@@ -190,6 +190,13 @@ export class ProyectosPageComponent implements OnInit {
     effect(() => {
       if (this.tiposService.status()?.type === 'ok' && this.showTipoForm()) {
         this.cerrarTipoForm();
+      }
+    });
+    effect(() => {
+      const status = this.service.status();
+      const modo = this.modal();
+      if (status?.type === 'ok' && (modo === 'crear' || modo === 'editar')) {
+        this.cerrar();
       }
     });
   }

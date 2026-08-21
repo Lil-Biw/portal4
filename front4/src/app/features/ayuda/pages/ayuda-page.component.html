@@ -1,0 +1,166 @@
+<div class="page">
+
+  <!-- Header -->
+  <div class="page-header">
+    <h2>Centro de ayuda</h2>
+    <p>Guías rápidas y estructura del portal.</p>
+  </div>
+
+  <!-- Estructura del portal -->
+  <div class="card">
+    <h3 class="section-title">Cómo se organiza el portal</h3>
+    <p class="section-sub">Cada nivel del portal tiene su propio almacenamiento de documentos: la empresa, los centros de costo, los proyectos, los activos y las actividades. Las actividades, además, cruzan esa estructura: combinan un centro de costo con uno o más activos de la misma empresa.</p>
+
+    <div class="legend">
+      <div class="legend-item"><span class="legend-line"></span>contiene</div>
+    </div>
+
+    <div class="diagram">
+      <svg viewBox="0 0 1200 480" preserveAspectRatio="none">
+        <defs>
+          <marker id="ayudaArrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M0,0 L10,5 L0,10 z" fill="var(--fg-5)"></path>
+          </marker>
+        </defs>
+        <line x1="360" y1="85" x2="360" y2="180" stroke="var(--border-strong)" stroke-width="2"></line>
+        <path d="M360,240 L360,310 L200,310 L200,370" fill="none" stroke="var(--border-strong)" stroke-width="2"></path>
+        <path d="M360,310 L670,310 L670,370" fill="none" stroke="var(--border-strong)" stroke-width="2"></path>
+        <path d="M480,210 L850,160" fill="none" stroke="var(--fg-5)" stroke-width="1.5" stroke-dasharray="5 5" opacity="0.6" marker-end="url(#ayudaArrow)"></path>
+        <path d="M780,400 L850,360" fill="none" stroke="var(--fg-5)" stroke-width="1.5" stroke-dasharray="5 5" opacity="0.6" marker-end="url(#ayudaArrow)"></path>
+        <path d="M880,55 L470,55" fill="none" stroke="var(--fg-5)" stroke-width="1.5" stroke-dasharray="5 5" opacity="0.6" marker-end="url(#ayudaArrow)"></path>
+      </svg>
+
+      <div class="docs-group" [style]="docsGroupStyle">
+        <span class="docs-group-label">Pestaña Documentos</span>
+      </div>
+
+      <div class="docs-group" [style]="activosGroupStyle">
+        <span class="docs-group-label">Pestaña Activos</span>
+      </div>
+
+      <div class="docs-group" [style]="actividadesGroupStyle">
+        <span class="docs-group-label">Pestaña Actividades</span>
+      </div>
+
+      <button type="button" class="diagram-box" [style]="empresaBoxStyle()" (click)="selectNode('empresa')">
+        <span [innerHTML]="getIcon('building-2')"></span>
+        <span>Empresa</span>
+      </button>
+
+      <button type="button" class="diagram-box" [style]="centroBoxStyle()" (click)="selectNode('centro')">
+        <span [innerHTML]="getIcon('map-pin')"></span>
+        <span>Centro de costo</span>
+      </button>
+
+      <button type="button" class="diagram-box" [style]="proyectoBoxStyle()" (click)="selectNode('proyecto')">
+        <span [innerHTML]="getIcon('folder')"></span>
+        <span>Proyectos</span>
+      </button>
+
+      <button type="button" class="diagram-box" [style]="activosBoxStyle()" (click)="selectNode('activos')">
+        <span [innerHTML]="getIcon('cpu')"></span>
+        <span>Activos</span>
+      </button>
+
+      <div class="actividades-wrap" [style]="actividadesWrapStyle">
+        <button type="button" class="actividades-box" [style]="actividadesBoxStyle()" (click)="selectNode('actividades')">
+          <span [innerHTML]="getIcon('calendar-clock')"></span>
+          <div>
+            <strong>Actividades</strong>
+            <small>Centros + Activos</small>
+          </div>
+        </button>
+
+        <div class="mini-calendar">
+          <div class="mini-calendar-head">
+            <span [innerHTML]="getIcon('chevron-left-16')"></span>
+            <strong>Agosto 2026</strong>
+            <span [innerHTML]="getIcon('chevron-right-16')"></span>
+          </div>
+          <div class="mini-calendar-weekdays">
+            @for (wd of weekdayLabels; track $index) {
+              <span>{{ wd }}</span>
+            }
+          </div>
+          <div class="mini-calendar-grid">
+            @for (cell of calendarDays; track $index) {
+              <div class="mini-calendar-cell" [class.has-activity]="cell.hasActivity">{{ cell.label }}</div>
+            }
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="legend" style="margin-top:.9rem">
+      <div class="legend-item"><span class="legend-line legend-line--dashed"></span>se vincula a</div>
+    </div>
+
+    <div class="node-detail">
+      <div class="node-detail-icon" [innerHTML]="getIcon(nodeDetail().icon)"></div>
+      <div>
+        <h4>{{ nodeDetail().title }}</h4>
+        <p>{{ nodeDetail().body }}</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Videos explicativos -->
+  <div>
+    <h3 class="section-title">Videos explicativos</h3>
+    <p class="section-sub">Guías cortas para aprender a usar el portal.</p>
+
+    <div class="video-section">
+      <div class="video-list">
+        @for (slide of slidesData; track $index) {
+          <button type="button" class="video-list-item" [class.active]="$index === slideIndex()" (click)="goToSlide($index)">
+            <span class="video-list-index">{{ $index + 1 }}</span>
+            <span class="video-list-title">{{ slide.title }}</span>
+          </button>
+        }
+      </div>
+
+      <div class="video-shell">
+        <div class="video-frame">
+          <video class="video-player" [src]="currentSlide().src" controls preload="metadata" playsinline></video>
+          <button type="button" class="video-nav prev" (click)="prevSlide()" [innerHTML]="getIcon('chevron-left-18')"></button>
+          <button type="button" class="video-nav next" (click)="nextSlide()" [innerHTML]="getIcon('chevron-right-18')"></button>
+        </div>
+        <div class="video-caption">
+          <strong>{{ currentSlide().title }}</strong>
+          <span class="video-count">{{ slideIndex() + 1 }} / {{ slidesData.length }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FAQ -->
+  <div>
+    <h3 class="section-title">Preguntas frecuentes</h3>
+    <div class="faq-list">
+      @for (item of faqData; track $index) {
+        <div class="faq-item">
+          <button type="button" class="faq-question" (click)="toggleFaq($index)">
+            <span>{{ item.q }}</span>
+            <span class="faq-chevron" [class.open]="faqOpen() === $index" [innerHTML]="getIcon('chevron-down')"></span>
+          </button>
+          @if (faqOpen() === $index) {
+            <div class="faq-answer">{{ item.a }}</div>
+          }
+        </div>
+      }
+    </div>
+  </div>
+
+  <!-- Soporte -->
+  <div class="support-banner">
+    <div>
+      <strong>¿Necesitas soporte directo?</strong>
+      <p>Nuestro equipo responde en menos de 24 horas hábiles.</p>
+    </div>
+    <a class="support-cta" href="mailto:andres.galaz@smartclarity.com">
+      <span [innerHTML]="getIcon('mail')"></span>
+      Contactar soporte
+    </a>
+  </div>
+
+</div>

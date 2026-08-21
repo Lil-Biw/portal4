@@ -163,7 +163,10 @@ export class InicioPageComponent implements OnInit {
   }
 
   protected formatFechaShort(iso: string): string {
-    return new Date(iso).toLocaleDateString('es-CL', { day: '2-digit', month: 'short', year: 'numeric' });
+    if (!iso) return '';
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return '';
+    return d.toLocaleDateString('es-CL', { day: '2-digit', month: 'short', year: 'numeric' });
   }
 
   protected abrirNoticia(url: string): void {
