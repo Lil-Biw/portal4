@@ -1,7 +1,7 @@
 import { Component, EventEmitter, Input, Output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { PermisosPanelComponent } from '../../../../shared/components/permisos-panel/permisos-panel.component';
-import { CreateRolDto, PermisosUsuario, Rol, UpdateRolDto, contarPermisosActivos } from '../../../../shared/models/permisos.model';
+import { CreateRolDto, PermisosUsuario, Rol, UpdateRolDto, contarPermisosActivos, normalizarPermisos } from '../../../../shared/models/permisos.model';
 
 type Vista = 'lista' | 'editar';
 
@@ -73,7 +73,12 @@ export class RolesManagerComponent {
   }
 
   guardar(): void {
-    const dto = { nombre: this.nombreForm, permisos: this.valoresForm };
+    // Los roles son presets globales (se pueden aplicar a cualquier rol de
+    // usuario), así que se normalizan con el catálogo completo — de lo
+    // contrario un rol nunca tocado en el editor queda en `{}` y, al
+    // aplicarlo, cada fila ausente cae al default del rol del usuario
+    // destino en vez de quedar denegada.
+    const dto = { nombre: this.nombreForm, permisos: normalizarPermisos(this.valoresForm, true) };
     const id = this.rolEditandoId();
     if (id) this.editar.emit({ id, dto });
     else this.crear.emit(dto);

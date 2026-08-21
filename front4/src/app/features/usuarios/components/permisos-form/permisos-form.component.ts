@@ -2,7 +2,7 @@ import { Component, EventEmitter, Input, OnChanges, Output } from '@angular/core
 import { FormsModule } from '@angular/forms';
 import { PermisosPanelComponent } from '../../../../shared/components/permisos-panel/permisos-panel.component';
 import { Usuario, RolUsuario } from '../../../../shared/models/usuario.model';
-import { PERM_SCHEMA, PermisosUsuario, Rol, contarPermisosActivos, filaAplica } from '../../../../shared/models/permisos.model';
+import { PermisosUsuario, Rol, contarPermisosActivos, normalizarPermisos } from '../../../../shared/models/permisos.model';
 
 @Component({
   selector: 'app-permisos-form',
@@ -106,20 +106,10 @@ export class PermisosFormComponent implements OnChanges {
     this.rolSeleccionadoId = rolId;
     const rol = this.roles.find((r) => r._id === rolId);
     if (!rol) return;
-    const copia = structuredClone(rol.permisos ?? {});
-    if (!this.contextoCompleto) {
-      for (const seccion of PERM_SCHEMA) {
-        for (const row of seccion.rows) {
-          if (!filaAplica(seccion, row, false)) {
-            delete copia[seccion.key]?.[row.key];
-          }
-        }
-        if (copia[seccion.key] && Object.keys(copia[seccion.key]).length === 0) {
-          delete copia[seccion.key];
-        }
-      }
-    }
-    this.valores = copia;
+    // normalizarPermisos rellena cada fila aplicable con boolean explícito —
+    // un rol guardado incompleto (ej. "sin permisos" nunca tocado, en `{}`)
+    // ya no cae al default del rol del usuario destino en las filas ausentes.
+    this.valores = normalizarPermisos(rol.permisos ?? {}, this.contextoCompleto);
   }
 
   iniciales(nombre: string): string {
@@ -141,6 +131,6 @@ export class PermisosFormComponent implements OnChanges {
   }
 
   submit(): void {
-    this.guardado.emit(this.valores);
+    this.guardado.emit(normalizarPermisos(this.valores, this.contextoCompleto));
   }
 }

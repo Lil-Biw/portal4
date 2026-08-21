@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { describe, it, expect, beforeEach } from 'vitest';
 import { PermisosFormComponent } from './permisos-form.component';
 import { Usuario } from '../../../../shared/models/usuario.model';
-import { Rol } from '../../../../shared/models/permisos.model';
+import { Rol, normalizarPermisos } from '../../../../shared/models/permisos.model';
 
 function usuario(over: Partial<Usuario> = {}): Usuario {
   return {
@@ -54,7 +54,9 @@ describe('PermisosFormComponent', () => {
     fixture.componentRef.setInput('roles', [rol]);
     fixture.detectChanges();
     fixture.componentInstance.aplicarRol('r1');
-    expect(fixture.componentInstance.valores).toEqual({ actividades: { crear: true, editar: true } });
+    // usuario() por defecto es rol=usuario (contextoCompleto=false): cada
+    // fila aplicable queda con boolean explícito, no solo las que traía el rol.
+    expect(fixture.componentInstance.valores).toEqual(normalizarPermisos(rol.permisos, false));
   });
 
   it('aplicarRol filtra los permisos no aplicables cuando el usuario destino es rol=usuario', () => {
@@ -81,7 +83,9 @@ describe('PermisosFormComponent', () => {
     const el = fixture.nativeElement as HTMLElement;
     const guardarBtn = Array.from(el.querySelectorAll('button')).find((b) => b.textContent?.includes('Guardar permisos')) as HTMLButtonElement;
     guardarBtn.click();
-    expect(emitido).toEqual({ actividades: { crear: true } });
+    // submit() normaliza antes de emitir: cada fila aplicable queda con
+    // boolean explícito, no solo las que ya estaban en usuario.permisos.
+    expect(emitido).toEqual(normalizarPermisos({ actividades: { crear: true } }, false));
   });
 
   it('al hacer click en Cancelar emite cancelado', () => {

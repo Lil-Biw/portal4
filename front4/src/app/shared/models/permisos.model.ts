@@ -174,6 +174,29 @@ export function filaAplica(seccion: PermisoSeccion, row: PermisoRow, contextoCom
   return true;
 }
 
+// Convierte un objeto de permisos posiblemente incompleto (ej. un rol nunca
+// tocado en el editor, que queda en `{}` porque los switches ya se veían
+// "apagados" por defecto) en uno con boolean explícito en cada fila aplicable.
+// Sin esto, una fila ausente cae al fallback de `tienePermiso()`/
+// `PermisoAccionGuard` (permiso por defecto del ROL del usuario destino) en
+// vez de quedar realmente denegada — que es exactamente lo que rompía
+// "Aplicar rol": un rol "sin permisos" guardado como `{}` no le quitaba nada
+// a nadie, porque cada fila ausente se resolvía con el default de su rol.
+export function normalizarPermisos(
+  valores: PermisosUsuario,
+  contextoCompleto: boolean,
+): PermisosUsuario {
+  const resultado: PermisosUsuario = {};
+  for (const seccion of PERM_SCHEMA) {
+    for (const row of seccion.rows) {
+      if (!filaAplica(seccion, row, contextoCompleto)) continue;
+      resultado[seccion.key] ??= {};
+      resultado[seccion.key][row.key] = valores?.[seccion.key]?.[row.key] === true;
+    }
+  }
+  return resultado;
+}
+
 export function contarPermisosActivos(
   valores: PermisosUsuario,
   contextoCompleto: boolean,

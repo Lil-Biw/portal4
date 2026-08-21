@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { describe, it, expect, beforeEach } from 'vitest';
 import { RolesManagerComponent } from './roles-manager.component';
-import { Rol } from '../../../../shared/models/permisos.model';
+import { Rol, normalizarPermisos } from '../../../../shared/models/permisos.model';
 
 function rol(over: Partial<Rol> = {}): Rol {
   return { _id: 'r1', nombre: 'Administrador', permisos: {}, ...over };
@@ -55,7 +55,13 @@ describe('RolesManagerComponent', () => {
     fixture.componentInstance.abrirEditar(rol({ _id: 'r2', nombre: 'Usuario auditor', permisos: {} }));
     fixture.componentInstance.nombreForm = 'Usuario auditor senior';
     fixture.componentInstance.guardar();
-    expect(emitido).toEqual({ id: 'r2', dto: { nombre: 'Usuario auditor senior', permisos: {} } });
+    // guardar() normaliza: los roles son presets globales, así que persisten
+    // boolean explícito (false) en cada fila del catálogo, no un objeto vacío
+    // que caería al default del rol del usuario destino al aplicarse.
+    expect(emitido).toEqual({
+      id: 'r2',
+      dto: { nombre: 'Usuario auditor senior', permisos: normalizarPermisos({}, true) },
+    });
     expect(fixture.componentInstance.vista()).toBe('lista');
   });
 
@@ -67,7 +73,7 @@ describe('RolesManagerComponent', () => {
     fixture.componentInstance.abrirNuevo();
     fixture.componentInstance.nombreForm = 'Usuario básico';
     fixture.componentInstance.guardar();
-    expect(emitido).toEqual({ nombre: 'Usuario básico', permisos: {} });
+    expect(emitido).toEqual({ nombre: 'Usuario básico', permisos: normalizarPermisos({}, true) });
   });
 
   it('click en Eliminar emite el id del rol', () => {
