@@ -38,6 +38,21 @@ export class AuthService {
   readonly cargando = signal(false);
   readonly error = signal('');
 
+  constructor() {
+    // El guard de navegación (refrescarSesionGuard) no alcanza a cubrir todo:
+    // dentro de /documentos las pestañas (Todos/Empresa/Centro/Proyecto) son
+    // un signal interno, no una navegación de ruta real, así que quedarse ahí
+    // cambiando de pestaña nunca dispara un refresh. Estos dos disparadores
+    // adicionales cubren ese caso: volver a la pestaña del navegador, y un
+    // poll de respaldo para sesiones que quedan abiertas sin interactuar.
+    if (isPlatformBrowser(this.platformId)) {
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') this.refrescarSesion();
+      });
+      setInterval(() => this.refrescarSesion(), 2 * 60 * 1000);
+    }
+  }
+
   login(email: string, password: string, perfil: 'admin' | 'consumidor'): void {
     this.cargando.set(true);
     this.error.set('');
