@@ -5,7 +5,6 @@ import { ProfileMode } from '../../profile/profile.types';
 import { ConsumidorContextService } from '../../profile/consumidor-context.service';
 import { CentrosService } from '../../features/centros/centros.service';
 import { ApiService } from '../../core/services/api.service';
-import { AuthService } from '../../features/auth/auth.service';
 import { asId } from '../../shared/utils';
 
 interface NavItem {
@@ -382,7 +381,6 @@ export class SidebarComponent implements OnChanges {
   private readonly centrosService = inject(CentrosService);
   private readonly sanitizer = inject(DomSanitizer);
   private readonly api = inject(ApiService);
-  private readonly authService = inject(AuthService);
 
   // Pre-compilados para evitar que bypassSecurityTrustHtml() en cada change-detection
   // recree el <img> del ícono Eclarity y cancele su request en loop.
@@ -483,17 +481,7 @@ export class SidebarComponent implements OnChanges {
   ];
 
   ngOnChanges(): void {
-    this.menuGroups =
-      this.mode === 'admin' ? this.groupsAdminVisibles() : this.consumidorGroups;
-  }
-
-  private groupsAdminVisibles(): NavGroup[] {
-    const rol = this.authService.usuarioActual()?.rol;
-    if (rol !== 'admin_smartclarity') return this.adminGroups;
-    return this.adminGroups.map((g) => ({
-      ...g,
-      items: g.items.filter((item) => item.route !== '/noticias'),
-    }));
+    this.menuGroups = this.mode === 'admin' ? this.adminGroups : this.consumidorGroups;
   }
 
   getIcon(name: string): SafeHtml {

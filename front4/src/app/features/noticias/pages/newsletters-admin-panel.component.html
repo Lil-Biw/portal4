@@ -1,0 +1,249 @@
+<div class="nlap-panel">
+  <app-status-banner [status]="service.status()" (closed)="service.clearStatus()"></app-status-banner>
+
+  <!-- Lista de newsletters -->
+  <div class="nlap-grid">
+    <!-- Tarjeta crear -->
+    @if (authService.tienePermiso('noticias', 'crear')) {
+      <button class="nlap-card nlap-card--add" (click)="abrirModal()" type="button">
+        <div class="nlap-add-icon">+</div>
+        <span class="nlap-add-label">Nuevo newsletter</span>
+      </button>
+    }
+
+    @for (n of service.newsletters(); track n._id) {
+      <div class="nlap-card" [class.pendiente]="n.estado === 'pendiente_aprobacion'" [class.enviado]="n.estado === 'enviado'" (click)="verDetalle(n)">
+        <div class="nlap-card-header">
+          <span class="nlap-estado nlap-estado-{{ n.estado }}">
+            <span class="nlap-estado-icon">{{ estadoIcon(n.estado) }}</span>
+            {{ estadoLabel(n.estado) }}
+          </span>
+        </div>
+
+        <div class="nlap-card-body">
+          <h3 class="nlap-card-title">{{ n.titulo }}</h3>
+          @if (n.tagline) {
+            <p class="nlap-card-tagline">{{ n.tagline }}</p>
+          }
+          <p class="nlap-card-resumen">{{ resumenNewsletter(n) }}</p>
+
+          @if (n.estado === 'rechazado' && n.motivo_rechazo) {
+            <div class="nlap-rechazo-box">
+              <strong>Motivo del rechazo:</strong>
+              <p>{{ n.motivo_rechazo }}</p>
+            </div>
+          }
+        </div>
+
+        <div class="nlap-card-footer">
+          <span class="nlap-card-fecha">{{ formatFecha(n.creado_en) }}</span>
+          <div class="nlap-card-actions">
+            @if (puedeEditar(n)) {
+              <button class="btn-edit" (click)="abrirEditar($event, n)" title="Editar">
+                <svg viewBox="0 0 20 20" fill="currentColor"><path d="M13.586 3.586a2 2 0 1 1 2.828 2.828l-.793.793-2.828-2.828.793-.793ZM11.379 5.793 3 14.172V17h2.828l8.38-8.379-2.83-2.828Z"/></svg>
+                <span>Editar</span>
+              </button>
+            }
+            @if (authService.tienePermiso('noticias', 'crear')) {
+              <button class="btn-permisos" [class.btn-loading]="estaProcesando(n._id, 'prueba')" [disabled]="estaProcesando(n._id, 'prueba')" (click)="enviarPrueba($event, n._id)" title="Enviar prueba a mi correo">
+                <svg viewBox="0 0 20 20" fill="currentColor"><path d="M2.003 5.884 10 2l7.997 3.884A.75.75 0 0 1 18.25 6.5v7a.75.75 0 0 1-.75.75h-15a.75.75 0 0 1-.75-.75v-7a.75.75 0 0 1 .253-.616Z"/><path d="M11.75 8.5v3.75m1.5-1.5L11.75 12l-1.5-1.25M3.75 7.059 10 9.5l6.25-2.441"/></svg>
+                <span>{{ estaProcesando(n._id, 'prueba') ? 'Enviando...' : 'Prueba' }}</span>
+              </button>
+            }
+            @if (esSuperAdmin) {
+              <button class="btn-delete" [class.btn-loading]="estaProcesando(n._id, 'eliminar')" [disabled]="estaProcesando(n._id, 'eliminar')" (click)="eliminarNewsletter($event, n._id)" title="Eliminar">
+                <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M8.75 1A2.75 2.75 0 0 0 6 3.75v.443c-.795.077-1.584.176-2.365.298a.75.75 0 1 0 .23 1.482l.149-.022.841 10.518A2.75 2.75 0 0 0 7.596 19h4.807a2.75 2.75 0 0 0 2.742-2.53l.841-10.52.149.023a.75.75 0 0 0 .23-1.482A41.03 41.03 0 0 0 14 4.193V3.75A2.75 2.75 0 0 0 11.25 1h-2.5ZM10 4c.84 0 1.673.025 2.5.075V3.75c0-.69-.56-1.25-1.25-1.25h-2.5c-.69 0-1.25.56-1.25 1.25v.325C8.327 4.025 9.16 4 10 4ZM8.58 7.72a.75.75 0 0 0-1.5.06l.3 7.5a.75.75 0 1 0 1.5-.06l-.3-7.5Zm4.34.06a.75.75 0 1 0-1.5-.06l-.3 7.5a.75.75 0 1 0 1.5.06l.3-7.5Z" clip-rule="evenodd"/></svg>
+                <span>{{ estaProcesando(n._id, 'eliminar') ? 'Eliminando...' : 'Eliminar' }}</span>
+              </button>
+            }
+          </div>
+        </div>
+
+        @if (puedeAprobarRechazar(n)) {
+          <div class="nlap-aprobar-actions">
+            <button class="btn-success btn-sm" [class.btn-loading]="estaProcesando(n._id, 'aprobar')" [disabled]="!!procesando()" (click)="aprobar($event, n._id)">
+              {{ estaProcesando(n._id, 'aprobar') ? 'Aprobando...' : 'Aprobar' }}
+            </button>
+            <button class="btn-danger btn-sm" [disabled]="!!procesando()" (click)="abrirRechazo($event, n._id)">Rechazar</button>
+          </div>
+        }
+
+        @if (n.estado === 'enviado') {
+          <div class="nlap-enviado-label">Enviado {{ formatFecha(n.enviado_en) }}</div>
+        } @else if (esSuperAdmin) {
+          <button
+            class="btn-primary btn-sm nlap-send-btn"
+            [class.btn-success]="n.estado === 'aprobado'"
+            [class.btn-loading]="estaProcesando(n._id, 'enviar')"
+            [disabled]="n.estado === 'pendiente_aprobacion' || estaProcesando(n._id, 'enviar')"
+            (click)="accionEnviarATodos($event, n)"
+          >
+            {{ estaProcesando(n._id, 'enviar') ? 'Procesando...' : enviarATodosLabel(n) }}
+          </button>
+        }
+      </div>
+    } @empty {
+      <p class="nlap-empty">No hay newsletters todavía. Crea el primero.</p>
+    }
+  </div>
+</div>
+
+<!-- Modal editor -->
+@if (showModal()) {
+  <div class="nlap-modal-overlay">
+    <div class="nlap-modal nlap-modal-xl">
+      <div class="nlap-modal-header">
+        <h3>{{ editandoId() ? 'Editar newsletter' : 'Nuevo newsletter' }}</h3>
+        <button class="nlap-close" (click)="cerrarModal()">×</button>
+      </div>
+
+      <div class="nlap-modal-body">
+        <div class="nlap-field-row">
+          <div class="nlap-field nlap-field-grow">
+            <label>Título</label>
+            <div class="nlap-input-with-emoji">
+              <input id="nl-titulo" class="form-control" type="text" [(ngModel)]="form.titulo" placeholder="Ej: SmartNews #12" />
+              <button type="button" class="nlap-emoji-btn" (click)="abrirEmojiPicker('nl-titulo', 'input', $event)">😊</button>
+              @if (emojiPicker()?.id === 'nl-titulo') { <ng-container *ngTemplateOutlet="emojiPickerTpl; context: { $implicit: 'nl-titulo' }"></ng-container> }
+            </div>
+          </div>
+          <div class="nlap-field nlap-field-grow">
+            <label>Tagline / subtítulo</label>
+            <div class="nlap-input-with-emoji">
+              <input id="nl-tagline" class="form-control" type="text" [(ngModel)]="form.tagline" placeholder="Ej: Novedades del mes" />
+              <button type="button" class="nlap-emoji-btn" (click)="abrirEmojiPicker('nl-tagline', 'input', $event)">😊</button>
+              @if (emojiPicker()?.id === 'nl-tagline') { <ng-container *ngTemplateOutlet="emojiPickerTpl; context: { $implicit: 'nl-tagline' }"></ng-container> }
+            </div>
+          </div>
+        </div>
+
+        <div class="nlap-bloques">
+          <div class="nlap-bloques-header">
+            <h4>Bloques ({{ bloques().length }})</h4>
+            <button type="button" class="btn btn-secondary btn-sm" (click)="agregarBloque()">+ Agregar bloque</button>
+          </div>
+
+          @for (b of bloques(); track $index; let i = $index) {
+            <div class="nlap-bloque" [class.expandido]="bloquesExpandidos()[i]">
+              <div class="nlap-bloque-header" (click)="toggleBloque(i)">
+                <div class="nlap-bloque-resumen">
+                  <span class="nlap-bloque-num">#{{ i + 1 }}</span>
+                  <span class="nlap-bloque-title">{{ b.titulo || 'Sin título' }}</span>
+                  @if (!bloquesExpandidos()[i]) {
+                    <span class="nlap-bloque-mini">
+                      @for (p of resumenCuerpo(b.cuerpo); track $index) {
+                        <span class="nlap-mini-p">{{ p }}</span>
+                      }
+                    </span>
+                  }
+                </div>
+                <div class="nlap-bloque-actions">
+                  <span class="nlap-bloque-badge">{{ totalImagenesBloque(b) }} 📷</span>
+                  <button type="button" class="nlap-icon-btn" (click)="moverBloque(i, -1); $event.stopPropagation()" [disabled]="i === 0">↑</button>
+                  <button type="button" class="nlap-icon-btn" (click)="moverBloque(i, 1); $event.stopPropagation()" [disabled]="i === bloques().length - 1">↓</button>
+                  <button type="button" class="nlap-icon-btn nlap-icon-danger" (click)="quitarBloque(i); $event.stopPropagation()" [disabled]="bloques().length === 1">×</button>
+                  <button type="button" class="nlap-toggle-btn">
+                    {{ bloquesExpandidos()[i] ? '▲' : '▼' }}
+                  </button>
+                </div>
+              </div>
+
+              @if (bloquesExpandidos()[i]) {
+                <div class="nlap-bloque-body">
+                  <div class="nlap-field">
+                    <label>Título del bloque</label>
+                    <div class="nlap-input-with-emoji">
+                      <input id="nl-bloque-titulo-{{i}}" class="form-control" type="text" [(ngModel)]="b.titulo" placeholder="Ej: Nuevo proyecto" />
+                      <button type="button" class="nlap-emoji-btn" (click)="abrirEmojiPicker('nl-bloque-titulo-' + i, 'input', $event)">😊</button>
+                      @if (emojiPicker()?.id === 'nl-bloque-titulo-' + i) { <ng-container *ngTemplateOutlet="emojiPickerTpl; context: { $implicit: 'nl-bloque-titulo-' + i }"></ng-container> }
+                    </div>
+                  </div>
+
+                  <div class="nlap-bloque-layout">
+                    <div class="nlap-field nlap-field-texto">
+                      <label>Contenido</label>
+                      <div class="nlap-textarea-with-emoji">
+                        <textarea id="nl-bloque-cuerpo-{{i}}" class="form-control" rows="8" [(ngModel)]="b.cuerpo" placeholder="Escribe el contenido del bloque..."></textarea>
+                        <button type="button" class="nlap-emoji-btn" (click)="abrirEmojiPicker('nl-bloque-cuerpo-' + i, 'textarea', $event)">😊</button>
+                        @if (emojiPicker()?.id === 'nl-bloque-cuerpo-' + i) { <ng-container *ngTemplateOutlet="emojiPickerTpl; context: { $implicit: 'nl-bloque-cuerpo-' + i }"></ng-container> }
+                      </div>
+                    </div>
+
+                    <div class="nlap-field nlap-field-imagenes">
+                      <label>Imágenes (máx. 3)</label>
+
+                      <div class="nlap-imagenes-grid">
+                        @for (img of b.imagenesExistentes; track img._id) {
+                          <div class="nlap-thumb-wrap">
+                            <img [src]="imagenUrl(img.url)" class="nlap-thumb" />
+                            <button type="button" class="nlap-thumb-remove" (click)="quitarImagenExistente(i, img._id)">×</button>
+                          </div>
+                        }
+                        @for (preview of b.previews; track $index) {
+                          <div class="nlap-thumb-wrap">
+                            <img [src]="preview" class="nlap-thumb" />
+                            <button type="button" class="nlap-thumb-remove" (click)="quitarArchivo(i, $index)">×</button>
+                          </div>
+                        }
+                      </div>
+
+                      @if (totalImagenesBloque(b) < 3) {
+                        <label class="nlap-upload">
+                          <input type="file" accept="image/*" multiple (change)="onFileChange($event, i)" />
+                          <span>📷 Agregar imágenes</span>
+                        </label>
+                      }
+                    </div>
+                  </div>
+                </div>
+              }
+            </div>
+          }
+        </div>
+      </div>
+
+      <div class="nlap-modal-footer">
+        <button class="btn btn-ghost" (click)="cerrarModal()" [disabled]="guardando()">Cancelar</button>
+        <button class="btn btn-primary" [class.btn-loading]="guardando()" (click)="guardar()" [disabled]="!formValido() || guardando()">
+          {{ guardando() ? 'Guardando...' : (editandoId() ? 'Guardar cambios' : 'Guardar borrador') }}
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Modal rechazo -->
+@if (showRechazoModal()) {
+  <div class="nlap-modal-overlay">
+    <div class="nlap-modal">
+      <div class="nlap-modal-header">
+        <h3>Rechazar newsletter</h3>
+        <button class="nlap-close" (click)="cerrarRechazo()">×</button>
+      </div>
+      <div class="nlap-modal-body">
+        <div class="nlap-field">
+          <label>Motivo del rechazo</label>
+          <textarea class="form-control" rows="4" [(ngModel)]="motivoRechazo" placeholder="Indica qué debe corregirse..."></textarea>
+        </div>
+      </div>
+      <div class="nlap-modal-footer">
+        <button class="btn btn-ghost" (click)="cerrarRechazo()" [disabled]="rechazando()">Cancelar</button>
+        <button class="btn btn-danger" [class.btn-loading]="rechazando()" (click)="confirmarRechazo()" [disabled]="!motivoRechazo.trim() || rechazando()">
+          {{ rechazando() ? 'Rechazando...' : 'Rechazar' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Emoji picker template -->
+<ng-template #emojiPickerTpl let-id>
+  <div class="nlap-emoji-picker" [style.top.px]="emojiPickerPos()?.top" [style.left.px]="emojiPickerPos()?.left">
+    <button type="button" class="nlap-emoji-picker-close" (click)="cerrarEmojiPicker()">×</button>
+    <div class="nlap-emoji-grid">
+      @for (emoji of emojis; track emoji) {
+        <button type="button" class="nlap-emoji" (click)="insertarEmoji(emoji)">{{ emoji }}</button>
+      }
+    </div>
+  </div>
+</ng-template>

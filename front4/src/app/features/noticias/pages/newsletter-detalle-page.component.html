@@ -1,0 +1,47 @@
+@if (cargando()) {
+  <div class="nld-estado">Cargando newsletter...</div>
+} @else if (noEncontrado()) {
+  <div class="nld-estado">
+    <p>No se encontró este newsletter.</p>
+    <a routerLink="/noticias" class="btn btn-secondary">Volver a Noticias</a>
+  </div>
+} @else if (newsletter(); as nl) {
+  <div class="nld-page">
+    <a routerLink="/noticias" class="nld-volver">← Volver a Noticias</a>
+
+    <div class="nld-card">
+      <div class="nld-header">
+        <div class="nld-header-eyebrow">⚡ NEWSLETTER SMARTCLARITY &amp; eCLARITI</div>
+        <h1 class="nld-titulo">{{ nl.titulo }}</h1>
+        @if (nl.tagline) {
+          <p class="nld-tagline">{{ nl.tagline }}</p>
+        }
+      </div>
+
+      <div class="nld-body">
+        @for (bloque of nl.bloques; track $index; let i = $index) {
+          @if (i > 0) { <div class="nld-separador"></div> }
+          <div class="nld-bloque" [id]="'bloque-' + i">
+            <h2 class="nld-bloque-titulo">{{ bloque.titulo }}</h2>
+            <div class="nld-bloque-layout" [class.nld-stack-fotos]="bloque.imagenes.length === 3">
+              <div class="nld-bloque-texto">
+                @for (p of parrafos(bloque.cuerpo); track $index) {
+                  <p>{{ p }}</p>
+                }
+              </div>
+              @if (bloque.imagenes.length > 0) {
+                <div class="nld-bloque-imagenes">
+                  @for (img of bloque.imagenes; track img._id) {
+                    <img [src]="imagenUrl(img.url)" alt="" class="nld-img" />
+                  }
+                </div>
+              }
+            </div>
+          </div>
+        }
+      </div>
+
+      <div class="nld-footer">Comunicación interna del equipo · SmartClarity &amp; eCLARITI</div>
+    </div>
+  </div>
+}

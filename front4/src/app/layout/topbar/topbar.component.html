@@ -64,6 +64,15 @@
 
   <!-- Zona derecha: acciones -->
   <div class="actions">
+    @if (esSuperAdmin && mode === 'admin') {
+      <button class="newsletter-notif-btn" (click)="irANoticiasNewsletters()" title="Newsletters pendientes de aprobación">
+        <span [innerHTML]="bellIcon"></span>
+        @if (newslettersService.pendientesCount() > 0) {
+          <span class="newsletter-notif-badge">{{ newslettersService.pendientesCount() > 9 ? '9+' : newslettersService.pendientesCount() }}</span>
+        }
+      </button>
+    }
+
     <span class="mode-chip">
       {{ modeLabel }}@if (authService.usuarioActual()?.nombre) { : {{ authService.usuarioActual()!.nombre }} }
     </span>

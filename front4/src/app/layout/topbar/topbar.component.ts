@@ -10,6 +10,7 @@ import { CentrosService } from '../../features/centros/centros.service';
 import { ActividadesService } from '../../features/actividades/actividades.service';
 import { TiposActividadService } from '../../features/actividades/tipos-actividad.service';
 import { SolicitudesService } from '../../features/solicitudes/solicitudes.service';
+import { NewslettersService } from '../../features/noticias/newsletters.service';
 import { Actividad, TipoActividad } from '../../shared/models/actividad.model';
 import { asId } from '../../shared/utils';
 
@@ -183,6 +184,38 @@ interface Notificacion {
       color: var(--fg-5);
     }
     .notif-wrapper { position: relative; }
+
+    /* Campana newsletters */
+    .newsletter-notif-btn {
+      position: relative;
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: .35rem;
+      border-radius: 8px;
+      color: rgba(255,255,255,.55);
+      display: flex;
+      align-items: center;
+      transition: background .12s, color .12s;
+    }
+    .newsletter-notif-btn:hover { background: rgba(255,255,255,.08); color: rgba(255,255,255,.8); }
+    .newsletter-notif-badge {
+      position: absolute;
+      top: 2px;
+      right: 2px;
+      background: #f59e0b;
+      color: #fff;
+      font-size: 9px;
+      font-weight: 800;
+      min-width: 16px;
+      height: 16px;
+      border-radius: 999px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 3px;
+      line-height: 1;
+    }
   `],
 })
 export class TopbarComponent implements OnInit {
@@ -195,6 +228,7 @@ export class TopbarComponent implements OnInit {
   protected readonly actividadesService  = inject(ActividadesService);
   protected readonly tiposService        = inject(TiposActividadService);
   protected readonly solicitudesService  = inject(SolicitudesService);
+  protected readonly newslettersService  = inject(NewslettersService);
   readonly consumidorContext             = inject(ConsumidorContextService);
   private readonly router                = inject(Router);
   private readonly sanitizer             = inject(DomSanitizer);
@@ -355,11 +389,16 @@ export class TopbarComponent implements OnInit {
     this.clientesService.cargar();
     if (this.esSuperAdmin) {
       this.centrosService.cargar();
+      this.newslettersService.cargarPendientesCount();
     }
   }
 
   irADocumentos(): void {
     this.router.navigate(['/documentos']);
+  }
+
+  irANoticiasNewsletters(): void {
+    this.router.navigate(['/noticias'], { queryParams: { tab: 'newsletters' } });
   }
 
   activarVistaConsumidor(): void {

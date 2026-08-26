@@ -188,6 +188,14 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'noticias/newsletters/:id',
+        canActivate: [soloAdminGuard],
+        loadComponent: () =>
+          import('./features/noticias/pages/newsletter-detalle-page.component').then(
+            (m) => m.NewsletterDetallePageComponent,
+          ),
+      },
+      {
         path: 'ayuda',
         loadComponent: () =>
           import('./features/ayuda/pages/ayuda-page.component').then((m) => m.AyudaPageComponent),

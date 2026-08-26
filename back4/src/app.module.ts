@@ -19,6 +19,7 @@ import { TiposProyectoModule } from './tipos-proyecto/tipos-proyecto.module';
 import { ActividadesModule } from './actividades/actividades.module';
 import { ActivosModule } from './activos/activos.module';
 import { NoticiasModule } from './noticias/noticias.module';
+import { NewslettersModule } from './newsletters/newsletters.module';
 import { DocumentosVencidosModule } from './documentos-vencidos/documentos-vencidos.module';
 import { DocumentosBusquedaModule } from './documentos-busqueda/documentos-busqueda.module';
 import { TareasModule } from './tareas/tareas.module';
@@ -43,6 +44,7 @@ import { TareasModule } from './tareas/tareas.module';
     ActividadesModule,
     ActivosModule,
     NoticiasModule,
+    NewslettersModule,
     DocumentosVencidosModule,
     DocumentosBusquedaModule,
     TareasModule,

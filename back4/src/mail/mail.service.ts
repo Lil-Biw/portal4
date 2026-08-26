@@ -9,6 +9,9 @@ import { nuevaSolicitudHtml } from './templates/nueva-solicitud.template';
 import { solicitudRechazadaHtml } from './templates/solicitud-rechazada.template';
 import { solicitudCompletadaHtml } from './templates/solicitud-completada.template';
 import { nuevaNoticiaHtml } from './templates/nueva-noticia.template';
+import { newsletterHtml } from './templates/newsletter.template';
+import { notificarNewsletterRevisionHtml } from './templates/newsletter-revision.template';
+import { notificarResultadoAprobacionHtml } from './templates/newsletter-resultado-aprobacion.template';
 import { documentoVencidoHtml } from './templates/documento-vencido.template';
 import { nuevoDocumentoHtml } from './templates/nuevo-documento.template';
 import { proyectoPorVencerHtml } from './templates/proyecto-por-vencer.template';
@@ -193,6 +196,163 @@ export class MailService {
       'noticia',
       extraAttachments,
     );
+  }
+
+  private buildNewsletterAttachments(
+    bloques: { titulo: string; cuerpo: string; imagenes: { buffer: Buffer; mimetype: string }[] }[],
+  ): { attachments: Mail.Attachment[]; bloquesParaHtml: { titulo: string; cuerpo: string; imagenes: string[] }[] } {
+    const attachments: Mail.Attachment[] = [];
+    const bloquesParaHtml = bloques.map((bloque, bi) => ({
+      titulo: bloque.titulo,
+      cuerpo: bloque.cuerpo,
+      imagenes: bloque.imagenes.map((img, ii) => {
+        const cid = `newsletter-img-${bi}-${ii}@smartclarity`;
+        attachments.push({
+          filename: `newsletter-img-${bi}-${ii}`,
+          content: img.buffer,
+          contentType: img.mimetype || 'image/jpeg',
+          cid,
+        });
+        return `cid:${cid}`;
+      }),
+    }));
+    return { attachments, bloquesParaHtml };
+  }
+
+  async notificarNewsletter(params: {
+    destinatarios: { nombre: string; email: string }[];
+    newsletter: {
+      id: string;
+      titulo: string;
+      tagline?: string;
+      bloques: { titulo: string; cuerpo: string; imagenes: { buffer: Buffer; mimetype: string }[] }[];
+    };
+  }): Promise<void> {
+    const { attachments, bloquesParaHtml } = this.buildNewsletterAttachments(params.newsletter.bloques);
+    const portalUrl = this.config.get<string>('PORTAL_URL') ?? 'http://localhost:4200';
+
+    await this.enviarATodos(
+      params.destinatarios,
+      `⚡ Newsletter: ${params.newsletter.titulo}`,
+      dest => newsletterHtml({
+        destinatario: dest.nombre,
+        titulo:   params.newsletter.titulo,
+        tagline:  params.newsletter.tagline,
+        bloques:  bloquesParaHtml,
+        newsletterUrl: `${portalUrl}/noticias/newsletters/${params.newsletter.id}`,
+        logoUrl:  `cid:${SC_LOGO_CID}`,
+      }),
+      'newsletter',
+      attachments,
+    );
+  }
+
+  async notificarNewsletterPrueba(params: {
+    destinatario: { nombre: string; email: string };
+    newsletter: {
+      id: string;
+      titulo: string;
+      tagline?: string;
+      bloques: { titulo: string; cuerpo: string; imagenes: { buffer: Buffer; mimetype: string }[] }[];
+    };
+  }): Promise<void> {
+    const { attachments, bloquesParaHtml } = this.buildNewsletterAttachments(params.newsletter.bloques);
+    const portalUrl = this.config.get<string>('PORTAL_URL') ?? 'http://localhost:4200';
+    const html = newsletterHtml({
+      destinatario: params.destinatario.nombre,
+      titulo:   params.newsletter.titulo,
+      tagline:  params.newsletter.tagline,
+      bloques:  bloquesParaHtml,
+      newsletterUrl: `${portalUrl}/noticias/newsletters/${params.newsletter.id}`,
+      logoUrl:  `cid:${SC_LOGO_CID}`,
+    });
+    const attachmentsFinal = [LOGO_ATTACHMENT, ...attachments];
+
+    try {
+      await this.transporter.sendMail({
+        from: this.from,
+        to: params.destinatario.email,
+        subject: `[PRUEBA] ⚡ Newsletter: ${params.newsletter.titulo}`,
+        html,
+        attachments: attachmentsFinal,
+      });
+      this.logger.log(`Newsletter prueba enviada a ${params.destinatario.email}`);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      this.logger.error(`Error al enviar newsletter de prueba a ${params.destinatario.email}: ${msg}`);
+      throw err;
+    }
+  }
+
+  async notificarNewsletterRevision(params: {
+    aprobadorEmail: string;
+    solicitanteNombre: string;
+    solicitanteEmail: string;
+    newsletter: {
+      titulo: string;
+      tagline?: string;
+      bloques: { titulo: string; cuerpo: string; imagenes: { buffer: Buffer; mimetype: string }[] }[];
+    };
+    revisarUrl: string;
+  }): Promise<void> {
+    const { attachments, bloquesParaHtml } = this.buildNewsletterAttachments(params.newsletter.bloques);
+    const html = notificarNewsletterRevisionHtml({
+      titulo: params.newsletter.titulo,
+      tagline: params.newsletter.tagline,
+      bloques: bloquesParaHtml,
+      solicitanteNombre: params.solicitanteNombre,
+      solicitanteEmail: params.solicitanteEmail,
+      revisarUrl: params.revisarUrl,
+      logoUrl: `cid:${SC_LOGO_CID}`,
+    });
+
+    try {
+      await this.transporter.sendMail({
+        from: this.from,
+        to: params.aprobadorEmail,
+        subject: `[REVISIÓN] ⚡ Newsletter: ${params.newsletter.titulo}`,
+        html,
+        attachments: [LOGO_ATTACHMENT, ...attachments],
+      });
+      this.logger.log(`Newsletter en revisión enviado a ${params.aprobadorEmail}`);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      this.logger.error(`Error al enviar revisión a ${params.aprobadorEmail}: ${msg}`);
+      throw err;
+    }
+  }
+
+  async notificarResultadoAprobacionNewsletter(params: {
+    destinatario: { nombre: string; email: string };
+    titulo: string;
+    aprobado: boolean;
+    motivo?: string;
+  }): Promise<void> {
+    const html = notificarResultadoAprobacionHtml({
+      destinatario: params.destinatario.nombre,
+      titulo: params.titulo,
+      aprobado: params.aprobado,
+      motivo: params.motivo,
+      portalUrl: this.config.get<string>('PORTAL_URL') ?? 'http://localhost:4200',
+      logoUrl: `cid:${SC_LOGO_CID}`,
+    });
+
+    try {
+      await this.transporter.sendMail({
+        from: this.from,
+        to: params.destinatario.email,
+        subject: params.aprobado
+          ? `✅ Newsletter aprobado: ${params.titulo}`
+          : `❌ Newsletter rechazado: ${params.titulo}`,
+        html,
+        attachments: [LOGO_ATTACHMENT],
+      });
+      this.logger.log(`Resultado de aprobación enviado a ${params.destinatario.email}`);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      this.logger.error(`Error al enviar resultado de aprobación a ${params.destinatario.email}: ${msg}`);
+      throw err;
+    }
   }
 
   async notificarNuevoUsuario(params: {

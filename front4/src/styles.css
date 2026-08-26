@@ -157,6 +157,15 @@ h1, h2, h3, h4, h5, h6 { font-family: var(--font-display); }
 .btn-ghost:hover { border-color: var(--border-strong); background: var(--bg-1); }
 .btn-ghost.btn-sm { padding: .4rem .75rem; font-size: .8rem; }
 
+/* Tamaño compacto: aplica a cualquier variante .btn-* */
+.btn.btn-sm,
+.btn-ghost.btn-sm {
+  padding: .4rem .75rem;
+  font-size: .8rem;
+  font-weight: 600;
+  border-radius: var(--radius-sm);
+}
+
 .btn-danger {
   padding: .4rem .75rem;
   border-radius: var(--radius-sm);
