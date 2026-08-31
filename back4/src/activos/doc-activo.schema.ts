@@ -14,6 +14,7 @@ export class DocActivo {
   @Prop() tamano_bytes?: number;
   @Prop({ type: Buffer }) contenido?: Buffer;
   @Prop() s3_key?: string;
+  @Prop() categoria?: string;
   @Prop({ default: Date.now }) subido_en: Date;
 }
 

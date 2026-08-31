@@ -6,6 +6,9 @@ export interface DocActivo {
   tipo_mime?: string;
   tipo_contenido?: 'archivo' | 'link';
   link_url?: string;
+  categoria?: string;
+  subido_en?: string;
+  subido_por_nombre?: string;
 }
 
 export interface ImagenDocEstado {
@@ -62,6 +65,9 @@ export interface DocActividad {
   tipo_mime?: string;
   tipo_contenido?: 'archivo' | 'link';
   link_url?: string;
+  categoria?: string;
+  subido_en?: string;
+  subido_por_nombre?: string;
 }
 
 export interface ActividadHistorialItem {

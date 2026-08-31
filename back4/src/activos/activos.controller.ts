@@ -61,9 +61,10 @@ export class ActivosController {
     @UploadedFile() archivo: Express.Multer.File & { buffer: Buffer },
     @Body('nombre_display') nombreDisplay?: string,
     @Body('link_url') linkUrl?: string,
+    @Body('categoria') categoria?: string,
   ) {
     if (!archivo && !linkUrl) throw new BadRequestException('Debes adjuntar un archivo o un link');
-    return this.activosService.subirDocumento(activoId, { archivo, linkUrl }, nombreDisplay);
+    return this.activosService.subirDocumento(activoId, { archivo, linkUrl }, nombreDisplay, categoria);
   }
 
   @Delete(':activoId/documentos/:docId')
@@ -77,13 +78,20 @@ export class ActivosController {
 
   @Patch(':activoId/documentos/:docId')
   @RequiereAccion('docActivo', 'editarCategoria')
-  renombrarDocumento(
+  actualizarDocumento(
     @Param('activoId') activoId: string,
     @Param('docId') docId: string,
-    @Body('nombre_display') nombreDisplay: string,
+    @Body('categoria') categoria: string | undefined,
+    @Body('nombre_display') nombreDisplay: string | undefined,
   ) {
-    if (!nombreDisplay?.trim()) throw new BadRequestException('Debes indicar un nombre');
-    return this.activosService.renombrarDocumento(activoId, docId, nombreDisplay.trim());
+    if (nombreDisplay !== undefined) {
+      if (!nombreDisplay.trim()) throw new BadRequestException('Debes indicar un nombre');
+      return this.activosService.renombrarDocumento(activoId, docId, nombreDisplay.trim());
+    }
+    if (categoria !== undefined) {
+      return this.activosService.actualizarCategoria(activoId, docId, categoria);
+    }
+    throw new BadRequestException('Debes indicar nombre_display o categoria');
   }
 
   @Get(':activoId/documentos/:docId')

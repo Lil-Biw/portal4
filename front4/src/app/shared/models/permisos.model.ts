@@ -77,6 +77,7 @@ export const PERM_SCHEMA: PermisoSeccion[] = [
   ] },
   { key: 'docActividad', titulo: 'Documentos de actividad', color: '#9f7ce8', colorSuave: '#cbb2f2', rows: [
     { key: 'subir', label: 'Subir documento' },
+    { key: 'editarCategoria', label: 'Editar categoría', hint: 'Reclasificar un documento ya subido' },
     { key: 'eliminar', label: 'Eliminar documento' },
   ] },
   { key: 'activos', titulo: 'Activos', color: '#0d9488', colorSuave: '#47c0b5', rows: [
@@ -119,7 +120,7 @@ export const PERMISOS_DEFECTO_ADMIN_SMARTCLARITY: PermisosUsuario = {
   proyectos: { crear: true, editar: true, eliminar: true },
   docProyecto: { subir: true, editarCategoria: true, vencer: true, eliminar: true },
   actividades: { crear: true, editar: true, eliminar: true },
-  docActividad: { subir: true, eliminar: true },
+  docActividad: { subir: true, editarCategoria: true, eliminar: true },
   activos: { crear: true, editar: true, eliminar: true },
   docActivo: { subir: true, editarCategoria: true, eliminar: true },
   catalogos: { crear: false, editar: false, eliminar: false },
@@ -136,7 +137,7 @@ export const PERMISOS_DEFECTO_USUARIO: PermisosUsuario = {
   proyectos: { crear: false, editar: false, eliminar: false },
   docProyecto: { subir: true, editarCategoria: true, vencer: false, eliminar: true },
   actividades: { crear: false, editar: false, eliminar: false },
-  docActividad: { subir: false, eliminar: false },
+  docActividad: { subir: false, editarCategoria: true, eliminar: false },
   activos: { crear: false, editar: false, eliminar: false },
   docActivo: { subir: false, editarCategoria: true, eliminar: false },
   catalogos: { crear: false, editar: false, eliminar: false },

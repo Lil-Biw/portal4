@@ -1,30 +1,63 @@
-  <!-- Panel de filtros — primer componente de la página -->
+  <!-- Panel de filtros — primer componente de la página. Los cambios de tipo de
+       documento, búsqueda por nombre y estado (vigentes/vencidos) quedan en
+       borrador hasta hacer clic en "Buscar", que los aplica todos juntos. -->
   @if (tabAdminActiva() === 'documentacion') {
     @let docTipo = tabJerarquia();
     <div style="background:var(--bg-1);border:1px solid var(--border-subtle);border-radius:.5rem;padding:.75rem;margin-bottom:1rem">
-      <div style="display:grid;grid-template-columns:1fr 560px;gap:1.5rem;align-items:start">
-        <div>
-          <p style="margin:0 0 .5rem;font-size:.8rem;font-weight:600;color:var(--fg-2)">Filtrar por tipo</p>
-          <div style="display:flex;flex-wrap:wrap;gap:.3rem .5rem">
-            @for (cat of categorias; track cat) {
-              @if (cat === '[GAS] Boleta/Factura') { <div style="flex-basis:100%;width:0;height:0"></div> }
-              <label style="display:flex;align-items:center;gap:.3rem;font-size:.85rem;cursor:pointer;padding:.3rem .6rem;border:1px solid var(--border-default);border-radius:.375rem"
-                [style.background]="isFiltroSelected(docTipo, cat) ? '#e0e7ff' : 'var(--bg-0)'"
-                [style.borderColor]="isFiltroSelected(docTipo, cat) ? '#6366f1' : 'var(--border-default)'">
-                <input type="checkbox" [checked]="isFiltroSelected(docTipo, cat)" (change)="toggleFiltroCategoria(docTipo, cat)" style="display:none" />
-                @if (categoriaTag(cat); as tag) { <span style="font-weight:700;color:#6366f1">[{{ tag }}]</span> {{ categoriaResto(cat) }} } @else { {{ cat }} }
-              </label>
-            }
+      <div style="display:flex;flex-wrap:wrap;gap:.75rem;align-items:flex-end">
+
+        <!-- Tipo de documento: dropdown multi-selección -->
+        <div style="position:relative;min-width:220px">
+          <span style="display:block;margin:0 0 .35rem;font-size:.8rem;font-weight:600;color:var(--fg-2)">Tipo de documento</span>
+          <button type="button" (click)="toggleDropdownTipo()"
+            style="width:100%;height:36px;display:flex;align-items:center;justify-content:space-between;gap:.5rem;padding:0 .65rem;border-style:solid;border-width:1px;border-radius:.375rem;cursor:pointer;font-size:.85rem;white-space:nowrap"
+            [style.background]="panels[docTipo].filtrosCategoriasPendiente.length ? '#e0e7ff' : 'var(--bg-0)'"
+            [style.borderColor]="panels[docTipo].filtrosCategoriasPendiente.length ? '#6366f1' : 'var(--border-default)'"
+            [style.color]="panels[docTipo].filtrosCategoriasPendiente.length ? '#6366f1' : 'var(--fg-2)'">
+            <span style="overflow:hidden;text-overflow:ellipsis">
+              {{ panels[docTipo].filtrosCategoriasPendiente.length ? 'Tipo de documento (' + panels[docTipo].filtrosCategoriasPendiente.length + ')' : 'Todos los tipos' }}
+            </span>
+            <span style="flex-shrink:0">▾</span>
+          </button>
+          @if (dropdownTipoAbierto()) {
+            <div style="position:fixed;inset:0;z-index:10" (click)="dropdownTipoAbierto.set(false)"></div>
+            <div style="position:absolute;top:64px;left:0;right:0;z-index:11;background:var(--bg-0);border:1px solid var(--border-default);border-radius:.5rem;box-shadow:0 8px 20px rgba(20,30,50,.12);padding:.5rem;max-height:280px;overflow-y:auto;min-width:260px">
+              @for (cat of categorias; track cat) {
+                <label style="display:flex;align-items:center;gap:.4rem;font-size:.85rem;padding:.35rem .3rem;cursor:pointer;color:var(--fg-2)">
+                  <input type="checkbox" [checked]="isFiltroCategoriaPendienteSelected(docTipo, cat)" (change)="toggleFiltroCategoriaPendiente(docTipo, cat)" />
+                  @if (categoriaTag(cat); as tag) { <span style="font-weight:700;color:#6366f1">[{{ tag }}]</span> {{ categoriaResto(cat) }} } @else { {{ cat }} }
+                </label>
+              }
+            </div>
+          }
+        </div>
+
+        <!-- Búsqueda por nombre -->
+        <label class="field" style="margin:0;flex:2;min-width:220px">
+          <span style="font-size:.8rem;font-weight:600;color:var(--fg-2)">Buscar por nombre</span>
+          <input type="text" [ngModel]="panels[docTipo].busquedaPendiente" (ngModelChange)="onBusquedaNombreChange(docTipo, $event)"
+            (keyup.enter)="aplicarFiltroDocumentos(docTipo)" placeholder="Nombre del documento…" />
+        </label>
+
+        <!-- Vigentes / Vencidos: no aplica a Actividad/Activo -->
+        @if (docTipo !== 'actividad' && docTipo !== 'activo') {
+          <div style="display:flex;border-style:solid;border-width:1px;border-color:var(--border-default);border-radius:.375rem;overflow:hidden;height:36px">
+            <button type="button" (click)="tabDocAdmin.set('activos')"
+              style="border:none;padding:0 .8rem;font-size:.82rem;font-weight:600;cursor:pointer;white-space:nowrap"
+              [style.background]="tabDocAdmin() === 'activos' ? 'var(--ok-bg)' : 'var(--bg-0)'"
+              [style.color]="tabDocAdmin() === 'activos' ? 'var(--ok)' : 'var(--fg-4)'">Vigentes</button>
+            <button type="button" (click)="activarTabVencidosAdmin()"
+              [disabled]="selectedEmpresaId === 'todos'"
+              style="border:none;padding:0 .8rem;font-size:.82rem;font-weight:600;white-space:nowrap;border-left:1px solid var(--border-default)"
+              [style.cursor]="selectedEmpresaId === 'todos' ? 'not-allowed' : 'pointer'"
+              [style.opacity]="selectedEmpresaId === 'todos' ? '0.45' : '1'"
+              [style.background]="tabDocAdmin() === 'vencidos' ? 'var(--danger-bg)' : 'var(--bg-0)'"
+              [style.color]="tabDocAdmin() === 'vencidos' ? 'var(--danger)' : 'var(--fg-4)'">Vencidos</button>
           </div>
-        </div>
-        <div style="display:flex;gap:.5rem;align-items:flex-end">
-          <label class="field" style="margin:0;flex:1;min-width:0">
-            <span style="font-size:.8rem;font-weight:600;color:var(--fg-2)">Buscar por nombre</span>
-            <input type="text" [ngModel]="panels[docTipo].busqueda" (ngModelChange)="onBusquedaNombreChange(docTipo, $event)" placeholder="Nombre del documento…" />
-          </label>
-          <button class="btn-ghost" style="font-size:.8rem;padding:.45rem .7rem;white-space:nowrap"
-            (click)="limpiarFiltroDocTipo(docTipo)">Limpiar</button>
-        </div>
+        }
+
+        <button class="btn-primary" style="font-size:.8rem;padding:0 .9rem;height:36px;white-space:nowrap" (click)="aplicarFiltroDocumentos(docTipo)">Buscar</button>
+        <button class="btn-ghost" style="font-size:.8rem;padding:0 .7rem;height:36px;white-space:nowrap" (click)="limpiarFiltroDocTipo(docTipo)">Limpiar</button>
       </div>
     </div>
   }
@@ -70,20 +103,6 @@
       <div style="display:flex;gap:.25rem;background:var(--bg-2);border-radius:10px;padding:.25rem">
         <button
           style="flex:1;padding:.55rem 1rem;border-style:solid;border-width:1px;border-radius:8px;font-size:.875rem;font-weight:600;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;justify-content:center;gap:.4rem;overflow:hidden"
-          [style.background]="tabJerarquia() === 'todos' ? 'rgba(124,58,237,.08)' : 'transparent'"
-          [style.color]="tabJerarquia() === 'todos' ? '#7c3aed' : 'var(--fg-4)'"
-          [style.borderColor]="tabJerarquia() === 'todos' ? 'rgba(124,58,237,.18)' : 'transparent'"
-          (click)="seleccionarTabJerarquia('todos')">
-          <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0">
-            <path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/>
-            <path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"/>
-            <path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"/>
-          </svg>
-          <span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Todos</span>
-          <span style="font-size:.68rem;font-weight:700;line-height:1;padding:.15rem .4rem;border-radius:999px;background:rgba(124,58,237,.15);color:#7c3aed;flex-shrink:0">{{ conteoTodos() }}</span>
-        </button>
-        <button
-          style="flex:1;padding:.55rem 1rem;border-style:solid;border-width:1px;border-radius:8px;font-size:.875rem;font-weight:600;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;justify-content:center;gap:.4rem;overflow:hidden"
           [style.background]="tabJerarquia() === 'empresa' ? 'rgba(0,174,239,.08)' : 'transparent'"
           [style.color]="tabJerarquia() === 'empresa' ? 'var(--sc-cyan)' : 'var(--fg-4)'"
           [style.borderColor]="tabJerarquia() === 'empresa' ? 'rgba(0,174,239,.18)' : 'transparent'"
@@ -127,72 +146,36 @@
           <span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ (selectedProyectoId === 'todos' ? 'Todos los proyectos' : proyectoNombre) || 'Proyecto' }}</span>
           <span style="font-size:.68rem;font-weight:700;line-height:1;padding:.15rem .4rem;border-radius:999px;background:rgba(245,165,36,.15);color:var(--warn);flex-shrink:0">{{ conteoProyecto() }}</span>
         </button>
+        <button
+          style="flex:1;padding:.55rem 1rem;border-style:solid;border-width:1px;border-radius:8px;font-size:.875rem;font-weight:600;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;justify-content:center;gap:.4rem;overflow:hidden"
+          [style.background]="tabJerarquia() === 'actividad' ? 'rgba(159,124,232,.08)' : 'transparent'"
+          [style.color]="tabJerarquia() === 'actividad' ? '#9f7ce8' : 'var(--fg-4)'"
+          [style.borderColor]="tabJerarquia() === 'actividad' ? 'rgba(159,124,232,.18)' : 'transparent'"
+          [disabled]="!selectedCentroId"
+          [style.opacity]="!selectedCentroId ? '0.45' : '1'"
+          (click)="seleccionarTabJerarquia('actividad')">
+          <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0">
+            <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+          </svg>
+          <span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ (selectedActividadId === 'todos' ? 'Todas las actividades' : actividadNombre) || 'Actividad' }}</span>
+          <span style="font-size:.68rem;font-weight:700;line-height:1;padding:.15rem .4rem;border-radius:999px;background:rgba(159,124,232,.15);color:#9f7ce8;flex-shrink:0">{{ conteoActividad() }}</span>
+        </button>
+        <button
+          style="flex:1;padding:.55rem 1rem;border-style:solid;border-width:1px;border-radius:8px;font-size:.875rem;font-weight:600;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;justify-content:center;gap:.4rem;overflow:hidden"
+          [style.background]="tabJerarquia() === 'activo' ? 'rgba(71,201,189,.08)' : 'transparent'"
+          [style.color]="tabJerarquia() === 'activo' ? '#47c9bd' : 'var(--fg-4)'"
+          [style.borderColor]="tabJerarquia() === 'activo' ? 'rgba(71,201,189,.18)' : 'transparent'"
+          [disabled]="!selectedCentroId"
+          [style.opacity]="!selectedCentroId ? '0.45' : '1'"
+          (click)="seleccionarTabJerarquia('activo')">
+          <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>
+          </svg>
+          <span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ (selectedActivoId === 'todos' ? 'Todos los activos' : activoNombre) || 'Activo' }}</span>
+          <span style="font-size:.68rem;font-weight:700;line-height:1;padding:.15rem .4rem;border-radius:999px;background:rgba(71,201,189,.15);color:#47c9bd;flex-shrink:0">{{ conteoActivo() }}</span>
+        </button>
       </div>
     </div>
-
-    <!-- Panel: Todos (resumen, sin selección) -->
-    @if (tabJerarquia() === 'todos') {
-      <div style="padding:1rem">
-        <div style="border-left:4px solid #7c3aed;border-radius:8px;background:var(--bg-1);padding:.75rem .85rem;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap">
-          <div style="display:flex;align-items:center;gap:.75rem">
-            <div style="width:38px;height:38px;border-radius:9px;background:rgba(124,58,237,.1);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#7c3aed">
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/>
-                <path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"/>
-                <path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"/>
-              </svg>
-            </div>
-            <div>
-              <p style="margin:0 0 .15rem;font-size:.9rem;font-weight:700;color:var(--fg-2)">Todos los documentos</p>
-              <p style="margin:0;font-size:.75rem;color:var(--fg-4)">Empresas, centros de costos y proyectos · {{ filasTodos().length }} documentos</p>
-            </div>
-          </div>
-          <div style="display:flex;gap:.35rem;flex-wrap:wrap;align-items:center">
-            <span style="font-size:.72rem;font-weight:600;color:var(--fg-4);margin-right:.15rem">Ordenar por:</span>
-            <button
-              style="padding:.3rem .65rem;border-style:solid;border-width:1px;border-radius:999px;font-size:.75rem;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap"
-              [style.background]="ordenTodos() === 'recientes' ? 'rgba(124,58,237,.08)' : 'transparent'"
-              [style.color]="ordenTodos() === 'recientes' ? '#7c3aed' : 'var(--fg-4)'"
-              [style.borderColor]="ordenTodos() === 'recientes' ? 'rgba(124,58,237,.3)' : 'var(--border-subtle)'"
-              (click)="ordenTodos.set('recientes')">
-              Recientes
-            </button>
-            <button
-              style="padding:.3rem .65rem;border-style:solid;border-width:1px;border-radius:999px;font-size:.75rem;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap"
-              [style.background]="ordenTodos() === 'alfabetico' ? 'rgba(124,58,237,.08)' : 'transparent'"
-              [style.color]="ordenTodos() === 'alfabetico' ? '#7c3aed' : 'var(--fg-4)'"
-              [style.borderColor]="ordenTodos() === 'alfabetico' ? 'rgba(124,58,237,.3)' : 'var(--border-subtle)'"
-              (click)="ordenTodos.set('alfabetico')">
-              Alfabético
-            </button>
-            <button
-              style="padding:.3rem .65rem;border-style:solid;border-width:1px;border-radius:999px;font-size:.75rem;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap"
-              [style.background]="ordenTodos() === 'nivel_empresa' ? 'rgba(124,58,237,.08)' : 'transparent'"
-              [style.color]="ordenTodos() === 'nivel_empresa' ? '#7c3aed' : 'var(--fg-4)'"
-              [style.borderColor]="ordenTodos() === 'nivel_empresa' ? 'rgba(124,58,237,.3)' : 'var(--border-subtle)'"
-              (click)="ordenTodos.set('nivel_empresa')">
-              Nivel empresa
-            </button>
-            <button
-              style="padding:.3rem .65rem;border-style:solid;border-width:1px;border-radius:999px;font-size:.75rem;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap"
-              [style.background]="ordenTodos() === 'nivel_centro' ? 'rgba(124,58,237,.08)' : 'transparent'"
-              [style.color]="ordenTodos() === 'nivel_centro' ? '#7c3aed' : 'var(--fg-4)'"
-              [style.borderColor]="ordenTodos() === 'nivel_centro' ? 'rgba(124,58,237,.3)' : 'var(--border-subtle)'"
-              (click)="ordenTodos.set('nivel_centro')">
-              Nivel centro
-            </button>
-            <button
-              style="padding:.3rem .65rem;border-style:solid;border-width:1px;border-radius:999px;font-size:.75rem;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap"
-              [style.background]="ordenTodos() === 'nivel_proyecto' ? 'rgba(124,58,237,.08)' : 'transparent'"
-              [style.color]="ordenTodos() === 'nivel_proyecto' ? '#7c3aed' : 'var(--fg-4)'"
-              [style.borderColor]="ordenTodos() === 'nivel_proyecto' ? 'rgba(124,58,237,.3)' : 'var(--border-subtle)'"
-              (click)="ordenTodos.set('nivel_proyecto')">
-              Nivel proyecto
-            </button>
-          </div>
-        </div>
-      </div>
-    }
 
     <!-- Panel: Empresa (resumen + select) -->
     @if (tabJerarquia() === 'empresa') {
@@ -385,6 +368,82 @@
       </div>
     }
 
+    <!-- Panel: Actividad (resumen + select) -->
+    @if (tabJerarquia() === 'actividad') {
+      <div style="padding:1rem;display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1rem">
+        @if (!selectedCentroId) {
+          <div style="border-left:4px solid var(--border-subtle);border-radius:8px;background:var(--bg-1);padding:.75rem .85rem;display:flex;align-items:center">
+            <p style="margin:0;color:var(--fg-5);font-size:.875rem">Selecciona primero un centro de costos para ver sus actividades.</p>
+          </div>
+        } @else {
+          <div style="border-left:4px solid #9f7ce8;border-radius:8px;background:var(--bg-1);padding:.75rem .85rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.75rem">
+            <div style="display:flex;align-items:center;gap:.75rem">
+              <div style="width:38px;height:38px;border-radius:9px;background:rgba(159,124,232,.1);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#9f7ce8">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+                </svg>
+              </div>
+              <div>
+                @if (selectedActividadId === 'todos') {
+                  <p style="margin:0 0 .15rem;font-size:.9rem;font-weight:700;color:var(--fg-2)">
+                    {{ selectedCentroId === 'todos' ? 'Todas las actividades' : 'Actividades de: ' + centroNombre }}
+                  </p>
+                } @else {
+                  <p style="margin:0 0 .15rem;font-size:.9rem;font-weight:700;color:var(--fg-2)">{{ actividadNombre }}</p>
+                }
+              </div>
+            </div>
+            <ng-container *ngTemplateOutlet="ordenActividadChips"></ng-container>
+          </div>
+        }
+        <label class="field" style="margin:0;justify-content:center">
+          <span>Actividad</span>
+          <select [(ngModel)]="selectedActividadId" (ngModelChange)="onActividadChange()" [disabled]="!selectedCentroId">
+            <option value="todos">Todas</option>
+            @for (a of actividadesFiltradas; track a._id) { <option [value]="a._id">{{ a.nombre }}</option> }
+          </select>
+        </label>
+      </div>
+    }
+
+    <!-- Panel: Activo (resumen + select) -->
+    @if (tabJerarquia() === 'activo') {
+      <div style="padding:1rem;display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1rem">
+        @if (!selectedCentroId) {
+          <div style="border-left:4px solid var(--border-subtle);border-radius:8px;background:var(--bg-1);padding:.75rem .85rem;display:flex;align-items:center">
+            <p style="margin:0;color:var(--fg-5);font-size:.875rem">Selecciona primero un centro de costos para ver sus activos.</p>
+          </div>
+        } @else {
+          <div style="border-left:4px solid #47c9bd;border-radius:8px;background:var(--bg-1);padding:.75rem .85rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.75rem">
+            <div style="display:flex;align-items:center;gap:.75rem">
+              <div style="width:38px;height:38px;border-radius:9px;background:rgba(71,201,189,.1);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#47c9bd">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>
+                </svg>
+              </div>
+              <div>
+                @if (selectedActivoId === 'todos') {
+                  <p style="margin:0 0 .15rem;font-size:.9rem;font-weight:700;color:var(--fg-2)">
+                    {{ selectedCentroId === 'todos' ? 'Todos los activos' : 'Activos de: ' + centroNombre }}
+                  </p>
+                } @else {
+                  <p style="margin:0 0 .15rem;font-size:.9rem;font-weight:700;color:var(--fg-2)">{{ activoNombre }}</p>
+                }
+              </div>
+            </div>
+            <ng-container *ngTemplateOutlet="ordenActivoChips"></ng-container>
+          </div>
+        }
+        <label class="field" style="margin:0;justify-content:center">
+          <span>Activo</span>
+          <select [(ngModel)]="selectedActivoId" (ngModelChange)="onActivoChange()" [disabled]="!selectedCentroId">
+            <option value="todos">Todos</option>
+            @for (a of activosFiltrados; track a._id) { <option [value]="a._id">{{ a.nombre }}</option> }
+          </select>
+        </label>
+      </div>
+    }
+
   </div> <!-- fin tarjeta A -->
 
   <!-- Chips "Ordenar por" reutilizados dentro de las tarjetas de resumen de Empresa/Centro/Proyecto -->
@@ -454,6 +513,50 @@
     </div>
   </ng-template>
 
+  <ng-template #ordenActividadChips>
+    <div style="display:flex;align-items:center;gap:.35rem;flex-wrap:wrap">
+      <span style="font-size:.72rem;font-weight:600;color:var(--fg-4);margin-right:.15rem">Ordenar por:</span>
+      <button
+        style="padding:.3rem .65rem;border-style:solid;border-width:1px;border-radius:999px;font-size:.75rem;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap"
+        [style.background]="ordenActividad() === 'recientes' ? 'rgba(159,124,232,.08)' : 'transparent'"
+        [style.color]="ordenActividad() === 'recientes' ? '#9f7ce8' : 'var(--fg-4)'"
+        [style.borderColor]="ordenActividad() === 'recientes' ? 'rgba(159,124,232,.3)' : 'var(--border-subtle)'"
+        (click)="ordenActividad.set('recientes')">
+        Recientes
+      </button>
+      <button
+        style="padding:.3rem .65rem;border-style:solid;border-width:1px;border-radius:999px;font-size:.75rem;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap"
+        [style.background]="ordenActividad() === 'alfabetico' ? 'rgba(159,124,232,.08)' : 'transparent'"
+        [style.color]="ordenActividad() === 'alfabetico' ? '#9f7ce8' : 'var(--fg-4)'"
+        [style.borderColor]="ordenActividad() === 'alfabetico' ? 'rgba(159,124,232,.3)' : 'var(--border-subtle)'"
+        (click)="ordenActividad.set('alfabetico')">
+        Alfabético
+      </button>
+    </div>
+  </ng-template>
+
+  <ng-template #ordenActivoChips>
+    <div style="display:flex;align-items:center;gap:.35rem;flex-wrap:wrap">
+      <span style="font-size:.72rem;font-weight:600;color:var(--fg-4);margin-right:.15rem">Ordenar por:</span>
+      <button
+        style="padding:.3rem .65rem;border-style:solid;border-width:1px;border-radius:999px;font-size:.75rem;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap"
+        [style.background]="ordenActivo() === 'recientes' ? 'rgba(71,201,189,.08)' : 'transparent'"
+        [style.color]="ordenActivo() === 'recientes' ? '#47c9bd' : 'var(--fg-4)'"
+        [style.borderColor]="ordenActivo() === 'recientes' ? 'rgba(71,201,189,.3)' : 'var(--border-subtle)'"
+        (click)="ordenActivo.set('recientes')">
+        Recientes
+      </button>
+      <button
+        style="padding:.3rem .65rem;border-style:solid;border-width:1px;border-radius:999px;font-size:.75rem;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap"
+        [style.background]="ordenActivo() === 'alfabetico' ? 'rgba(71,201,189,.08)' : 'transparent'"
+        [style.color]="ordenActivo() === 'alfabetico' ? '#47c9bd' : 'var(--fg-4)'"
+        [style.borderColor]="ordenActivo() === 'alfabetico' ? 'rgba(71,201,189,.3)' : 'var(--border-subtle)'"
+        (click)="ordenActivo.set('alfabetico')">
+        Alfabético
+      </button>
+    </div>
+  </ng-template>
+
   <!-- ══════════════════════════════════════════════════════════════
        TARJETA B: Sub-tabs + contenido
   ══════════════════════════════════════════════════════════════ -->
@@ -477,7 +580,7 @@
               </svg>
               Documentación
             </button>
-            @if (tabJerarquia() !== 'todos') {
+            @if (tabJerarquia() === 'empresa' || tabJerarquia() === 'centro' || tabJerarquia() === 'proyecto') {
               <button
                 style="flex:1;padding:.55rem 1rem;border-style:solid;border-width:1px;border-radius:8px;font-size:.875rem;font-weight:600;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;justify-content:center;gap:.4rem"
                 [style.background]="tabAdminActiva() === 'solicitudes' ? 'rgba(46,174,110,.08)' : 'transparent'"
@@ -497,7 +600,7 @@
         <div style="padding:0 .5rem .5rem">
           <div style="display:flex;gap:.25rem;padding:.25rem">
             <div style="flex:1;display:flex;gap:.25rem">
-              @if (tabAdminActiva() === 'documentacion' && tabJerarquia() !== 'todos') {
+              @if (tabAdminActiva() === 'documentacion' && (tabJerarquia() === 'empresa' || tabJerarquia() === 'centro' || tabJerarquia() === 'proyecto')) {
                 @if (tabDocAdmin() === 'activos' && puedeGestionarDocumento) {
                   <button class="btn-primary" style="flex:1;font-size:.8rem;padding:.4rem .5rem;white-space:nowrap;display:inline-flex;align-items:center;justify-content:center;gap:.35rem" (click)="toggleUpload(docTipoActual)">
                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0">
@@ -506,30 +609,6 @@
                     {{ panels[docTipoActual].showUpload ? 'Terminar' : 'Subir' }}
                   </button>
                 }
-                <button
-                  style="flex:1;padding:.3rem .5rem;border-style:solid;border-width:1px;border-radius:6px;font-size:.78rem;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap;display:inline-flex;align-items:center;justify-content:center;gap:.35rem"
-                  [style.background]="tabDocAdmin() === 'activos' ? 'var(--sc-cyan-tint-6)' : 'transparent'"
-                  [style.color]="tabDocAdmin() === 'activos' ? 'var(--sc-cyan)' : 'var(--fg-4)'"
-                  [style.borderColor]="tabDocAdmin() === 'activos' ? 'rgba(0,174,239,.25)' : 'var(--border-subtle)'"
-                  (click)="tabDocAdmin.set('activos')">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0">
-                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
-                  </svg>
-                  Vigentes
-                </button>
-                <button
-                  style="flex:1;padding:.3rem .5rem;border-style:solid;border-width:1px;border-radius:6px;font-size:.78rem;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap;display:inline-flex;align-items:center;justify-content:center;gap:.35rem"
-                  [style.background]="tabDocAdmin() === 'vencidos' ? 'rgba(229,72,77,.06)' : 'transparent'"
-                  [style.color]="tabDocAdmin() === 'vencidos' ? 'var(--danger)' : 'var(--fg-4)'"
-                  [style.borderColor]="tabDocAdmin() === 'vencidos' ? 'rgba(229,72,77,.25)' : 'var(--border-subtle)'"
-                  [style.opacity]="selectedEmpresaId === 'todos' ? '0.45' : '1'"
-                  [disabled]="selectedEmpresaId === 'todos'"
-                  (click)="activarTabVencidosAdmin()">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0">
-                    <path d="m21.73 18-8-14a2 2 0 0 0-3.46 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
-                  </svg>
-                  Vencidos
-                </button>
               }
             </div>
             <div style="flex:1;display:flex;justify-content:center">
@@ -552,99 +631,7 @@
         <!-- ── DOCUMENTACIÓN ──────────────────────────────────────── -->
         @if (tabAdminActiva() === 'documentacion') {
 
-          <!-- Vista "Todos": lista plana con tag de nivel -->
-          @if (tabJerarquia() === 'todos') {
-            <app-status-banner [status]="service.uploadStatus().empresa"></app-status-banner>
-
-            @if (filasTodos().length === 0) {
-              <p class="empty">{{ service.busquedaCascadaError() ? 'No se pudo cargar la búsqueda total. Intenta de nuevo.' : 'Sin documentos para el filtro actual.' }}</p>
-            } @else {
-              <div style="border:1px solid var(--border-subtle);border-radius:8px">
-                <div style="display:flex;justify-content:space-between;padding:.5rem 1rem;background:var(--bg-1);border-bottom:1px solid var(--border-subtle);border-top-left-radius:8px;border-top-right-radius:8px">
-                  <span style="font-size:.7rem;font-weight:700;color:var(--fg-5);letter-spacing:.07em;text-transform:uppercase">Documento</span>
-                  <span style="font-size:.7rem;font-weight:700;color:var(--fg-5);letter-spacing:.07em;text-transform:uppercase">Acciones</span>
-                </div>
-                @for (fila of filasTodos(); track fila.doc._id + '|' + fila.empresaId + '|' + (fila.centroId || '') + '|' + (fila.proyectoId || '')) {
-                  <div style="display:flex;align-items:center;justify-content:space-between;padding:.6rem 1rem;border-bottom:1px solid var(--bg-2)">
-                    <div style="display:flex;align-items:center;gap:.6rem;min-width:0">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--fg-5)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-                      <div style="min-width:0;overflow:hidden">
-                        <div style="display:flex;align-items:center;gap:.4rem;flex-wrap:wrap">
-                          <span style="font-size:.7rem;font-weight:600;padding:.2rem .55rem;border-radius:999px;background:#e0e7ff;color:#3730a3;white-space:nowrap;flex-shrink:0">{{ fila.doc.categoria }}</span>
-                          <span style="font-size:.875rem;color:var(--fg-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ fila.doc.nombre_display }}</span>
-                          @if (fila.doc.tipo_contenido === 'link') {
-                            <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:#ecfdf5;color:#047857;flex-shrink:0">🔗 Link</span>
-                          }
-                        </div>
-                        <div style="margin-top:.2rem;display:flex;align-items:center;gap:.5rem;flex-wrap:wrap">
-                          <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:rgba(0,174,239,.1);color:var(--sc-cyan)">Empresa · {{ fila.empresaNombre }}</span>
-                          @if (fila.centroId) {
-                            <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:rgba(46,174,110,.1);color:var(--ok)">Centro · {{ fila.centroNombre }}</span>
-                          }
-                          @if (fila.proyectoId) {
-                            <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:rgba(245,165,36,.1);color:var(--warn)">Proyecto · {{ fila.proyectoNombre }}</span>
-                          }
-                          <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:#f1f5f9;color:#475569">Subido: {{ formatFechaHora(fila.doc.subido_en) }}</span>
-                          @if (fila.doc.subido_por_nombre) {
-                            <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:#f0fdfa;color:#0f766e">{{ fila.doc.subido_por_nombre }}</span>
-                          }
-                        </div>
-                      </div>
-                    </div>
-                    <div style="display:flex;gap:.35rem;flex-shrink:0">
-                      <button (click)="abrirDocumento(fila.doc)"
-                              style="padding:.35rem .65rem;border-radius:7px;border:none;background:var(--sc-cyan-tint-6);color:var(--sc-cyan);cursor:pointer;display:inline-flex;align-items:center;gap:.35rem;font-size:.72rem;font-weight:600;white-space:nowrap">
-                        @if (fila.doc.tipo_contenido === 'link') {
-                          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-                        } @else {
-                          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                        }
-                        {{ fila.doc.tipo_contenido === 'link' ? 'Abrir enlace' : 'Descargar' }}
-                      </button>
-                      @if (puedeDoc(fila.tipo, 'editarCategoria')) {
-                      <div style="position:relative">
-                        <button title="Cambiar categoría" (click)="toggleCategoriaMenu(fila.doc._id)"
-                                style="width:auto;height:30px;padding:0 .55rem;gap:.35rem;border-radius:7px;border:none;background:#eef2ff;color:#4f46e5;cursor:pointer;display:flex;align-items:center;justify-content:center">
-                          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m20.59 13.41-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82Z"/><circle cx="7" cy="7" r="1"/></svg><span style="font-size:.72rem;font-weight:600">Categoría</span>
-                        </button>
-                        @if (categoriaMenuAbierto() === fila.doc._id) {
-                          <div style="position:fixed;inset:0;z-index:60" (click)="categoriaMenuAbierto.set(null)"></div>
-                          <div style="position:absolute;top:36px;right:0;background:var(--bg-0);border:1px solid var(--border-subtle);border-radius:8px;box-shadow:0 8px 24px rgba(15,23,42,.14);z-index:61;min-width:190px;max-height:240px;overflow-y:auto;padding:.25rem">
-                            @for (cat of categorias; track cat) {
-                              <div (click)="seleccionarCategoriaTodos(fila.doc.url, cat)"
-                                   style="padding:.4rem .65rem;font-size:.8rem;border-radius:6px;cursor:pointer"
-                                   [style.font-weight]="cat === fila.doc.categoria ? '700' : '400'"
-                                   [style.color]="cat === fila.doc.categoria ? '#3730a3' : 'var(--fg-2)'"
-                                   [style.background]="cat === fila.doc.categoria ? '#eef2ff' : 'transparent'">
-                                {{ cat }}
-                              </div>
-                            }
-                          </div>
-                        }
-                      </div>
-                      }
-                      @if (puedeDoc(fila.tipo, 'vencer')) {
-                      <button (click)="abrirModalVencer(fila.doc, fila.centroId, fila.proyectoId, fila.empresaId, fila.tipo)"
-                              style="padding:.35rem .65rem;border-radius:7px;border:none;background:var(--warn-bg);color:var(--warn);cursor:pointer;display:inline-flex;align-items:center;gap:.35rem;font-size:.72rem;font-weight:600;white-space:nowrap">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                        Marcar vencido
-                      </button>
-                      }
-                      @if (puedeDoc(fila.tipo, 'eliminar')) {
-                      <button (click)="eliminarEnTodos(fila.doc.url, fila.doc.nombre_display)"
-                              style="padding:.35rem .65rem;border-radius:7px;border:none;background:var(--danger-bg);color:var(--danger);cursor:pointer;display:inline-flex;align-items:center;gap:.35rem;font-size:.72rem;font-weight:600;white-space:nowrap">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
-                        Eliminar
-                      </button>
-                      }
-                    </div>
-                  </div>
-                }
-              </div>
-            }
-          }
-
-          @if (tabJerarquia() !== 'todos') {
+          @if (tabJerarquia() === 'empresa' || tabJerarquia() === 'centro' || tabJerarquia() === 'proyecto') {
 
           @if (tabDocAdmin() === 'activos') {
           @if (tabJerarquia() === 'empresa') { <app-status-banner [status]="service.uploadStatus().empresa"></app-status-banner> }
@@ -1278,7 +1265,145 @@
             }
           } <!-- fin vencidos -->
 
-          } <!-- fin tabJerarquia !== 'todos' -->
+          } <!-- fin empresa/centro/proyecto -->
+
+          <!-- ── ACTIVIDAD ─────────────────────────────────────── -->
+          @if (tabJerarquia() === 'actividad') {
+            @if (cargandoGrupoAdmin()) { <p class="empty">Cargando…</p> }
+            @else if (filasActividadAdmin().length === 0) { <p class="empty">Sin documentos.</p> }
+            @for (grupo of filasActividadAdmin(); track grupo.id) {
+              <div style="margin-bottom:1rem">
+                <p style="margin:0 0 .15rem;font-size:.875rem;font-weight:700;color:var(--fg-2)">{{ grupo.nombre }}</p>
+                @if (grupo.meta) { <p style="margin:0 0 .5rem;font-size:.75rem;color:var(--fg-5)">Centro: {{ grupo.meta }}</p> }
+                <div style="border:1px solid var(--border-subtle);border-radius:8px;overflow:hidden">
+                  <div style="display:flex;justify-content:space-between;padding:.5rem 1rem;background:var(--bg-1);border-bottom:1px solid var(--border-subtle)">
+                    <span style="font-size:.7rem;font-weight:700;color:var(--fg-5);letter-spacing:.07em;text-transform:uppercase">Documento</span>
+                    <span style="font-size:.7rem;font-weight:700;color:var(--fg-5);letter-spacing:.07em;text-transform:uppercase">Acciones</span>
+                  </div>
+                  @for (d of grupo.docs; track d._id) {
+                    <div style="display:flex;align-items:center;justify-content:space-between;padding:.6rem 1rem;border-bottom:1px solid var(--bg-2)">
+                      <div style="display:flex;align-items:center;gap:.6rem;min-width:0">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--fg-5)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                        <div style="min-width:0;overflow:hidden">
+                          <div style="display:flex;align-items:center;gap:.4rem;flex-wrap:wrap">
+                            @if (d.categoria) { <span style="font-size:.7rem;font-weight:600;padding:.2rem .55rem;border-radius:999px;background:#e0e7ff;color:#3730a3;white-space:nowrap;flex-shrink:0">{{ d.categoria }}</span> }
+                            <span style="font-size:.875rem;color:var(--fg-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ d.nombre_display }}</span>
+                            @if (d.tipo_contenido === 'link') { <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:#ecfdf5;color:#047857;flex-shrink:0">🔗 Link</span> }
+                          </div>
+                          @if (d.subido_en) {
+                            <div style="margin-top:.2rem"><span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:#f1f5f9;color:#475569">Subido: {{ formatFechaHora(d.subido_en) }}</span></div>
+                          }
+                        </div>
+                      </div>
+                      <div style="display:flex;gap:.35rem;flex-shrink:0">
+                        <button title="Descargar" (click)="descargarActividadDocAdmin(grupo.id, d._id, d.nombre_display)"
+                                style="width:auto;height:30px;padding:0 .55rem;gap:.35rem;border-radius:7px;border:none;background:var(--sc-cyan-tint-6);color:var(--sc-cyan);cursor:pointer;display:flex;align-items:center;justify-content:center">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                          <span style="font-size:.72rem;font-weight:600">Descargar</span></button>
+                        @if (puedeDocActividad('editarCategoria')) {
+                        <div style="position:relative">
+                          <button title="Cambiar categoría" (click)="toggleCategoriaMenu(d._id)"
+                                  style="width:auto;height:30px;padding:0 .55rem;gap:.35rem;border-radius:7px;border:none;background:#eef2ff;color:#4f46e5;cursor:pointer;display:flex;align-items:center;justify-content:center">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m20.59 13.41-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82Z"/><circle cx="7" cy="7" r="1"/></svg><span style="font-size:.72rem;font-weight:600">Categoría</span>
+                          </button>
+                          @if (categoriaMenuAbierto() === d._id) {
+                            <div style="position:fixed;inset:0;z-index:60" (click)="categoriaMenuAbierto.set(null)"></div>
+                            <div style="position:absolute;top:36px;right:0;background:var(--bg-0);border:1px solid var(--border-subtle);border-radius:8px;box-shadow:0 8px 24px rgba(15,23,42,.14);z-index:61;min-width:190px;max-height:240px;overflow-y:auto;padding:.25rem">
+                              @for (cat of categorias; track cat) {
+                                <div (click)="actualizarCategoriaActividadDocAdmin(grupo.id, d._id, cat)"
+                                     style="padding:.4rem .65rem;font-size:.8rem;border-radius:6px;cursor:pointer"
+                                     [style.font-weight]="cat === d.categoria ? '700' : '400'"
+                                     [style.color]="cat === d.categoria ? '#3730a3' : 'var(--fg-2)'"
+                                     [style.background]="cat === d.categoria ? '#eef2ff' : 'transparent'">
+                                  {{ cat }}
+                                </div>
+                              }
+                            </div>
+                          }
+                        </div>
+                        }
+                        @if (puedeDocActividad('eliminar')) {
+                        <button title="Eliminar" (click)="eliminarActividadDocAdmin(grupo.id, d._id)"
+                                style="width:auto;height:30px;padding:0 .55rem;gap:.35rem;border-radius:7px;border:none;background:var(--danger-bg);color:var(--danger);cursor:pointer;display:flex;align-items:center;justify-content:center">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg><span style="font-size:.72rem;font-weight:600">Eliminar</span>
+                        </button>
+                        }
+                      </div>
+                    </div>
+                  }
+                </div>
+              </div>
+            }
+          }
+
+          <!-- ── ACTIVO ─────────────────────────────────────── -->
+          @if (tabJerarquia() === 'activo') {
+            @if (cargandoGrupoAdmin()) { <p class="empty">Cargando…</p> }
+            @else if (filasActivoAdmin().length === 0) { <p class="empty">Sin documentos.</p> }
+            @for (grupo of filasActivoAdmin(); track grupo.id) {
+              <div style="margin-bottom:1rem">
+                <p style="margin:0 0 .15rem;font-size:.875rem;font-weight:700;color:var(--fg-2)">{{ grupo.nombre }}</p>
+                @if (grupo.meta) { <p style="margin:0 0 .5rem;font-size:.75rem;color:var(--fg-5)">Centro: {{ grupo.meta }}</p> }
+                <div style="border:1px solid var(--border-subtle);border-radius:8px;overflow:hidden">
+                  <div style="display:flex;justify-content:space-between;padding:.5rem 1rem;background:var(--bg-1);border-bottom:1px solid var(--border-subtle)">
+                    <span style="font-size:.7rem;font-weight:700;color:var(--fg-5);letter-spacing:.07em;text-transform:uppercase">Documento</span>
+                    <span style="font-size:.7rem;font-weight:700;color:var(--fg-5);letter-spacing:.07em;text-transform:uppercase">Acciones</span>
+                  </div>
+                  @for (d of grupo.docs; track d._id) {
+                    <div style="display:flex;align-items:center;justify-content:space-between;padding:.6rem 1rem;border-bottom:1px solid var(--bg-2)">
+                      <div style="display:flex;align-items:center;gap:.6rem;min-width:0">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--fg-5)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                        <div style="min-width:0;overflow:hidden">
+                          <div style="display:flex;align-items:center;gap:.4rem;flex-wrap:wrap">
+                            @if (d.categoria) { <span style="font-size:.7rem;font-weight:600;padding:.2rem .55rem;border-radius:999px;background:#e0e7ff;color:#3730a3;white-space:nowrap;flex-shrink:0">{{ d.categoria }}</span> }
+                            <span style="font-size:.875rem;color:var(--fg-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ d.nombre_display }}</span>
+                            @if (d.tipo_contenido === 'link') { <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:#ecfdf5;color:#047857;flex-shrink:0">🔗 Link</span> }
+                          </div>
+                          @if (d.subido_en) {
+                            <div style="margin-top:.2rem"><span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:#f1f5f9;color:#475569">Subido: {{ formatFechaHora(d.subido_en) }}</span></div>
+                          }
+                        </div>
+                      </div>
+                      <div style="display:flex;gap:.35rem;flex-shrink:0">
+                        <button title="Descargar" (click)="descargarActivoDocAdmin(grupo.id, grupo.centroId ?? '', d._id, d.nombre_display)"
+                                style="width:auto;height:30px;padding:0 .55rem;gap:.35rem;border-radius:7px;border:none;background:var(--sc-cyan-tint-6);color:var(--sc-cyan);cursor:pointer;display:flex;align-items:center;justify-content:center">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                          <span style="font-size:.72rem;font-weight:600">Descargar</span></button>
+                        @if (puedeDocActivo('editarCategoria')) {
+                        <div style="position:relative">
+                          <button title="Cambiar categoría" (click)="toggleCategoriaMenu(d._id)"
+                                  style="width:auto;height:30px;padding:0 .55rem;gap:.35rem;border-radius:7px;border:none;background:#eef2ff;color:#4f46e5;cursor:pointer;display:flex;align-items:center;justify-content:center">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m20.59 13.41-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82Z"/><circle cx="7" cy="7" r="1"/></svg><span style="font-size:.72rem;font-weight:600">Categoría</span>
+                          </button>
+                          @if (categoriaMenuAbierto() === d._id) {
+                            <div style="position:fixed;inset:0;z-index:60" (click)="categoriaMenuAbierto.set(null)"></div>
+                            <div style="position:absolute;top:36px;right:0;background:var(--bg-0);border:1px solid var(--border-subtle);border-radius:8px;box-shadow:0 8px 24px rgba(15,23,42,.14);z-index:61;min-width:190px;max-height:240px;overflow-y:auto;padding:.25rem">
+                              @for (cat of categorias; track cat) {
+                                <div (click)="actualizarCategoriaActivoDocAdmin(grupo.id, grupo.centroId ?? '', d._id, cat)"
+                                     style="padding:.4rem .65rem;font-size:.8rem;border-radius:6px;cursor:pointer"
+                                     [style.font-weight]="cat === d.categoria ? '700' : '400'"
+                                     [style.color]="cat === d.categoria ? '#3730a3' : 'var(--fg-2)'"
+                                     [style.background]="cat === d.categoria ? '#eef2ff' : 'transparent'">
+                                  {{ cat }}
+                                </div>
+                              }
+                            </div>
+                          }
+                        </div>
+                        }
+                        @if (puedeDocActivo('eliminar')) {
+                        <button title="Eliminar" (click)="eliminarActivoDocAdmin(grupo.id, grupo.centroId ?? '', d._id)"
+                                style="width:auto;height:30px;padding:0 .55rem;gap:.35rem;border-radius:7px;border:none;background:var(--danger-bg);color:var(--danger);cursor:pointer;display:flex;align-items:center;justify-content:center">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg><span style="font-size:.72rem;font-weight:600">Eliminar</span>
+                        </button>
+                        }
+                      </div>
+                    </div>
+                  }
+                </div>
+              </div>
+            }
+          }
 
         } <!-- fin documentacion -->
 

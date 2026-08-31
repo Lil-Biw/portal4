@@ -1,5 +1,7 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 import { ApiService } from '../../core/services/api.service';
 import { Actividad, CreateActividadDto, DocActividad, UpdateActividadDto } from '../../shared/models/actividad.model';
 import { Status } from '../../shared/models/status.model';
@@ -119,49 +121,59 @@ export class ActividadesService {
     });
   }
 
-  subirDocumento(id: string, archivo: File, nombreDisplay?: string, onSuccess?: () => void, onError?: () => void): void {
-    if (this.saving()) { onError?.(); return; }
+  // Variante que retorna un Observable en vez de mutar `documentosActividad` —
+  // para poder pedir los documentos de muchas actividades en paralelo (forkJoin)
+  // sin que cada respuesta pise la de la anterior en la señal compartida.
+  listarDocumentosObs(actividadId: string) {
+    const actividad = this.actividades().find(a => a._id === actividadId);
+    if (!actividad) return of([] as DocActividad[]);
+    const centroId = asId(actividad.centro_costo_id);
+    const empresaId = this.getEmpresaId(centroId);
+    if (!empresaId) return of([] as DocActividad[]);
+    return this.http.get<DocActividad[]>(
+      this.api.url(`/empresas/${empresaId}/centros/${centroId}/actividades/${actividadId}/documentos`)
+    ).pipe(catchError(() => of([] as DocActividad[])));
+  }
+
+  subirDocumento(id: string, archivo: File, nombreDisplay?: string, onSuccess?: () => void, onError?: () => void, categoria?: string): void {
     const centroId = this.actividades().find(a => a._id === id)?.centro_costo_id;
     const empresaId = centroId ? this.getEmpresaId(centroId) : undefined;
-    if (!empresaId || !centroId) { this.setError({ error: { message: 'Centro no encontrado' } }); onError?.(); return; }
-    this.saving.set(true);
+    if (!empresaId || !centroId) { this.status.set({ type: 'error', text: 'Centro no encontrado' }); onError?.(); return; }
     const form = new FormData();
     form.append('archivo', archivo);
     if (nombreDisplay) form.append('nombre_display', nombreDisplay);
+    if (categoria) form.append('categoria', categoria);
     this.http.post(
       this.api.url(`/empresas/${empresaId}/centros/${centroId}/actividades/${id}/documentos`),
       form
     ).subscribe({
       next: () => {
-        this.saving.set(false);
         this.status.set({ type: 'ok', text: 'Documento adjuntado correctamente' });
         this.listarDocumentos(id);
         onSuccess?.();
       },
-      error: err => { this.setError(err); onError?.(); },
+      error: err => { this.status.set({ type: 'error', text: err?.error?.message ?? 'Error inesperado' }); onError?.(); },
     });
   }
 
-  subirDocumentoLink(id: string, linkUrl: string, nombreDisplay?: string, onSuccess?: () => void, onError?: () => void): void {
-    if (this.saving()) { onError?.(); return; }
+  subirDocumentoLink(id: string, linkUrl: string, nombreDisplay?: string, onSuccess?: () => void, onError?: () => void, categoria?: string): void {
     const centroId = this.actividades().find(a => a._id === id)?.centro_costo_id;
     const empresaId = centroId ? this.getEmpresaId(centroId) : undefined;
-    if (!empresaId || !centroId) { this.setError({ error: { message: 'Centro no encontrado' } }); onError?.(); return; }
-    this.saving.set(true);
+    if (!empresaId || !centroId) { this.status.set({ type: 'error', text: 'Centro no encontrado' }); onError?.(); return; }
     const form = new FormData();
     form.append('link_url', linkUrl);
     if (nombreDisplay) form.append('nombre_display', nombreDisplay);
+    if (categoria) form.append('categoria', categoria);
     this.http.post(
       this.api.url(`/empresas/${empresaId}/centros/${centroId}/actividades/${id}/documentos`),
       form
     ).subscribe({
       next: () => {
-        this.saving.set(false);
         this.status.set({ type: 'ok', text: 'Documento adjuntado correctamente' });
         this.listarDocumentos(id);
         onSuccess?.();
       },
-      error: err => { this.setError(err); onError?.(); },
+      error: err => { this.status.set({ type: 'error', text: err?.error?.message ?? 'Error inesperado' }); onError?.(); },
     });
   }
 
@@ -194,6 +206,23 @@ export class ActividadesService {
         this.listarDocumentos(actividadId);
       },
       error: err => this.setError(err),
+    });
+  }
+
+  actualizarCategoria(actividadId: string, docId: string, categoria: string, onSuccess?: () => void, onError?: () => void): void {
+    const centroId = this.actividades().find(a => a._id === actividadId)?.centro_costo_id;
+    const empresaId = centroId ? this.getEmpresaId(centroId) : undefined;
+    if (!empresaId || !centroId) { this.setError({ error: { message: 'Centro no encontrado' } }); onError?.(); return; }
+    this.http.patch(
+      this.api.url(`/empresas/${empresaId}/centros/${centroId}/actividades/${actividadId}/documentos/${docId}`),
+      { categoria }
+    ).subscribe({
+      next: () => {
+        this.status.set({ type: 'ok', text: 'Categoría actualizada' });
+        this.listarDocumentos(actividadId);
+        onSuccess?.();
+      },
+      error: err => { this.setError(err); onError?.(); },
     });
   }
 

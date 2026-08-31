@@ -102,6 +102,7 @@ export class ActividadesController {
     @UploadedFile() archivo: Express.Multer.File & { buffer: Buffer },
     @Body('nombre_display') nombreDisplay?: string,
     @Body('link_url') linkUrl?: string,
+    @Body('categoria') categoria?: string,
   ) {
     if (!archivo && !linkUrl) throw new BadRequestException('Debes adjuntar un archivo o un link');
     const user = (req as any)?.user;
@@ -112,7 +113,7 @@ export class ActividadesController {
       actividadId, centroId, empresaId,
       user && { sub: user.sub, rol: user.rol },
     );
-    return this.service.subirDocumento(actividadId, { archivo, linkUrl }, nombreDisplay);
+    return this.service.subirDocumento(actividadId, { archivo, linkUrl }, nombreDisplay, categoria);
   }
 
   @Delete(':actividadId/documentos/:docId')
@@ -133,14 +134,21 @@ export class ActividadesController {
   }
 
   @Patch(':actividadId/documentos/:docId')
-  @Roles('super_admin', 'admin_smartclarity')
-  renombrarDocumento(
+  @RequiereAccion('docActividad', 'editarCategoria')
+  actualizarDocumento(
     @Param('actividadId') actividadId: string,
     @Param('docId') docId: string,
-    @Body('nombre_display') nombreDisplay: string,
+    @Body('categoria') categoria: string | undefined,
+    @Body('nombre_display') nombreDisplay: string | undefined,
   ) {
-    if (!nombreDisplay?.trim()) throw new BadRequestException('Debes indicar un nombre');
-    return this.service.renombrarDocumento(actividadId, docId, nombreDisplay.trim());
+    if (nombreDisplay !== undefined) {
+      if (!nombreDisplay.trim()) throw new BadRequestException('Debes indicar un nombre');
+      return this.service.renombrarDocumento(actividadId, docId, nombreDisplay.trim());
+    }
+    if (categoria !== undefined) {
+      return this.service.actualizarCategoria(actividadId, docId, categoria);
+    }
+    throw new BadRequestException('Debes indicar nombre_display o categoria');
   }
 
   @Get(':actividadId/documentos/:docId')

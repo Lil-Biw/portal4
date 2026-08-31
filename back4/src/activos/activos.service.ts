@@ -100,8 +100,12 @@ export class ActivosService {
     return this.docsHelper.listar(activoId);
   }
 
-  subirDocumento(activoId: string, input: DocumentoInput, nombreDisplay?: string) {
-    return this.docsHelper.agregar(activoId, input, nombreDisplay);
+  subirDocumento(activoId: string, input: DocumentoInput, nombreDisplay?: string, categoria?: string) {
+    return this.docsHelper.agregar(activoId, input, nombreDisplay, categoria);
+  }
+
+  actualizarCategoria(activoId: string, docId: string, categoria: string) {
+    return this.docsHelper.actualizarCategoria(activoId, docId, categoria);
   }
 
   servirDocumento(activoId: string, docId: string) {

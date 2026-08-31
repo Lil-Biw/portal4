@@ -527,8 +527,12 @@ export class ActividadesService {
     return this.docsHelper.listar(actividadId);
   }
 
-  subirDocumento(actividadId: string, input: DocumentoInput, nombreDisplay?: string) {
-    return this.docsHelper.agregar(actividadId, input, nombreDisplay);
+  subirDocumento(actividadId: string, input: DocumentoInput, nombreDisplay?: string, categoria?: string) {
+    return this.docsHelper.agregar(actividadId, input, nombreDisplay, categoria);
+  }
+
+  actualizarCategoria(actividadId: string, docId: string, categoria: string) {
+    return this.docsHelper.actualizarCategoria(actividadId, docId, categoria);
   }
 
   async servirDocumento(actividadId: string, docId: string, centroId: string, empresaId: string) {

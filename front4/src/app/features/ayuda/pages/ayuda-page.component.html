@@ -43,27 +43,42 @@
       </div>
 
       <button type="button" class="diagram-box" [style]="empresaBoxStyle()" (click)="selectNode('empresa')">
+        @if (hintNode() === 'empresa') {
+          <span class="diagram-hint">¡Seleccióname!</span>
+        }
         <span [innerHTML]="getIcon('building-2')"></span>
         <span>Empresa</span>
       </button>
 
       <button type="button" class="diagram-box" [style]="centroBoxStyle()" (click)="selectNode('centro')">
+        @if (hintNode() === 'centro') {
+          <span class="diagram-hint">¡Seleccióname!</span>
+        }
         <span [innerHTML]="getIcon('map-pin')"></span>
         <span>Centro de costo</span>
       </button>
 
       <button type="button" class="diagram-box" [style]="proyectoBoxStyle()" (click)="selectNode('proyecto')">
+        @if (hintNode() === 'proyecto') {
+          <span class="diagram-hint">¡Seleccióname!</span>
+        }
         <span [innerHTML]="getIcon('folder')"></span>
         <span>Proyectos</span>
       </button>
 
       <button type="button" class="diagram-box" [style]="activosBoxStyle()" (click)="selectNode('activos')">
+        @if (hintNode() === 'activos') {
+          <span class="diagram-hint">¡Seleccióname!</span>
+        }
         <span [innerHTML]="getIcon('cpu')"></span>
         <span>Activos</span>
       </button>
 
       <div class="actividades-wrap" [style]="actividadesWrapStyle">
         <button type="button" class="actividades-box" [style]="actividadesBoxStyle()" (click)="selectNode('actividades')">
+          @if (hintNode() === 'actividades') {
+            <span class="diagram-hint">¡Seleccióname!</span>
+          }
           <span [innerHTML]="getIcon('calendar-clock')"></span>
           <div>
             <strong>Actividades</strong>

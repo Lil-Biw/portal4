@@ -7,39 +7,156 @@
 
 @if (consumidorContext.empresaSeleccionada()) {
 
-  <!-- Panel de filtros — primer componente de la página, como en admin -->
+  <!-- Panel de filtros — primer componente de la página. Los cambios de tipo de
+       documento, búsqueda por nombre, estado (vigentes/vencidos), agrupar por,
+       valor específico y orden quedan en borrador hasta hacer clic en "Buscar",
+       que los aplica todos juntos. -->
   @if (tabConsumidorActiva() === 'documentacion') {
-    @let docTipo = tabJerarquia();
     <div style="background:var(--bg-1);border:1px solid var(--border-subtle);border-radius:.5rem;padding:.75rem;margin-bottom:1rem">
-      <div style="display:grid;grid-template-columns:1fr 400px;gap:1.5rem;align-items:start">
-        <div>
-          <p style="margin:0 0 .5rem;font-size:.8rem;font-weight:600;color:var(--fg-2)">Tipo de documento</p>
-          <div style="display:flex;flex-wrap:wrap;gap:.5rem">
-            <button type="button"
-              style="font-size:.85rem;padding:.3rem .6rem;border-style:solid;border-width:1px;border-radius:.375rem;cursor:pointer"
-              [style.background]="!panels[docTipo].categoriaFiltro ? '#e0e7ff' : 'var(--bg-0)'"
-              [style.borderColor]="!panels[docTipo].categoriaFiltro ? '#6366f1' : 'var(--border-default)'"
-              [style.color]="!panels[docTipo].categoriaFiltro ? '#6366f1' : 'var(--fg-2)'"
-              (click)="seleccionarCategoriaFiltro(docTipo, '')">Todos</button>
-            @for (cat of categorias; track cat) {
-              <button type="button"
-                style="font-size:.85rem;padding:.3rem .6rem;border-style:solid;border-width:1px;border-radius:.375rem;cursor:pointer"
-                [style.background]="panels[docTipo].categoriaFiltro === cat ? '#e0e7ff' : 'var(--bg-0)'"
-                [style.borderColor]="panels[docTipo].categoriaFiltro === cat ? '#6366f1' : 'var(--border-default)'"
-                [style.color]="panels[docTipo].categoriaFiltro === cat ? '#6366f1' : 'var(--fg-2)'"
-                (click)="seleccionarCategoriaFiltro(docTipo, cat)">{{ cat }}</button>
-            }
+      <div style="display:flex;flex-wrap:wrap;gap:.75rem;align-items:flex-end">
+
+        <!-- Tipo de documento: dropdown multi-selección -->
+        <div style="position:relative;min-width:220px">
+          <span style="display:block;margin:0 0 .35rem;font-size:.8rem;font-weight:600;color:var(--fg-2)">Tipo de documento</span>
+          <button type="button" (click)="toggleDropdownTipo()"
+            style="width:100%;height:36px;display:flex;align-items:center;justify-content:space-between;gap:.5rem;padding:0 .65rem;border-style:solid;border-width:1px;border-radius:.375rem;cursor:pointer;font-size:.85rem;white-space:nowrap"
+            [style.background]="categoriasPendiente().length ? '#e0e7ff' : 'var(--bg-0)'"
+            [style.borderColor]="categoriasPendiente().length ? '#6366f1' : 'var(--border-default)'"
+            [style.color]="categoriasPendiente().length ? '#6366f1' : 'var(--fg-2)'">
+            <span style="overflow:hidden;text-overflow:ellipsis">
+              {{ categoriasPendiente().length ? 'Tipo de documento (' + categoriasPendiente().length + ')' : 'Todos los tipos' }}
+            </span>
+            <span style="flex-shrink:0">▾</span>
+          </button>
+          @if (dropdownTipoAbierto()) {
+            <div style="position:fixed;inset:0;z-index:10" (click)="dropdownTipoAbierto.set(false)"></div>
+            <div style="position:absolute;top:64px;left:0;right:0;z-index:11;background:var(--bg-0);border:1px solid var(--border-default);border-radius:.5rem;box-shadow:0 8px 20px rgba(20,30,50,.12);padding:.5rem;max-height:280px;overflow-y:auto;min-width:260px">
+              @for (cat of categorias; track cat) {
+                <label style="display:flex;align-items:center;gap:.4rem;font-size:.85rem;padding:.35rem .3rem;cursor:pointer;color:var(--fg-2)">
+                  <input type="checkbox" [checked]="isFiltroCategoriaPendienteSelected(cat)" (change)="toggleFiltroCategoriaPendiente(cat)" />
+                  @if (categoriaTag(cat); as tag) { <span style="font-weight:700;color:#6366f1">[{{ tag }}]</span> {{ categoriaResto(cat) }} } @else { {{ cat }} }
+                </label>
+              }
+            </div>
+          }
+        </div>
+
+        <!-- Búsqueda por nombre -->
+        <label class="field" style="margin:0;flex:2;min-width:220px">
+          <span style="font-size:.8rem;font-weight:600;color:var(--fg-2)">Buscar por nombre</span>
+          <input type="text" [ngModel]="busquedaPendiente()" (ngModelChange)="onBusquedaNombreChange($event)"
+            (keyup.enter)="aplicarFiltros()" placeholder="Nombre del documento…" />
+        </label>
+
+        <!-- Vigentes / Vencidos: no aplica a Actividad/Activo -->
+        @if (grupoPendiente() !== 'actividad' && grupoPendiente() !== 'activo') {
+          <div style="display:flex;border-style:solid;border-width:1px;border-color:var(--border-default);border-radius:.375rem;overflow:hidden;height:36px">
+            <button type="button" (click)="estadoPendiente.set('activos')"
+              style="border:none;padding:0 .8rem;font-size:.82rem;font-weight:600;cursor:pointer;white-space:nowrap"
+              [style.background]="estadoPendiente() === 'activos' ? 'var(--ok-bg)' : 'var(--bg-0)'"
+              [style.color]="estadoPendiente() === 'activos' ? 'var(--ok)' : 'var(--fg-4)'">Vigentes</button>
+            <button type="button" (click)="estadoPendiente.set('vencidos')"
+              style="border:none;padding:0 .8rem;font-size:.82rem;font-weight:600;cursor:pointer;white-space:nowrap;border-left:1px solid var(--border-default)"
+              [style.background]="estadoPendiente() === 'vencidos' ? 'var(--danger-bg)' : 'var(--bg-0)'"
+              [style.color]="estadoPendiente() === 'vencidos' ? 'var(--danger)' : 'var(--fg-4)'">Vencidos</button>
+          </div>
+        }
+
+        <button class="btn-primary" style="font-size:.8rem;padding:0 .9rem;height:36px;white-space:nowrap" (click)="aplicarFiltros()">Buscar</button>
+        <button class="btn-ghost" style="font-size:.8rem;padding:0 .7rem;height:36px;white-space:nowrap" (click)="limpiarFiltros()">Limpiar</button>
+      </div>
+
+      <!-- Agrupar por -->
+      <div style="margin-top:1rem">
+        <p style="margin:0 0 .5rem;font-size:.8rem;font-weight:600;color:var(--fg-2)">Agrupar por</p>
+        <div style="display:flex;flex-wrap:wrap;gap:.5rem;align-items:center">
+          @for (g of [
+            { key: 'empresa',   label: 'Empresa' },
+            { key: 'centro',    label: 'Centro de costo' },
+            { key: 'proyecto',  label: 'Proyecto' },
+            { key: 'actividad', label: 'Actividad' },
+            { key: 'activo',    label: 'Activo' }
+          ]; track g.key) {
+            <button type="button" (click)="seleccionarGrupoPendiente(g.key)"
+              style="font-size:.85rem;padding:.4rem .8rem;border-style:solid;border-width:1px;border-radius:999px;cursor:pointer;font-weight:600"
+              [style.background]="grupoPendiente() === g.key ? '#e0e7ff' : 'var(--bg-0)'"
+              [style.borderColor]="grupoPendiente() === g.key ? '#6366f1' : 'var(--border-default)'"
+              [style.color]="grupoPendiente() === g.key ? '#6366f1' : 'var(--fg-2)'">{{ g.label }}</button>
+          }
+          @if (grupoPendiente() !== grupoAplicado()) {
+            <span style="font-size:.72rem;color:var(--warn);font-style:italic">cambios sin aplicar — clic en Buscar</span>
+          }
+        </div>
+
+        <!-- Filtro de valores, contextual al grupo elegido -->
+        <div style="display:flex;flex-wrap:wrap;gap:.75rem;margin-top:.75rem;align-items:flex-end">
+          @if (grupoPendiente() !== 'empresa') {
+            <label class="field" style="margin:0;min-width:200px">
+              <span>Centro de costos</span>
+              <select [ngModel]="centroIdPendiente()" (ngModelChange)="onCentroChangePendiente($event)">
+                <option value="todos">Todos</option>
+                @for (c of centrosFiltradosC; track c._id) { <option [value]="c._id">{{ c.nombre }}</option> }
+              </select>
+            </label>
+          }
+          @if (grupoPendiente() === 'proyecto') {
+            <label class="field" style="margin:0;min-width:200px">
+              <span>Proyecto</span>
+              <select [ngModel]="proyectoIdPendiente()" (ngModelChange)="proyectoIdPendiente.set($event)">
+                <option value="todos">Todos</option>
+                @for (p of proyectosFiltradosC; track p._id) { <option [value]="p._id">{{ p.nombre }}</option> }
+              </select>
+            </label>
+          }
+          @if (grupoPendiente() === 'actividad') {
+            <label class="field" style="margin:0;min-width:200px">
+              <span>Actividad</span>
+              <select [ngModel]="actividadIdPendiente()" (ngModelChange)="actividadIdPendiente.set($event)">
+                <option value="todos">Todas</option>
+                @for (a of actividadesFiltradasC; track a._id) { <option [value]="a._id">{{ a.nombre }}</option> }
+              </select>
+            </label>
+          }
+          @if (grupoPendiente() === 'activo') {
+            <label class="field" style="margin:0;min-width:200px">
+              <span>Activo</span>
+              <select [ngModel]="activoIdPendiente()" (ngModelChange)="activoIdPendiente.set($event)">
+                <option value="todos">Todos</option>
+                @for (a of activosFiltradosC; track a._id) { <option [value]="a._id">{{ a.nombre }}</option> }
+              </select>
+            </label>
+          }
+
+          <div style="display:flex;align-items:center;gap:.35rem;flex-wrap:wrap;margin-left:auto">
+            <span style="font-size:.72rem;font-weight:600;color:var(--fg-4);margin-right:.15rem">Ordenar por:</span>
+            <button
+              style="padding:.3rem .65rem;border-style:solid;border-width:1px;border-radius:999px;font-size:.75rem;font-weight:600;cursor:pointer"
+              [style.background]="ordenPendiente() === 'recientes' ? 'rgba(0,174,239,.08)' : 'transparent'"
+              [style.color]="ordenPendiente() === 'recientes' ? 'var(--sc-cyan)' : 'var(--fg-4)'"
+              [style.borderColor]="ordenPendiente() === 'recientes' ? 'rgba(0,174,239,.3)' : 'var(--border-subtle)'"
+              (click)="ordenPendiente.set('recientes')">Recientes</button>
+            <button
+              style="padding:.3rem .65rem;border-style:solid;border-width:1px;border-radius:999px;font-size:.75rem;font-weight:600;cursor:pointer"
+              [style.background]="ordenPendiente() === 'alfabetico' ? 'rgba(0,174,239,.08)' : 'transparent'"
+              [style.color]="ordenPendiente() === 'alfabetico' ? 'var(--sc-cyan)' : 'var(--fg-4)'"
+              [style.borderColor]="ordenPendiente() === 'alfabetico' ? 'rgba(0,174,239,.3)' : 'var(--border-subtle)'"
+              (click)="ordenPendiente.set('alfabetico')">Alfabético</button>
           </div>
         </div>
-        <div style="display:flex;gap:.5rem;align-items:flex-end">
-          <label class="field" style="margin:0;flex:1;min-width:0">
-            <span style="font-size:.8rem;font-weight:600;color:var(--fg-2)">Buscar por nombre</span>
-            <input type="text" [ngModel]="panels[docTipo].busqueda" (ngModelChange)="onBusquedaNombreChange(docTipo, $event)" placeholder="Nombre del documento…" />
-          </label>
-          <button class="btn-ghost" style="font-size:.8rem;padding:.45rem .7rem;white-space:nowrap"
-            (click)="limpiarFiltroDocTipo(docTipo)">Limpiar</button>
-        </div>
       </div>
+    </div>
+  }
+
+  <!-- "Subir documentos" — independiente de los filtros de arriba: el destino se
+       elige dentro del modal, no según lo que se esté buscando/mostrando. -->
+  @if (tabConsumidorActiva() === 'documentacion' && puedeSubirAlgunDestino) {
+    <div style="margin-bottom:1rem">
+      <button class="btn-primary" style="font-size:.85rem;padding:.5rem 1rem;display:inline-flex;align-items:center;gap:.4rem" (click)="abrirModalSubida()">
+        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+        </svg>
+        Subir documentos
+      </button>
     </div>
   }
 
@@ -88,592 +205,80 @@
   }
 
   <!-- ══════════════════════════════════════════════════════════════
-       TARJETA A: Tabs de jerarquía + subcontexto integrado
+       Sub-tabs (Documentación / Solicitudes) + contenido
   ══════════════════════════════════════════════════════════════ -->
-  <div class="card" style="padding:0;overflow:hidden;margin-bottom:1rem">
+  <div class="card" style="padding:0;overflow:hidden">
 
-    <!-- Tab strip -->
-    <div style="padding:.5rem;border-bottom:1px solid var(--border-subtle)">
+    <div style="border-bottom:1px solid var(--border-subtle)">
       <div style="display:flex;gap:.25rem;background:var(--bg-2);border-radius:10px;padding:.25rem">
         <button
           style="flex:1;padding:.55rem 1rem;border-style:solid;border-width:1px;border-radius:8px;font-size:.875rem;font-weight:600;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;justify-content:center;gap:.4rem"
-          [style.background]="tabJerarquia() === 'todos' ? 'rgba(124,58,237,.08)' : 'transparent'"
-          [style.color]="tabJerarquia() === 'todos' ? '#7c3aed' : 'var(--fg-4)'"
-          [style.borderColor]="tabJerarquia() === 'todos' ? 'rgba(124,58,237,.18)' : 'transparent'"
-          (click)="seleccionarTabJerarquiaC('todos')">
-          <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/>
-            <path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"/>
-            <path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"/>
+          [style.background]="tabConsumidorActiva() === 'documentacion' ? 'rgba(0,174,239,.08)' : 'transparent'"
+          [style.color]="tabConsumidorActiva() === 'documentacion' ? 'var(--sc-cyan)' : 'var(--fg-4)'"
+          [style.borderColor]="tabConsumidorActiva() === 'documentacion' ? 'rgba(0,174,239,.18)' : 'transparent'"
+          (click)="tabConsumidorActiva.set('documentacion')">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/>
+            <polyline points="14 2 14 8 20 8"/>
+            <line x1="16" y1="13" x2="8" y2="13"/>
+            <line x1="16" y1="17" x2="8" y2="17"/>
           </svg>
-          Todos
-          <span style="font-size:.68rem;font-weight:700;line-height:1;padding:.15rem .4rem;border-radius:999px;background:rgba(124,58,237,.15);color:#7c3aed;flex-shrink:0">{{ conteoTodos() }}</span>
+          Documentación
         </button>
         <button
-          style="flex:1;padding:.55rem 1rem;border-style:solid;border-width:1px;border-radius:8px;font-size:.875rem;font-weight:600;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;justify-content:center;gap:.4rem"
-          [style.background]="tabJerarquia() === 'empresa' ? 'rgba(0,174,239,.08)' : 'transparent'"
-          [style.color]="tabJerarquia() === 'empresa' ? 'var(--sc-cyan)' : 'var(--fg-4)'"
-          [style.borderColor]="tabJerarquia() === 'empresa' ? 'rgba(0,174,239,.18)' : 'transparent'"
-          (click)="seleccionarTabJerarquiaC('empresa')">
-          <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"/>
-            <path d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"/>
-            <path d="M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2"/>
-            <path d="M10 6h4"/><path d="M10 10h4"/><path d="M10 14h4"/><path d="M10 18h4"/>
+          style="flex:1;padding:.55rem 1rem;border-style:solid;border-width:1px;border-radius:8px;font-size:.875rem;font-weight:600;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;justify-content:center;gap:.4rem;position:relative"
+          [style.background]="tabConsumidorActiva() === 'solicitudes' ? 'rgba(46,174,110,.08)' : 'transparent'"
+          [style.color]="tabConsumidorActiva() === 'solicitudes' ? 'var(--ok)' : 'var(--fg-4)'"
+          [style.borderColor]="tabConsumidorActiva() === 'solicitudes' ? 'rgba(46,174,110,.18)' : 'transparent'"
+          (click)="tabConsumidorActiva.set('solicitudes')">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="m22 2-7 20-4-9-9-4Z"/>
+            <path d="M22 2 11 13"/>
           </svg>
-          Empresa
-          <span style="font-size:.68rem;font-weight:700;line-height:1;padding:.15rem .4rem;border-radius:999px;background:rgba(0,174,239,.15);color:var(--sc-cyan);flex-shrink:0">{{ conteoEmpresa() }}</span>
-        </button>
-        <button
-          style="flex:1;padding:.55rem 1rem;border-style:solid;border-width:1px;border-radius:8px;font-size:.875rem;font-weight:600;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;justify-content:center;gap:.4rem"
-          [style.background]="tabJerarquia() === 'centro' ? 'rgba(46,174,110,.08)' : 'transparent'"
-          [style.color]="tabJerarquia() === 'centro' ? 'var(--ok)' : 'var(--fg-4)'"
-          [style.borderColor]="tabJerarquia() === 'centro' ? 'rgba(46,174,110,.18)' : 'transparent'"
-          (click)="seleccionarTabJerarquiaC('centro')">
-          <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <polygon points="12 2 2 7 12 12 22 7 12 2"/>
-            <polyline points="2 17 12 22 22 17"/>
-            <polyline points="2 12 12 17 22 12"/>
-          </svg>
-          Centro de costo
-          <span style="font-size:.68rem;font-weight:700;line-height:1;padding:.15rem .4rem;border-radius:999px;background:rgba(46,174,110,.15);color:var(--ok);flex-shrink:0">{{ conteoCentro() }}</span>
-        </button>
-        <button
-          style="flex:1;padding:.55rem 1rem;border-style:solid;border-width:1px;border-radius:8px;font-size:.875rem;font-weight:600;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;justify-content:center;gap:.4rem"
-          [style.background]="tabJerarquia() === 'proyecto' ? 'rgba(245,165,36,.08)' : 'transparent'"
-          [style.color]="tabJerarquia() === 'proyecto' ? 'var(--warn)' : 'var(--fg-4)'"
-          [style.borderColor]="tabJerarquia() === 'proyecto' ? 'rgba(245,165,36,.18)' : 'transparent'"
-          [disabled]="!selectedCentroIdC()"
-          [style.opacity]="!selectedCentroIdC() ? '0.45' : '1'"
-          (click)="seleccionarTabJerarquiaC('proyecto')">
-          <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
-          </svg>
-          Proyecto
-          <span style="font-size:.68rem;font-weight:700;line-height:1;padding:.15rem .4rem;border-radius:999px;background:rgba(245,165,36,.15);color:var(--warn);flex-shrink:0">{{ conteoProyecto() }}</span>
+          Solicitudes
+          @if (haySolicitudesActivas() && tabConsumidorActiva() !== 'solicitudes') {
+            <span style="position:absolute;top:6px;right:10px;width:8px;height:8px;border-radius:50%;background:var(--danger);flex-shrink:0"></span>
+          }
         </button>
       </div>
     </div>
 
-    <!-- Subcontexto: Todos -->
-    @if (tabJerarquia() === 'todos') {
-      <div style="padding:.75rem 1rem;border-left:4px solid #7c3aed;display:flex;align-items:center;justify-content:space-between;gap:.75rem;flex-wrap:wrap">
-        <div style="display:flex;align-items:center;gap:.75rem">
-          <div style="width:38px;height:38px;border-radius:9px;background:rgba(124,58,237,.1);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#7c3aed">
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/>
-              <path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"/>
-              <path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"/>
-            </svg>
-          </div>
-          <div>
-            <p style="margin:0 0 .15rem;font-size:.9rem;font-weight:700;color:var(--fg-2)">Todos los documentos</p>
-            <p style="margin:0;font-size:.75rem;color:var(--fg-4)">Centros de costos y proyectos de {{ empresaNombreC }} · {{ filasTodos().length }} documentos</p>
-          </div>
-        </div>
-        <div style="display:flex;gap:.35rem;flex-wrap:wrap;align-items:center">
-          <span style="font-size:.72rem;font-weight:600;color:var(--fg-4);margin-right:.15rem">Ordenar por:</span>
-          <button
-            style="padding:.3rem .65rem;border-style:solid;border-width:1px;border-radius:999px;font-size:.75rem;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap"
-            [style.background]="ordenTodosC() === 'recientes' ? 'rgba(124,58,237,.08)' : 'transparent'"
-            [style.color]="ordenTodosC() === 'recientes' ? '#7c3aed' : 'var(--fg-4)'"
-            [style.borderColor]="ordenTodosC() === 'recientes' ? 'rgba(124,58,237,.3)' : 'var(--border-subtle)'"
-            (click)="ordenTodosC.set('recientes')">
-            Recientes
-          </button>
-          <button
-            style="padding:.3rem .65rem;border-style:solid;border-width:1px;border-radius:999px;font-size:.75rem;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap"
-            [style.background]="ordenTodosC() === 'alfabetico' ? 'rgba(124,58,237,.08)' : 'transparent'"
-            [style.color]="ordenTodosC() === 'alfabetico' ? '#7c3aed' : 'var(--fg-4)'"
-            [style.borderColor]="ordenTodosC() === 'alfabetico' ? 'rgba(124,58,237,.3)' : 'var(--border-subtle)'"
-            (click)="ordenTodosC.set('alfabetico')">
-            Alfabético
-          </button>
-          <button
-            style="padding:.3rem .65rem;border-style:solid;border-width:1px;border-radius:999px;font-size:.75rem;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap"
-            [style.background]="ordenTodosC() === 'nivel_empresa' ? 'rgba(124,58,237,.08)' : 'transparent'"
-            [style.color]="ordenTodosC() === 'nivel_empresa' ? '#7c3aed' : 'var(--fg-4)'"
-            [style.borderColor]="ordenTodosC() === 'nivel_empresa' ? 'rgba(124,58,237,.3)' : 'var(--border-subtle)'"
-            (click)="ordenTodosC.set('nivel_empresa')">
-            Nivel empresa
-          </button>
-          <button
-            style="padding:.3rem .65rem;border-style:solid;border-width:1px;border-radius:999px;font-size:.75rem;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap"
-            [style.background]="ordenTodosC() === 'nivel_centro' ? 'rgba(124,58,237,.08)' : 'transparent'"
-            [style.color]="ordenTodosC() === 'nivel_centro' ? '#7c3aed' : 'var(--fg-4)'"
-            [style.borderColor]="ordenTodosC() === 'nivel_centro' ? 'rgba(124,58,237,.3)' : 'var(--border-subtle)'"
-            (click)="ordenTodosC.set('nivel_centro')">
-            Nivel centro
-          </button>
-          <button
-            style="padding:.3rem .65rem;border-style:solid;border-width:1px;border-radius:999px;font-size:.75rem;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap"
-            [style.background]="ordenTodosC() === 'nivel_proyecto' ? 'rgba(124,58,237,.08)' : 'transparent'"
-            [style.color]="ordenTodosC() === 'nivel_proyecto' ? '#7c3aed' : 'var(--fg-4)'"
-            [style.borderColor]="ordenTodosC() === 'nivel_proyecto' ? 'rgba(124,58,237,.3)' : 'var(--border-subtle)'"
-            (click)="ordenTodosC.set('nivel_proyecto')">
-            Nivel proyecto
-          </button>
-        </div>
-      </div>
-    }
+    <!-- Contenido -->
+    <div style="padding:1rem">
 
-    <!-- Subcontexto: Empresa -->
-    @if (tabJerarquia() === 'empresa') {
-      <div style="padding:.75rem 1rem;border-left:4px solid var(--sc-cyan);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.75rem">
-        <div style="display:flex;align-items:center;gap:.75rem">
-          <div style="width:38px;height:38px;border-radius:9px;background:rgba(0,174,239,.1);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--sc-cyan)">
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"/>
-              <path d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"/>
-              <path d="M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2"/>
-              <path d="M10 6h4"/><path d="M10 10h4"/><path d="M10 14h4"/><path d="M10 18h4"/>
-            </svg>
-          </div>
-          <div>
-            <p style="margin:0 0 .15rem;font-size:.9rem;font-weight:700;color:var(--fg-2)">{{ empresaNombreC }}</p>
-            @if (empresaSeleccionadaObj) {
-              <p style="margin:0;font-size:.75rem;color:var(--fg-4)">
-                RUT: {{ empresaSeleccionadaObj.rut }}
-                @if (empresaSeleccionadaObj.direccion?.ciudad) { · {{ empresaSeleccionadaObj.direccion!.ciudad }} }
-              </p>
-            }
-          </div>
-        </div>
-        <ng-container *ngTemplateOutlet="ordenEmpresaChipsC"></ng-container>
-      </div>
-    }
+      <!-- ── DOCUMENTACIÓN ─────────────────────────────────────── -->
+      @if (tabConsumidorActiva() === 'documentacion') {
 
-    <!-- Subcontexto: Centro de costo (resumen + select) -->
-    @if (tabJerarquia() === 'centro') {
-      <div style="padding:1rem;display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1rem">
-        @if (!selectedCentroIdC()) {
-          <div style="border-left:4px solid var(--border-subtle);border-radius:8px;background:var(--bg-1);padding:.75rem .85rem;display:flex;align-items:center">
-            <p style="margin:0;color:var(--fg-5);font-size:.875rem">Selecciona un centro de costos para ver su documentación.</p>
-          </div>
-        } @else if (selectedCentroIdC() === 'todos') {
-          <div style="border-left:4px solid var(--ok);border-radius:8px;background:var(--bg-1);padding:.75rem .85rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.75rem">
-            <div style="display:flex;align-items:center;gap:.75rem">
-              <div style="width:38px;height:38px;border-radius:9px;background:rgba(46,174,110,.1);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--ok)">
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <polygon points="12 2 2 7 12 12 22 7 12 2"/>
-                  <polyline points="2 17 12 22 22 17"/>
-                  <polyline points="2 12 12 17 22 12"/>
-                </svg>
-              </div>
-              <div>
-                <p style="margin:0 0 .15rem;font-size:.9rem;font-weight:700;color:var(--fg-2)">Documentación total de centros de costos</p>
-                <p style="margin:0;font-size:.75rem;color:var(--fg-4)">{{ centrosFiltradosC.length }} centros de costos</p>
-              </div>
-            </div>
-            <ng-container *ngTemplateOutlet="ordenCentroChipsC"></ng-container>
-          </div>
-        } @else {
-          <div style="border-left:4px solid var(--ok);border-radius:8px;background:var(--bg-1);padding:.75rem .85rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.75rem">
-            <div style="display:flex;align-items:center;gap:.75rem">
-              <div style="width:38px;height:38px;border-radius:9px;background:rgba(46,174,110,.1);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--ok)">
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <polygon points="12 2 2 7 12 12 22 7 12 2"/>
-                  <polyline points="2 17 12 22 22 17"/>
-                  <polyline points="2 12 12 17 22 12"/>
-                </svg>
-              </div>
-              <div>
-                <p style="margin:0 0 .15rem;font-size:.9rem;font-weight:700;color:var(--fg-2)">{{ centroNombreC }}</p>
-                @if (centroSeleccionado) {
-                  <p style="margin:0;font-size:.75rem;color:var(--fg-4)">
-                    Código: {{ centroSeleccionado.codigo }}
-                    @if (centroSeleccionado.ubicacion_ciudad) { · {{ centroSeleccionado.ubicacion_ciudad }}@if (centroSeleccionado.ubicacion_region) {, {{ centroSeleccionado.ubicacion_region }}} }
-                  </p>
-                }
-              </div>
-            </div>
-            <ng-container *ngTemplateOutlet="ordenCentroChipsC"></ng-container>
-          </div>
-        }
-        <label class="field" style="margin:0;justify-content:center">
-          <span>Centro de costos</span>
-          <select [ngModel]="selectedCentroIdC()" (ngModelChange)="onCentroChangeC($event)">
-            <option value="todos">Todos</option>
-            @for (c of centrosFiltradosC; track c._id) {
-              <option [value]="c._id">{{ c.nombre }}</option>
-            }
-          </select>
-        </label>
-      </div>
-    }
-
-    <!-- Subcontexto: Proyecto (resumen + select) -->
-    @if (tabJerarquia() === 'proyecto') {
-      <div style="padding:1rem;display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1rem">
-        @if (!selectedCentroIdC()) {
-          <div style="border-left:4px solid var(--border-subtle);border-radius:8px;background:var(--bg-1);padding:.75rem .85rem;display:flex;align-items:center">
-            <p style="margin:0;color:var(--fg-5);font-size:.875rem">Selecciona primero un centro de costos para ver sus proyectos.</p>
-          </div>
-        } @else if (!selectedProyectoIdC()) {
-          <div style="border-left:4px solid var(--border-subtle);border-radius:8px;background:var(--bg-1);padding:.75rem .85rem;display:flex;align-items:center">
-            <p style="margin:0;color:var(--fg-5);font-size:.875rem">Selecciona un proyecto para ver su documentación.</p>
-          </div>
-        } @else if (selectedProyectoIdC() === 'todos') {
-          <div style="border-left:4px solid var(--warn);border-radius:8px;background:var(--bg-1);padding:.75rem .85rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.75rem">
-            <div style="display:flex;align-items:center;gap:.75rem">
-              <div style="width:38px;height:38px;border-radius:9px;background:rgba(245,165,36,.1);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--warn)">
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
-                </svg>
-              </div>
-              <div>
-                @if (selectedCentroIdC() === 'todos') {
-                  <p style="margin:0 0 .15rem;font-size:.9rem;font-weight:700;color:var(--fg-2)">Todos los proyectos</p>
-                  <p style="margin:0;font-size:.75rem;color:var(--fg-4)">Todos los centros de costos</p>
-                } @else {
-                  <p style="margin:0 0 .15rem;font-size:.9rem;font-weight:700;color:var(--fg-2)">Todos los proyectos de: {{ centroNombreC }}</p>
-                  @if (centroSeleccionado) {
-                    <p style="margin:0;font-size:.75rem;color:var(--fg-4)">Código: {{ centroSeleccionado.codigo }}</p>
-                  }
-                }
-              </div>
-            </div>
-            <ng-container *ngTemplateOutlet="ordenProyectoChipsC"></ng-container>
-          </div>
-        } @else {
-          <div style="border-left:4px solid var(--warn);border-radius:8px;background:var(--bg-1);padding:.75rem .85rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.75rem">
-            <div style="display:flex;align-items:center;gap:.75rem">
-              <div style="width:38px;height:38px;border-radius:9px;background:rgba(245,165,36,.1);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--warn)">
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
-                </svg>
-              </div>
-              <div>
-                <p style="margin:0 0 .15rem;font-size:.9rem;font-weight:700;color:var(--fg-2)">{{ proyectoNombreC }}</p>
-                @if (proyectoSeleccionado) {
-                  <p style="margin:0;font-size:.75rem;color:var(--fg-4)">
-                    Código: {{ proyectoSeleccionado.codigo }}
-                    @if (proyectoSeleccionado.fecha_inicio) { · Inicio: {{ formatFecha(proyectoSeleccionado.fecha_inicio) }} }
-                    @if (proyectoSeleccionado.fecha_fin) { — Término: {{ formatFecha(proyectoSeleccionado.fecha_fin) }} }
-                  </p>
-                }
-              </div>
-            </div>
-            <ng-container *ngTemplateOutlet="ordenProyectoChipsC"></ng-container>
-          </div>
-        }
-        <label class="field" style="margin:0;justify-content:center">
-          <span>Proyecto</span>
-          <select [ngModel]="selectedProyectoIdC()" (ngModelChange)="onProyectoChangeC($event)" [disabled]="!selectedCentroIdC()">
-            @if (selectedCentroIdC()) {
-              <option value="todos">Todos</option>
-            }
-            @if (selectedCentroIdC() && selectedCentroIdC() !== 'todos') {
-              @for (p of proyectosFiltradosC; track p._id) {
-                <option [value]="p._id">{{ p.nombre }}</option>
-              }
-            }
-          </select>
-        </label>
-      </div>
-    }
-
-  </div> <!-- fin tarjeta A -->
-
-  <!-- Chips "Ordenar por" reutilizados dentro de las tarjetas de resumen de Empresa/Centro/Proyecto -->
-  <ng-template #ordenEmpresaChipsC>
-    <div style="display:flex;align-items:center;gap:.35rem;flex-wrap:wrap">
-      <span style="font-size:.72rem;font-weight:600;color:var(--fg-4);margin-right:.15rem">Ordenar por:</span>
-      <button
-        style="padding:.3rem .65rem;border-style:solid;border-width:1px;border-radius:999px;font-size:.75rem;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap"
-        [style.background]="ordenEmpresaC() === 'recientes' ? 'rgba(0,174,239,.08)' : 'transparent'"
-        [style.color]="ordenEmpresaC() === 'recientes' ? 'var(--sc-cyan)' : 'var(--fg-4)'"
-        [style.borderColor]="ordenEmpresaC() === 'recientes' ? 'rgba(0,174,239,.3)' : 'var(--border-subtle)'"
-        (click)="ordenEmpresaC.set('recientes')">
-        Recientes
-      </button>
-      <button
-        style="padding:.3rem .65rem;border-style:solid;border-width:1px;border-radius:999px;font-size:.75rem;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap"
-        [style.background]="ordenEmpresaC() === 'alfabetico' ? 'rgba(0,174,239,.08)' : 'transparent'"
-        [style.color]="ordenEmpresaC() === 'alfabetico' ? 'var(--sc-cyan)' : 'var(--fg-4)'"
-        [style.borderColor]="ordenEmpresaC() === 'alfabetico' ? 'rgba(0,174,239,.3)' : 'var(--border-subtle)'"
-        (click)="ordenEmpresaC.set('alfabetico')">
-        Alfabético
-      </button>
-    </div>
-  </ng-template>
-
-  <ng-template #ordenCentroChipsC>
-    <div style="display:flex;align-items:center;gap:.35rem;flex-wrap:wrap">
-      <span style="font-size:.72rem;font-weight:600;color:var(--fg-4);margin-right:.15rem">Ordenar por:</span>
-      <button
-        style="padding:.3rem .65rem;border-style:solid;border-width:1px;border-radius:999px;font-size:.75rem;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap"
-        [style.background]="ordenCentroC() === 'recientes' ? 'rgba(46,174,110,.08)' : 'transparent'"
-        [style.color]="ordenCentroC() === 'recientes' ? 'var(--ok)' : 'var(--fg-4)'"
-        [style.borderColor]="ordenCentroC() === 'recientes' ? 'rgba(46,174,110,.3)' : 'var(--border-subtle)'"
-        (click)="ordenCentroC.set('recientes')">
-        Recientes
-      </button>
-      <button
-        style="padding:.3rem .65rem;border-style:solid;border-width:1px;border-radius:999px;font-size:.75rem;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap"
-        [style.background]="ordenCentroC() === 'alfabetico' ? 'rgba(46,174,110,.08)' : 'transparent'"
-        [style.color]="ordenCentroC() === 'alfabetico' ? 'var(--ok)' : 'var(--fg-4)'"
-        [style.borderColor]="ordenCentroC() === 'alfabetico' ? 'rgba(46,174,110,.3)' : 'var(--border-subtle)'"
-        (click)="ordenCentroC.set('alfabetico')">
-        Alfabético
-      </button>
-    </div>
-  </ng-template>
-
-  <ng-template #ordenProyectoChipsC>
-    <div style="display:flex;align-items:center;gap:.35rem;flex-wrap:wrap">
-      <span style="font-size:.72rem;font-weight:600;color:var(--fg-4);margin-right:.15rem">Ordenar por:</span>
-      <button
-        style="padding:.3rem .65rem;border-style:solid;border-width:1px;border-radius:999px;font-size:.75rem;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap"
-        [style.background]="ordenProyectoC() === 'recientes' ? 'rgba(245,165,36,.08)' : 'transparent'"
-        [style.color]="ordenProyectoC() === 'recientes' ? 'var(--warn)' : 'var(--fg-4)'"
-        [style.borderColor]="ordenProyectoC() === 'recientes' ? 'rgba(245,165,36,.3)' : 'var(--border-subtle)'"
-        (click)="ordenProyectoC.set('recientes')">
-        Recientes
-      </button>
-      <button
-        style="padding:.3rem .65rem;border-style:solid;border-width:1px;border-radius:999px;font-size:.75rem;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap"
-        [style.background]="ordenProyectoC() === 'alfabetico' ? 'rgba(245,165,36,.08)' : 'transparent'"
-        [style.color]="ordenProyectoC() === 'alfabetico' ? 'var(--warn)' : 'var(--fg-4)'"
-        [style.borderColor]="ordenProyectoC() === 'alfabetico' ? 'rgba(245,165,36,.3)' : 'var(--border-subtle)'"
-        (click)="ordenProyectoC.set('alfabetico')">
-        Alfabético
-      </button>
-    </div>
-  </ng-template>
-
-  <!-- ══════════════════════════════════════════════════════════════
-       TARJETA B: Sub-tabs (Documentación / Solicitudes) + contenido
-       Solo se muestra cuando hay contexto seleccionado
-  ══════════════════════════════════════════════════════════════ -->
-  @if (
-    tabJerarquia() === 'todos' ||
-    tabJerarquia() === 'empresa' ||
-    (tabJerarquia() === 'centro' && selectedCentroIdC()) ||
-    (tabJerarquia() === 'proyecto' && selectedCentroIdC() && selectedProyectoIdC())
-  ) {
-    <div class="card" style="padding:0;overflow:hidden">
-
-      <!-- Sub-tab strip + botones de acción centrados -->
-      <div style="border-bottom:1px solid var(--border-subtle)">
-        <div style="display:flex;gap:.25rem;background:var(--bg-2);border-radius:10px;padding:.25rem">
-          <button
-            style="flex:1;padding:.55rem 1rem;border-style:solid;border-width:1px;border-radius:8px;font-size:.875rem;font-weight:600;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;justify-content:center;gap:.4rem"
-            [style.background]="tabConsumidorActiva() === 'documentacion' ? 'rgba(0,174,239,.08)' : 'transparent'"
-            [style.color]="tabConsumidorActiva() === 'documentacion' ? 'var(--sc-cyan)' : 'var(--fg-4)'"
-            [style.borderColor]="tabConsumidorActiva() === 'documentacion' ? 'rgba(0,174,239,.18)' : 'transparent'"
-            (click)="tabConsumidorActiva.set('documentacion')">
-            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/>
-              <polyline points="14 2 14 8 20 8"/>
-              <line x1="16" y1="13" x2="8" y2="13"/>
-              <line x1="16" y1="17" x2="8" y2="17"/>
-            </svg>
-            Documentación
-          </button>
-          @if (tabJerarquia() !== 'todos') {
-            <button
-              style="flex:1;padding:.55rem 1rem;border-style:solid;border-width:1px;border-radius:8px;font-size:.875rem;font-weight:600;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;justify-content:center;gap:.4rem;position:relative"
-              [style.background]="tabConsumidorActiva() === 'solicitudes' ? 'rgba(46,174,110,.08)' : 'transparent'"
-              [style.color]="tabConsumidorActiva() === 'solicitudes' ? 'var(--ok)' : 'var(--fg-4)'"
-              [style.borderColor]="tabConsumidorActiva() === 'solicitudes' ? 'rgba(46,174,110,.18)' : 'transparent'"
-              (click)="tabConsumidorActiva.set('solicitudes')">
-              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="m22 2-7 20-4-9-9-4Z"/>
-                <path d="M22 2 11 13"/>
-              </svg>
-              Solicitudes
-              @if (haySolicitudesActivas() && tabConsumidorActiva() !== 'solicitudes') {
-                <span style="position:absolute;top:6px;right:10px;width:8px;height:8px;border-radius:50%;background:var(--danger);flex-shrink:0"></span>
-              }
-            </button>
+        <!-- Encabezado de contexto -->
+        <div style="margin-bottom:.75rem">
+          @if (grupoAplicado() === 'empresa') {
+            <p style="margin:0;font-size:.9rem;font-weight:700;color:var(--fg-2)">{{ empresaNombreC }}</p>
+          } @else if (grupoAplicado() === 'centro') {
+            <p style="margin:0;font-size:.9rem;font-weight:700;color:var(--fg-2)">
+              {{ centroIdAplicado() === 'todos' ? 'Todos los centros de costo' : centroNombreC }}
+            </p>
+          } @else if (grupoAplicado() === 'proyecto') {
+            <p style="margin:0;font-size:.9rem;font-weight:700;color:var(--fg-2)">
+              {{ proyectoIdAplicado() === 'todos' ? 'Todos los proyectos' : proyectoNombreC }}
+              @if (centroIdAplicado() !== 'todos') { <span style="font-weight:400;color:var(--fg-5)"> · {{ centroNombreC }}</span> }
+            </p>
+          } @else if (grupoAplicado() === 'actividad') {
+            <p style="margin:0;font-size:.9rem;font-weight:700;color:var(--fg-2)">
+              {{ actividadIdAplicado() === 'todos' ? 'Todas las actividades' : actividadNombreC }}
+            </p>
+          } @else if (grupoAplicado() === 'activo') {
+            <p style="margin:0;font-size:.9rem;font-weight:700;color:var(--fg-2)">
+              {{ activoIdAplicado() === 'todos' ? 'Todos los activos' : activoNombreC }}
+            </p>
           }
         </div>
-      </div>
 
-      <!-- Fila de acciones, alineada al ancho de cada tab -->
-      <div style="display:flex;gap:.25rem;padding:.25rem">
-        <div style="flex:1;display:flex;gap:.25rem">
-          @if (tabConsumidorActiva() === 'documentacion' && tabJerarquia() !== 'todos') {
-            @if (tabDocConsumidor() === 'activos' && puedeGestionarDocumento && puedeDoc(docTipoActual, 'subir')) {
-              <button class="btn-primary" style="flex:1;font-size:.8rem;padding:.4rem .5rem;white-space:nowrap;display:inline-flex;align-items:center;justify-content:center;gap:.35rem" (click)="toggleUpload(docTipoActual)">
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0">
-                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
-                </svg>
-                {{ panels[docTipoActual].showUpload ? 'Terminar' : 'Subir' }}
-              </button>
-            }
-            <button
-              style="flex:1;padding:.3rem .5rem;border-style:solid;border-width:1px;border-radius:6px;font-size:.78rem;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap;display:inline-flex;align-items:center;justify-content:center;gap:.35rem"
-              [style.background]="tabDocConsumidor() === 'activos' ? 'var(--sc-cyan-tint-6)' : 'transparent'"
-              [style.color]="tabDocConsumidor() === 'activos' ? 'var(--sc-cyan)' : 'var(--fg-4)'"
-              [style.borderColor]="tabDocConsumidor() === 'activos' ? 'rgba(0,174,239,.25)' : 'var(--border-subtle)'"
-              (click)="tabDocConsumidor.set('activos')">
-              <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0">
-                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
-              </svg>
-              Vigentes
-            </button>
-            <button
-              style="flex:1;padding:.3rem .5rem;border-style:solid;border-width:1px;border-radius:6px;font-size:.78rem;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap;display:inline-flex;align-items:center;justify-content:center;gap:.35rem"
-              [style.background]="tabDocConsumidor() === 'vencidos' ? 'rgba(229,72,77,.06)' : 'transparent'"
-              [style.color]="tabDocConsumidor() === 'vencidos' ? 'var(--danger)' : 'var(--fg-4)'"
-              [style.borderColor]="tabDocConsumidor() === 'vencidos' ? 'rgba(229,72,77,.25)' : 'var(--border-subtle)'"
-              (click)="activarTabVencidosConsumidor()">
-              <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0">
-                <path d="m21.73 18-8-14a2 2 0 0 0-3.46 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
-              </svg>
-              Vencidos
-            </button>
-          }
-        </div>
-        <div style="flex:1;display:flex;justify-content:center"></div>
-      </div>
-
-      <!-- Contenido -->
-      <div style="padding:1rem">
-
-        <!-- ── DOCUMENTACIÓN ─────────────────────────────────────── -->
-        @if (tabConsumidorActiva() === 'documentacion') {
-
-          <!-- Vista "Todos": lista plana de la propia empresa, con tag de nivel -->
-          @if (tabJerarquia() === 'todos') {
-            <app-status-banner [status]="service.uploadStatus().empresa"></app-status-banner>
-
-            @if (filasTodos().length === 0) {
-              <p class="empty">{{ service.busquedaCascadaError() ? 'No se pudo cargar la búsqueda total. Intenta de nuevo.' : 'Sin documentos para el filtro actual.' }}</p>
-            } @else {
-              <div style="border:1px solid var(--border-subtle);border-radius:8px;overflow:hidden">
-                <div style="display:flex;justify-content:space-between;padding:.5rem 1rem;background:var(--bg-1);border-bottom:1px solid var(--border-subtle)">
-                  <span style="font-size:.7rem;font-weight:700;color:var(--fg-5);letter-spacing:.07em;text-transform:uppercase">Documento</span>
-                  <span style="font-size:.7rem;font-weight:700;color:var(--fg-5);letter-spacing:.07em;text-transform:uppercase">Acciones</span>
-                </div>
-                @for (fila of filasTodos(); track fila.doc._id) {
-                  <div style="display:flex;align-items:center;justify-content:space-between;padding:.6rem 1rem;border-bottom:1px solid var(--bg-2)">
-                    <div style="display:flex;align-items:center;gap:.6rem;min-width:0">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--fg-5)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-                      <div style="min-width:0;overflow:hidden">
-                        <div style="display:flex;align-items:center;gap:.4rem;flex-wrap:wrap">
-                          <span style="font-size:.7rem;font-weight:600;padding:.2rem .55rem;border-radius:999px;background:#e0e7ff;color:#3730a3;white-space:nowrap;flex-shrink:0">{{ fila.doc.categoria }}</span>
-                          <span style="font-size:.875rem;color:var(--fg-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ fila.doc.nombre_display }}</span>
-                          @if (fila.doc.tipo_contenido === 'link') {
-                            <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:#ecfdf5;color:#047857;flex-shrink:0">🔗 Link</span>
-                          }
-                        </div>
-                        <div style="margin-top:.2rem;display:flex;align-items:center;gap:.5rem;flex-wrap:wrap">
-                          @if (fila.tipo === 'empresa') {
-                            <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:rgba(0,174,239,.1);color:var(--sc-cyan)">Empresa · {{ empresaNombreC }}</span>
-                          }
-                          @if (fila.centroId) {
-                            <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:rgba(46,174,110,.1);color:var(--ok)">Centro · {{ fila.centroNombre }}</span>
-                          }
-                          @if (fila.proyectoId) {
-                            <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:rgba(245,165,36,.1);color:var(--warn)">Proyecto · {{ fila.proyectoNombre }}</span>
-                          }
-                          <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:#f1f5f9;color:#475569">Subido: {{ formatFechaHora(fila.doc.subido_en) }}</span>
-                          @if (fila.doc.subido_por_nombre) {
-                            <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:#f0fdfa;color:#0f766e">{{ fila.doc.subido_por_nombre }}</span>
-                          }
-                        </div>
-                      </div>
-                    </div>
-                    <div style="display:flex;gap:.35rem;flex-shrink:0">
-                      <button [title]="fila.doc.tipo_contenido === 'link' ? 'Abrir enlace' : 'Descargar'" (click)="abrirDocumento(fila.doc)"
-                              style="width:auto;height:30px;padding:0 .55rem;gap:.35rem;border-radius:7px;border:none;background:var(--sc-cyan-tint-6);color:var(--sc-cyan);cursor:pointer;display:flex;align-items:center;justify-content:center">
-                        @if (fila.doc.tipo_contenido === 'link') {
-                          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-                        } @else {
-                          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                        }
-                      <span style="font-size:.72rem;font-weight:600">{{ fila.doc.tipo_contenido === 'link' ? 'Abrir' : 'Descargar' }}</span></button>
-                      @if (puedeDoc(fila.tipo, 'editarCategoria')) {
-                      <div style="position:relative">
-                        <button title="Cambiar categoría" (click)="toggleCategoriaMenu(fila.doc._id)"
-                                style="width:auto;height:30px;padding:0 .55rem;gap:.35rem;border-radius:7px;border:none;background:#eef2ff;color:#4f46e5;cursor:pointer;display:flex;align-items:center;justify-content:center">
-                          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m20.59 13.41-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82Z"/><circle cx="7" cy="7" r="1"/></svg><span style="font-size:.72rem;font-weight:600">Categoría</span>
-                        </button>
-                        @if (categoriaMenuAbierto() === fila.doc._id) {
-                          <div style="position:fixed;inset:0;z-index:60" (click)="categoriaMenuAbierto.set(null)"></div>
-                          <div style="position:absolute;top:36px;right:0;background:var(--bg-0);border:1px solid var(--border-subtle);border-radius:8px;box-shadow:0 8px 24px rgba(15,23,42,.14);z-index:61;min-width:190px;max-height:240px;overflow-y:auto;padding:.25rem">
-                            @for (cat of categorias; track cat) {
-                              <div (click)="seleccionarCategoriaTodosC(fila.doc.url, cat)"
-                                   style="padding:.4rem .65rem;font-size:.8rem;border-radius:6px;cursor:pointer"
-                                   [style.font-weight]="cat === fila.doc.categoria ? '700' : '400'"
-                                   [style.color]="cat === fila.doc.categoria ? '#3730a3' : 'var(--fg-2)'"
-                                   [style.background]="cat === fila.doc.categoria ? '#eef2ff' : 'transparent'">
-                                {{ cat }}
-                              </div>
-                            }
-                          </div>
-                        }
-                      </div>
-                      }
-                      @if (puedeDoc(fila.tipo, 'vencer')) {
-                      <button title="Marcar vencido" (click)="marcarVencidoConsumidor(fila.doc.url, fila.tipo)"
-                              style="width:auto;height:30px;padding:0 .55rem;gap:.35rem;border-radius:7px;border:none;background:var(--warn-bg);color:var(--warn);cursor:pointer;display:flex;align-items:center;justify-content:center">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><span style="font-size:.72rem;font-weight:600">Vencer</span>
-                      </button>
-                      }
-                      @if (puedeDoc(fila.tipo, 'eliminar')) {
-                      <button title="Eliminar" (click)="eliminarEnTodos(fila.doc.url, fila.doc.nombre_display)"
-                              style="width:auto;height:30px;padding:0 .55rem;gap:.35rem;border-radius:7px;border:none;background:var(--danger-bg);color:var(--danger);cursor:pointer;display:flex;align-items:center;justify-content:center">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg><span style="font-size:.72rem;font-weight:600">Eliminar</span>
-                      </button>
-                      }
-                    </div>
-                  </div>
-                }
-              </div>
-            }
-          }
-
-          @if (tabJerarquia() !== 'todos') {
-
-          @if (tabDocConsumidor() === 'activos') {
-          <!-- Status banners -->
-          @if (tabJerarquia() === 'empresa') { <app-status-banner [status]="service.uploadStatus().empresa"></app-status-banner> }
-          @if (tabJerarquia() === 'centro')  { <app-status-banner [status]="service.uploadStatus().centro"></app-status-banner> }
-          @if (tabJerarquia() === 'proyecto'){ <app-status-banner [status]="service.uploadStatus().proyecto"></app-status-banner> }
+        @if (estadoAplicado() === 'activos' && (grupoAplicado() === 'empresa' || grupoAplicado() === 'centro' || grupoAplicado() === 'proyecto')) {
+          <app-status-banner [status]="service.uploadStatus()[docTipoActual]"></app-status-banner>
 
           @let docTipo = docTipoActual;
 
           @if (puedeGestionarDocumento) {
-            <!-- Panel subir -->
-            @if (panels[docTipo].showUpload) {
-              <app-upload-document-form
-                style="display:block;margin-bottom:1rem"
-                [mostrarAviso]="true"
-                [modo]="panels[docTipo].modoUpload" (modoChange)="setModoUpload(docTipo, $event)"
-                [archivo]="panels[docTipo].selectedFile" (archivoChange)="onArchivoChange($event, docTipo)"
-                [(link)]="panels[docTipo].linkInput"
-                [(nombre)]="panels[docTipo].nombreInput"
-                [(categoria)]="panels[docTipo].categoriaInput"
-                [categorias]="categorias"
-                [mostrarCamposArchivo]="false"
-                [ocultarBotonConfirmarArchivo]="true"
-                [archivoInvalido]="archivoDemasiadoGrande(docTipo)"
-                [mensajeArchivoInvalido]="mensajeArchivoDemasiadoGrande(docTipo)"
-                [linkInvalido]="linkInvalido(docTipo)"
-                [confirmDisabled]="panels[docTipo].modoUpload === 'archivo'
-                  ? (!panels[docTipo].selectedFile || archivoDemasiadoGrande(docTipo))
-                  : (!panels[docTipo].linkInput.trim() || linkInvalido(docTipo))"
-                (confirmar)="confirmarSubida(docTipo)"
-                (cancelar)="toggleUpload(docTipo)" />
-
-              @if (tarjetasArchivoSubiendo(docTipo).length > 0) {
-                <div style="margin-bottom:1rem">
-                  <app-document-card-list
-                    [documentos]="tarjetasArchivoSubiendo(docTipo)"
-                    [mostrarCategoria]="true"
-                    [categorias]="categorias"
-                    (categoriaChange)="onCategoriaTarjetaChange($event, docTipo)"
-                    (eliminar)="onEliminarTarjeta($event, docTipo)"
-                    (reintentar)="reintentarSubida($event)"
-                    (renombrar)="onRenombrarTarjeta($event, docTipo)" />
-                </div>
-              }
-            }
-
             <!-- Lista documentos específicos -->
             @if (docsFiltrados(docTipo).length === 0) { <p class="empty">Sin documentos.</p> }
             @else {
@@ -718,36 +323,36 @@
                           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                         }
                       <span style="font-size:.72rem;font-weight:600">{{ d.tipo_contenido === 'link' ? 'Abrir' : 'Descargar' }}</span></button>
-@if (puedeDoc(docTipo, 'editarCategoria')) {
-<div style="position:relative">
-  <button title="Cambiar categoría" (click)="toggleCategoriaMenu(d._id)"
-          style="width:auto;height:30px;padding:0 .55rem;gap:.35rem;border-radius:7px;border:none;background:#eef2ff;color:#4f46e5;cursor:pointer;display:flex;align-items:center;justify-content:center">
-    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m20.59 13.41-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82Z"/><circle cx="7" cy="7" r="1"/></svg><span style="font-size:.72rem;font-weight:600">Categoría</span>
-  </button>
-  @if (categoriaMenuAbierto() === d._id) {
-    <div style="position:fixed;inset:0;z-index:60" (click)="categoriaMenuAbierto.set(null)"></div>
-    <div style="position:absolute;top:36px;right:0;background:var(--bg-0);border:1px solid var(--border-subtle);border-radius:8px;box-shadow:0 8px 24px rgba(15,23,42,.14);z-index:61;min-width:190px;max-height:240px;overflow-y:auto;padding:.25rem">
-      @for (cat of categorias; track cat) {
-        <div (click)="seleccionarCategoriaC(d.url, cat, docTipo)"
-             style="padding:.4rem .65rem;font-size:.8rem;border-radius:6px;cursor:pointer"
-             [style.font-weight]="cat === d.categoria ? '700' : '400'"
-             [style.color]="cat === d.categoria ? '#3730a3' : 'var(--fg-2)'"
-             [style.background]="cat === d.categoria ? '#eef2ff' : 'transparent'">
-          {{ cat }}
-        </div>
-      }
-    </div>
-  }
-</div>
-}
-@if (puedeDoc(docTipo, 'vencer')) {
-<button title="Marcar vencido" (click)="marcarVencidoConsumidor(d.url, docTipo)"
+                      @if (puedeDoc(docTipo, 'editarCategoria')) {
+                      <div style="position:relative">
+                        <button title="Cambiar categoría" (click)="toggleCategoriaMenu(d._id)"
+                                style="width:auto;height:30px;padding:0 .55rem;gap:.35rem;border-radius:7px;border:none;background:#eef2ff;color:#4f46e5;cursor:pointer;display:flex;align-items:center;justify-content:center">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m20.59 13.41-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82Z"/><circle cx="7" cy="7" r="1"/></svg><span style="font-size:.72rem;font-weight:600">Categoría</span>
+                        </button>
+                        @if (categoriaMenuAbierto() === d._id) {
+                          <div style="position:fixed;inset:0;z-index:60" (click)="categoriaMenuAbierto.set(null)"></div>
+                          <div style="position:absolute;top:36px;right:0;background:var(--bg-0);border:1px solid var(--border-subtle);border-radius:8px;box-shadow:0 8px 24px rgba(15,23,42,.14);z-index:61;min-width:190px;max-height:240px;overflow-y:auto;padding:.25rem">
+                            @for (cat of categorias; track cat) {
+                              <div (click)="seleccionarCategoriaC(d.url, cat, docTipo)"
+                                   style="padding:.4rem .65rem;font-size:.8rem;border-radius:6px;cursor:pointer"
+                                   [style.font-weight]="cat === d.categoria ? '700' : '400'"
+                                   [style.color]="cat === d.categoria ? '#3730a3' : 'var(--fg-2)'"
+                                   [style.background]="cat === d.categoria ? '#eef2ff' : 'transparent'">
+                                {{ cat }}
+                              </div>
+                            }
+                          </div>
+                        }
+                      </div>
+                      }
+                      @if (puedeDoc(docTipo, 'vencer')) {
+                      <button title="Marcar vencido" (click)="marcarVencidoConsumidor(d.url, docTipo)"
                               style="width:auto;height:30px;padding:0 .55rem;gap:.35rem;border-radius:7px;border:none;background:var(--warn-bg);color:var(--warn);cursor:pointer;display:flex;align-items:center;justify-content:center">
                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><span style="font-size:.72rem;font-weight:600">Vencer</span>
                       </button>
                       }
-@if (puedeDoc(docTipo, 'eliminar')) {
-<button title="Eliminar" (click)="eliminar(d.url, docTipo, d.nombre_display)"
+                      @if (puedeDoc(docTipo, 'eliminar')) {
+                      <button title="Eliminar" (click)="eliminar(d.url, docTipo, d.nombre_display)"
                               style="width:auto;height:30px;padding:0 .55rem;gap:.35rem;border-radius:7px;border:none;background:var(--danger-bg);color:var(--danger);cursor:pointer;display:flex;align-items:center;justify-content:center">
                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg><span style="font-size:.72rem;font-weight:600">Eliminar</span>
                       </button>
@@ -760,7 +365,7 @@
           }
 
           <!-- Vista "todos centros": agrupado, filtrado, solo descargar -->
-          @if (tabJerarquia() === 'centro' && selectedCentroIdC() === 'todos') {
+          @if (grupoAplicado() === 'centro' && centroIdAplicado() === 'todos') {
             @if (filteredDocsPorCentro().length === 0) {
               <p class="empty">Sin documentos en centros de costos.</p>
             }
@@ -809,7 +414,7 @@
           }
 
           <!-- Vista "todos proyectos": agrupado, filtrado, solo descargar -->
-          @if (tabJerarquia() === 'proyecto' && selectedProyectoIdC() === 'todos') {
+          @if (grupoAplicado() === 'proyecto' && proyectoIdAplicado() === 'todos') {
             @if (filteredDocsPorProyecto().length === 0) {
               <p class="empty">Sin documentos en proyectos.</p>
             }
@@ -859,89 +464,259 @@
               </div>
             }
           }
+        }
 
-          } <!-- fin activos -->
-
-          <!-- Sub-vista vencidos -->
-          @if (tabDocConsumidor() === 'vencidos') {
-            <p style="margin:0 0 .75rem;font-size:.8rem;color:var(--fg-4)">Mostrando los últimos 20 documentos vencidos de este contexto.</p>
-            @if (service.documentosVencidos().length === 0) {
-              <p class="empty">Sin documentos vencidos.</p>
-            } @else {
+        <!-- ── ACTIVIDAD ─────────────────────────────────────── -->
+        @if (grupoAplicado() === 'actividad') {
+          @if (cargandoGrupo()) { <p class="empty">Cargando…</p> }
+          @else if (filasActividad().length === 0) { <p class="empty">Sin documentos.</p> }
+          @for (grupo of filasActividad(); track grupo.id) {
+            <div style="margin-bottom:1rem">
+              <p style="margin:0 0 .15rem;font-size:.875rem;font-weight:700;color:var(--fg-2)">{{ grupo.nombre }}</p>
+              @if (grupo.meta) { <p style="margin:0 0 .5rem;font-size:.75rem;color:var(--fg-5)">Centro: {{ grupo.meta }}</p> }
               <div style="border:1px solid var(--border-subtle);border-radius:8px;overflow:hidden">
-                <div style="display:grid;grid-template-columns:1fr auto auto;padding:.5rem 1rem;background:var(--bg-1);border-bottom:1px solid var(--border-subtle);gap:1rem">
+                <div style="display:flex;justify-content:space-between;padding:.5rem 1rem;background:var(--bg-1);border-bottom:1px solid var(--border-subtle)">
                   <span style="font-size:.7rem;font-weight:700;color:var(--fg-5);letter-spacing:.07em;text-transform:uppercase">Documento</span>
-                  <span style="font-size:.7rem;font-weight:700;color:var(--fg-5);letter-spacing:.07em;text-transform:uppercase">Fechas</span>
                   <span style="font-size:.7rem;font-weight:700;color:var(--fg-5);letter-spacing:.07em;text-transform:uppercase">Acciones</span>
                 </div>
-                @for (v of service.documentosVencidos(); track v._id) {
-                  <div style="display:grid;grid-template-columns:1fr auto auto;align-items:center;padding:.6rem 1rem;border-bottom:1px solid var(--bg-2);gap:1rem">
+                @for (d of grupo.docs; track d._id) {
+                  <div style="display:flex;align-items:center;justify-content:space-between;padding:.6rem 1rem;border-bottom:1px solid var(--bg-2)">
                     <div style="display:flex;align-items:center;gap:.6rem;min-width:0">
                       <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--fg-5)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
                       <div style="min-width:0;overflow:hidden">
                         <div style="display:flex;align-items:center;gap:.4rem;flex-wrap:wrap">
-                          @if (v.categoria) {
-                            <span style="font-size:.7rem;font-weight:600;padding:.2rem .55rem;border-radius:999px;background:#e0e7ff;color:#3730a3;white-space:nowrap;flex-shrink:0">{{ v.categoria }}</span>
-                          }
-                          <span style="font-size:.875rem;color:var(--fg-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ v.nombre_display }}</span>
-                          @if (v.tipo_contenido === 'link') {
-                            <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:#ecfdf5;color:#047857;flex-shrink:0">🔗 Link</span>
-                          }
+                          @if (d.categoria) { <span style="font-size:.7rem;font-weight:600;padding:.2rem .55rem;border-radius:999px;background:#e0e7ff;color:#3730a3;white-space:nowrap;flex-shrink:0">{{ d.categoria }}</span> }
+                          <span style="font-size:.875rem;color:var(--fg-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ d.nombre_display }}</span>
+                          @if (d.tipo_contenido === 'link') { <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:#ecfdf5;color:#047857;flex-shrink:0">🔗 Link</span> }
                         </div>
-                        <div style="margin-top:.2rem">
-                          @if (v.origen_tipo === 'empresa') {
-                            <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:rgba(0,174,239,.1);color:var(--sc-cyan)">Empresa</span>
-                          } @else if (v.origen_tipo === 'centro') {
-                            <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:rgba(46,174,110,.1);color:var(--ok)">Centro{{ v.centro_nombre ? ' · ' + v.centro_nombre : '' }}</span>
-                          } @else if (v.origen_tipo === 'proyecto') {
-                            <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:rgba(245,165,36,.1);color:var(--warn)">Proyecto{{ v.proyecto_nombre ? ' · ' + v.proyecto_nombre : '' }}</span>
-                          }
-                        </div>
+                        @if (d.subido_en) {
+                          <div style="margin-top:.2rem"><span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:#f1f5f9;color:#475569">Subido: {{ formatFechaHora(d.subido_en) }}</span></div>
+                        }
                       </div>
                     </div>
-                    <div style="display:flex;flex-direction:column;gap:.15rem;flex-shrink:0;text-align:right">
-                      @if (v.subido_en) {
-                        <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:#f1f5f9;color:#475569;align-self:flex-end">Subido: {{ formatFechaHora(v.subido_en) }}</span>
-                      }
-                      @if (v.subido_por_nombre) {
-                        <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:#f0fdfa;color:#0f766e;align-self:flex-end">{{ v.subido_por_nombre }}</span>
-                      }
-                      <span style="font-size:.72rem;color:var(--danger);font-weight:600">Vencido: {{ formatFechaHora(v.vencido_en) }}</span>
-                    </div>
-                    <button [title]="v.tipo_contenido === 'link' ? 'Abrir enlace' : 'Descargar'" (click)="abrirDocumento(v)"
-                            style="width:auto;height:30px;padding:0 .55rem;gap:.35rem;border-radius:7px;border:none;background:var(--sc-cyan-tint-6);color:var(--sc-cyan);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0">
-                      @if (v.tipo_contenido === 'link') {
-                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-                      } @else {
+                    <div style="display:flex;gap:.35rem;flex-shrink:0">
+                      <button title="Descargar" (click)="descargarActividadDoc(grupo.id, d._id, d.nombre_display)"
+                              style="width:auto;height:30px;padding:0 .55rem;gap:.35rem;border-radius:7px;border:none;background:var(--sc-cyan-tint-6);color:var(--sc-cyan);cursor:pointer;display:flex;align-items:center;justify-content:center">
                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                        <span style="font-size:.72rem;font-weight:600">Descargar</span></button>
+                      @if (puedeDocActividad('editarCategoria')) {
+                      <div style="position:relative">
+                        <button title="Cambiar categoría" (click)="toggleCategoriaMenu(d._id)"
+                                style="width:auto;height:30px;padding:0 .55rem;gap:.35rem;border-radius:7px;border:none;background:#eef2ff;color:#4f46e5;cursor:pointer;display:flex;align-items:center;justify-content:center">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m20.59 13.41-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82Z"/><circle cx="7" cy="7" r="1"/></svg><span style="font-size:.72rem;font-weight:600">Categoría</span>
+                        </button>
+                        @if (categoriaMenuAbierto() === d._id) {
+                          <div style="position:fixed;inset:0;z-index:60" (click)="categoriaMenuAbierto.set(null)"></div>
+                          <div style="position:absolute;top:36px;right:0;background:var(--bg-0);border:1px solid var(--border-subtle);border-radius:8px;box-shadow:0 8px 24px rgba(15,23,42,.14);z-index:61;min-width:190px;max-height:240px;overflow-y:auto;padding:.25rem">
+                            @for (cat of categorias; track cat) {
+                              <div (click)="actualizarCategoriaActividadDoc(grupo.id, d._id, cat)"
+                                   style="padding:.4rem .65rem;font-size:.8rem;border-radius:6px;cursor:pointer"
+                                   [style.font-weight]="cat === d.categoria ? '700' : '400'"
+                                   [style.color]="cat === d.categoria ? '#3730a3' : 'var(--fg-2)'"
+                                   [style.background]="cat === d.categoria ? '#eef2ff' : 'transparent'">
+                                {{ cat }}
+                              </div>
+                            }
+                          </div>
+                        }
+                      </div>
                       }
-                    <span style="font-size:.72rem;font-weight:600">{{ v.tipo_contenido === 'link' ? 'Abrir' : 'Descargar' }}</span></button>
+                      @if (puedeDocActividad('eliminar')) {
+                      <button title="Eliminar" (click)="eliminarActividadDoc(grupo.id, d._id)"
+                              style="width:auto;height:30px;padding:0 .55rem;gap:.35rem;border-radius:7px;border:none;background:var(--danger-bg);color:var(--danger);cursor:pointer;display:flex;align-items:center;justify-content:center">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg><span style="font-size:.72rem;font-weight:600">Eliminar</span>
+                      </button>
+                      }
+                    </div>
                   </div>
                 }
               </div>
-            }
-          } <!-- fin vencidos -->
-
-          } <!-- fin tabJerarquia !== 'todos' -->
-
-        } <!-- fin documentacion -->
-
-        <!-- ── SOLICITUDES ────────────────────────────────────────── -->
-        @if (tabConsumidorActiva() === 'solicitudes') {
-          <app-status-banner [status]="solicitudesService.status()"></app-status-banner>
-
-          @let solicitudes = tabJerarquia() === 'empresa' ? solicitudesDeEmpresa() : tabJerarquia() === 'centro' ? solicitudesDeCentro() : solicitudesDeProyecto();
-
-          @if (solicitudes.length === 0) { <p class="empty">Sin solicitudes.</p> }
-          @for (s of solicitudes; track s._id) {
-            <ng-container *ngTemplateOutlet="solicitudConsumidorCard; context: { s: s }"></ng-container>
+            </div>
           }
+        }
 
-        } <!-- fin solicitudes -->
+        <!-- ── ACTIVO ─────────────────────────────────────── -->
+        @if (grupoAplicado() === 'activo') {
+          @if (cargandoGrupo()) { <p class="empty">Cargando…</p> }
+          @else if (filasActivo().length === 0) { <p class="empty">Sin documentos.</p> }
+          @for (grupo of filasActivo(); track grupo.id) {
+            <div style="margin-bottom:1rem">
+              <p style="margin:0 0 .15rem;font-size:.875rem;font-weight:700;color:var(--fg-2)">{{ grupo.nombre }}</p>
+              @if (grupo.meta) { <p style="margin:0 0 .5rem;font-size:.75rem;color:var(--fg-5)">Centro: {{ grupo.meta }}</p> }
+              <div style="border:1px solid var(--border-subtle);border-radius:8px;overflow:hidden">
+                <div style="display:flex;justify-content:space-between;padding:.5rem 1rem;background:var(--bg-1);border-bottom:1px solid var(--border-subtle)">
+                  <span style="font-size:.7rem;font-weight:700;color:var(--fg-5);letter-spacing:.07em;text-transform:uppercase">Documento</span>
+                  <span style="font-size:.7rem;font-weight:700;color:var(--fg-5);letter-spacing:.07em;text-transform:uppercase">Acciones</span>
+                </div>
+                @for (d of grupo.docs; track d._id) {
+                  <div style="display:flex;align-items:center;justify-content:space-between;padding:.6rem 1rem;border-bottom:1px solid var(--bg-2)">
+                    <div style="display:flex;align-items:center;gap:.6rem;min-width:0">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--fg-5)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                      <div style="min-width:0;overflow:hidden">
+                        <div style="display:flex;align-items:center;gap:.4rem;flex-wrap:wrap">
+                          @if (d.categoria) { <span style="font-size:.7rem;font-weight:600;padding:.2rem .55rem;border-radius:999px;background:#e0e7ff;color:#3730a3;white-space:nowrap;flex-shrink:0">{{ d.categoria }}</span> }
+                          <span style="font-size:.875rem;color:var(--fg-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ d.nombre_display }}</span>
+                          @if (d.tipo_contenido === 'link') { <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:#ecfdf5;color:#047857;flex-shrink:0">🔗 Link</span> }
+                        </div>
+                        @if (d.subido_en) {
+                          <div style="margin-top:.2rem"><span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:#f1f5f9;color:#475569">Subido: {{ formatFechaHora(d.subido_en) }}</span></div>
+                        }
+                      </div>
+                    </div>
+                    <div style="display:flex;gap:.35rem;flex-shrink:0">
+                      <button title="Descargar" (click)="descargarActivoDoc(grupo.id, grupo.centroId ?? '', d._id, d.nombre_display)"
+                              style="width:auto;height:30px;padding:0 .55rem;gap:.35rem;border-radius:7px;border:none;background:var(--sc-cyan-tint-6);color:var(--sc-cyan);cursor:pointer;display:flex;align-items:center;justify-content:center">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                        <span style="font-size:.72rem;font-weight:600">Descargar</span></button>
+                      @if (puedeDocActivo('editarCategoria')) {
+                      <div style="position:relative">
+                        <button title="Cambiar categoría" (click)="toggleCategoriaMenu(d._id)"
+                                style="width:auto;height:30px;padding:0 .55rem;gap:.35rem;border-radius:7px;border:none;background:#eef2ff;color:#4f46e5;cursor:pointer;display:flex;align-items:center;justify-content:center">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m20.59 13.41-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82Z"/><circle cx="7" cy="7" r="1"/></svg><span style="font-size:.72rem;font-weight:600">Categoría</span>
+                        </button>
+                        @if (categoriaMenuAbierto() === d._id) {
+                          <div style="position:fixed;inset:0;z-index:60" (click)="categoriaMenuAbierto.set(null)"></div>
+                          <div style="position:absolute;top:36px;right:0;background:var(--bg-0);border:1px solid var(--border-subtle);border-radius:8px;box-shadow:0 8px 24px rgba(15,23,42,.14);z-index:61;min-width:190px;max-height:240px;overflow-y:auto;padding:.25rem">
+                            @for (cat of categorias; track cat) {
+                              <div (click)="actualizarCategoriaActivoDoc(grupo.id, grupo.centroId ?? '', d._id, cat)"
+                                   style="padding:.4rem .65rem;font-size:.8rem;border-radius:6px;cursor:pointer"
+                                   [style.font-weight]="cat === d.categoria ? '700' : '400'"
+                                   [style.color]="cat === d.categoria ? '#3730a3' : 'var(--fg-2)'"
+                                   [style.background]="cat === d.categoria ? '#eef2ff' : 'transparent'">
+                                {{ cat }}
+                              </div>
+                            }
+                          </div>
+                        }
+                      </div>
+                      }
+                      @if (puedeDocActivo('eliminar')) {
+                      <button title="Eliminar" (click)="eliminarActivoDoc(grupo.id, grupo.centroId ?? '', d._id)"
+                              style="width:auto;height:30px;padding:0 .55rem;gap:.35rem;border-radius:7px;border:none;background:var(--danger-bg);color:var(--danger);cursor:pointer;display:flex;align-items:center;justify-content:center">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg><span style="font-size:.72rem;font-weight:600">Eliminar</span>
+                      </button>
+                      }
+                    </div>
+                  </div>
+                }
+              </div>
+            </div>
+          }
+        }
 
-      </div> <!-- fin contenido -->
-    </div> <!-- fin tarjeta B -->
-  }
+        <!-- Sub-vista vencidos -->
+        @if (estadoAplicado() === 'vencidos' && (grupoAplicado() === 'empresa' || grupoAplicado() === 'centro' || grupoAplicado() === 'proyecto')) {
+          <p style="margin:0 0 .75rem;font-size:.8rem;color:var(--fg-4)">Mostrando los últimos 20 documentos vencidos de este contexto.</p>
+          @if (service.documentosVencidos().length === 0) {
+            <p class="empty">Sin documentos vencidos.</p>
+          } @else {
+            <div style="border:1px solid var(--border-subtle);border-radius:8px;overflow:hidden">
+              <div style="display:grid;grid-template-columns:1fr auto auto;padding:.5rem 1rem;background:var(--bg-1);border-bottom:1px solid var(--border-subtle);gap:1rem">
+                <span style="font-size:.7rem;font-weight:700;color:var(--fg-5);letter-spacing:.07em;text-transform:uppercase">Documento</span>
+                <span style="font-size:.7rem;font-weight:700;color:var(--fg-5);letter-spacing:.07em;text-transform:uppercase">Fechas</span>
+                <span style="font-size:.7rem;font-weight:700;color:var(--fg-5);letter-spacing:.07em;text-transform:uppercase">Acciones</span>
+              </div>
+              @for (v of service.documentosVencidos(); track v._id) {
+                <div style="display:grid;grid-template-columns:1fr auto auto;align-items:center;padding:.6rem 1rem;border-bottom:1px solid var(--bg-2);gap:1rem">
+                  <div style="display:flex;align-items:center;gap:.6rem;min-width:0">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--fg-5)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                    <div style="min-width:0;overflow:hidden">
+                      <div style="display:flex;align-items:center;gap:.4rem;flex-wrap:wrap">
+                        @if (v.categoria) {
+                          <span style="font-size:.7rem;font-weight:600;padding:.2rem .55rem;border-radius:999px;background:#e0e7ff;color:#3730a3;white-space:nowrap;flex-shrink:0">{{ v.categoria }}</span>
+                        }
+                        <span style="font-size:.875rem;color:var(--fg-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ v.nombre_display }}</span>
+                        @if (v.tipo_contenido === 'link') {
+                          <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:#ecfdf5;color:#047857;flex-shrink:0">🔗 Link</span>
+                        }
+                      </div>
+                      <div style="margin-top:.2rem">
+                        @if (v.origen_tipo === 'empresa') {
+                          <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:rgba(0,174,239,.1);color:var(--sc-cyan)">Empresa</span>
+                        } @else if (v.origen_tipo === 'centro') {
+                          <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:rgba(46,174,110,.1);color:var(--ok)">Centro{{ v.centro_nombre ? ' · ' + v.centro_nombre : '' }}</span>
+                        } @else if (v.origen_tipo === 'proyecto') {
+                          <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:rgba(245,165,36,.1);color:var(--warn)">Proyecto{{ v.proyecto_nombre ? ' · ' + v.proyecto_nombre : '' }}</span>
+                        }
+                      </div>
+                    </div>
+                  </div>
+                  <div style="display:flex;flex-direction:column;gap:.15rem;flex-shrink:0;text-align:right">
+                    @if (v.subido_en) {
+                      <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:#f1f5f9;color:#475569;align-self:flex-end">Subido: {{ formatFechaHora(v.subido_en) }}</span>
+                    }
+                    @if (v.subido_por_nombre) {
+                      <span style="font-size:.68rem;font-weight:600;padding:.15rem .45rem;border-radius:999px;background:#f0fdfa;color:#0f766e;align-self:flex-end">{{ v.subido_por_nombre }}</span>
+                    }
+                    <span style="font-size:.72rem;color:var(--danger);font-weight:600">Vencido: {{ formatFechaHora(v.vencido_en) }}</span>
+                  </div>
+                  <button [title]="v.tipo_contenido === 'link' ? 'Abrir enlace' : 'Descargar'" (click)="abrirDocumento(v)"
+                          style="width:auto;height:30px;padding:0 .55rem;gap:.35rem;border-radius:7px;border:none;background:var(--sc-cyan-tint-6);color:var(--sc-cyan);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                    @if (v.tipo_contenido === 'link') {
+                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                    } @else {
+                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                    }
+                  <span style="font-size:.72rem;font-weight:600">{{ v.tipo_contenido === 'link' ? 'Abrir' : 'Descargar' }}</span></button>
+                </div>
+              }
+            </div>
+          }
+        } <!-- fin vencidos -->
+
+      } <!-- fin documentacion -->
+
+      <!-- ── SOLICITUDES ────────────────────────────────────────── -->
+      @if (tabConsumidorActiva() === 'solicitudes') {
+        <app-status-banner [status]="solicitudesService.status()"></app-status-banner>
+
+        <!-- Ámbito, independiente del "Agrupar por" de Documentación -->
+        <div style="display:flex;gap:.25rem;background:var(--bg-2);border-radius:10px;padding:.25rem;margin-bottom:1rem">
+          @for (a of [
+            { key: 'empresa',  label: 'Empresa' },
+            { key: 'centro',   label: 'Centro de costo' },
+            { key: 'proyecto', label: 'Proyecto' }
+          ]; track a.key) {
+            <button style="flex:1;padding:.5rem 1rem;border-style:solid;border-width:1px;border-radius:8px;font-size:.85rem;font-weight:600;cursor:pointer"
+              [style.background]="solicitudAmbito() === a.key ? 'rgba(46,174,110,.08)' : 'transparent'"
+              [style.color]="solicitudAmbito() === a.key ? 'var(--ok)' : 'var(--fg-4)'"
+              [style.borderColor]="solicitudAmbito() === a.key ? 'rgba(46,174,110,.18)' : 'transparent'"
+              (click)="seleccionarSolicitudAmbito(a.key)">{{ a.label }}</button>
+          }
+        </div>
+
+        @if (solicitudAmbito() !== 'empresa') {
+          <div style="display:flex;gap:.75rem;flex-wrap:wrap;margin-bottom:1rem">
+            <label class="field" style="margin:0;min-width:200px">
+              <span>Centro de costos</span>
+              <select [ngModel]="solicitudCentroId()" (ngModelChange)="onSolicitudCentroChange($event)">
+                <option value="todos">Todos</option>
+                @for (c of centrosFiltradosC; track c._id) { <option [value]="c._id">{{ c.nombre }}</option> }
+              </select>
+            </label>
+            @if (solicitudAmbito() === 'proyecto') {
+              <label class="field" style="margin:0;min-width:200px">
+                <span>Proyecto</span>
+                <select [ngModel]="solicitudProyectoId()" (ngModelChange)="onSolicitudProyectoChange($event)" [disabled]="solicitudCentroId() === 'todos'">
+                  <option value="todos">Todos</option>
+                  @for (p of proyectosParaSolicitudesC; track p._id) { <option [value]="p._id">{{ p.nombre }}</option> }
+                </select>
+              </label>
+            }
+          </div>
+        }
+
+        @let solicitudes = solicitudAmbito() === 'empresa' ? solicitudesDeEmpresa() : solicitudAmbito() === 'centro' ? solicitudesDeCentro() : solicitudesDeProyecto();
+
+        @if (solicitudes.length === 0) { <p class="empty">Sin solicitudes.</p> }
+        @for (s of solicitudes; track s._id) {
+          <ng-container *ngTemplateOutlet="solicitudConsumidorCard; context: { s: s }"></ng-container>
+        }
+
+      } <!-- fin solicitudes -->
+
+    </div> <!-- fin contenido -->
+  </div> <!-- fin card -->
 
   <!-- ─── Template reutilizable: card de solicitud consumidor ─── -->
   <ng-template #solicitudConsumidorCard let-s="s">
@@ -1009,10 +784,121 @@
     </div>
   </ng-template>
 
+  <!-- ─── Modal "Subir documentos" — destino independiente de los filtros ─── -->
+  @if (uploadModalAbierto()) {
+    <div style="position:fixed;inset:0;z-index:100;background:rgba(15,23,42,.45);display:flex;align-items:center;justify-content:center;padding:1rem" (click)="cerrarModalSubida()">
+      <div style="background:var(--bg-0);border-radius:.75rem;max-width:640px;width:100%;max-height:90vh;overflow-y:auto;padding:1.25rem" (click)="$event.stopPropagation()">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem">
+          <h3 style="margin:0;font-size:1rem;color:var(--fg-2)">Subir documentos</h3>
+          <button class="btn-ghost" style="font-size:.8rem;padding:.3rem .6rem" (click)="cerrarModalSubida()">Cerrar</button>
+        </div>
+
+        <p style="margin:0 0 .5rem;font-size:.8rem;font-weight:600;color:var(--fg-2)">¿Dónde quieres adjuntar los documentos?</p>
+        <div style="display:flex;flex-wrap:wrap;gap:.5rem;margin-bottom:1rem">
+          @for (d of [
+            { key: 'empresa',   label: 'Empresa' },
+            { key: 'centro',    label: 'Centro de costo' },
+            { key: 'proyecto',  label: 'Proyecto' },
+            { key: 'actividad', label: 'Actividad' },
+            { key: 'activo',    label: 'Activo' }
+          ]; track d.key) {
+            <button type="button" [disabled]="!puedeSubirDestino(d.key)" (click)="seleccionarDestinoTipo(d.key)"
+              style="font-size:.85rem;padding:.4rem .8rem;border-style:solid;border-width:1px;border-radius:999px;font-weight:600"
+              [style.cursor]="puedeSubirDestino(d.key) ? 'pointer' : 'not-allowed'"
+              [style.opacity]="puedeSubirDestino(d.key) ? '1' : '0.45'"
+              [style.background]="uploadDestinoTipo() === d.key ? '#e0e7ff' : 'var(--bg-1)'"
+              [style.borderColor]="uploadDestinoTipo() === d.key ? '#6366f1' : 'var(--border-default)'"
+              [style.color]="uploadDestinoTipo() === d.key ? '#6366f1' : 'var(--fg-2)'">{{ d.label }}</button>
+          }
+        </div>
+
+        <!-- Empresa: fija, solo informativa -->
+        @if (uploadDestinoTipo() === 'empresa') {
+          <p style="margin:0 0 1rem;font-size:.85rem;color:var(--fg-4)">Se subirán a: <strong style="color:var(--fg-2)">{{ empresaNombreC }}</strong></p>
+        }
+
+        <!-- Centro: requerido para centro/proyecto/actividad/activo -->
+        @if (uploadDestinoTipo() !== 'empresa') {
+          <label class="field" style="margin:0 0 .75rem">
+            <span>Centro de costos</span>
+            <select [ngModel]="uploadCentroId()" (ngModelChange)="onUploadCentroChange($event)">
+              <option value="" disabled>Selecciona un centro…</option>
+              @for (c of centrosFiltradosC; track c._id) { <option [value]="c._id">{{ c.nombre }}</option> }
+            </select>
+          </label>
+        }
+
+        @if (uploadDestinoTipo() === 'proyecto' && uploadCentroId()) {
+          <label class="field" style="margin:0 0 .75rem">
+            <span>Proyecto</span>
+            <select [ngModel]="uploadProyectoId()" (ngModelChange)="uploadProyectoId.set($event)">
+              <option value="" disabled>Selecciona un proyecto…</option>
+              @for (p of uploadProyectosDisponibles; track p._id) { <option [value]="p._id">{{ p.nombre }}</option> }
+            </select>
+          </label>
+        }
+
+        @if (uploadDestinoTipo() === 'actividad' && uploadCentroId()) {
+          <label class="field" style="margin:0 0 .75rem">
+            <span>Actividad</span>
+            <select [ngModel]="uploadActividadId()" (ngModelChange)="uploadActividadId.set($event)">
+              <option value="" disabled>Selecciona una actividad…</option>
+              @for (a of uploadActividadesDisponibles; track a._id) { <option [value]="a._id">{{ a.nombre }}</option> }
+            </select>
+          </label>
+        }
+
+        @if (uploadDestinoTipo() === 'activo' && uploadCentroId()) {
+          <label class="field" style="margin:0 0 .75rem">
+            <span>Activo</span>
+            <select [ngModel]="uploadActivoId()" (ngModelChange)="uploadActivoId.set($event)">
+              <option value="" disabled>Selecciona un activo…</option>
+              @for (a of uploadActivosDisponibles; track a._id) { <option [value]="a._id">{{ a.nombre }}</option> }
+            </select>
+          </label>
+        }
+
+        @if (!uploadDestinoListo) {
+          <p class="empty">Selecciona primero dónde vas a subir los documentos.</p>
+        } @else {
+          <app-upload-document-form
+            style="display:block;margin-bottom:1rem"
+            [mostrarAviso]="true"
+            [avisoTexto]="'Puedes seleccionar varios archivos a la vez.'"
+            [modo]="uploadModoUpload()" (modoChange)="uploadModoUpload.set($event)"
+            [archivo]="null" (archivoChange)="onArchivoChangeModal($event)"
+            [(link)]="uploadLinkInput"
+            [(nombre)]="uploadNombreInput"
+            [(categoria)]="uploadCategoriaInput"
+            [categorias]="categorias"
+            [multiple]="true"
+            [mostrarCamposArchivo]="false"
+            [ocultarBotonConfirmarArchivo]="true"
+            [linkInvalido]="linkInvalidoModal()"
+            [confirmDisabled]="!uploadLinkInput.trim() || linkInvalidoModal()"
+            (confirmar)="confirmarSubidaLinkModal()"
+            (cancelar)="cerrarModalSubida()" />
+
+          @if (tarjetasSubidaModal().length > 0) {
+            <div style="margin-bottom:.5rem">
+              <app-document-card-list
+                [documentos]="tarjetasSubidaModal()"
+                [mostrarCategoria]="mostrarCategoriaModal"
+                [categorias]="categorias"
+                (categoriaChange)="onCategoriaTarjetaChangeModal($event)"
+                (eliminar)="onEliminarTarjetaModal($event)"
+                (reintentar)="reintentarSubida($event)"
+                (renombrar)="onRenombrarTarjetaModal($event)" />
+            </div>
+          }
+        }
+      </div>
+    </div>
+  }
+
 }
 
 <app-upload-bubble
   [items]="itemsLinkParaBurbuja()"
   (cerrar)="cerrarUploadBubble()"
-  (reintentar)="reintentarSubida($event)">
-</app-upload-bubble>
+  (reintentar)="reintentarSubida($event)" />

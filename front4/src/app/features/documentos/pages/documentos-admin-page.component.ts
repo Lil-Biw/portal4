@@ -2,10 +2,15 @@ import { Component, OnInit, inject, signal, computed, effect, untracked } from '
 import { NgTemplateOutlet } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpEvent, HttpEventType } from '@angular/common/http';
+import { forkJoin } from 'rxjs';
 import { DocumentosService, DocTipo, CATEGORIAS_DOCUMENTO, DocumentoItem, DocumentoVencidoItem, DocBusquedaItem, NodoBusqueda } from '../documentos.service';
 import { ClientesService } from '../../clientes/clientes.service';
 import { CentrosService } from '../../centros/centros.service';
 import { ProyectosService } from '../../proyectos/proyectos.service';
+import { ActividadesService } from '../../actividades/actividades.service';
+import { ActivosService } from '../../activos/activos.service';
+import { DocActividad } from '../../../shared/models/actividad.model';
+import { DocActivo } from '../../../shared/models/activo.model';
 import { SolicitudesService, CreateSolicitudDto, UpdateSolicitudDto, EstadoSolicitud, Solicitud } from '../../solicitudes/solicitudes.service';
 import { UsuariosService } from '../../usuarios/usuarios.service';
 import { AuthService } from '../../auth/auth.service';
@@ -19,62 +24,13 @@ import { asId, confirmarEliminacion, detectarCategoriaDocumento, formatFechaHora
 import { Usuario } from '../../../shared/models/usuario.model';
 
 interface PanelState {
-  showUpload: boolean;
-  nombreInput: string;
-  categoriaInput: string;
   busqueda: string;
+  busquedaPendiente: string;
   filtrosCategorias: string[];
-  selectedFile: File | null;
-  modoUpload: 'archivo' | 'link';
-  linkInput: string;
+  filtrosCategoriasPendiente: string[];
 }
 
-type FiltroTipo = DocTipo | 'todos';
-
-const collatorNombre = new Intl.Collator('es', { sensitivity: 'base', numeric: true });
-
-export interface FilaDocTodos {
-  tipo: DocTipo;
-  empresaId: string;
-  empresaNombre: string;
-  centroId?: string;
-  centroNombre?: string;
-  proyectoId?: string;
-  proyectoNombre?: string;
-  doc: DocBusquedaItem;
-}
-
-export type OrdenTodos = 'alfabetico' | 'recientes' | 'nivel_empresa' | 'nivel_centro' | 'nivel_proyecto';
-
-const RANGOS_POR_MODO: Record<Exclude<OrdenTodos, 'alfabetico' | 'recientes'>, DocTipo[]> = {
-  nivel_empresa:  ['empresa', 'centro', 'proyecto'],
-  nivel_centro:   ['centro', 'proyecto', 'empresa'],
-  nivel_proyecto: ['proyecto', 'empresa', 'centro'],
-};
-
-export function ordenarFilasTodos(filas: FilaDocTodos[], modo: OrdenTodos): FilaDocTodos[] {
-  const resultado = [...filas];
-  if (modo === 'alfabetico') {
-    resultado.sort((a, b) => collatorNombre.compare(a.doc.nombre_display, b.doc.nombre_display));
-    return resultado;
-  }
-  if (modo === 'recientes') {
-    resultado.sort((a, b) => {
-      const da = a.doc.subido_en, db = b.doc.subido_en;
-      return (db ? Date.parse(db) : 0) - (da ? Date.parse(da) : 0);
-    });
-    return resultado;
-  }
-  const rango = RANGOS_POR_MODO[modo];
-  resultado.sort((a, b) =>
-    (rango.indexOf(a.tipo) - rango.indexOf(b.tipo)) ||
-    collatorNombre.compare(a.empresaNombre, b.empresaNombre) ||
-    collatorNombre.compare(a.centroNombre ?? '', b.centroNombre ?? '') ||
-    collatorNombre.compare(a.proyectoNombre ?? '', b.proyectoNombre ?? '') ||
-    collatorNombre.compare(a.doc.nombre_display, b.doc.nombre_display)
-  );
-  return resultado;
-}
+type FiltroTipo = DocTipo | 'actividad' | 'activo';
 
 // Un nodo de nivel 'proyecto' puede repetirse en el árbol (un Proyecto con varios
 // centros aparece una vez por centro, con los mismos documentos) — se dedupea por
@@ -93,9 +49,24 @@ export function contarNivelEnArbol(nodos: NodoBusqueda[], nivel: 'empresa' | 'ce
   return vistos.size;
 }
 
-type UploadCtx =
-  | { kind: 'archivo'; file: File; tipo: DocTipo; empresaId: string; centroId?: string; proyectoId?: string; nombreDisplay?: string; categoria?: string }
-  | { kind: 'link'; linkUrl: string; tipo: DocTipo; empresaId: string; centroId?: string; proyectoId?: string; nombreDisplay?: string; categoria?: string };
+// El botón "Subir documentos" es independiente de los filtros de búsqueda — el
+// destino (dónde adjuntar) se elige dentro del propio modal, con su propia
+// cascada empresa→centro→proyecto/actividad/activo.
+type DestinoTipo = 'empresa' | 'centro' | 'proyecto' | 'actividad' | 'activo';
+
+interface ModalUploadCtx {
+  kind: 'archivo' | 'link';
+  file?: File;
+  linkUrl?: string;
+  destinoTipo: DestinoTipo;
+  empresaId: string;
+  centroId?: string;
+  proyectoId?: string;
+  actividadId?: string;
+  activoId?: string;
+  nombreDisplay?: string;
+  categoria?: string;
+}
 
 export interface EstadoDestino {
   valor: EstadoSolicitud;
@@ -115,6 +86,8 @@ export class DocumentosAdminPageComponent implements OnInit {
   protected readonly clientesService    = inject(ClientesService);
   protected readonly centrosService     = inject(CentrosService);
   protected readonly proyectosService   = inject(ProyectosService);
+  protected readonly actividadesService = inject(ActividadesService);
+  protected readonly activosService     = inject(ActivosService);
   protected readonly solicitudesService = inject(SolicitudesService);
   protected readonly usuariosService    = inject(UsuariosService);
   protected readonly authService         = inject(AuthService);
@@ -129,13 +102,23 @@ export class DocumentosAdminPageComponent implements OnInit {
     return this.authService.tienePermiso(this.seccionDoc(tipo), accion);
   }
 
+  protected puedeDocActividad(accion: 'subir' | 'editarCategoria' | 'eliminar'): boolean {
+    return this.authService.tienePermiso('docActividad', accion);
+  }
+
+  protected puedeDocActivo(accion: 'subir' | 'editarCategoria' | 'eliminar'): boolean {
+    return this.authService.tienePermiso('docActivo', accion);
+  }
+
   protected readonly categorias = CATEGORIAS_DOCUMENTO;
 
-  private _selectedEmpresaId  = signal('todos');
-  private _selectedCentroId   = signal('todos');
-  private _selectedProyectoId = signal('todos');
+  private _selectedEmpresaId   = signal('todos');
+  private _selectedCentroId    = signal('todos');
+  private _selectedProyectoId  = signal('todos');
+  private _selectedActividadId = signal('todos');
+  private _selectedActivoId    = signal('todos');
 
-  private busquedaTodosDebounceTimer?: ReturnType<typeof setTimeout>;
+  protected dropdownTipoAbierto = signal(false);
 
   get selectedEmpresaId()  { return this._selectedEmpresaId(); }
   set selectedEmpresaId(v: string)  { this._selectedEmpresaId.set(v); }
@@ -143,18 +126,33 @@ export class DocumentosAdminPageComponent implements OnInit {
   set selectedCentroId(v: string)   { this._selectedCentroId.set(v); }
   get selectedProyectoId() { return this._selectedProyectoId(); }
   set selectedProyectoId(v: string) { this._selectedProyectoId.set(v); }
+  get selectedActividadId()  { return this._selectedActividadId(); }
+  set selectedActividadId(v: string)  { this._selectedActividadId.set(v); }
+  get selectedActivoId()  { return this._selectedActivoId(); }
+  set selectedActivoId(v: string)  { this._selectedActivoId.set(v); }
 
-  protected tabJerarquia    = signal<'todos' | 'empresa' | 'centro' | 'proyecto'>('todos');
-  protected ordenTodos      = signal<OrdenTodos>('alfabetico');
+  protected tabJerarquia    = signal<'empresa' | 'centro' | 'proyecto' | 'actividad' | 'activo'>('empresa');
   protected ordenEmpresa    = signal<OrdenDocumentos>('alfabetico');
   protected ordenCentro     = signal<OrdenDocumentos>('alfabetico');
   protected ordenProyecto   = signal<OrdenDocumentos>('alfabetico');
+  protected ordenActividad  = signal<OrdenDocumentos>('alfabetico');
+  protected ordenActivo     = signal<OrdenDocumentos>('alfabetico');
   protected tabAdminActiva  = signal<'documentacion' | 'solicitudes'>('documentacion');
   protected tabDocAdmin     = signal<'activos' | 'vencidos'>('activos');
 
   protected ordenParaTipo(tipo: FiltroTipo) {
-    return tipo === 'empresa' ? this.ordenEmpresa : tipo === 'centro' ? this.ordenCentro : this.ordenProyecto;
+    return tipo === 'empresa' ? this.ordenEmpresa
+      : tipo === 'centro' ? this.ordenCentro
+      : tipo === 'proyecto' ? this.ordenProyecto
+      : tipo === 'actividad' ? this.ordenActividad
+      : this.ordenActivo;
   }
+
+  // Documentos agrupados por actividad/activo — sin endpoint agregador propio,
+  // se arman con forkJoin (ver ejecutarBusquedaActividadAdmin/ActivoAdmin).
+  protected filasActividadAdmin = signal<{ nombre: string; id: string; centroId?: string; meta?: string; docs: DocActividad[] }[]>([]);
+  protected filasActivoAdmin    = signal<{ nombre: string; id: string; centroId?: string; meta?: string; docs: DocActivo[] }[]>([]);
+  protected cargandoGrupoAdmin  = signal(false);
 
   protected showSolicitudForm   = signal(false);
   protected creandoSolicitud    = signal(false);
@@ -256,14 +254,29 @@ export class DocumentosAdminPageComponent implements OnInit {
   );
 
   protected panels: Record<FiltroTipo, PanelState> = {
-    todos:    this.emptyPanel(),
-    empresa:  this.emptyPanel(),
-    centro:   this.emptyPanel(),
-    proyecto: this.emptyPanel(),
+    empresa:   this.emptyPanel(),
+    centro:    this.emptyPanel(),
+    proyecto:  this.emptyPanel(),
+    actividad: this.emptyPanel(),
+    activo:    this.emptyPanel(),
   };
 
+  // ─── modal "Subir documentos" — independiente de los filtros de búsqueda:
+  // el destino (empresa/centro/proyecto/actividad/activo) se elige adentro. ──
+  protected uploadModalAbierto  = signal(false);
+  protected uploadEmpresaId     = signal('');
+  protected uploadDestinoTipo   = signal<DestinoTipo>('empresa');
+  protected uploadCentroId      = signal('');
+  protected uploadProyectoId    = signal('');
+  protected uploadActividadId   = signal('');
+  protected uploadActivoId      = signal('');
+  protected uploadModoUpload    = signal<'archivo' | 'link'>('archivo');
+  protected uploadLinkInput     = '';
+  protected uploadNombreInput   = '';
+  protected uploadCategoriaInput = 'Contratos';
+
   protected readonly uploadQueue = createUploadQueue();
-  private readonly retryContext = new Map<string, UploadCtx>();
+  private readonly retryContext = new Map<string, ModalUploadCtx>();
 
   constructor() {
     effect(() => {
@@ -429,9 +442,93 @@ export class DocumentosAdminPageComponent implements OnInit {
     );
   }
 
+  get actividadesFiltradas() {
+    let list = this.actividadesService.actividades();
+    if (this.selectedEmpresaId && this.selectedEmpresaId !== 'todos') {
+      const centroIds = new Set(this.centrosFiltrados.map(c => asId(c._id)));
+      list = list.filter(a => centroIds.has(asId(a.centro_costo_id)));
+    }
+    if (this.selectedCentroId && this.selectedCentroId !== 'todos') {
+      list = list.filter(a => asId(a.centro_costo_id) === this.selectedCentroId);
+    }
+    return list;
+  }
+
+  get activosFiltrados() {
+    let list = this.activosService.activos();
+    if (this.selectedEmpresaId && this.selectedEmpresaId !== 'todos') {
+      const centroIds = new Set(this.centrosFiltrados.map(c => asId(c._id)));
+      list = list.filter(a => centroIds.has(asId(a.centro_costo_id)));
+    }
+    if (this.selectedCentroId && this.selectedCentroId !== 'todos') {
+      list = list.filter(a => asId(a.centro_costo_id) === this.selectedCentroId);
+    }
+    return list;
+  }
+
+  // ─── cascada del modal "Subir documentos" — independiente de la cascada de
+  // filtros de arriba (esa usa selectedEmpresaId/selectedCentroId, ésta usa
+  // uploadEmpresaId/uploadCentroId) ────────────────────────────────────────
+
+  get uploadCentrosDisponibles() {
+    if (!this.uploadEmpresaId()) return [];
+    return this.centrosService.centros().filter(c => asId(c.cliente_id) === this.uploadEmpresaId());
+  }
+
+  get uploadProyectosDisponibles() {
+    const empresaId = this.uploadEmpresaId();
+    const centroId = this.uploadCentroId();
+    if (!empresaId || !centroId) return [];
+    return this.proyectosService.proyectos().filter(p =>
+      asId(p.cliente_id) === empresaId && (p.centro_costo_ids ?? []).some(id => asId(id) === centroId)
+    );
+  }
+
+  get uploadActividadesDisponibles() {
+    const centroId = this.uploadCentroId();
+    if (!centroId) return [];
+    return this.actividadesService.actividades().filter(a => asId(a.centro_costo_id) === centroId);
+  }
+
+  get uploadActivosDisponibles() {
+    const centroId = this.uploadCentroId();
+    if (!centroId) return [];
+    return this.activosService.activos().filter(a => asId(a.centro_costo_id) === centroId);
+  }
+
+  puedeSubirDestino(tipo: string): boolean {
+    if (tipo === 'actividad') return this.puedeDocActividad('subir');
+    if (tipo === 'activo') return this.puedeDocActivo('subir');
+    return this.puedeDoc(tipo as DocTipo, 'subir');
+  }
+
+  get puedeSubirAlgunDestino(): boolean {
+    return (['empresa', 'centro', 'proyecto', 'actividad', 'activo'] as DestinoTipo[]).some(t => this.puedeSubirDestino(t));
+  }
+
+  get uploadDestinoListo(): boolean {
+    if (!this.uploadEmpresaId()) return false;
+    const t = this.uploadDestinoTipo();
+    if (t === 'empresa') return true;
+    if (t === 'centro') return !!this.uploadCentroId();
+    if (t === 'proyecto') return !!this.uploadCentroId() && !!this.uploadProyectoId();
+    if (t === 'actividad') return !!this.uploadCentroId() && !!this.uploadActividadId();
+    return !!this.uploadCentroId() && !!this.uploadActivoId();
+  }
+
+  // Solo empresa/centro/proyecto tienen docUrl reutilizable para editar/borrar
+  // desde la tarjeta de subida — actividad/activo se corrigen desde su propia
+  // pestaña una vez subidos.
+  get mostrarCategoriaModal(): boolean {
+    const t = this.uploadDestinoTipo();
+    return t === 'empresa' || t === 'centro' || t === 'proyecto';
+  }
+
   get empresaNombre()  { return this.clientesService.clientes().find(c => c._id === this.selectedEmpresaId)?.razon_social; }
   get centroNombre()   { return this.centrosService.centros().find(c => c._id === this.selectedCentroId)?.nombre; }
   get proyectoNombre() { return this.proyectosService.proyectos().find(p => p._id === this.selectedProyectoId)?.nombre; }
+  get actividadNombre() { return this.actividadesService.actividades().find(a => a._id === this.selectedActividadId)?.nombre; }
+  get activoNombre() { return this.activosService.activos().find(a => a._id === this.selectedActivoId)?.nombre; }
 
   get empresaSeleccionadaObj() { return this.clientesService.clientes().find(c => c._id === this.selectedEmpresaId) ?? null; }
 
@@ -460,56 +557,17 @@ export class DocumentosAdminPageComponent implements OnInit {
   }
 
   get tieneContenido(): boolean {
-    if (this.tabJerarquia() === 'todos') return true;
     return !!this.selectedEmpresaId && (
       this.tabJerarquia() === 'empresa' ||
       (this.tabJerarquia() === 'centro'   && !!this.selectedCentroId) ||
-      (this.tabJerarquia() === 'proyecto' && !!this.selectedCentroId && !!this.selectedProyectoId)
+      (this.tabJerarquia() === 'proyecto' && !!this.selectedCentroId && !!this.selectedProyectoId) ||
+      this.tabJerarquia() === 'actividad' ||
+      this.tabJerarquia() === 'activo'
     );
   }
 
-  protected filasTodos = computed<FilaDocTodos[]>(() => {
-    // Un Proyecto puede pertenecer a varios centros, así que aparece una vez por cada
-    // centro en el árbol (ver documentos-busqueda.service.ts) — sus documentos vienen
-    // repetidos (mismo _id) tantas veces como centros comparta. Se deduplica manteniendo
-    // la primera aparición: si no, el mismo _id en 2+ filas hace que el menú de
-    // categoría (indexado por doc._id) se abra en todas a la vez.
-    const vistos = new Set<string>();
-    const filas: FilaDocTodos[] = [];
-    for (const empresa of this.service.busquedaCascada()) {
-      for (const doc of empresa.documentos) {
-        if (vistos.has(doc._id)) continue;
-        vistos.add(doc._id);
-        filas.push({ tipo: 'empresa', empresaId: empresa._id, empresaNombre: empresa.nombre, doc });
-      }
-      for (const centro of empresa.centros) {
-        for (const doc of centro.documentos) {
-          if (vistos.has(doc._id)) continue;
-          vistos.add(doc._id);
-          filas.push({ tipo: 'centro', empresaId: centro.empresa_id, empresaNombre: empresa.nombre, centroId: centro._id, centroNombre: centro.nombre, doc });
-        }
-        for (const proyecto of centro.proyectos) {
-          for (const doc of proyecto.documentos) {
-            if (vistos.has(doc._id)) continue;
-            vistos.add(doc._id);
-            filas.push({
-              tipo: 'proyecto',
-              empresaId: proyecto.empresa_id, empresaNombre: empresa.nombre,
-              centroId: proyecto.centro_id, centroNombre: centro.nombre,
-              proyectoId: proyecto._id, proyectoNombre: proyecto.nombre,
-              doc,
-            });
-          }
-        }
-      }
-    }
-    return ordenarFilasTodos(filas, this.ordenTodos());
-  });
-
   // Conteos para los badges de los tabs — total de documentos "en juego" en cada
   // tab con la selección actual, independiente del buscador/categorías de cada panel.
-  protected conteoTodos = computed(() => this.filasTodos().length);
-
   protected conteoEmpresa = computed(() => {
     if (this.selectedEmpresaId === 'todos') {
       return contarNivelEnArbol(this.service.documentosTodasEmpresas(), 'empresa');
@@ -532,6 +590,9 @@ export class DocumentosAdminPageComponent implements OnInit {
     if (this.selectedProyectoId !== 'todos') return this.service.documentosProyecto().length;
     return this.service.documentosPorProyecto().reduce((acc, g) => acc + g.docs.length, 0);
   });
+
+  protected conteoActividad = computed(() => this.filasActividadAdmin().reduce((acc, g) => acc + g.docs.length, 0));
+  protected conteoActivo    = computed(() => this.filasActivoAdmin().reduce((acc, g) => acc + g.docs.length, 0));
 
   formatFecha(fecha?: string): string {
     if (!fecha) return '—';
@@ -571,6 +632,8 @@ export class DocumentosAdminPageComponent implements OnInit {
     this.clientesService.cargar();
     this.centrosService.cargar();
     this.proyectosService.cargar();
+    this.actividadesService.cargar();
+    this.activosService.cargar();
     if (this.selectedEmpresaId === 'todos') {
       this.service.cargarTodasEmpresas();
       this.solicitudesService.solicitudes.set([]);
@@ -578,7 +641,6 @@ export class DocumentosAdminPageComponent implements OnInit {
       this.solicitudesService.cargar(this.selectedEmpresaId);
     }
     this.usuariosService.cargar();
-    this.refrescarBusquedaCascada();
   }
 
   // ─── admin handlers ───────────────────────────────────────────────────────
@@ -586,6 +648,10 @@ export class DocumentosAdminPageComponent implements OnInit {
   onEmpresaChange(): void {
     this.selectedCentroId = 'todos';
     this.selectedProyectoId = 'todos';
+    this.selectedActividadId = 'todos';
+    this.selectedActivoId = 'todos';
+    this.filasActividadAdmin.set([]);
+    this.filasActivoAdmin.set([]);
     this.tabJerarquia.set('empresa');
     this.tabAdminActiva.set('documentacion');
     this.tabDocAdmin.set('activos');
@@ -610,6 +676,10 @@ export class DocumentosAdminPageComponent implements OnInit {
   onCentroChange(): void {
     const estabaEnVencidos = this.tabDocAdmin() === 'vencidos';
     this.selectedProyectoId = 'todos';
+    this.selectedActividadId = 'todos';
+    this.selectedActivoId = 'todos';
+    this.filasActividadAdmin.set([]);
+    this.filasActivoAdmin.set([]);
     if (!estabaEnVencidos) this.tabDocAdmin.set('activos');
     this.service.documentosVencidos.set([]);
     this.service.documentosPorProyecto.set([]);
@@ -847,16 +917,19 @@ export class DocumentosAdminPageComponent implements OnInit {
       });
   }
 
-  toggleFiltroCategoria(tipo: FiltroTipo, cat: string): void {
-    const filtros = this.panels[tipo].filtrosCategorias;
-    const idx = filtros.indexOf(cat);
-    if (idx === -1) filtros.push(cat);
-    else filtros.splice(idx, 1);
-    this.refrescarBusquedaCascada();
+  toggleFiltroCategoriaPendiente(tipo: FiltroTipo, cat: string): void {
+    const actuales = this.panels[tipo].filtrosCategoriasPendiente;
+    this.panels[tipo].filtrosCategoriasPendiente = actuales.includes(cat)
+      ? actuales.filter(c => c !== cat)
+      : [...actuales, cat];
   }
 
-  isFiltroSelected(tipo: FiltroTipo, cat: string): boolean {
-    return this.panels[tipo].filtrosCategorias.includes(cat);
+  isFiltroCategoriaPendienteSelected(tipo: FiltroTipo, cat: string): boolean {
+    return this.panels[tipo].filtrosCategoriasPendiente.includes(cat);
+  }
+
+  toggleDropdownTipo(): void {
+    this.dropdownTipoAbierto.update(v => !v);
   }
 
   categoriaTag(cat: string): string | null {
@@ -990,11 +1063,6 @@ export class DocumentosAdminPageComponent implements OnInit {
     this.service.actualizarCategoria(docUrl, categoria, tipo);
   }
 
-  seleccionarCategoriaTodos(docUrl: string, categoria: string): void {
-    this.categoriaMenuAbierto.set(null);
-    this.service.actualizarCategoria(docUrl, categoria, 'empresa', () => this.refrescarBusquedaCascada());
-  }
-
   seleccionarCategoriaTodasEmpresas(docUrl: string, categoria: string, tipo: DocTipo): void {
     this.categoriaMenuAbierto.set(null);
     this.service.actualizarCategoria(docUrl, categoria, tipo, () => this.service.cargarTodasEmpresas());
@@ -1018,11 +1086,6 @@ export class DocumentosAdminPageComponent implements OnInit {
     const todos = this.proyectosService.proyectos().filter(p => asId(p.cliente_id) === empresaId);
     this.service.eliminar(docUrl, 'proyecto', empresaId, undefined, undefined,
       () => this.service.cargarTodosProyectos(empresaId, todos, this.centrosFiltrados));
-  }
-
-  eliminarEnTodos(docUrl: string, nombre?: string): void {
-    if (nombre !== undefined && !confirmarEliminacion(nombre)) return;
-    this.service.eliminar(docUrl, 'empresa', '', undefined, undefined, () => this.refrescarBusquedaCascada());
   }
 
   eliminarEnTodasEmpresas(docUrl: string, empresaId: string, nombre?: string): void {
@@ -1315,36 +1378,127 @@ export class DocumentosAdminPageComponent implements OnInit {
     this.cargarVencidosAdmin();
   }
 
-  seleccionarTabJerarquia(tab: 'todos' | 'empresa' | 'centro' | 'proyecto'): void {
+  seleccionarTabJerarquia(tab: 'empresa' | 'centro' | 'proyecto' | 'actividad' | 'activo'): void {
     this.tabJerarquia.set(tab);
     this.tabAdminActiva.set('documentacion');
     if (this.tabDocAdmin() === 'vencidos') this.cargarVencidosAdmin();
-    this.refrescarBusquedaCascada();
-  }
-
-  refrescarBusquedaCascada(): void {
-    if (this.tabJerarquia() !== 'todos') return;
-    const { filtrosCategorias, busqueda } = this.panels['todos'];
-    this.service.buscarCascada('empresa', filtrosCategorias, busqueda);
+    if (tab === 'actividad') this.ejecutarBusquedaActividadAdmin();
+    if (tab === 'activo') this.ejecutarBusquedaActivoAdmin();
   }
 
   onBusquedaNombreChange(tipo: FiltroTipo, valor: string): void {
-    this.panels[tipo].busqueda = valor;
-    if (tipo === 'todos') {
-      // Debounce: cada tecla dispara un GET /documentos/busqueda-total sobre
-      // todas las empresas — sin esto se manda un request por carácter tipeado.
-      clearTimeout(this.busquedaTodosDebounceTimer);
-      this.busquedaTodosDebounceTimer = setTimeout(() => this.refrescarBusquedaCascada(), 300);
-      return;
-    }
-    this.refrescarBusquedaCascada();
+    this.panels[tipo].busquedaPendiente = valor;
+  }
+
+  // Aplica la búsqueda por nombre y los tipos de documento seleccionados
+  // (pendientes) recién al hacer clic en "Buscar" — hasta entonces el usuario
+  // puede ajustar ambos sin disparar filtrado ni recargas de red.
+  aplicarFiltroDocumentos(tipo: FiltroTipo): void {
+    const p = this.panels[tipo];
+    p.busqueda = p.busquedaPendiente;
+    p.filtrosCategorias = [...p.filtrosCategoriasPendiente];
+    if (tipo === 'actividad') this.ejecutarBusquedaActividadAdmin();
+    if (tipo === 'activo') this.ejecutarBusquedaActivoAdmin();
   }
 
   limpiarFiltroDocTipo(tipo: FiltroTipo): void {
-    if (tipo === 'todos') clearTimeout(this.busquedaTodosDebounceTimer);
-    this.panels[tipo].busqueda = '';
-    this.panels[tipo].filtrosCategorias = [];
-    this.refrescarBusquedaCascada();
+    const p = this.panels[tipo];
+    p.busqueda = '';
+    p.busquedaPendiente = '';
+    p.filtrosCategorias = [];
+    p.filtrosCategoriasPendiente = [];
+    if (tipo === 'actividad') this.ejecutarBusquedaActividadAdmin();
+    if (tipo === 'activo') this.ejecutarBusquedaActivoAdmin();
+  }
+
+  private aplicarFiltrosDocsAdmin<T extends { nombre_display: string; categoria?: string; subido_en?: string }>(
+    docs: T[], tipo: 'actividad' | 'activo',
+  ): T[] {
+    const { filtrosCategorias, busqueda } = this.panels[tipo];
+    const term = busqueda.trim().toLowerCase();
+    const orden = this.ordenParaTipo(tipo)();
+    const filtrados = docs
+      .filter(d => !filtrosCategorias.length || filtrosCategorias.includes(d.categoria ?? ''))
+      .filter(d => !term || d.nombre_display.toLowerCase().includes(term));
+    return ordenarPorDocumento(filtrados, orden, d => d);
+  }
+
+  ejecutarBusquedaActividadAdmin(): void {
+    const actividades = this.actividadesFiltradas;
+    if (!actividades.length) { this.filasActividadAdmin.set([]); return; }
+    this.cargandoGrupoAdmin.set(true);
+    forkJoin(actividades.map(a => this.actividadesService.listarDocumentosObs(a._id))).subscribe(resultados => {
+      this.cargandoGrupoAdmin.set(false);
+      const centroMap = new Map(this.centrosService.centros().map(c => [asId(c._id), c.nombre]));
+      this.filasActividadAdmin.set(
+        actividades
+          .map((a, i) => ({
+            nombre: a.nombre,
+            id: a._id,
+            centroId: asId(a.centro_costo_id),
+            meta: centroMap.get(asId(a.centro_costo_id)),
+            docs: this.aplicarFiltrosDocsAdmin(resultados[i], 'actividad'),
+          }))
+          .filter(f => f.docs.length > 0)
+      );
+    });
+  }
+
+  ejecutarBusquedaActivoAdmin(): void {
+    const activos = this.activosFiltrados;
+    if (!activos.length) { this.filasActivoAdmin.set([]); return; }
+    this.cargandoGrupoAdmin.set(true);
+    forkJoin(activos.map(a => this.activosService.listarDocumentosObs(a._id, asId(a.centro_costo_id)))).subscribe(resultados => {
+      this.cargandoGrupoAdmin.set(false);
+      const centroMap = new Map(this.centrosService.centros().map(c => [asId(c._id), c.nombre]));
+      this.filasActivoAdmin.set(
+        activos
+          .map((a, i) => ({
+            nombre: a.nombre,
+            id: a._id,
+            centroId: asId(a.centro_costo_id),
+            meta: centroMap.get(asId(a.centro_costo_id)),
+            docs: this.aplicarFiltrosDocsAdmin(resultados[i], 'activo'),
+          }))
+          .filter(f => f.docs.length > 0)
+      );
+    });
+  }
+
+  onActividadChange(): void {
+    this.ejecutarBusquedaActividadAdmin();
+  }
+
+  onActivoChange(): void {
+    this.ejecutarBusquedaActivoAdmin();
+  }
+
+  eliminarActividadDocAdmin(actividadId: string, docId: string): void {
+    if (!confirmarEliminacion('este documento')) return;
+    this.actividadesService.eliminarDocumento(actividadId, docId, () => this.ejecutarBusquedaActividadAdmin());
+  }
+
+  actualizarCategoriaActividadDocAdmin(actividadId: string, docId: string, categoria: string): void {
+    this.categoriaMenuAbierto.set(null);
+    this.actividadesService.actualizarCategoria(actividadId, docId, categoria, () => this.ejecutarBusquedaActividadAdmin());
+  }
+
+  descargarActividadDocAdmin(actividadId: string, docId: string, nombreDisplay: string): void {
+    this.actividadesService.descargarDocumento(actividadId, docId, nombreDisplay);
+  }
+
+  eliminarActivoDocAdmin(activoId: string, centroId: string, docId: string): void {
+    if (!confirmarEliminacion('este documento')) return;
+    this.activosService.eliminarDocumento(activoId, centroId, docId, () => this.ejecutarBusquedaActivoAdmin());
+  }
+
+  actualizarCategoriaActivoDocAdmin(activoId: string, centroId: string, docId: string, categoria: string): void {
+    this.categoriaMenuAbierto.set(null);
+    this.activosService.actualizarCategoria(activoId, centroId, docId, categoria, () => this.ejecutarBusquedaActivoAdmin());
+  }
+
+  descargarActivoDocAdmin(activoId: string, centroId: string, docId: string, nombreDisplay: string): void {
+    this.activosService.descargarDocumento(activoId, centroId, docId, nombreDisplay);
   }
 
   cargarVencidosAdmin(): void {
@@ -1405,9 +1559,7 @@ export class DocumentosAdminPageComponent implements OnInit {
     const proyectoNombreReal = proyectoId ? (this.proyectosService.proyectos().find(p => asId(p._id) === proyectoId)?.nombre ?? this.proyectoNombre) : this.proyectoNombre;
 
     let onSuccess: (() => void) | undefined;
-    if (this.tabJerarquia() === 'todos') {
-      onSuccess = () => this.refrescarBusquedaCascada();
-    } else if (this.selectedEmpresaId === 'todos') {
+    if (this.selectedEmpresaId === 'todos') {
       onSuccess = () => this.service.cargarTodasEmpresas();
     } else if (this.selectedCentroId === 'todos' && m.centroIdReal) {
       onSuccess = () => this.service.cargarTodosCentros(empresaId, this.centrosFiltrados);
@@ -1461,7 +1613,11 @@ export class DocumentosAdminPageComponent implements OnInit {
   // ─── private helpers ─────────────────────────────────────────────────────
 
   private emptyPanel(): PanelState {
-    return { showUpload: false, nombreInput: '', categoriaInput: 'Contratos', busqueda: '', filtrosCategorias: [], selectedFile: null, modoUpload: 'archivo', linkInput: '' };
+    return {
+      showUpload: false, nombreInput: '', categoriaInput: 'Contratos',
+      busqueda: '', busquedaPendiente: '', filtrosCategorias: [], filtrosCategoriasPendiente: [],
+      selectedFile: null, modoUpload: 'archivo', linkInput: '',
+    };
   }
 
   private emptySolicitudForm(): CreateSolicitudDto {

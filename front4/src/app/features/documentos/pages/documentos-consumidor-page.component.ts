@@ -3,9 +3,14 @@ import { NgTemplateOutlet } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { HttpEvent, HttpEventType } from '@angular/common/http';
-import { DocumentosService, DocTipo, CATEGORIAS_DOCUMENTO, DocumentoItem, DocBusquedaItem } from '../documentos.service';
+import { forkJoin } from 'rxjs';
+import { DocumentosService, DocTipo, CATEGORIAS_DOCUMENTO, DocumentoItem } from '../documentos.service';
 import { CentrosService } from '../../centros/centros.service';
 import { ProyectosService } from '../../proyectos/proyectos.service';
+import { ActividadesService } from '../../actividades/actividades.service';
+import { ActivosService } from '../../activos/activos.service';
+import { DocActividad } from '../../../shared/models/actividad.model';
+import { DocActivo } from '../../../shared/models/activo.model';
 import { ConsumidorContextService } from '../../../profile/consumidor-context.service';
 import { SolicitudesService, EstadoSolicitud, Solicitud } from '../../solicitudes/solicitudes.service';
 import { AuthService } from '../../auth/auth.service';
@@ -17,67 +22,36 @@ import { DocumentoTarjeta } from '../../../shared/models/documento-tarjeta.model
 import { createUploadQueue } from '../../../shared/upload-queue-state';
 import { asId, confirmarEliminacion, detectarCategoriaDocumento, formatFechaHora, formatBytes, MAX_UPLOAD_SIZE_BYTES, ordenarPorDocumento, OrdenDocumentos } from '../../../shared/utils';
 
-interface PanelState {
-  showUpload: boolean;
-  nombreInput: string;
-  categoriaInput: string;
-  busqueda: string;
-  categoriaFiltro: string;
-  selectedFile: File | null;
-  modoUpload: 'archivo' | 'link';
-  linkInput: string;
+// Las 5 dimensiones de "Agrupar por" — reemplaza al viejo tabJerarquia +
+// el tab "Todos" (que combinaba empresa/centro/proyecto en una sola vista).
+export type Grupo = 'empresa' | 'centro' | 'proyecto' | 'actividad' | 'activo';
+
+interface GrupoFila<T> {
+  nombre: string;
+  id: string;
+  centroId?: string; // requerido por ActivosService para resolver la empresa
+  meta?: string; // p.ej. nombre del centro, para actividad/activo/proyecto
+  docs: T[];
 }
 
-type FiltroTipoC = DocTipo | 'todos';
+// El botón "Subir documentos" es independiente de los filtros de búsqueda — el
+// destino (dónde adjuntar) se elige dentro del propio modal, con su propia
+// cascada empresa(fija)→centro→proyecto/actividad/activo.
+type DestinoTipo = 'empresa' | 'centro' | 'proyecto' | 'actividad' | 'activo';
 
-const collatorNombreC = new Intl.Collator('es', { sensitivity: 'base', numeric: true });
-
-interface FilaDocTodosC {
-  tipo: DocTipo;
+interface ModalUploadCtx {
+  kind: 'archivo' | 'link';
+  file?: File;
+  linkUrl?: string;
+  destinoTipo: DestinoTipo;
+  empresaId: string;
   centroId?: string;
-  centroNombre?: string;
   proyectoId?: string;
-  proyectoNombre?: string;
-  doc: DocBusquedaItem;
+  actividadId?: string;
+  activoId?: string;
+  nombreDisplay?: string;
+  categoria?: string;
 }
-
-// Igual que en admin (documentos-admin-page.component.ts), pero sin nivel
-// empresa como criterio de desempate: en consumidor todas las filas son de
-// la misma empresa, así que no hace falta compararla.
-type OrdenTodosC = 'alfabetico' | 'recientes' | 'nivel_empresa' | 'nivel_centro' | 'nivel_proyecto';
-
-const RANGOS_POR_MODO_C: Record<Exclude<OrdenTodosC, 'alfabetico' | 'recientes'>, DocTipo[]> = {
-  nivel_empresa:  ['empresa', 'centro', 'proyecto'],
-  nivel_centro:   ['centro', 'proyecto', 'empresa'],
-  nivel_proyecto: ['proyecto', 'empresa', 'centro'],
-};
-
-function ordenarFilasTodosC(filas: FilaDocTodosC[], modo: OrdenTodosC): FilaDocTodosC[] {
-  const resultado = [...filas];
-  if (modo === 'alfabetico') {
-    resultado.sort((a, b) => collatorNombreC.compare(a.doc.nombre_display, b.doc.nombre_display));
-    return resultado;
-  }
-  if (modo === 'recientes') {
-    resultado.sort((a, b) => {
-      const da = a.doc.subido_en, db = b.doc.subido_en;
-      return (db ? Date.parse(db) : 0) - (da ? Date.parse(da) : 0);
-    });
-    return resultado;
-  }
-  const rango = RANGOS_POR_MODO_C[modo];
-  resultado.sort((a, b) =>
-    (rango.indexOf(a.tipo) - rango.indexOf(b.tipo)) ||
-    collatorNombreC.compare(a.centroNombre ?? '', b.centroNombre ?? '') ||
-    collatorNombreC.compare(a.proyectoNombre ?? '', b.proyectoNombre ?? '') ||
-    collatorNombreC.compare(a.doc.nombre_display, b.doc.nombre_display)
-  );
-  return resultado;
-}
-
-type UploadCtx =
-  | { kind: 'archivo'; file: File; tipo: DocTipo; empresaId: string; centroId?: string; proyectoId?: string; nombreDisplay?: string; categoria?: string }
-  | { kind: 'link'; linkUrl: string; tipo: DocTipo; empresaId: string; centroId?: string; proyectoId?: string; nombreDisplay?: string; categoria?: string };
 
 @Component({
   selector: 'app-documentos-consumidor-page',
@@ -89,36 +63,51 @@ export class DocumentosConsumidorPageComponent implements OnInit {
   protected readonly service            = inject(DocumentosService);
   protected readonly centrosService     = inject(CentrosService);
   protected readonly proyectosService   = inject(ProyectosService);
+  protected readonly actividadesService = inject(ActividadesService);
+  protected readonly activosService     = inject(ActivosService);
   protected readonly consumidorContext  = inject(ConsumidorContextService);
   protected readonly solicitudesService = inject(SolicitudesService);
   protected readonly authService          = inject(AuthService);
   private  readonly route                 = inject(ActivatedRoute);
 
-  private _pendingCentroId   = signal<string | null>(null);
-  private _pendingProyectoId = signal<string | null>(null);
-
   protected readonly categorias = CATEGORIAS_DOCUMENTO;
 
-  protected selectedCentroIdC   = signal('todos');
-  protected selectedProyectoIdC = signal('todos');
-  protected filtroEstado              = signal<EstadoSolicitud | ''>('');
-  protected filtroTipoSolicitud       = signal('');
-  protected busquedaEmpresa           = signal('');
-  protected busquedaCentro            = signal('');
-  protected busquedaProyecto          = signal('');
-  protected tabConsumidorActiva       = signal<'documentacion' | 'solicitudes'>('documentacion');
-  protected tabDocConsumidor          = signal<'activos' | 'vencidos'>('activos');
-  protected tabJerarquia              = signal<'todos' | 'empresa' | 'centro' | 'proyecto'>('todos');
-  protected ordenTodosC               = signal<OrdenTodosC>('alfabetico');
-  protected ordenEmpresaC             = signal<OrdenDocumentos>('alfabetico');
-  protected ordenCentroC              = signal<OrdenDocumentos>('alfabetico');
-  protected ordenProyectoC            = signal<OrdenDocumentos>('alfabetico');
+  // ─── filtros de Solicitudes (sub-tab aparte, sin relación con "Agrupar por") ──
+  protected solicitudAmbito      = signal<'empresa' | 'centro' | 'proyecto'>('empresa');
+  protected solicitudCentroId    = signal('todos');
+  protected solicitudProyectoId  = signal('todos');
+  protected filtroEstado         = signal<EstadoSolicitud | ''>('');
+  protected filtroTipoSolicitud  = signal('');
+  protected busquedaEmpresa      = signal('');
+  protected busquedaCentro       = signal('');
+  protected busquedaProyecto     = signal('');
+  protected tabConsumidorActiva  = signal<'documentacion' | 'solicitudes'>('documentacion');
 
-  protected ordenParaTipoC(tipo: FiltroTipoC) {
-    return tipo === 'empresa' ? this.ordenEmpresaC : tipo === 'centro' ? this.ordenCentroC : this.ordenProyectoC;
-  }
+  // ─── estado del filtro de Documentos: "pendiente" (lo que el usuario toca) vs
+  // "aplicado" (lo que efectivamente se usó en el último clic en Buscar) ───────
+  protected grupoPendiente = signal<Grupo>('empresa');
+  protected grupoAplicado  = signal<Grupo>('empresa');
 
-  private busquedaTodosDebounceTimer?: ReturnType<typeof setTimeout>;
+  protected centroIdPendiente    = signal('todos');
+  protected proyectoIdPendiente  = signal('todos');
+  protected actividadIdPendiente = signal('todos');
+  protected activoIdPendiente    = signal('todos');
+
+  protected centroIdAplicado    = signal('todos');
+  protected proyectoIdAplicado  = signal('todos');
+  protected actividadIdAplicado = signal('todos');
+  protected activoIdAplicado    = signal('todos');
+
+  protected categoriasPendiente = signal<string[]>([]);
+  protected categoriasAplicado  = signal<string[]>([]);
+  protected busquedaPendiente   = signal('');
+  protected busquedaAplicada    = signal('');
+  protected estadoPendiente     = signal<'activos' | 'vencidos'>('activos');
+  protected estadoAplicado      = signal<'activos' | 'vencidos'>('activos');
+  protected ordenPendiente      = signal<OrdenDocumentos>('alfabetico');
+  protected ordenAplicado       = signal<OrdenDocumentos>('alfabetico');
+
+  protected dropdownTipoAbierto = signal(false);
 
   protected solicitudAdjuntando = signal<string | null>(null);
   protected adjuntoFile: File | null = null;
@@ -126,17 +115,32 @@ export class DocumentosConsumidorPageComponent implements OnInit {
   protected adjuntoLinkInput = '';
   protected adjuntando = signal(false);
 
-  protected panels: Record<FiltroTipoC, PanelState> = {
-    todos:    this.emptyPanel(),
-    empresa:  this.emptyPanel(),
-    centro:   this.emptyPanel(),
-    proyecto: this.emptyPanel(),
-  };
+  // ─── modal "Subir documentos" — independiente de los filtros de búsqueda:
+  // el destino (empresa/centro/proyecto/actividad/activo) se elige adentro. ──
+  protected uploadModalAbierto  = signal(false);
+  protected uploadDestinoTipo   = signal<DestinoTipo>('empresa');
+  protected uploadCentroId      = signal('');
+  protected uploadProyectoId    = signal('');
+  protected uploadActividadId   = signal('');
+  protected uploadActivoId      = signal('');
+  protected uploadModoUpload    = signal<'archivo' | 'link'>('archivo');
+  protected uploadLinkInput     = '';
+  protected uploadNombreInput   = '';
+  protected uploadCategoriaInput = 'Contratos';
 
   protected readonly uploadQueue = createUploadQueue();
-  private readonly retryContext = new Map<string, UploadCtx>();
+  private readonly retryContext = new Map<string, ModalUploadCtx>();
 
-  // ─── computed ─────────────────────────────────────────────────────────────
+  // Resultado de la búsqueda por actividad/activo (sin endpoint agregador propio,
+  // se arma en el componente vía forkJoin — ver ejecutarBusquedaActividad/Activo).
+  protected filasActividad = signal<GrupoFila<DocActividad>[]>([]);
+  protected filasActivo    = signal<GrupoFila<DocActivo>[]>([]);
+  protected cargandoGrupo  = signal(false);
+
+  private _pendingCentroId   = signal<string | null>(null);
+  private _pendingProyectoId = signal<string | null>(null);
+
+  // ─── computed: opciones de los selects, en cascada por centro (pendiente) ──
 
   private readonly centrosFiltradosCSig = computed(() => {
     const empresa = this.consumidorContext.empresaSeleccionada();
@@ -150,22 +154,89 @@ export class DocumentosConsumidorPageComponent implements OnInit {
 
   get proyectosFiltradosC() {
     const empresa = this.consumidorContext.empresaSeleccionada();
-    const centroId = this.selectedCentroIdC();
+    const centroId = this.centroIdPendiente();
     if (!empresa || !centroId || centroId === 'todos') return [];
     return this.proyectosService.proyectos().filter(p =>
       asId(p.cliente_id) === asId(empresa._id) && (p.centro_costo_ids ?? []).some(id => asId(id) === centroId)
     );
   }
 
+  get actividadesFiltradasC() {
+    const centroId = this.centroIdPendiente();
+    if (!centroId) return [];
+    const todas = this.actividadesService.actividades();
+    return centroId === 'todos' ? todas : todas.filter(a => asId(a.centro_costo_id) === centroId);
+  }
+
+  get activosFiltradosC() {
+    const centroId = this.centroIdPendiente();
+    if (!centroId) return [];
+    const todos = this.activosService.activos();
+    return centroId === 'todos' ? todos : todos.filter(a => asId(a.centro_costo_id) === centroId);
+  }
+
+  // ─── cascada del modal "Subir documentos" — independiente de la cascada de
+  // filtros de arriba (esa es "centroIdPendiente"-driven, ésta usa uploadCentroId) ──
+
+  get uploadProyectosDisponibles() {
+    const empresa = this.consumidorContext.empresaSeleccionada();
+    const centroId = this.uploadCentroId();
+    if (!empresa || !centroId) return [];
+    return this.proyectosService.proyectos().filter(p =>
+      asId(p.cliente_id) === asId(empresa._id) && (p.centro_costo_ids ?? []).some(id => asId(id) === centroId)
+    );
+  }
+
+  get uploadActividadesDisponibles() {
+    const centroId = this.uploadCentroId();
+    if (!centroId) return [];
+    return this.actividadesService.actividades().filter(a => asId(a.centro_costo_id) === centroId);
+  }
+
+  get uploadActivosDisponibles() {
+    const centroId = this.uploadCentroId();
+    if (!centroId) return [];
+    return this.activosService.activos().filter(a => asId(a.centro_costo_id) === centroId);
+  }
+
+  puedeSubirDestino(tipo: string): boolean {
+    if (tipo === 'actividad') return this.puedeDocActividad('subir');
+    if (tipo === 'activo') return this.puedeDocActivo('subir');
+    return this.puedeDoc(tipo as DocTipo, 'subir');
+  }
+
+  get puedeSubirAlgunDestino(): boolean {
+    return (['empresa', 'centro', 'proyecto', 'actividad', 'activo'] as DestinoTipo[]).some(t => this.puedeSubirDestino(t));
+  }
+
+  get uploadDestinoListo(): boolean {
+    const t = this.uploadDestinoTipo();
+    if (t === 'empresa') return true;
+    if (t === 'centro') return !!this.uploadCentroId();
+    if (t === 'proyecto') return !!this.uploadCentroId() && !!this.uploadProyectoId();
+    if (t === 'actividad') return !!this.uploadCentroId() && !!this.uploadActividadId();
+    return !!this.uploadCentroId() && !!this.uploadActivoId();
+  }
+
+  // Solo empresa/centro/proyecto tienen docUrl reutilizable para editar/borrar
+  // desde la tarjeta de subida — actividad/activo se corrigen desde su propia
+  // pestaña una vez subidos.
+  get mostrarCategoriaModal(): boolean {
+    const t = this.uploadDestinoTipo();
+    return t === 'empresa' || t === 'centro' || t === 'proyecto';
+  }
+
   get empresaNombreC()  { return this.consumidorContext.empresaSeleccionada()?.razon_social; }
-  get centroNombreC()   { return this.centrosService.centros().find(c => c._id === this.selectedCentroIdC())?.nombre; }
-  get proyectoNombreC() { return this.proyectosService.proyectos().find(p => p._id === this.selectedProyectoIdC())?.nombre; }
+  get centroNombreC()   { return this.centrosService.centros().find(c => c._id === this.centroIdAplicado())?.nombre; }
+  get proyectoNombreC() { return this.proyectosService.proyectos().find(p => p._id === this.proyectoIdAplicado())?.nombre; }
+  get actividadNombreC() { return this.actividadesService.actividades().find(a => a._id === this.actividadIdAplicado())?.nombre; }
+  get activoNombreC()    { return this.activosService.activos().find(a => a._id === this.activoIdAplicado())?.nombre; }
 
   get empresaSeleccionadaObj() { return this.consumidorContext.empresaSeleccionada(); }
 
   get docTipoActual(): DocTipo {
-    return this.tabJerarquia() === 'empresa' ? 'empresa'
-      : this.tabJerarquia() === 'centro' ? 'centro'
+    return this.grupoAplicado() === 'empresa' ? 'empresa'
+      : this.grupoAplicado() === 'centro' ? 'centro'
       : 'proyecto';
   }
 
@@ -179,74 +250,36 @@ export class DocumentosConsumidorPageComponent implements OnInit {
     return this.authService.tienePermiso(this.seccionDoc(tipo), accion);
   }
 
+  protected puedeDocActividad(accion: 'subir' | 'editarCategoria' | 'eliminar'): boolean {
+    return this.authService.tienePermiso('docActividad', accion);
+  }
+
+  protected puedeDocActivo(accion: 'subir' | 'editarCategoria' | 'eliminar'): boolean {
+    return this.authService.tienePermiso('docActivo', accion);
+  }
+
+  // Solo hay "un centro/proyecto activo" (para Subir y Vigentes/Vencidos) cuando
+  // el grupo aplicado es esa dimensión y hay exactamente un valor elegido (no
+  // 'todos'). Reemplaza al viejo selectedCentroIdC/selectedProyectoIdC, que ahora
+  // quedan reservados para el sub-tab de Solicitudes.
   get puedeGestionarDocumento(): boolean {
-    return this.tabJerarquia() === 'empresa' ||
-      (this.tabJerarquia() === 'centro'   && !!this.selectedCentroIdC()   && this.selectedCentroIdC()   !== 'todos') ||
-      (this.tabJerarquia() === 'proyecto' && !!this.selectedProyectoIdC() && this.selectedProyectoIdC() !== 'todos');
+    const g = this.grupoAplicado();
+    return g === 'empresa' ||
+      (g === 'centro'   && !!this.centroIdAplicado()   && this.centroIdAplicado()   !== 'todos') ||
+      (g === 'proyecto' && !!this.proyectoIdAplicado() && this.proyectoIdAplicado() !== 'todos');
   }
 
   get centroSeleccionado() {
-    const id = this.selectedCentroIdC();
+    const id = this.centroIdAplicado();
     if (!id || id === 'todos') return null;
     return this.centrosService.centros().find(c => c._id === id) ?? null;
   }
 
   get proyectoSeleccionado() {
-    const id = this.selectedProyectoIdC();
+    const id = this.proyectoIdAplicado();
     if (!id || id === 'todos') return null;
     return this.proyectosService.proyectos().find(p => p._id === id) ?? null;
   }
-
-  // Cascada acotada a la propia empresa del consumidor (ver refrescarBusquedaCascada).
-  // Igual que en admin, un Proyecto puede pertenecer a varios centros y aparece
-  // repetido (mismo _id) en el árbol — se deduplica manteniendo la primera aparición.
-  protected filasTodos = computed<FilaDocTodosC[]>(() => {
-    const vistos = new Set<string>();
-    const filas: FilaDocTodosC[] = [];
-    for (const empresa of this.service.busquedaCascada()) {
-      for (const doc of empresa.documentos) {
-        if (vistos.has(doc._id)) continue;
-        vistos.add(doc._id);
-        filas.push({ tipo: 'empresa', doc });
-      }
-      for (const centro of empresa.centros) {
-        for (const doc of centro.documentos) {
-          if (vistos.has(doc._id)) continue;
-          vistos.add(doc._id);
-          filas.push({ tipo: 'centro', centroId: centro._id, centroNombre: centro.nombre, doc });
-        }
-        for (const proyecto of centro.proyectos) {
-          for (const doc of proyecto.documentos) {
-            if (vistos.has(doc._id)) continue;
-            vistos.add(doc._id);
-            filas.push({
-              tipo: 'proyecto',
-              centroId: proyecto.centro_id, centroNombre: centro.nombre,
-              proyectoId: proyecto._id, proyectoNombre: proyecto.nombre,
-              doc,
-            });
-          }
-        }
-      }
-    }
-    return ordenarFilasTodosC(filas, this.ordenTodosC());
-  });
-
-  // Conteos para los badges de los tabs — total de documentos "en juego" en cada
-  // tab con la selección actual, independiente del buscador/categorías de cada panel.
-  protected conteoTodos = computed(() => this.filasTodos().length);
-
-  protected conteoEmpresa = computed(() => this.service.documentosEmpresa().length);
-
-  protected conteoCentro = computed(() => {
-    if (this.selectedCentroIdC() !== 'todos') return this.service.documentosCentro().length;
-    return this.service.documentosPorCentro().reduce((acc, g) => acc + g.docs.length, 0);
-  });
-
-  protected conteoProyecto = computed(() => {
-    if (this.selectedProyectoIdC() !== 'todos') return this.service.documentosProyecto().length;
-    return this.service.documentosPorProyecto().reduce((acc, g) => acc + g.docs.length, 0);
-  });
 
   formatFecha(fecha?: string): string {
     if (!fecha) return '—';
@@ -274,7 +307,7 @@ export class DocumentosConsumidorPageComponent implements OnInit {
   });
 
   protected solicitudesDeCentro = computed(() => {
-    const centroId = this.selectedCentroIdC();
+    const centroId = this.solicitudCentroId();
     if (!centroId) return [];
     const all = this.solicitudesService.solicitudes().filter(s => s.estado !== 'aprobado');
     const sols = centroId === 'todos'
@@ -284,8 +317,8 @@ export class DocumentosConsumidorPageComponent implements OnInit {
   });
 
   protected solicitudesDeProyecto = computed(() => {
-    const centroId   = this.selectedCentroIdC();
-    const proyectoId = this.selectedProyectoIdC();
+    const centroId   = this.solicitudCentroId();
+    const proyectoId = this.solicitudProyectoId();
     if (!centroId || !proyectoId) return [];
     const all = this.solicitudesService.solicitudes().filter(s => s.estado !== 'aprobado');
     let sols: Solicitud[];
@@ -308,18 +341,39 @@ export class DocumentosConsumidorPageComponent implements OnInit {
     this.solicitudesService.solicitudes().some(s => s.estado !== 'aprobado')
   );
 
+  get proyectosParaSolicitudesC() {
+    const empresa = this.consumidorContext.empresaSeleccionada();
+    const centroId = this.solicitudCentroId();
+    if (!empresa || !centroId || centroId === 'todos') return [];
+    return this.proyectosService.proyectos().filter(p =>
+      asId(p.cliente_id) === asId(empresa._id) && (p.centro_costo_ids ?? []).some(id => asId(id) === centroId)
+    );
+  }
+
   protected busquedaSolicitudActual = computed(() => {
-    const jerarquia = this.tabJerarquia();
-    if (jerarquia === 'empresa') return this.busquedaEmpresa();
-    if (jerarquia === 'centro')  return this.busquedaCentro();
-    return this.busquedaProyecto();
+    if (!this.solicitudCentroId() || this.solicitudCentroId() === 'todos') return this.busquedaEmpresa();
+    if (this.solicitudProyectoId() && this.solicitudProyectoId() !== 'todos') return this.busquedaProyecto();
+    return this.busquedaCentro();
   });
 
   onBusquedaSolicitudChange(value: string): void {
-    const jerarquia = this.tabJerarquia();
-    if (jerarquia === 'empresa') this.busquedaEmpresa.set(value);
-    else if (jerarquia === 'centro') this.busquedaCentro.set(value);
-    else this.busquedaProyecto.set(value);
+    if (!this.solicitudCentroId() || this.solicitudCentroId() === 'todos') { this.busquedaEmpresa.set(value); return; }
+    if (this.solicitudProyectoId() && this.solicitudProyectoId() !== 'todos') { this.busquedaProyecto.set(value); return; }
+    this.busquedaCentro.set(value);
+  }
+
+  seleccionarSolicitudAmbito(ambito: string): void {
+    this.solicitudAmbito.set(ambito as 'empresa' | 'centro' | 'proyecto');
+    this.onSolicitudCentroChange('todos');
+  }
+
+  onSolicitudCentroChange(id: string): void {
+    this.solicitudCentroId.set(id);
+    this.solicitudProyectoId.set('todos');
+  }
+
+  onSolicitudProyectoChange(id: string): void {
+    this.solicitudProyectoId.set(id);
   }
 
   // ─── lifecycle ────────────────────────────────────────────────────────────
@@ -327,10 +381,21 @@ export class DocumentosConsumidorPageComponent implements OnInit {
   constructor() {
     effect(() => {
       const empresa = this.consumidorContext.empresaSeleccionada();
-      this.selectedCentroIdC.set('todos');
-      this.selectedProyectoIdC.set('todos');
-      this.tabDocConsumidor.set('activos');
+      this.solicitudCentroId.set('todos');
+      this.solicitudProyectoId.set('todos');
+      this.centroIdPendiente.set('todos');
+      this.proyectoIdPendiente.set('todos');
+      this.actividadIdPendiente.set('todos');
+      this.activoIdPendiente.set('todos');
+      this.centroIdAplicado.set('todos');
+      this.proyectoIdAplicado.set('todos');
+      this.actividadIdAplicado.set('todos');
+      this.activoIdAplicado.set('todos');
+      this.estadoPendiente.set('activos');
+      this.estadoAplicado.set('activos');
       this.service.documentosVencidos.set([]);
+      this.filasActividad.set([]);
+      this.filasActivo.set([]);
       if (empresa) {
         this.service.documentosCentro.set([]);
         this.service.documentosProyecto.set([]);
@@ -339,12 +404,23 @@ export class DocumentosConsumidorPageComponent implements OnInit {
         this.solicitudesService.cargar(empresa._id);
         untracked(() => {
           this.proyectosService.cargarPorEmpresa(empresa._id);
-          this.refrescarBusquedaCascada();
+          this.actividadesService.cargarPorEmpresa(empresa._id);
         });
       } else {
         this.service.documentosEmpresa.set([]);
         this.solicitudesService.cargar('');
-        this.service.busquedaCascada.set([]);
+      }
+    });
+
+    // Activos se carga por centro (no hay endpoint "por empresa" para activos) —
+    // se reintenta cuando la lista de centros de la empresa está lista.
+    effect(() => {
+      const empresa = this.consumidorContext.empresaSeleccionada();
+      const centros = this.centrosFiltradosCSig();
+      if (empresa && centros.length > 0) {
+        untracked(() => this.activosService.cargarPorCentros(empresa._id, centros.map(c => c._id)));
+      } else if (empresa) {
+        untracked(() => this.activosService.activos.set([]));
       }
     });
 
@@ -355,33 +431,29 @@ export class DocumentosConsumidorPageComponent implements OnInit {
       const proyectoId = this._pendingProyectoId();
       this._pendingCentroId.set(null);
       this._pendingProyectoId.set(null);
-      untracked(() => {
-        this.onCentroChangeC(centroId);
-        if (proyectoId) this.onProyectoChangeC(proyectoId);
-      });
+      untracked(() => this.activarDesdeQueryParams(centroId, proyectoId ?? undefined));
     });
 
     // cargarTodosCentros/cargarTodosProyectos reciben la lista de centros/proyectos
-    // como snapshot no-reactivo (this.centrosFiltradosC es un getter plano). Si se
-    // llaman antes de que CentrosService/ProyectosService terminen su GET (p.ej. el
-    // GET que dispara TopbarComponent), el snapshot llega vacío y nada vuelve a
-    // reintentarlo — por eso "Centro"/"Proyecto" en modo "todos" podían quedar vacíos
-    // hasta que el usuario tocaba el <select> a mano. Estos efectos reaccionan cuando
-    // esas listas cambian y rellenan la carga.
+    // como snapshot no-reactivo. Si se llaman antes de que CentrosService/
+    // ProyectosService terminen su GET, el snapshot llega vacío — este efecto
+    // reintenta la carga de "Centro: todos" cuando la selección aplicada lo pide.
     effect(() => {
       const empresa = this.consumidorContext.empresaSeleccionada();
-      const centroId = this.selectedCentroIdC();
+      const grupo = this.grupoAplicado();
+      const centroId = this.centroIdAplicado();
       const centros = this.centrosFiltradosC;
-      if (empresa && centroId === 'todos' && centros.length > 0) {
+      if (empresa && grupo === 'centro' && centroId === 'todos' && centros.length > 0) {
         untracked(() => this.service.cargarTodosCentros(empresa._id, centros));
       }
     });
 
     effect(() => {
       const empresa = this.consumidorContext.empresaSeleccionada();
-      const centroId = this.selectedCentroIdC();
-      const proyectoId = this.selectedProyectoIdC();
-      if (!empresa || proyectoId !== 'todos') return;
+      const grupo = this.grupoAplicado();
+      const centroId = this.centroIdAplicado();
+      const proyectoId = this.proyectoIdAplicado();
+      if (!empresa || grupo !== 'proyecto' || proyectoId !== 'todos') return;
       const proyectos = centroId !== 'todos'
         ? this.proyectosService.proyectos().filter(p => asId(p.cliente_id) === asId(empresa._id) && (p.centro_costo_ids ?? []).some(id => asId(id) === centroId))
         : this.proyectosService.proyectos().filter(p => asId(p.cliente_id) === asId(empresa._id));
@@ -399,209 +471,287 @@ export class DocumentosConsumidorPageComponent implements OnInit {
     if (tab) this.tabConsumidorActiva.set(tab);
     if (centroId) {
       this._pendingCentroId.set(centroId);
-      this.tabJerarquia.set('centro');
-    }
-    if (proyectoId) {
-      this._pendingProyectoId.set(proyectoId);
-      this.tabJerarquia.set('proyecto');
+      if (proyectoId) this._pendingProyectoId.set(proyectoId);
     }
     if (!centroId && !proyectoId && tab === 'solicitudes') {
-      this.tabJerarquia.set('empresa');
+      this.solicitudCentroId.set('todos');
     }
   }
 
   // ─── consumidor handlers ──────────────────────────────────────────────────
 
-  onCentroChangeC(id: string): void {
-    const estabaEnVencidos = this.tabDocConsumidor() === 'vencidos';
-    this.selectedCentroIdC.set(id);
-    this.selectedProyectoIdC.set('todos');
-    if (!estabaEnVencidos) this.tabDocConsumidor.set('activos');
-    this.service.documentosVencidos.set([]);
-    if (id) this.tabJerarquia.set('centro');
-    const empresa = this.consumidorContext.empresaSeleccionada();
-    const empresaId = empresa?._id ?? '';
-    this.service.documentosPorProyecto.set([]);
-    if (id === 'todos') {
-      this.service.documentosCentro.set([]);
-      this.service.cargarTodosCentros(empresaId, this.centrosFiltradosC);
-    } else if (id) {
-      this.service.documentosPorCentro.set([]);
-      this.service.cargar('centro', empresaId, id);
-    } else {
-      this.service.documentosPorCentro.set([]);
-      this.service.documentosCentro.set([]);
-    }
-    if (empresa) this.solicitudesService.cargar(empresa._id);
-    if (estabaEnVencidos) this.cargarVencidosConsumidor();
+  // Llegada directa desde otra página (p.ej. "Ver documentos" en el detalle de un
+  // centro/proyecto) — activa el grupo correspondiente y dispara la búsqueda de
+  // inmediato, sin esperar un clic en "Buscar" (es una navegación explícita del
+  // usuario, no un ajuste de filtro en curso).
+  private activarDesdeQueryParams(centroId: string, proyectoId?: string): void {
+    const grupo: Grupo = proyectoId ? 'proyecto' : 'centro';
+    this.grupoPendiente.set(grupo);
+    this.centroIdPendiente.set(centroId);
+    this.proyectoIdPendiente.set(proyectoId ?? 'todos');
+    this.aplicarFiltros();
   }
 
-  onProyectoChangeC(id: string): void {
-    const estabaEnVencidos = this.tabDocConsumidor() === 'vencidos';
-    if (!estabaEnVencidos) this.tabDocConsumidor.set('activos');
-    this.service.documentosVencidos.set([]);
-    this.selectedProyectoIdC.set(id);
-    if (id) this.tabJerarquia.set('proyecto');
-    const empresa = this.consumidorContext.empresaSeleccionada();
-    const empresaId = empresa?._id ?? '';
-    const centroId = this.selectedCentroIdC();
-
-    this.service.documentosProyecto.set([]);
-    this.service.documentosPorProyecto.set([]);
-    this.service.documentosPorCentro.set([]);
-
-    if (id === 'todos' && centroId === 'todos') {
-      const todosProyectos = this.proyectosService.proyectos().filter(
-        p => asId(p.cliente_id) === asId(empresa?._id)
-      );
-      this.service.cargarTodosProyectos(empresaId, todosProyectos, this.centrosFiltradosC);
-    } else if (id === 'todos' && centroId && centroId !== 'todos') {
-      const proyectosDeCentro = this.proyectosService.proyectos().filter(
-        p => asId(p.cliente_id) === asId(empresa?._id) && (p.centro_costo_ids ?? []).some(cid => asId(cid) === centroId)
-      );
-      this.service.cargarTodosProyectos(empresaId, proyectosDeCentro, this.centrosFiltradosC);
-    } else if (id && id !== 'todos' && centroId && centroId !== 'todos') {
-      this.service.cargar('proyecto', empresaId, centroId, id);
-    } else if (centroId && centroId !== 'todos') {
-      this.service.cargar('centro', empresaId, centroId);
-    } else {
-      this.service.documentosCentro.set([]);
-    }
-    if (empresa) this.solicitudesService.cargar(empresa._id);
-    if (estabaEnVencidos) this.cargarVencidosConsumidor();
+  onCentroChangePendiente(id: string): void {
+    this.centroIdPendiente.set(id);
+    this.proyectoIdPendiente.set('todos');
+    this.actividadIdPendiente.set('todos');
+    this.activoIdPendiente.set('todos');
   }
 
-  private recargarDocsC(): void {
-    const empresaId  = this.consumidorContext.empresaSeleccionada()?._id;
-    const centroId   = this.selectedCentroIdC();
-    const proyectoId = this.selectedProyectoIdC();
-    const tab = this.tabJerarquia();
-    if (!empresaId) return;
-    if (tab === 'empresa') {
-      this.service.cargarEmpresa(empresaId);
-    } else if (tab === 'centro') {
-      if (centroId === 'todos') {
-        this.service.cargarTodosCentros(empresaId, this.centrosFiltradosC);
-      } else if (centroId) {
-        this.service.cargar('centro', empresaId, centroId);
-      }
-    } else if (tab === 'proyecto') {
-      const cId = centroId !== 'todos' ? centroId : undefined;
-      const pId = proyectoId !== 'todos' ? proyectoId : undefined;
-      if (proyectoId === 'todos' && centroId === 'todos') {
-        const todos = this.proyectosService.proyectos().filter(p => asId(p.cliente_id) === asId(empresaId));
-        this.service.cargarTodosProyectos(empresaId, todos, this.centrosFiltradosC);
-      } else if (proyectoId === 'todos' && cId) {
-        const delCentro = this.proyectosService.proyectos().filter(
-          p => asId(p.cliente_id) === asId(empresaId) && (p.centro_costo_ids ?? []).some(id => asId(id) === cId)
-        );
-        this.service.cargarTodosProyectos(empresaId, delCentro, this.centrosFiltradosC);
-      } else if (pId && cId) {
-        this.service.cargar('proyecto', empresaId, cId, pId);
-      }
-    }
+  seleccionarGrupoPendiente(grupo: string): void {
+    this.grupoPendiente.set(grupo as Grupo);
   }
 
-  seleccionarTabJerarquiaC(tab: 'todos' | 'empresa' | 'centro' | 'proyecto'): void {
-    this.tabJerarquia.set(tab);
+  // ─── Buscar / Limpiar — aplican todo el filtro pendiente de una vez ────────
+
+  aplicarFiltros(): void {
+    this.grupoAplicado.set(this.grupoPendiente());
+    this.centroIdAplicado.set(this.centroIdPendiente());
+    this.proyectoIdAplicado.set(this.proyectoIdPendiente());
+    this.actividadIdAplicado.set(this.actividadIdPendiente());
+    this.activoIdAplicado.set(this.activoIdPendiente());
+    this.categoriasAplicado.set([...this.categoriasPendiente()]);
+    this.busquedaAplicada.set(this.busquedaPendiente());
+    this.estadoAplicado.set(this.estadoPendiente());
+    this.ordenAplicado.set(this.ordenPendiente());
     this.tabConsumidorActiva.set('documentacion');
-    this.filtroTipoSolicitud.set('');
-    this.filtroEstado.set('');
-    if (this.tabDocConsumidor() === 'vencidos') this.cargarVencidosConsumidor();
-    this.refrescarBusquedaCascada();
-    if (tab === 'centro' || tab === 'proyecto') this.recargarDocsC();
+    this.categoriaMenuAbierto.set(null);
+    this.ejecutarBusqueda();
   }
 
-  refrescarBusquedaCascada(): void {
-    if (this.tabJerarquia() !== 'todos') return;
+  limpiarFiltros(): void {
+    this.grupoPendiente.set('empresa');
+    this.centroIdPendiente.set('todos');
+    this.proyectoIdPendiente.set('todos');
+    this.actividadIdPendiente.set('todos');
+    this.activoIdPendiente.set('todos');
+    this.categoriasPendiente.set([]);
+    this.busquedaPendiente.set('');
+    this.estadoPendiente.set('activos');
+    this.ordenPendiente.set('alfabetico');
+    this.aplicarFiltros();
+  }
+
+  private ejecutarBusqueda(): void {
     const empresa = this.consumidorContext.empresaSeleccionada();
-    if (!empresa) { this.service.busquedaCascada.set([]); return; }
-    const { categoriaFiltro, busqueda } = this.panels['todos'];
-    this.service.buscarCascada('empresa', categoriaFiltro ? [categoriaFiltro] : undefined, busqueda, empresa._id);
-  }
+    if (!empresa) return;
+    const grupo = this.grupoAplicado();
+    this.service.documentosVencidos.set([]);
 
-  onBusquedaNombreChange(tipo: FiltroTipoC, valor: string): void {
-    this.panels[tipo].busqueda = valor;
-    if (tipo === 'todos') {
-      clearTimeout(this.busquedaTodosDebounceTimer);
-      this.busquedaTodosDebounceTimer = setTimeout(() => this.refrescarBusquedaCascada(), 300);
+    if (this.estadoAplicado() === 'vencidos' && (grupo === 'empresa' || grupo === 'centro' || grupo === 'proyecto')) {
+      this.cargarVencidosConsumidor();
       return;
     }
+
+    if (grupo === 'empresa') {
+      this.service.cargarEmpresa(empresa._id);
+    } else if (grupo === 'centro') {
+      const id = this.centroIdAplicado();
+      if (id === 'todos') {
+        this.service.documentosCentro.set([]);
+        this.service.cargarTodosCentros(empresa._id, this.centrosFiltradosC);
+      } else if (id) {
+        this.service.documentosPorCentro.set([]);
+        this.service.cargar('centro', empresa._id, id);
+      }
+    } else if (grupo === 'proyecto') {
+      const centroId   = this.centroIdAplicado();
+      const proyectoId = this.proyectoIdAplicado();
+      this.service.documentosProyecto.set([]);
+      this.service.documentosPorProyecto.set([]);
+      if (proyectoId === 'todos' && centroId === 'todos') {
+        const todosProyectos = this.proyectosService.proyectos().filter(p => asId(p.cliente_id) === asId(empresa._id));
+        this.service.cargarTodosProyectos(empresa._id, todosProyectos, this.centrosFiltradosC);
+      } else if (proyectoId === 'todos' && centroId && centroId !== 'todos') {
+        const proyectosDeCentro = this.proyectosService.proyectos().filter(
+          p => asId(p.cliente_id) === asId(empresa._id) && (p.centro_costo_ids ?? []).some(cid => asId(cid) === centroId)
+        );
+        this.service.cargarTodosProyectos(empresa._id, proyectosDeCentro, this.centrosFiltradosC);
+      } else if (proyectoId && proyectoId !== 'todos' && centroId && centroId !== 'todos') {
+        this.service.cargar('proyecto', empresa._id, centroId, proyectoId);
+      }
+    } else if (grupo === 'actividad') {
+      this.ejecutarBusquedaActividad();
+    } else if (grupo === 'activo') {
+      this.ejecutarBusquedaActivo();
+    }
+
+    if (empresa) this.solicitudesService.cargar(empresa._id);
   }
 
-  limpiarFiltroDocTipo(tipo: FiltroTipoC): void {
-    if (tipo === 'todos') clearTimeout(this.busquedaTodosDebounceTimer);
-    this.panels[tipo].busqueda = '';
-    this.panels[tipo].categoriaFiltro = '';
-    if (tipo === 'todos') this.refrescarBusquedaCascada();
+  private aplicarFiltrosDocs<T extends { nombre_display: string; categoria?: string; subido_en?: string }>(docs: T[]): T[] {
+    const categorias = this.categoriasAplicado();
+    const term = this.busquedaAplicada().trim().toLowerCase();
+    const filtrados = docs
+      .filter(d => !categorias.length || categorias.includes(d.categoria ?? ''))
+      .filter(d => !term || d.nombre_display.toLowerCase().includes(term));
+    return ordenarPorDocumento(filtrados, this.ordenAplicado(), d => d);
   }
 
-  eliminarEnTodos(docUrl: string, nombre?: string): void {
-    if (nombre !== undefined && !confirmarEliminacion(nombre)) return;
-    const empresaId = asId(this.consumidorContext.empresaSeleccionada()?._id) ?? '';
-    this.service.eliminar(docUrl, 'empresa', empresaId, undefined, undefined, () => this.refrescarBusquedaCascada());
+  private ejecutarBusquedaActividad(): void {
+    const centroId = this.centroIdAplicado();
+    const actividadId = this.actividadIdAplicado();
+    let actividades = this.actividadesService.actividades();
+    if (centroId !== 'todos') actividades = actividades.filter(a => asId(a.centro_costo_id) === centroId);
+    if (actividadId !== 'todos') actividades = actividades.filter(a => a._id === actividadId);
+    if (!actividades.length) { this.filasActividad.set([]); return; }
+
+    this.cargandoGrupo.set(true);
+    forkJoin(actividades.map(a => this.actividadesService.listarDocumentosObs(a._id))).subscribe(resultados => {
+      this.cargandoGrupo.set(false);
+      const centroMap = new Map(this.centrosService.centros().map(c => [asId(c._id), c.nombre]));
+      this.filasActividad.set(
+        actividades
+          .map((a, i) => ({
+            nombre: a.nombre,
+            id: a._id,
+            meta: centroMap.get(asId(a.centro_costo_id)),
+            docs: this.aplicarFiltrosDocs(resultados[i]),
+          }))
+          .filter(f => f.docs.length > 0)
+      );
+    });
+  }
+
+  private ejecutarBusquedaActivo(): void {
+    const centroId = this.centroIdAplicado();
+    const activoId = this.activoIdAplicado();
+    let activos = this.activosService.activos();
+    if (centroId !== 'todos') activos = activos.filter(a => asId(a.centro_costo_id) === centroId);
+    if (activoId !== 'todos') activos = activos.filter(a => a._id === activoId);
+    if (!activos.length) { this.filasActivo.set([]); return; }
+
+    this.cargandoGrupo.set(true);
+    forkJoin(activos.map(a => this.activosService.listarDocumentosObs(a._id, asId(a.centro_costo_id)))).subscribe(resultados => {
+      this.cargandoGrupo.set(false);
+      const centroMap = new Map(this.centrosService.centros().map(c => [asId(c._id), c.nombre]));
+      this.filasActivo.set(
+        activos
+          .map((a, i) => ({
+            nombre: a.nombre,
+            id: a._id,
+            centroId: asId(a.centro_costo_id),
+            meta: centroMap.get(asId(a.centro_costo_id)),
+            docs: this.aplicarFiltrosDocs(resultados[i]),
+          }))
+          .filter(f => f.docs.length > 0)
+      );
+    });
+  }
+
+  onBusquedaNombreChange(valor: string): void {
+    this.busquedaPendiente.set(valor);
+  }
+
+  eliminarActividadDoc(actividadId: string, docId: string): void {
+    if (!confirmarEliminacion('este documento')) return;
+    this.actividadesService.eliminarDocumento(actividadId, docId, () => this.ejecutarBusquedaActividad());
+  }
+
+  actualizarCategoriaActividadDoc(actividadId: string, docId: string, categoria: string): void {
+    this.categoriaMenuAbierto.set(null);
+    this.actividadesService.actualizarCategoria(actividadId, docId, categoria, () => this.ejecutarBusquedaActividad());
+  }
+
+  eliminarActivoDoc(activoId: string, centroId: string, docId: string): void {
+    if (!confirmarEliminacion('este documento')) return;
+    this.activosService.eliminarDocumento(activoId, centroId, docId, () => this.ejecutarBusquedaActivo());
+  }
+
+  actualizarCategoriaActivoDoc(activoId: string, centroId: string, docId: string, categoria: string): void {
+    this.categoriaMenuAbierto.set(null);
+    this.activosService.actualizarCategoria(activoId, centroId, docId, categoria, () => this.ejecutarBusquedaActivo());
+  }
+
+  descargarActividadDoc(actividadId: string, docId: string, nombreDisplay: string): void {
+    this.actividadesService.descargarDocumento(actividadId, docId, nombreDisplay);
+  }
+
+  descargarActivoDoc(activoId: string, centroId: string, docId: string, nombreDisplay: string): void {
+    this.activosService.descargarDocumento(activoId, centroId, docId, nombreDisplay);
   }
 
   marcarVencidoConsumidor(docUrl: string, tipo: DocTipo): void {
     const empresaId = asId(this.consumidorContext.empresaSeleccionada()?._id) ?? '';
-    const centroId   = this.selectedCentroIdC()   !== 'todos' ? this.selectedCentroIdC()   : undefined;
-    const proyectoId = this.selectedProyectoIdC() !== 'todos' ? this.selectedProyectoIdC() : undefined;
-    const onSuccess = this.tabJerarquia() === 'todos' ? () => this.refrescarBusquedaCascada() : undefined;
-    this.service.marcarVencido(docUrl, tipo, empresaId, centroId, proyectoId, undefined, undefined, undefined, undefined, onSuccess);
+    const centroId   = this.centroIdAplicado()   !== 'todos' ? this.centroIdAplicado()   : undefined;
+    const proyectoId = this.proyectoIdAplicado() !== 'todos' ? this.proyectoIdAplicado() : undefined;
+    this.service.marcarVencido(docUrl, tipo, empresaId, centroId, proyectoId, undefined, undefined, undefined, undefined, () => this.ejecutarBusqueda());
   }
 
-  // ─── upload panels ────────────────────────────────────────────────────────
+  // ─── modal "Subir documentos" ─────────────────────────────────────────────
 
-  toggleUpload(tipo: DocTipo): void {
-    const p = this.panels[tipo];
-    p.showUpload = !p.showUpload;
-    if (!p.showUpload) {
-      p.selectedFile = null; p.nombreInput = ''; p.linkInput = ''; p.modoUpload = 'archivo';
-      this.uploadQueue.items()
-        .filter(i => i.kind === 'archivo' && this.retryContext.get(i.id)?.tipo === tipo)
-        .forEach(i => { this.uploadQueue.quitar(i.id); this.retryContext.delete(i.id); });
-    }
+  abrirModalSubida(): void {
+    this.uploadDestinoTipo.set('empresa');
+    this.uploadCentroId.set('');
+    this.uploadProyectoId.set('');
+    this.uploadActividadId.set('');
+    this.uploadActivoId.set('');
+    this.uploadModoUpload.set('archivo');
+    this.uploadLinkInput = '';
+    this.uploadNombreInput = '';
+    this.uploadCategoriaInput = 'Contratos';
+    this.uploadModalAbierto.set(true);
   }
 
-  seleccionarCategoriaFiltro(tipo: FiltroTipoC, categoria: string): void {
-    this.panels[tipo].categoriaFiltro = categoria;
-    if (tipo === 'todos') this.refrescarBusquedaCascada();
+  cerrarModalSubida(): void {
+    this.uploadModalAbierto.set(false);
+    this.uploadQueue.items()
+      .filter(i => i.kind === 'archivo' && this.retryContext.has(i.id))
+      .forEach(i => { this.uploadQueue.quitar(i.id); this.retryContext.delete(i.id); });
   }
 
-  setModoUpload(tipo: DocTipo, modo: 'archivo' | 'link'): void {
-    const p = this.panels[tipo];
-    if (p.modoUpload === modo) return;
-    p.modoUpload = modo;
-    p.selectedFile = null;
-    p.linkInput = '';
-    p.nombreInput = '';
+  seleccionarDestinoTipo(tipo: string): void {
+    this.uploadDestinoTipo.set(tipo as DestinoTipo);
+    this.uploadCentroId.set('');
+    this.uploadProyectoId.set('');
+    this.uploadActividadId.set('');
+    this.uploadActivoId.set('');
   }
 
-  linkInvalido(tipo: DocTipo): boolean {
-    const link = this.panels[tipo].linkInput.trim();
+  onUploadCentroChange(id: string): void {
+    this.uploadCentroId.set(id);
+    this.uploadProyectoId.set('');
+    this.uploadActividadId.set('');
+    this.uploadActivoId.set('');
+  }
+
+  private resolverDestinoModal(): Pick<ModalUploadCtx, 'destinoTipo' | 'empresaId' | 'centroId' | 'proyectoId' | 'actividadId' | 'activoId'> | null {
+    const empresa = this.consumidorContext.empresaSeleccionada();
+    if (!empresa) return null;
+    const t = this.uploadDestinoTipo();
+    const empresaId = empresa._id;
+    if (t === 'empresa') return { destinoTipo: t, empresaId };
+    if (t === 'centro') return this.uploadCentroId() ? { destinoTipo: t, empresaId, centroId: this.uploadCentroId() } : null;
+    if (t === 'proyecto') return (this.uploadCentroId() && this.uploadProyectoId()) ? { destinoTipo: t, empresaId, centroId: this.uploadCentroId(), proyectoId: this.uploadProyectoId() } : null;
+    if (t === 'actividad') return (this.uploadCentroId() && this.uploadActividadId()) ? { destinoTipo: t, empresaId, centroId: this.uploadCentroId(), actividadId: this.uploadActividadId() } : null;
+    return (this.uploadCentroId() && this.uploadActivoId()) ? { destinoTipo: t, empresaId, centroId: this.uploadCentroId(), activoId: this.uploadActivoId() } : null;
+  }
+
+  linkInvalidoModal(): boolean {
+    const link = this.uploadLinkInput.trim();
     if (!link) return false;
     return !/^https?:\/\/.+/i.test(link);
   }
 
-  onArchivoChange(file: File | null, tipo: DocTipo): void {
+  onArchivoChangeModal(file: File | null): void {
     if (!file) return;
+    const destino = this.resolverDestinoModal();
+    if (!destino) return;
     const categoria = detectarCategoriaDocumento(file.name) ?? 'Otros';
     const id = this.uploadQueue.agregar(file.name, 'archivo', categoria);
-    const empresaId = this.consumidorContext.empresaSeleccionada()?._id ?? '';
-    const centroId = this.selectedCentroIdC() || undefined;
-    const proyectoId = this.selectedProyectoIdC() || undefined;
-    const ctx: UploadCtx = { kind: 'archivo', file, tipo, empresaId, centroId, proyectoId, categoria };
+    const ctx: ModalUploadCtx = { kind: 'archivo', file, ...destino, categoria };
     this.retryContext.set(id, ctx);
     if (file.size > MAX_UPLOAD_SIZE_BYTES) {
       this.uploadQueue.marcarError(id, `El archivo pesa ${formatBytes(file.size)} y supera el límite de 20 MB. Selecciona uno más liviano.`);
       return;
     }
-    this.ejecutarSubida(id, ctx);
+    this.ejecutarSubidaModal(id, ctx);
   }
 
-  tarjetasArchivoSubiendo(tipo: DocTipo): DocumentoTarjeta[] {
+  tarjetasSubidaModal(): DocumentoTarjeta[] {
     return this.uploadQueue.items()
-      .filter(i => i.kind === 'archivo' && this.retryContext.get(i.id)?.tipo === tipo)
+      .filter(i => i.kind === 'archivo' && this.retryContext.has(i.id))
       .map(i => ({
         id: i.id,
         nombre: i.nombre,
@@ -612,76 +762,59 @@ export class DocumentosConsumidorPageComponent implements OnInit {
       }));
   }
 
-  onCategoriaTarjetaChange(event: { id: string; categoria: string }, tipo: DocTipo): void {
+  onCategoriaTarjetaChangeModal(event: { id: string; categoria: string }): void {
     this.uploadQueue.actualizarCategoria(event.id, event.categoria);
     const item = this.uploadQueue.items().find(i => i.id === event.id);
-    if (item?.estado === 'listo' && item.docUrl) {
-      this.service.actualizarCategoria(item.docUrl, event.categoria, tipo);
+    const ctx = this.retryContext.get(event.id);
+    if (item?.estado === 'listo' && item.docUrl && ctx && (ctx.destinoTipo === 'empresa' || ctx.destinoTipo === 'centro' || ctx.destinoTipo === 'proyecto')) {
+      this.service.actualizarCategoria(item.docUrl, event.categoria, ctx.destinoTipo);
     }
   }
 
-  onRenombrarTarjeta(event: { id: string; nuevoNombre: string }, tipo: DocTipo): void {
+  onRenombrarTarjetaModal(event: { id: string; nuevoNombre: string }): void {
     const item = this.uploadQueue.items().find(i => i.id === event.id);
-    if (item?.estado === 'listo' && item.docUrl) {
-      this.service.renombrarDocumento(item.docUrl, event.nuevoNombre, tipo,
+    const ctx = this.retryContext.get(event.id);
+    if (item?.estado === 'listo' && item.docUrl && ctx && (ctx.destinoTipo === 'empresa' || ctx.destinoTipo === 'centro' || ctx.destinoTipo === 'proyecto')) {
+      this.service.renombrarDocumento(item.docUrl, event.nuevoNombre, ctx.destinoTipo,
         () => this.uploadQueue.actualizarNombre(event.id, event.nuevoNombre));
     }
   }
 
-  onEliminarTarjeta(id: string, tipo: DocTipo): void {
+  onEliminarTarjetaModal(id: string): void {
     const item = this.uploadQueue.items().find(i => i.id === id);
-    if (item?.estado === 'listo' && item.docUrl) {
+    const ctx = this.retryContext.get(id);
+    if (item?.estado === 'listo' && item.docUrl && ctx && (ctx.destinoTipo === 'empresa' || ctx.destinoTipo === 'centro' || ctx.destinoTipo === 'proyecto')) {
       if (!confirmarEliminacion(item.nombre ?? 'este documento')) return;
-      const empresaId = this.consumidorContext.empresaSeleccionada()?._id ?? '';
-      this.service.eliminar(item.docUrl, tipo, empresaId, this.selectedCentroIdC() || undefined, this.selectedProyectoIdC() || undefined,
-        () => { this.uploadQueue.quitar(id); this.retryContext.delete(id); this.recargarDocsC(); });
+      this.service.eliminar(item.docUrl, ctx.destinoTipo, ctx.empresaId, ctx.centroId, ctx.proyectoId,
+        () => { this.uploadQueue.quitar(id); this.retryContext.delete(id); this.ejecutarBusqueda(); });
       return;
     }
+    if (item?.estado === 'listo') return; // actividad/activo ya subidos: se gestionan desde su propia pestaña.
     this.uploadQueue.quitar(id);
     this.retryContext.delete(id);
   }
 
-  itemsLinkParaBurbuja() {
-    return this.uploadQueue.items().filter(i => i.kind === 'link');
-  }
-
-  archivoDemasiadoGrande(tipo: DocTipo): boolean {
-    const file = this.panels[tipo].selectedFile;
-    return !!file && file.size > MAX_UPLOAD_SIZE_BYTES;
-  }
-
-  mensajeArchivoDemasiadoGrande(tipo: DocTipo): string {
-    const file = this.panels[tipo].selectedFile;
-    if (!file) return '';
-    return `El archivo pesa ${formatBytes(file.size)} y supera el límite de 20 MB. Selecciona uno más liviano.`;
-  }
-
-  confirmarSubida(tipo: DocTipo): void {
-    const p = this.panels[tipo];
-    const empresaId = this.consumidorContext.empresaSeleccionada()?._id ?? '';
-    const centroId = this.selectedCentroIdC() || undefined;
-    const proyectoId = this.selectedProyectoIdC() || undefined;
-
-    const link = p.linkInput.trim();
-    if (!link || this.linkInvalido(tipo)) return;
-    const ctx: UploadCtx = { kind: 'link', linkUrl: link, tipo, empresaId, centroId, proyectoId, nombreDisplay: p.nombreInput || undefined, categoria: p.categoriaInput || undefined };
-    const nombreParaCola = p.nombreInput || link;
+  confirmarSubidaLinkModal(): void {
+    const destino = this.resolverDestinoModal();
+    if (!destino) return;
+    const link = this.uploadLinkInput.trim();
+    if (!link || this.linkInvalidoModal()) return;
+    const ctx: ModalUploadCtx = { kind: 'link', linkUrl: link, ...destino, nombreDisplay: this.uploadNombreInput || undefined, categoria: this.uploadCategoriaInput || undefined };
+    const nombreParaCola = this.uploadNombreInput || link;
 
     const id = this.uploadQueue.agregar(nombreParaCola, 'link', ctx.categoria);
     this.retryContext.set(id, ctx);
-    this.ejecutarSubida(id, ctx);
+    this.ejecutarSubidaModal(id, ctx);
 
-    p.selectedFile = null;
-    p.nombreInput = '';
-    p.linkInput = '';
-    p.showUpload = false;
+    this.uploadNombreInput = '';
+    this.uploadLinkInput = '';
   }
 
   reintentarSubida(id: string): void {
     const ctx = this.retryContext.get(id);
     if (!ctx) return;
     this.uploadQueue.reiniciar(id);
-    this.ejecutarSubida(id, ctx);
+    this.ejecutarSubidaModal(id, ctx);
   }
 
   cerrarUploadBubble(): void {
@@ -690,8 +823,12 @@ export class DocumentosConsumidorPageComponent implements OnInit {
       .forEach(i => { this.uploadQueue.quitar(i.id); this.retryContext.delete(i.id); });
   }
 
-  private ejecutarSubida(id: string, ctx: UploadCtx): void {
-    const onError = (err: any) => {
+  itemsLinkParaBurbuja() {
+    return this.uploadQueue.items().filter(i => i.kind === 'link');
+  }
+
+  private ejecutarSubidaModal(id: string, ctx: ModalUploadCtx): void {
+    const onError = (err?: any) => {
       if (err?.status === 413) {
         this.uploadQueue.marcarError(id, 'El archivo supera el límite de 20MB.');
         return;
@@ -701,8 +838,31 @@ export class DocumentosConsumidorPageComponent implements OnInit {
       this.uploadQueue.marcarError(id, text);
     };
 
+    if (ctx.destinoTipo === 'actividad') {
+      if (ctx.kind === 'link') {
+        this.actividadesService.subirDocumentoLink(ctx.actividadId!, ctx.linkUrl!, ctx.nombreDisplay,
+          () => this.uploadQueue.marcarListo(id), onError, ctx.categoria);
+      } else {
+        this.actividadesService.subirDocumento(ctx.actividadId!, ctx.file!, ctx.nombreDisplay,
+          () => this.uploadQueue.marcarListo(id), onError, ctx.categoria);
+      }
+      return;
+    }
+
+    if (ctx.destinoTipo === 'activo') {
+      if (ctx.kind === 'link') {
+        this.activosService.subirDocumentoLink(ctx.activoId!, ctx.centroId!, ctx.linkUrl!, ctx.nombreDisplay,
+          () => this.uploadQueue.marcarListo(id), onError, ctx.categoria);
+      } else {
+        this.activosService.subirDocumento(ctx.activoId!, ctx.centroId!, ctx.file!, ctx.nombreDisplay,
+          () => this.uploadQueue.marcarListo(id), onError, ctx.categoria);
+      }
+      return;
+    }
+
+    const tipo = ctx.destinoTipo; // 'empresa' | 'centro' | 'proyecto'
     if (ctx.kind === 'link') {
-      this.service.subirLink(ctx.linkUrl, ctx.tipo, ctx.empresaId, ctx.centroId, ctx.proyectoId, ctx.nombreDisplay, ctx.categoria)
+      this.service.subirLink(ctx.linkUrl!, tipo, ctx.empresaId, ctx.centroId, ctx.proyectoId, ctx.nombreDisplay, ctx.categoria)
         .subscribe({
           next: () => { this.uploadQueue.marcarListo(id); this.retryContext.delete(id); },
           error: onError,
@@ -710,20 +870,20 @@ export class DocumentosConsumidorPageComponent implements OnInit {
       return;
     }
 
-    this.service.subir(ctx.file, ctx.tipo, ctx.empresaId, ctx.centroId, ctx.proyectoId, ctx.nombreDisplay, ctx.categoria)
+    this.service.subir(ctx.file!, tipo, ctx.empresaId, ctx.centroId, ctx.proyectoId, ctx.nombreDisplay, ctx.categoria)
       .subscribe({
         next: (event: HttpEvent<DocumentoItem>) => {
           if (event.type === HttpEventType.UploadProgress && event.total) {
             this.uploadQueue.actualizarProgreso(id, Math.round((100 * event.loaded) / event.total));
           } else if (event.type === HttpEventType.Response) {
             const docUrl = event.body?._id
-              ? this.service.docUrl(ctx.tipo, event.body._id, ctx.empresaId, ctx.centroId, ctx.proyectoId)
+              ? this.service.docUrl(tipo, event.body._id, ctx.empresaId, ctx.centroId, ctx.proyectoId)
               : undefined;
             this.uploadQueue.marcarListo(id, docUrl);
             if (docUrl) {
               const item = this.uploadQueue.items().find(i => i.id === id);
               if (item?.categoria && item.categoria !== ctx.categoria) {
-                this.service.actualizarCategoria(docUrl, item.categoria, ctx.tipo);
+                this.service.actualizarCategoria(docUrl, item.categoria, tipo);
               }
             }
           }
@@ -732,37 +892,38 @@ export class DocumentosConsumidorPageComponent implements OnInit {
       });
   }
 
+  toggleFiltroCategoriaPendiente(categoria: string): void {
+    const actuales = this.categoriasPendiente();
+    this.categoriasPendiente.set(
+      actuales.includes(categoria) ? actuales.filter(c => c !== categoria) : [...actuales, categoria]
+    );
+  }
+
+  isFiltroCategoriaPendienteSelected(categoria: string): boolean {
+    return this.categoriasPendiente().includes(categoria);
+  }
+
+  toggleDropdownTipo(): void {
+    this.dropdownTipoAbierto.update(v => !v);
+  }
+
+  categoriaTag(cat: string): string | null {
+    return cat.match(/^\[([^\]]+)\]/)?.[1] ?? null;
+  }
+
+  categoriaResto(cat: string): string {
+    return cat.replace(/^\[[^\]]+\]\s*/, '');
+  }
+
   filteredDocsPorCentro() {
-    const { busqueda, categoriaFiltro } = this.panels['centro'];
-    const term = busqueda.trim().toLowerCase();
-    const orden = this.ordenCentroC();
     return this.service.documentosPorCentro()
-      .map(item => ({
-        ...item,
-        docs: ordenarPorDocumento(
-          item.docs
-            .filter(d => !categoriaFiltro || d.categoria === categoriaFiltro)
-            .filter(d => !term || d.nombre_display.toLowerCase().includes(term)),
-          orden, d => d,
-        ),
-      }))
+      .map(item => ({ ...item, docs: this.aplicarFiltrosDocs(item.docs) }))
       .filter(item => item.docs.length > 0);
   }
 
   filteredDocsPorProyecto() {
-    const { busqueda, categoriaFiltro } = this.panels['proyecto'];
-    const term = busqueda.trim().toLowerCase();
-    const orden = this.ordenProyectoC();
     return this.service.documentosPorProyecto()
-      .map(item => ({
-        ...item,
-        docs: ordenarPorDocumento(
-          item.docs
-            .filter(d => !categoriaFiltro || d.categoria === categoriaFiltro)
-            .filter(d => !term || d.nombre_display.toLowerCase().includes(term)),
-          orden, d => d,
-        ),
-      }))
+      .map(item => ({ ...item, docs: this.aplicarFiltrosDocs(item.docs) }))
       .filter(item => item.docs.length > 0);
   }
 
@@ -770,18 +931,15 @@ export class DocumentosConsumidorPageComponent implements OnInit {
     const docs = tipo === 'empresa' ? this.service.documentosEmpresa()
       : tipo === 'centro' ? this.service.documentosCentro()
       : this.service.documentosProyecto();
-    const { busqueda, categoriaFiltro } = this.panels[tipo];
-    const term = busqueda.trim().toLowerCase();
-    const filtrados = docs
-      .filter(d => !categoriaFiltro || d.categoria === categoriaFiltro)
-      .filter(d => !term || d.nombre_display.toLowerCase().includes(term));
-    return ordenarPorDocumento(filtrados, this.ordenParaTipoC(tipo)(), d => d);
+    return this.aplicarFiltrosDocs(docs);
   }
 
   eliminar(docUrl: string, tipo: DocTipo, nombre?: string): void {
     if (nombre !== undefined && !confirmarEliminacion(nombre)) return;
     const empresaId = asId(this.consumidorContext.empresaSeleccionada()?._id) ?? '';
-    this.service.eliminar(docUrl, tipo, empresaId, this.selectedCentroIdC() || undefined, this.selectedProyectoIdC() || undefined);
+    const centroId = this.centroIdAplicado() !== 'todos' ? this.centroIdAplicado() : undefined;
+    const proyectoId = this.proyectoIdAplicado() !== 'todos' ? this.proyectoIdAplicado() : undefined;
+    this.service.eliminar(docUrl, tipo, empresaId, centroId, proyectoId, () => this.ejecutarBusqueda());
   }
 
   protected categoriaMenuAbierto = signal<string | null>(null);
@@ -792,12 +950,7 @@ export class DocumentosConsumidorPageComponent implements OnInit {
 
   seleccionarCategoriaC(docUrl: string, categoria: string, tipo: DocTipo): void {
     this.categoriaMenuAbierto.set(null);
-    this.service.actualizarCategoria(docUrl, categoria, tipo);
-  }
-
-  seleccionarCategoriaTodosC(docUrl: string, categoria: string): void {
-    this.categoriaMenuAbierto.set(null);
-    this.service.actualizarCategoria(docUrl, categoria, 'empresa', () => this.refrescarBusquedaCascada());
+    this.service.actualizarCategoria(docUrl, categoria, tipo, () => this.ejecutarBusqueda());
   }
 
   abrirDocumento(d: { tipo_contenido?: 'archivo' | 'link'; link_url?: string; url: string; nombre_display: string }): void {
@@ -808,13 +961,9 @@ export class DocumentosConsumidorPageComponent implements OnInit {
   // ─── helpers unificados para búsqueda de solicitudes ────────────────────
 
   limpiarBuscadorSolicitudes(): void {
-    if (this.tabJerarquia() === 'empresa') {
-      this.busquedaEmpresa.set('');
-    } else if (this.tabJerarquia() === 'centro') {
-      this.busquedaCentro.set('');
-    } else {
-      this.busquedaProyecto.set('');
-    }
+    this.busquedaEmpresa.set('');
+    this.busquedaCentro.set('');
+    this.busquedaProyecto.set('');
     this.filtroTipoSolicitud.set('');
     this.filtroEstado.set('');
   }
@@ -905,24 +1054,14 @@ export class DocumentosConsumidorPageComponent implements OnInit {
     return map[estado];
   }
 
-  activarTabVencidosConsumidor(): void {
-    this.tabDocConsumidor.set('vencidos');
-    this.cargarVencidosConsumidor();
-  }
-
   cargarVencidosConsumidor(): void {
     const empresa = this.consumidorContext.empresaSeleccionada();
     if (!empresa) return;
-    const tab = this.tabJerarquia();
-    const centroId   = tab !== 'empresa' && this.selectedCentroIdC()   && this.selectedCentroIdC()   !== 'todos' ? this.selectedCentroIdC()   : undefined;
-    const proyectoId = tab === 'proyecto' && this.selectedProyectoIdC() && this.selectedProyectoIdC() !== 'todos' ? this.selectedProyectoIdC() : undefined;
-    const tipo: 'empresa' | 'centro' | 'proyecto' = tab === 'centro' || tab === 'proyecto' ? tab : 'empresa';
+    const grupo = this.grupoAplicado();
+    const centroId   = grupo !== 'empresa' && this.centroIdAplicado()   && this.centroIdAplicado()   !== 'todos' ? this.centroIdAplicado()   : undefined;
+    const proyectoId = grupo === 'proyecto' && this.proyectoIdAplicado() && this.proyectoIdAplicado() !== 'todos' ? this.proyectoIdAplicado() : undefined;
+    const tipo: 'empresa' | 'centro' | 'proyecto' = grupo === 'centro' || grupo === 'proyecto' ? grupo : 'empresa';
     this.service.cargarVencidos(empresa._id, centroId, proyectoId, tipo);
   }
 
-  // ─── private helpers ─────────────────────────────────────────────────────
-
-  private emptyPanel(): PanelState {
-    return { showUpload: false, nombreInput: '', categoriaInput: 'Contratos', busqueda: '', categoriaFiltro: '', selectedFile: null, modoUpload: 'archivo', linkInput: '' };
-  }
 }

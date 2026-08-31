@@ -107,6 +107,8 @@ const FAQ_DATA: FaqItem[] = [
   },
 ];
 
+const TOUR_ORDER: NodeId[] = ['empresa', 'centro', 'proyecto', 'activos', 'actividades'];
+
 const ACTIVITY_DAYS = [3, 9, 14, 20, 22, 27];
 const CALENDAR_LEAD_BLANKS = 5;
 const CALENDAR_DAYS_IN_MONTH = 31;
@@ -184,9 +186,26 @@ function iconSvg(name: string, size: number, fill = 'none'): string {
     .diagram-box span { font-size: .875rem; font-weight: 700; }
     .actividades-wrap { display: flex; flex-direction: column; }
     .actividades-box {
+      position: relative;
       display: flex; align-items: center; gap: .6rem; padding: .85rem 1rem; border-radius: var(--radius-lg);
       cursor: pointer; background: var(--bg-0); transition: box-shadow .15s, border-color .15s; flex: none;
       font-family: var(--font-body); text-align: left;
+    }
+
+    .diagram-hint {
+      position: absolute; top: 0; left: 50%; transform: translate(-50%, -100%);
+      display: inline-flex; align-items: center; white-space: nowrap; pointer-events: none;
+      background: var(--sc-cyan); color: var(--fg-inverse); font-size: .68rem; font-weight: 700;
+      padding: .3rem .65rem; border-radius: var(--radius-pill); box-shadow: var(--shadow-1);
+      animation: diagram-hint-bounce 1.6s ease-in-out infinite;
+    }
+    .diagram-hint::after {
+      content: ''; position: absolute; top: 100%; left: 50%; transform: translateX(-50%);
+      border: 5px solid transparent; border-top-color: var(--sc-cyan);
+    }
+    @keyframes diagram-hint-bounce {
+      0%, 100% { transform: translate(-50%, -100%); }
+      50% { transform: translate(-50%, calc(-100% - 5px)); }
     }
     .actividades-box strong { display: block; font-size: .875rem; font-weight: 700; color: var(--fg-1); }
     .actividades-box small { display: block; font-size: .72rem; color: var(--fg-5); margin-top: .1rem; }
@@ -328,6 +347,10 @@ export class AyudaPageComponent {
   readonly slideIndex = signal(0);
   readonly faqOpen = signal(0);
 
+  private readonly visited = signal<ReadonlySet<NodeId>>(new Set<NodeId>(['empresa']));
+
+  readonly hintNode = computed<NodeId | null>(() => TOUR_ORDER.find((n) => !this.visited().has(n)) ?? null);
+
   readonly nodeDetail = computed(() => this.nodeDetails[this.selectedNode()]);
   readonly currentSlide = computed(() => this.slidesData[this.slideIndex()]);
 
@@ -350,6 +373,11 @@ export class AyudaPageComponent {
 
   selectNode(id: NodeId): void {
     this.selectedNode.set(id);
+    this.visited.update((prev) => {
+      const next = new Set(prev);
+      next.add(id);
+      return next;
+    });
   }
 
   prevSlide(): void {

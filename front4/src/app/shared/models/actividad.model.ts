@@ -16,6 +16,9 @@ export interface DocActividad {
   tipo_mime?: string;
   tipo_contenido?: 'archivo' | 'link';
   link_url?: string;
+  categoria?: string;
+  subido_en?: string;
+  subido_por_nombre?: string;
 }
 
 import type { Activo } from './activo.model';

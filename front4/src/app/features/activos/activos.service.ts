@@ -123,6 +123,17 @@ export class ActivosService {
     });
   }
 
+  // Variante que retorna un Observable en vez de mutar `documentosActivo` — para
+  // pedir los documentos de muchos activos en paralelo (forkJoin) sin que cada
+  // respuesta pise la de la anterior en la señal compartida.
+  listarDocumentosObs(activoId: string, centroId: string) {
+    const { empresaId } = this.resolverIds(centroId);
+    if (!empresaId) return of([] as DocActivo[]);
+    return this.http.get<DocActivo[]>(
+      this.api.url(`/empresas/${empresaId}/centros/${centroId}/activos/${activoId}/documentos`)
+    ).pipe(catchError(() => of([] as DocActivo[])));
+  }
+
   subirDocumento(
     activoId: string,
     centroId: string,
@@ -130,12 +141,14 @@ export class ActivosService {
     nombreDisplay?: string,
     onSuccess?: () => void,
     onError?: () => void,
+    categoria?: string,
   ): void {
     const { empresaId } = this.resolverIds(centroId);
     if (!empresaId) { this.setError({ error: { message: 'Centro no encontrado' } }); onError?.(); return; }
     const form = new FormData();
     form.append('archivo', archivo);
     if (nombreDisplay) form.append('nombre_display', nombreDisplay);
+    if (categoria) form.append('categoria', categoria);
     this.http.post(
       this.api.url(`/empresas/${empresaId}/centros/${centroId}/activos/${activoId}/documentos`),
       form
@@ -156,12 +169,14 @@ export class ActivosService {
     nombreDisplay?: string,
     onSuccess?: () => void,
     onError?: () => void,
+    categoria?: string,
   ): void {
     const { empresaId } = this.resolverIds(centroId);
     if (!empresaId) { this.setError({ error: { message: 'Centro no encontrado' } }); onError?.(); return; }
     const form = new FormData();
     form.append('link_url', linkUrl);
     if (nombreDisplay) form.append('nombre_display', nombreDisplay);
+    if (categoria) form.append('categoria', categoria);
     this.http.post(
       this.api.url(`/empresas/${empresaId}/centros/${centroId}/activos/${activoId}/documentos`),
       form
@@ -202,6 +217,22 @@ export class ActivosService {
         this.listarDocumentos(activoId, centroId);
       },
       error: (err) => this.setError(err),
+    });
+  }
+
+  actualizarCategoria(activoId: string, centroId: string, docId: string, categoria: string, onSuccess?: () => void, onError?: () => void): void {
+    const { empresaId } = this.resolverIds(centroId);
+    if (!empresaId) { this.setError({ error: { message: 'Centro no encontrado' } }); onError?.(); return; }
+    this.http.patch(
+      this.api.url(`/empresas/${empresaId}/centros/${centroId}/activos/${activoId}/documentos/${docId}`),
+      { categoria }
+    ).subscribe({
+      next: () => {
+        this.status.set({ type: 'ok', text: 'Categoría actualizada' });
+        this.listarDocumentos(activoId, centroId);
+        onSuccess?.();
+      },
+      error: (err) => { this.setError(err); onError?.(); },
     });
   }
 
